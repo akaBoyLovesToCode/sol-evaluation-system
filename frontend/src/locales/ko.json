@@ -1,0 +1,50 @@
+{
+  "common": {
+    "confirm": "확인",
+    "cancel": "취소",
+    "save": "저장",
+    "edit": "편집",
+    "delete": "삭제",
+    "add": "추가",
+    "search": "검색",
+    "loading": "로딩 중...",
+    "noData": "데이터 없음",
+    "operation": "작업",
+    "status": "상태"
+  },
+  "auth": {
+    "login": "로그인",
+    "logout": "로그아웃",
+    "username": "사용자명",
+    "password": "비밀번호",
+    "loginTitle": "SSD 평가 관리 시스템",
+    "loginSuccess": "로그인 성공",
+    "loginFailed": "로그인 실패"
+  },
+  "navigation": {
+    "dashboard": "대시보드",
+    "evaluations": "평가 관리",
+    "users": "사용자 관리",
+    "reports": "보고서",
+    "settings": "설정"
+  },
+  "evaluation": {
+    "title": "평가 관리",
+    "evaluationNumber": "평가 번호",
+    "evaluationType": "평가 유형",
+    "ssdProduct": "SSD 제품",
+    "evaluator": "평가자",
+    "startDate": "시작 날짜",
+    "newProduct": "신제품",
+    "massProduction": "양산"
+  },
+  "status": {
+    "inProgress": "진행 중",
+    "pendingPartApproval": "Part Leader 승인 대기",
+    "pendingGroupApproval": "Group Leader 승인 대기",
+    "completed": "완료",
+    "paused": "일시정지",
+    "cancelled": "취소됨",
+    "rejected": "거부됨"
+  }
+} 

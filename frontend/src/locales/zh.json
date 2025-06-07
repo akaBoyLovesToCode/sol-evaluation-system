@@ -1,0 +1,50 @@
+{
+  "common": {
+    "confirm": "确认",
+    "cancel": "取消",
+    "save": "保存",
+    "edit": "编辑",
+    "delete": "删除",
+    "add": "添加",
+    "search": "搜索",
+    "loading": "加载中...",
+    "noData": "暂无数据",
+    "operation": "操作",
+    "status": "状态"
+  },
+  "auth": {
+    "login": "登录",
+    "logout": "退出登录",
+    "username": "用户名",
+    "password": "密码",
+    "loginTitle": "SSD评价管理系统",
+    "loginSuccess": "登录成功",
+    "loginFailed": "登录失败"
+  },
+  "navigation": {
+    "dashboard": "仪表盘",
+    "evaluations": "评价管理",
+    "users": "用户管理",
+    "reports": "报表分析",
+    "settings": "系统设置"
+  },
+  "evaluation": {
+    "title": "评价管理",
+    "evaluationNumber": "评价编号",
+    "evaluationType": "评价类型",
+    "ssdProduct": "SSD产品",
+    "evaluator": "评价人",
+    "startDate": "开始日期",
+    "newProduct": "新产品",
+    "massProduction": "量产"
+  },
+  "status": {
+    "inProgress": "进行中",
+    "pendingPartApproval": "待Part Leader审批",
+    "pendingGroupApproval": "待Group Leader审批",
+    "completed": "已完成",
+    "paused": "已暂停",
+    "cancelled": "已取消",
+    "rejected": "已拒绝"
+  }
+} 

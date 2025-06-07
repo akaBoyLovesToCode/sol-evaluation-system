@@ -1,0 +1,50 @@
+{
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "add": "Add",
+    "search": "Search",
+    "loading": "Loading...",
+    "noData": "No Data",
+    "operation": "Operation",
+    "status": "Status"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "username": "Username",
+    "password": "Password",
+    "loginTitle": "SSD Evaluation Management System",
+    "loginSuccess": "Login successful",
+    "loginFailed": "Login failed"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "evaluations": "Evaluations",
+    "users": "Users",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "evaluation": {
+    "title": "Evaluation Management",
+    "evaluationNumber": "Evaluation Number",
+    "evaluationType": "Evaluation Type",
+    "ssdProduct": "SSD Product",
+    "evaluator": "Evaluator",
+    "startDate": "Start Date",
+    "newProduct": "New Product",
+    "massProduction": "Mass Production"
+  },
+  "status": {
+    "inProgress": "In Progress",
+    "pendingPartApproval": "Pending Part Leader Approval",
+    "pendingGroupApproval": "Pending Group Leader Approval",
+    "completed": "Completed",
+    "paused": "Paused",
+    "cancelled": "Cancelled",
+    "rejected": "Rejected"
+  }
+} 

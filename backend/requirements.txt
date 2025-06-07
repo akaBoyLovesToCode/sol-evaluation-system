@@ -1,0 +1,19 @@
+# Core Flask dependencies
+Flask
+Flask-SQLAlchemy
+Flask-Migrate
+Flask-JWT-Extended
+Flask-CORS
+Flask-SocketIO
+
+# Database
+PyMySQL
+cryptography
+
+# Utilities
+python-dotenv
+APScheduler
+Werkzeug
+
+# Development
+python-dateutil 
