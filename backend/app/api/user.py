@@ -1,10 +1,12 @@
-from flask import Blueprint, request, jsonify, current_app
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import Blueprint, request, current_app
+from flask_jwt_extended import jwt_required
 from app import db
 from app.models import User, Message
 from app.utils.decorators import require_role, validate_json, handle_exceptions
 from app.utils.validators import validate_email, validate_password, validate_username
-from app.utils.helpers import calculate_pagination, build_query_filters, create_response
+from app.utils.helpers import (
+    calculate_pagination, build_query_filters, create_response, get_current_user_id
+)
 
 # Create user blueprint
 user_bp = Blueprint('user', __name__)
@@ -94,7 +96,7 @@ def get_users():
 def get_user(user_id):
     """Get single user by ID"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         current_user = User.query.get(current_user_id)
         
         # Users can view their own profile, leaders can view others
@@ -216,7 +218,7 @@ def create_user():
 def update_user(user_id):
     """Update user information"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         current_user = User.query.get(current_user_id)
         data = request.get_json()
         
@@ -317,7 +319,7 @@ def update_user(user_id):
 def deactivate_user(user_id):
     """Deactivate user account"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         
         # Cannot deactivate yourself
         if user_id == current_user_id:
@@ -439,7 +441,7 @@ def reset_user_password(user_id):
 def get_user_messages():
     """Get current user's messages"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         
         # Get query parameters
         page = request.args.get('page', 1, type=int)
@@ -490,7 +492,7 @@ def get_user_messages():
 def mark_message_read(message_id):
     """Mark message as read"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         
         message = Message.query.filter_by(
             id=message_id,
@@ -522,7 +524,7 @@ def mark_message_read(message_id):
 def mark_all_messages_read():
     """Mark all messages as read for current user"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         
         # Update all unread messages for the user
         Message.query.filter_by(

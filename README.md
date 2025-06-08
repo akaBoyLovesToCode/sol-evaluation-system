@@ -48,20 +48,20 @@ ssd-evaluation-system/
 - [x] Basic UI with Element Plus + Tailwind CSS
 
 ### Phase 2: Workflow Management
-- [ ] Evaluation workflow engine
-- [ ] Approval process (Part Leader → Group Leader)
-- [ ] Status management
-- [ ] In-app notification system
+- [x] Evaluation workflow engine
+- [x] Approval process (Part Leader → Group Leader)
+- [x] Status management
+- [x] In-app notification system
 
 ### Phase 3: Analytics & Reporting
-- [ ] Statistical analysis
-- [ ] Data visualization with charts
-- [ ] Automated report generation
-- [ ] Export functionality
+- [x] Statistical analysis
+- [x] Data visualization with charts
+- [x] Automated report generation
+- [x] Export functionality
 
 ### Phase 4: System Enhancement
-- [ ] Operation logging
-- [ ] Data backup system
+- [x] Operation logging
+- [x] Data backup system
 - [ ] Full internationalization (CN/EN/KR)
 - [ ] Performance optimization
 

@@ -74,10 +74,10 @@ def login():
         
         # Create tokens
         access_token = create_access_token(
-            identity=user.id,
+            identity=str(user.id),
             additional_claims={'role': user.role}
         )
-        refresh_token = create_refresh_token(identity=user.id)
+        refresh_token = create_refresh_token(identity=str(user.id))
         
         # Update last login
         user.update_last_login()
@@ -111,7 +111,7 @@ def logout():
     try:
         # Get current token and user
         jti = get_jwt()['jti']  # JWT ID
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())  # Convert string to int
         
         # Add token to blacklist
         blacklisted_tokens.add(jti)
@@ -135,7 +135,7 @@ def refresh():
     Refresh access token using refresh token
     """
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())  # Convert string to int
         
         # Get user to include role in new token
         user = User.query.get(current_user_id)
@@ -144,7 +144,7 @@ def refresh():
         
         # Create new access token
         new_access_token = create_access_token(
-            identity=current_user_id,
+            identity=str(current_user_id),
             additional_claims={'role': user.role}
         )
         
@@ -163,7 +163,7 @@ def get_current_user():
     Get current user information
     """
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())  # Convert string to int
         user = User.query.get(current_user_id)
         
         if not user:
@@ -208,7 +208,7 @@ def change_password():
             return jsonify({'error': password_validation['message']}), 400
         
         # Get current user
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())  # Convert string to int
         user = User.query.get(current_user_id)
         
         if not user:

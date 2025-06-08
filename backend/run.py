@@ -214,12 +214,12 @@ if __name__ == '__main__':
             print("  flask list-users  - List all users")
             print("  flask backup-db   - Create database backup")
             exit(1)
-    
+
     # Get configuration from environment
     host = os.environ.get('FLASK_HOST', '127.0.0.1')
-    port = int(os.environ.get('FLASK_PORT', 5000))
+    port = int(os.environ.get('FLASK_PORT', 5001))
     debug = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
-    
+
     print("🚀 Starting SSD Evaluation System...")
     print(f"   Server: http://{host}:{port}")
     print(f"   Debug mode: {debug}")

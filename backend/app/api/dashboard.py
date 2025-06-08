@@ -1,11 +1,11 @@
 from flask import Blueprint, request, jsonify, current_app
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required
 from sqlalchemy import func, and_, or_
 from datetime import datetime, timedelta
 from app import db
 from app.models import Evaluation, User, Message, OperationLog
 from app.utils.decorators import handle_exceptions, cache_response
-from app.utils.helpers import create_response, parse_date_string
+from app.utils.helpers import create_response, parse_date_string, get_current_user_id
 
 # Create dashboard blueprint
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -13,7 +13,6 @@ dashboard_bp = Blueprint('dashboard', __name__)
 @dashboard_bp.route('/overview', methods=['GET'])
 @jwt_required()
 @handle_exceptions
-@cache_response(timeout=300)  # Cache for 5 minutes
 def get_dashboard_overview():
     """
     Get dashboard overview statistics
@@ -26,7 +25,7 @@ def get_dashboard_overview():
     - User statistics (for admins)
     """
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         current_user = User.query.get(current_user_id)
         
         # Base query for evaluations (role-based filtering)
@@ -188,7 +187,7 @@ def get_detailed_statistics():
     - group_by: Grouping option ('month', 'week', 'day')
     """
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         current_user = User.query.get(current_user_id)
         
         # Get query parameters
@@ -374,7 +373,7 @@ def get_evaluation_status_report():
     Returns detailed breakdown of evaluation statuses with trends
     """
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         current_user = User.query.get(current_user_id)
         
         # Only leaders and admins can access this report
@@ -488,7 +487,7 @@ def get_productivity_report():
     Get productivity report showing evaluation throughput and efficiency
     """
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         current_user = User.query.get(current_user_id)
         
         # Only leaders and admins can access this report

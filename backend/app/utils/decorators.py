@@ -1,8 +1,8 @@
 from functools import wraps
 from flask import jsonify, request, current_app
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from flask_jwt_extended import jwt_required, get_jwt
 from app.models import User, OperationLog
-from app.utils.helpers import get_client_ip
+from app.utils.helpers import get_client_ip, get_current_user_id
 
 def require_role(required_role):
     """
@@ -19,7 +19,7 @@ def require_role(required_role):
         @jwt_required()
         def decorated_function(*args, **kwargs):
             try:
-                current_user_id = get_jwt_identity()
+                current_user_id = get_current_user_id()
                 user = User.query.get(current_user_id)
                 
                 if not user:
@@ -61,6 +61,62 @@ def require_part_leader(f):
     """
     return require_role('part_leader')(f)
 
+def role_required(allowed_roles):
+    """
+    Decorator to require one of the specified roles
+    
+    Args:
+        allowed_roles (list): List of allowed roles
+        
+    Returns:
+        function: Decorated function
+    """
+    def decorator(f):
+        @wraps(f)
+        @jwt_required()
+        def decorated_function(*args, **kwargs):
+            try:
+                current_user_id = get_current_user_id()
+                user = User.query.get(current_user_id)
+                
+                if not user:
+                    return jsonify({'error': 'User not found'}), 404
+                
+                if not user.is_active:
+                    return jsonify({'error': 'Account is inactive'}), 401
+                
+                # Convert role names to lowercase for comparison
+                user_role = user.role.lower()
+                allowed_roles_lower = [role.lower().replace(' ', '_') for role in allowed_roles]
+                
+                # Map display names to database values
+                role_mapping = {
+                    'admin': 'admin',
+                    'group_leader': 'group_leader',
+                    'part_leader': 'part_leader',
+                    'user': 'user'
+                }
+                
+                # Check if user has any of the allowed roles
+                has_permission = False
+                for allowed_role in allowed_roles_lower:
+                    mapped_role = role_mapping.get(allowed_role, allowed_role)
+                    if user.has_permission(mapped_role):
+                        has_permission = True
+                        break
+                
+                if not has_permission:
+                    return jsonify({'error': 'Insufficient permissions'}), 403
+                
+                return f(*args, **kwargs)
+                
+            except Exception as e:
+                current_app.logger.error(f'Role check error: {str(e)}')
+                return jsonify({'error': 'Authorization error'}), 500
+        
+        return decorated_function
+    return decorator
+
 def log_operation(operation_type, target_type, get_target_id=None, get_old_data=None):
     """
     Decorator to automatically log operations
@@ -90,7 +146,7 @@ def log_operation(operation_type, target_type, get_target_id=None, get_old_data=
             
             # Log the operation after successful execution
             try:
-                current_user_id = get_jwt_identity()
+                current_user_id = get_current_user_id()
                 if current_user_id:
                     # Extract target ID from result if function provided
                     target_id = None
@@ -215,7 +271,7 @@ def rate_limit(max_requests=100, window_seconds=3600):
             current_user_id = None
             
             try:
-                current_user_id = get_jwt_identity()
+                current_user_id = get_current_user_id()
             except:
                 pass
             
@@ -269,12 +325,18 @@ def cache_response(timeout=300):
             import json
             
             # Create cache key from function name, args, and request data
+            user_id = None
+            try:
+                user_id = get_current_user_id() if request.headers.get('Authorization') else None
+            except:
+                pass  # Ignore JWT errors for caching
+            
             cache_key_data = {
                 'function': f.__name__,
                 'args': str(args),
                 'kwargs': str(kwargs),
                 'query_string': request.query_string.decode(),
-                'user_id': get_jwt_identity() if request.headers.get('Authorization') else None
+                'user_id': user_id
             }
             
             cache_key = hashlib.md5(

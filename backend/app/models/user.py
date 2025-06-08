@@ -1,6 +1,16 @@
 from datetime import datetime
+from enum import Enum
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
+
+
+class UserRole(Enum):
+    """User role enumeration"""
+    ADMIN = 'admin'
+    GROUP_LEADER = 'group_leader'
+    PART_LEADER = 'part_leader'
+    USER = 'user'
+
 
 class User(db.Model):
     """
@@ -39,8 +49,11 @@ class User(db.Model):
     last_login = db.Column(db.DateTime)
     
     # Relationships
-    evaluations = db.relationship('Evaluation', backref='evaluator', lazy='dynamic')
-    messages = db.relationship('Message', backref='recipient', lazy='dynamic')
+    evaluations = db.relationship('Evaluation', foreign_keys='Evaluation.evaluator_id', backref='evaluator', lazy='dynamic')
+    part_approvals = db.relationship('Evaluation', foreign_keys='Evaluation.part_approver_id', backref='part_approver', lazy='dynamic')
+    group_approvals = db.relationship('Evaluation', foreign_keys='Evaluation.group_approver_id', backref='group_approver', lazy='dynamic')
+    messages = db.relationship('Message', foreign_keys='Message.recipient_id', backref='recipient', lazy='dynamic')
+    sent_messages = db.relationship('Message', foreign_keys='Message.sender_id', backref='sender', lazy='dynamic')
     operation_logs = db.relationship('OperationLog', backref='user', lazy='dynamic')
     
     def __init__(self, username, email, password, full_name, role='user', **kwargs):

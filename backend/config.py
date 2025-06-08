@@ -15,7 +15,7 @@ class Config:
     MYSQL_HOST = os.environ.get('MYSQL_HOST') or 'localhost'
     MYSQL_PORT = os.environ.get('MYSQL_PORT') or 3306
     MYSQL_USER = os.environ.get('MYSQL_USER') or 'root'
-    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD') or 'password'
+    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD') or 'ssd_eval_root_2024'
     MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE') or 'ssd_evaluation'
     
     SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}?charset=utf8mb4'
@@ -31,6 +31,8 @@ class Config:
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'jwt-secret-string-2024'
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+    JWT_IDENTITY_CLAIM = 'sub'  # Explicitly set the identity claim
+    JWT_ALGORITHM = 'HS256'     # Explicitly set the algorithm
     
     # CORS configuration
     CORS_ORIGINS = ['http://localhost:3000', 'http://localhost:5173']

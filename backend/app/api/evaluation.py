@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required
 from datetime import datetime
 from app import db
 from app.models import Evaluation, EvaluationDetail, EvaluationResult, User, Message
@@ -7,7 +7,7 @@ from app.utils.decorators import require_role, validate_json, handle_exceptions
 from app.utils.validators import validate_evaluation_data, validate_evaluation_detail
 from app.utils.helpers import (
     generate_evaluation_number, parse_date_string, 
-    calculate_pagination, build_query_filters, create_response
+    calculate_pagination, build_query_filters, create_response, get_current_user_id
 )
 
 # Create evaluation blueprint
@@ -31,7 +31,7 @@ def get_evaluations():
     - start_date_to: Filter by start date (to)
     """
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         current_user = User.query.get(current_user_id)
         
         # Get query parameters
@@ -121,7 +121,7 @@ def get_evaluations():
 def get_evaluation(evaluation_id):
     """Get single evaluation by ID with details"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         current_user = User.query.get(current_user_id)
         
         evaluation = Evaluation.query.get(evaluation_id)
@@ -170,7 +170,7 @@ def get_evaluation(evaluation_id):
 def create_evaluation():
     """Create new evaluation"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         data = request.get_json()
         
         # Validate evaluation data
@@ -202,7 +202,8 @@ def create_evaluation():
             evaluator_id=current_user_id,
             start_date=start_date,
             evaluation_reason=data.get('evaluation_reason', '').strip(),
-            remarks=data.get('remarks', '').strip()
+            remarks=data.get('remarks', '').strip(),
+            status=data.get('status', 'draft')
         )
         
         db.session.add(evaluation)
@@ -261,7 +262,7 @@ def create_evaluation():
 def update_evaluation(evaluation_id):
     """Update evaluation"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         current_user = User.query.get(current_user_id)
         data = request.get_json()
         
@@ -329,7 +330,7 @@ def update_evaluation(evaluation_id):
 def approve_evaluation(evaluation_id):
     """Approve evaluation (Part Leader or Group Leader)"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         current_user = User.query.get(current_user_id)
         
         evaluation = Evaluation.query.get(evaluation_id)
@@ -404,7 +405,7 @@ def approve_evaluation(evaluation_id):
 def reject_evaluation(evaluation_id):
     """Reject evaluation"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         current_user = User.query.get(current_user_id)
         data = request.get_json()
         
@@ -464,7 +465,7 @@ def reject_evaluation(evaluation_id):
 def update_evaluation_status(evaluation_id):
     """Update evaluation status (pause, resume, cancel, complete)"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         current_user = User.query.get(current_user_id)
         data = request.get_json()
         

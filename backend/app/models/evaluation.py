@@ -1,5 +1,25 @@
 from datetime import datetime
+from enum import Enum
 from app import db
+
+
+class EvaluationStatus(Enum):
+    """Evaluation status enumeration"""
+    DRAFT = 'draft'
+    IN_PROGRESS = 'in_progress'
+    PENDING_PART_APPROVAL = 'pending_part_approval'
+    PENDING_GROUP_APPROVAL = 'pending_group_approval'
+    COMPLETED = 'completed'
+    PAUSED = 'paused'
+    CANCELLED = 'cancelled'
+    REJECTED = 'rejected'
+
+
+class EvaluationType(Enum):
+    """Evaluation type enumeration"""
+    NEW_PRODUCT = 'new_product'
+    MASS_PRODUCTION = 'mass_production'
+
 
 class Evaluation(db.Model):
     """
@@ -29,9 +49,9 @@ class Evaluation(db.Model):
     remarks = db.Column(db.Text)
     
     # Status and workflow
-    status = db.Column(db.Enum('in_progress', 'pending_part_approval', 'pending_group_approval', 
+    status = db.Column(db.Enum('draft', 'in_progress', 'pending_part_approval', 'pending_group_approval', 
                               'completed', 'paused', 'cancelled', 'rejected', name='evaluation_status'), 
-                      nullable=False, default='in_progress')
+                      nullable=False, default='draft')
     
     # Dates
     start_date = db.Column(db.Date, nullable=False)

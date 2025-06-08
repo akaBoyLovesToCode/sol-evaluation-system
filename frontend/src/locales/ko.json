@@ -10,7 +10,16 @@
     "loading": "로딩 중...",
     "noData": "데이터 없음",
     "operation": "작업",
-    "status": "상태"
+    "status": "상태",
+    "view": "보기",
+    "reset": "재설정",
+    "submit": "제출",
+    "createTime": "생성 시간",
+    "updateTime": "업데이트 시간",
+    "more": "더보기",
+    "approve": "승인",
+    "pause": "일시정지",
+    "resume": "재개"
   },
   "auth": {
     "login": "로그인",
@@ -21,6 +30,54 @@
     "loginSuccess": "로그인 성공",
     "loginFailed": "로그인 실패"
   },
+  "system": {
+    "name": "SSD 평가",
+    "fullName": "SSD 평가 관리 시스템"
+  },
+  "login": {
+    "title": "SSD 평가 관리 시스템",
+    "subtitle": "계정에 로그인하세요",
+    "username": "사용자명",
+    "password": "비밀번호",
+    "remember": "로그인 상태 유지",
+    "submit": "로그인",
+    "success": "로그인 성공",
+    "failed": "로그인 실패"
+  },
+  "validation": {
+    "required": "{field}은(는) 필수입니다",
+    "length": "길이는 {min}-{max}자 사이여야 합니다",
+    "minLength": "길이는 최소 {min}자 이상이어야 합니다"
+  },
+  "menu": {
+    "dashboard": "대시보드",
+    "evaluations": "평가 관리",
+    "reports": "보고서",
+    "users": "사용자 관리",
+    "messages": "메시지",
+    "profile": "프로필",
+    "logout": "로그아웃"
+  },
+  "dashboard": {
+    "description": "시스템 개요 및 주요 지표를 확인하세요",
+    "totalEvaluations": "총 평가 수",
+    "pendingApprovals": "승인 대기",
+    "completedEvaluations": "완료됨",
+    "activeUsers": "활성 사용자",
+    "statusDistribution": "상태 분포",
+    "monthlyTrend": "월별 추세",
+    "quickActions": "빠른 작업",
+    "newEvaluation": "새 평가",
+    "viewEvaluations": "평가 보기",
+    "viewReports": "보고서 보기",
+    "viewMessages": "메시지 보기",
+    "pendingItems": "대기 항목",
+    "noPendingItems": "대기 항목 없음",
+    "recentActivities": "최근 활동",
+    "evaluationStatus": "평가 상태",
+    "newEvaluations": "새 평가",
+    "loadError": "데이터 로드 실패"
+  },
   "navigation": {
     "dashboard": "대시보드",
     "evaluations": "평가 관리",
@@ -30,21 +87,66 @@
   },
   "evaluation": {
     "title": "평가 관리",
+    "description": "모든 SSD 제품 평가를 관리하고 조회합니다",
     "evaluationNumber": "평가 번호",
     "evaluationType": "평가 유형",
     "ssdProduct": "SSD 제품",
+    "partNumber": "부품 번호",
     "evaluator": "평가자",
     "startDate": "시작 날짜",
+    "endDate": "종료 날짜",
+    "dateRange": "날짜 범위",
+    "progress": "진행률",
+    "operation": "작업",
+    "list": "평가 목록",
+    "export": "내보내기",
+    "search": "검색",
+    "reset": "재설정",
     "newProduct": "신제품",
-    "massProduction": "양산"
+    "massProduction": "양산",
+    "placeholders": {
+      "evaluationNumber": "평가 번호를 입력하세요",
+      "evaluationType": "평가 유형을 선택하세요",
+      "status": "상태를 선택하세요",
+      "evaluator": "평가자를 입력하세요",
+      "startDate": "시작 날짜",
+      "endDate": "종료 날짜",
+      "rangeSeparator": "~"
+    },
+    "type": {
+      "new_product": "신제품",
+      "mass_production": "양산"
+    },
+    "process": {
+      "doe": "DOE",
+      "ppq": "PPQ", 
+      "prq": "PRQ",
+      "production_test": "생산 테스트",
+      "aql": "AQL"
+    }
   },
   "status": {
+    "draft": "초안",
     "inProgress": "진행 중",
     "pendingPartApproval": "Part Leader 승인 대기",
     "pendingGroupApproval": "Group Leader 승인 대기",
     "completed": "완료",
     "paused": "일시정지",
     "cancelled": "취소됨",
-    "rejected": "거부됨"
+    "rejected": "거부됨",
+    "in_progress": "진행 중",
+    "pending_approval": "승인 대기"
+  },
+  "messages": {
+    "title": "메시지 센터",
+    "description": "시스템 알림 및 평가 관련 메시지를 확인하세요",
+    "comingSoon": "메시지 기능 개발 중",
+    "comingSoonDesc": "메시지 센터 기능이 개발 중입니다. 곧 만나보실 수 있습니다"
+  },
+  "reports": {
+    "title": "보고서 및 통계",
+    "description": "평가 데이터 통계 및 분석 보고서를 확인하세요",
+    "comingSoon": "보고서 기능 개발 중",
+    "comingSoonDesc": "통계 보고서 기능이 개발 중입니다. 곧 만나보실 수 있습니다"
   }
 } 

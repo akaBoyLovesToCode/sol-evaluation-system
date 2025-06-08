@@ -1,5 +1,32 @@
 from datetime import datetime
+from enum import Enum
 from app import db
+
+
+class MessageType(Enum):
+    """Message type enumeration"""
+    APPROVAL_REQUEST = 'approval_request'
+    STATUS_CHANGE = 'status_change'
+    SYSTEM_ANNOUNCEMENT = 'system_announcement'
+    EVALUATION_ASSIGNED = 'evaluation_assigned'
+    EVALUATION_COMPLETED = 'evaluation_completed'
+    SYSTEM = 'system'
+    REMINDER = 'reminder'
+    DIGEST = 'digest'
+
+
+class MessageStatus(Enum):
+    """Message status enumeration"""
+    UNREAD = 'unread'
+    READ = 'read'
+
+
+class MessagePriority(Enum):
+    """Message priority enumeration"""
+    LOW = 'low'
+    NORMAL = 'normal'
+    HIGH = 'high'
+    URGENT = 'urgent'
 
 class Message(db.Model):
     """
@@ -42,7 +69,6 @@ class Message(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     
     # Relationships
-    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
     evaluation = db.relationship('Evaluation', backref='messages')
     
     def __init__(self, title, content, message_type, recipient_id, **kwargs):

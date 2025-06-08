@@ -10,7 +10,16 @@
     "loading": "Loading...",
     "noData": "No Data",
     "operation": "Operation",
-    "status": "Status"
+    "status": "Status",
+    "view": "View",
+    "reset": "Reset",
+    "submit": "Submit",
+    "createTime": "Create Time",
+    "updateTime": "Update Time",
+    "more": "More",
+    "approve": "Approve",
+    "pause": "Pause",
+    "resume": "Resume"
   },
   "auth": {
     "login": "Login",
@@ -21,6 +30,54 @@
     "loginSuccess": "Login successful",
     "loginFailed": "Login failed"
   },
+  "system": {
+    "name": "SSD Evaluation",
+    "fullName": "SSD Evaluation Management System"
+  },
+  "login": {
+    "title": "SSD Evaluation Management System",
+    "subtitle": "Please login to your account",
+    "username": "Username",
+    "password": "Password",
+    "remember": "Remember me",
+    "submit": "Login",
+    "success": "Login successful",
+    "failed": "Login failed"
+  },
+  "validation": {
+    "required": "{field} is required",
+    "length": "Length must be between {min}-{max} characters",
+    "minLength": "Length must be at least {min} characters"
+  },
+  "menu": {
+    "dashboard": "Dashboard",
+    "evaluations": "Evaluations",
+    "reports": "Reports",
+    "users": "Users",
+    "messages": "Messages",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "dashboard": {
+    "description": "View system overview and key metrics",
+    "totalEvaluations": "Total Evaluations",
+    "pendingApprovals": "Pending Approvals",
+    "completedEvaluations": "Completed",
+    "activeUsers": "Active Users",
+    "statusDistribution": "Status Distribution",
+    "monthlyTrend": "Monthly Trend",
+    "quickActions": "Quick Actions",
+    "newEvaluation": "New Evaluation",
+    "viewEvaluations": "View Evaluations",
+    "viewReports": "View Reports",
+    "viewMessages": "View Messages",
+    "pendingItems": "Pending Items",
+    "noPendingItems": "No pending items",
+    "recentActivities": "Recent Activities",
+    "evaluationStatus": "Evaluation Status",
+    "newEvaluations": "New Evaluations",
+    "loadError": "Failed to load data"
+  },
   "navigation": {
     "dashboard": "Dashboard",
     "evaluations": "Evaluations",
@@ -30,21 +87,66 @@
   },
   "evaluation": {
     "title": "Evaluation Management",
+    "description": "Manage and view all SSD product evaluations",
     "evaluationNumber": "Evaluation Number",
     "evaluationType": "Evaluation Type",
     "ssdProduct": "SSD Product",
+    "partNumber": "Part Number",
     "evaluator": "Evaluator",
     "startDate": "Start Date",
+    "endDate": "End Date",
+    "dateRange": "Date Range",
+    "progress": "Progress",
+    "operation": "Operation",
+    "list": "Evaluation List",
+    "export": "Export",
+    "search": "Search",
+    "reset": "Reset",
     "newProduct": "New Product",
-    "massProduction": "Mass Production"
+    "massProduction": "Mass Production",
+    "placeholders": {
+      "evaluationNumber": "Enter evaluation number",
+      "evaluationType": "Select evaluation type",
+      "status": "Select status",
+      "evaluator": "Enter evaluator",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "rangeSeparator": "to"
+    },
+    "type": {
+      "new_product": "New Product",
+      "mass_production": "Mass Production"
+    },
+    "process": {
+      "doe": "DOE",
+      "ppq": "PPQ", 
+      "prq": "PRQ",
+      "production_test": "Production Test",
+      "aql": "AQL"
+    }
   },
   "status": {
+    "draft": "Draft",
     "inProgress": "In Progress",
     "pendingPartApproval": "Pending Part Leader Approval",
     "pendingGroupApproval": "Pending Group Leader Approval",
     "completed": "Completed",
     "paused": "Paused",
     "cancelled": "Cancelled",
-    "rejected": "Rejected"
+    "rejected": "Rejected",
+    "in_progress": "In Progress",
+    "pending_approval": "Pending Approval"
+  },
+  "messages": {
+    "title": "Message Center",
+    "description": "View system notifications and evaluation-related messages",
+    "comingSoon": "Message Feature Under Development",
+    "comingSoonDesc": "The message center feature is under development, please stay tuned"
+  },
+  "reports": {
+    "title": "Reports & Statistics",
+    "description": "View evaluation data statistics and analysis reports",
+    "comingSoon": "Report Feature Under Development",
+    "comingSoonDesc": "The statistical report feature is under development, please stay tuned"
   }
 } 

@@ -43,10 +43,15 @@ def create_app(config_name=None):
     
     # Register blueprints
     from app.api import auth_bp, evaluation_bp, user_bp, dashboard_bp
+    from app.api.workflow import workflow_bp
+    from app.api.notifications import notifications_bp
+    
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(evaluation_bp, url_prefix='/api/evaluations')
     app.register_blueprint(user_bp, url_prefix='/api/users')
     app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
+    app.register_blueprint(workflow_bp, url_prefix='/api/workflow')
+    app.register_blueprint(notifications_bp, url_prefix='/api/notifications')
     
     # Configure logging
     if not app.debug and not app.testing:

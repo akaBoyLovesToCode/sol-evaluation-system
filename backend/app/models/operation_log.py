@@ -1,6 +1,19 @@
 from datetime import datetime
+from enum import Enum
 from app import db
-import json
+
+
+class OperationType(Enum):
+    """Operation type enumeration"""
+    LOGIN = 'login'
+    LOGOUT = 'logout'
+    CREATE = 'create'
+    UPDATE = 'update'
+    DELETE = 'delete'
+    APPROVE = 'approve'
+    REJECT = 'reject'
+    EXPORT = 'export'
+    VIEW = 'view'
 
 class OperationLog(db.Model):
     """

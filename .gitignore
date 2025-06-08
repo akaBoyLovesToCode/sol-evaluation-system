@@ -160,3 +160,14 @@ tmp/
 temp/
 *.tmp
 *.temp
+
+# Docker & MySQL (for development/testing)
+# Keep docker-compose.yml and mysql/ config in version control
+# but exclude runtime data and backups
+backups/
+mysql/data/
+.docker/
+
+# Docker volumes and runtime data
+# Note: We keep docker-compose.yml and mysql/conf.d/, mysql/init/ 
+# in version control as they are configuration, not data

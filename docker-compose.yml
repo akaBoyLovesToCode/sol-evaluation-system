@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  mysql:
+    # Use MySQL 8.0 as specified in README.md requirements
+    image: mysql:8.0
+    container_name: ssd_evaluation_mysql
+    restart: unless-stopped
+    
+    # Environment variables for MySQL configuration
+    environment:
+      # Root password for MySQL admin access
+      MYSQL_ROOT_PASSWORD: ssd_eval_root_2024
+      # Create the database as specified in README.md
+      MYSQL_DATABASE: ssd_evaluation
+      # Create a dedicated user for the application
+      MYSQL_USER: ssd_eval_user
+      MYSQL_PASSWORD: ssd_eval_pass_2024
+      # Set timezone to UTC for consistency
+      TZ: UTC
+    
+    # Port mapping: host:container
+    ports:
+      - "3306:3306"
+    
+    # Volume mapping for data persistence
+    volumes:
+      # Persist MySQL data to avoid data loss on container restart
+      - mysql_data:/var/lib/mysql
+      # Custom MySQL configuration
+      - ./mysql/conf.d:/etc/mysql/conf.d
+      # Initialization scripts (if needed)
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    
+    # MySQL command line options
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-authentication-plugin=mysql_native_password
+      --innodb-buffer-pool-size=256M
+      --max-connections=200
+      --sql-mode=STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO
+    
+    # Health check to ensure MySQL is ready
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$MYSQL_ROOT_PASSWORD"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+      start_period: 40s
+
+  # Optional: phpMyAdmin for database management (can be removed in production)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: ssd_evaluation_phpmyadmin
+    restart: unless-stopped
+    
+    # Environment variables for phpMyAdmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: ssd_eval_root_2024
+      MYSQL_ROOT_PASSWORD: ssd_eval_root_2024
+    
+    # Port mapping for web interface
+    ports:
+      - "8080:80"
+    
+    # Ensure MySQL starts before phpMyAdmin
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+# Named volumes for data persistence
+volumes:
+  mysql_data:
+    driver: local
+    name: ssd_evaluation_mysql_data
+
+# Network configuration
+networks:
+  default:
+    name: ssd_evaluation_network 
