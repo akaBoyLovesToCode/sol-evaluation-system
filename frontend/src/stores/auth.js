@@ -1,12 +1,26 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import api from '../utils/api'
+import api from '../utils/api' // api might still be used for profile/password updates
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref(null)
-  const token = ref(localStorage.getItem('token'))
-  
-  const isAuthenticated = computed(() => !!token.value)
+  // Assume a default user is always logged in
+  const user = ref({
+    id: 'default-user-id', // Placeholder ID
+    username: 'defaultuser',
+    email: 'user@example.com',
+    full_name: 'Default User',
+    role: 'user', // Default role
+    // Add any other essential user properties that the app might expect
+    department: 'Default Department',
+    phone: '000-000-0000',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    last_login: new Date().toISOString()
+  })
+  const token = ref('fake-token') // Assume a token is always present
+
+  const isAuthenticated = computed(() => true) // Always authenticated
   
   const hasRole = (roles) => {
     if (!user.value) return false
@@ -21,46 +35,12 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => hasRole('admin'))
   const isGroupLeader = computed(() => hasRole(['admin', 'group_leader']))
   const isPartLeader = computed(() => hasRole(['admin', 'group_leader', 'part_leader']))
-  
-  const login = async (credentials) => {
-    try {
-      const response = await api.post('/auth/login', credentials)
-      const { access_token, user: userData } = response.data
-      
-      token.value = access_token
-      localStorage.setItem('token', access_token)
-      user.value = userData
-      
-      return { success: true }
-    } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Login failed' 
-      }
-    }
-  }
-  
-  const logout = () => {
-    token.value = null
-    user.value = null
-    localStorage.removeItem('token')
-  }
-  
-  const checkAuth = async () => {
-    if (!token.value) {
-      return false
-    }
-    
-    try {
-      const response = await api.get('/auth/me')
-      user.value = response.data
-      return true
-    } catch (error) {
-      logout()
-      return false
-    }
-  }
-  
+
+  // login, logout, and checkAuth are no longer needed as user is always authenticated.
+  // We can keep updateProfile and changePassword if they are meant to work
+  // with a backend that allows these modifications for an assumed user.
+  // If they strictly require prior real authentication, they should be removed or refactored.
+
   const updateProfile = async (profileData) => {
     try {
       const response = await api.put('/auth/profile', profileData)
@@ -95,9 +75,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAdmin,
     isGroupLeader,
     isPartLeader,
-    login,
-    logout,
-    checkAuth,
+    // login, logout, checkAuth removed
     updateProfile,
     changePassword
   }

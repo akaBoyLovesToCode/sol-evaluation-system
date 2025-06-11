@@ -9,7 +9,7 @@ class UserRole(Enum):
     ADMIN = 'admin'
     GROUP_LEADER = 'group_leader'
     PART_LEADER = 'part_leader'
-    USER = 'user'
+    USER = 'user'  # Explicitly set default user role
 
 
 class User(db.Model):
@@ -40,7 +40,7 @@ class User(db.Model):
     
     # Role and status
     role = db.Column(db.Enum('admin', 'group_leader', 'part_leader', 'user', name='user_roles'), 
-                     nullable=False, default='user')
+                     nullable=False, default=UserRole.USER.value)  # Ensure default is 'user'
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     
     # Timestamps

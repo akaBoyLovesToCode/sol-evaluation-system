@@ -30,58 +30,43 @@ def login():
         JSON response with access token and user info
     """
     try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({'error': 'No data provided'}), 400
-        
-        username = data.get('username', '').strip()
-        password = data.get('password', '')
-        
-        # Validate input
-        if not username or not password:
-            return jsonify({'error': 'Username and password are required'}), 400
-        
-        # Find user by username or email
-        user = User.query.filter(
-            (User.username == username) | (User.email == username)
-        ).first()
-        
-        # Check if user exists and password is correct
-        if not user or not user.check_password(password):
-            # Log failed login attempt
-            if user:
-                OperationLog.log_login(
-                    user_id=user.id,
-                    ip_address=get_client_ip(request),
-                    user_agent=get_user_agent(request),
-                    success=False,
-                    error_message='Invalid password'
+        # Try to find an existing user with 'user' role
+        user = User.query.filter_by(role='user').first()
+
+        # If no 'user' role user exists, create a default one
+        if not user:
+            default_username = "defaultuser"
+            default_email = "user@example.com"
+            default_password = "password"  # This password won't be used for login
+
+            # Check if default user already exists by username or email
+            user = User.query.filter(
+                (User.username == default_username) | (User.email == default_email)
+            ).first()
+
+            if not user:
+                user = User(
+                    username=default_username,
+                    email=default_email,
+                    password=default_password,
+                    full_name="Default User",
+                    role='user'
                 )
-            
-            return jsonify({'error': 'Invalid username or password'}), 401
-        
-        # Check if user is active
-        if not user.is_active:
-            OperationLog.log_login(
-                user_id=user.id,
-                ip_address=get_client_ip(request),
-                user_agent=get_user_agent(request),
-                success=False,
-                error_message='Account is inactive'
-            )
-            return jsonify({'error': 'Account is inactive'}), 401
-        
-        # Create tokens
+                db.session.add(user)
+                db.session.commit()
+            elif not user.is_active: # If user exists but is inactive
+                 return jsonify({'error': 'Default user account is inactive'}), 401
+
+        # Create tokens for the user
         access_token = create_access_token(
             identity=str(user.id),
             additional_claims={'role': user.role}
         )
         refresh_token = create_refresh_token(identity=str(user.id))
-        
+
         # Update last login
         user.update_last_login()
-        
+
         # Log successful login
         OperationLog.log_login(
             user_id=user.id,
@@ -89,16 +74,16 @@ def login():
             user_agent=get_user_agent(request),
             success=True
         )
-        
+
         return jsonify({
-            'message': 'Login successful',
+            'message': 'Login successful (bypassed)',
             'access_token': access_token,
             'refresh_token': refresh_token,
             'user': user.to_dict()
         }), 200
-        
+
     except Exception as e:
-        current_app.logger.error(f'Login error: {str(e)}')
+        current_app.logger.error(f'Login error (bypassed): {str(e)}')
         return jsonify({'error': 'Internal server error'}), 500
 
 @auth_bp.route('/logout', methods=['POST'])
