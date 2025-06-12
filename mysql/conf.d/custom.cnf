@@ -1,5 +1,5 @@
 [mysqld]
-# Custom MySQL configuration for SSD Evaluation System
+# Custom MySQL configuration for Product Evaluation System
 
 # Character set and collation settings
 # Use utf8mb4 for full Unicode support including emojis

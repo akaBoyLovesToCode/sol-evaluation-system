@@ -1,5 +1,5 @@
 """
-Notifications API endpoints for SSD Evaluation System
+Notifications API endpoints for Product Evaluation System
 
 This module handles notification-related API endpoints including message management,
 notification preferences, and in-app messaging.

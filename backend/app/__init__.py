@@ -73,7 +73,7 @@ def create_app(config_name=None):
         app.logger.addHandler(file_handler)
         
         app.logger.setLevel(logging.INFO)
-        app.logger.info('SSD Evaluation System startup')
+        app.logger.info('Product Evaluation System startup')
     
     # Create upload and backup directories
     for directory in [app.config['UPLOAD_FOLDER'], app.config['BACKUP_FOLDER']]:
@@ -94,6 +94,6 @@ def create_app(config_name=None):
     @app.route('/api/health')
     def health_check():
         """Health check endpoint for monitoring"""
-        return {'status': 'healthy', 'message': 'SSD Evaluation System is running'}
+        return {'status': 'healthy', 'message': 'Product Evaluation System is running'}
     
     return app 

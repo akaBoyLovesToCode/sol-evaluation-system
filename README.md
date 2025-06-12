@@ -1,6 +1,6 @@
-# SSD Product Evaluation Management System
+# Product Evaluation Management System
 
-A web application for managing SSD product evaluations including new product evaluations and mass production evaluations (PGM, material changes, etc.) with statistical analysis and data visualization capabilities.
+A web application for managing product evaluations including new product evaluations and mass production evaluations (PGM, material changes, etc.) with statistical analysis and data visualization capabilities.
 
 ## System Architecture
 
@@ -12,7 +12,7 @@ A web application for managing SSD product evaluations including new product eva
 ## Project Structure
 
 ```
-ssd-evaluation-system/
+evaluation-system/
 ├── frontend/                 # Vue 3 frontend application
 │   ├── src/
 │   │   ├── components/      # Reusable components
@@ -89,7 +89,7 @@ python run.py
 ### Database Setup
 ```bash
 # Create database
-mysql -u root -p -e "CREATE DATABASE ssd_evaluation CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p -e "CREATE DATABASE evaluation CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 # Run migrations
 cd backend

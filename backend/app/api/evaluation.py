@@ -26,7 +26,8 @@ def get_evaluations():
     - status: Filter by status
     - evaluation_type: Filter by type
     - evaluator_id: Filter by evaluator
-    - ssd_product: Filter by product name
+    - product: Filter by product name
+    - ssd_product: Filter by product name (deprecated, use 'product' instead)
     - start_date_from: Filter by start date (from)
     - start_date_to: Filter by start date (to)
     """
@@ -58,8 +59,11 @@ def get_evaluations():
         if request.args.get('evaluator_id'):
             filters['evaluator_id'] = request.args.get('evaluator_id', type=int)
         
-        if request.args.get('ssd_product'):
-            filters['ssd_product'] = {'like': request.args.get('ssd_product')}
+        # Support both new product field and deprecated ssd_product field
+        if request.args.get('product'):
+            filters['product_name'] = {'like': request.args.get('product')}
+        elif request.args.get('ssd_product'):
+            filters['product_name'] = {'like': request.args.get('ssd_product')}
         
         # Date range filters
         start_date_from = request.args.get('start_date_from')
@@ -165,7 +169,7 @@ def get_evaluation(evaluation_id):
 
 @evaluation_bp.route('', methods=['POST'])
 @jwt_required()
-@validate_json(required_fields=['evaluation_type', 'ssd_product', 'part_number', 'start_date'])
+@validate_json(required_fields=['evaluation_type', 'product_name', 'part_number', 'start_date'])
 @handle_exceptions
 def create_evaluation():
     """Create new evaluation"""
@@ -197,7 +201,7 @@ def create_evaluation():
         evaluation = Evaluation(
             evaluation_number=evaluation_number,
             evaluation_type=data['evaluation_type'],
-            ssd_product=data['ssd_product'].strip(),
+            product_name=data.get('product_name', data.get('ssd_product', '')).strip(),
             part_number=data['part_number'].strip(),
             evaluator_id=current_user_id,
             start_date=start_date,
@@ -295,7 +299,7 @@ def update_evaluation(evaluation_id):
         
         # Update fields
         updatable_fields = [
-            'ssd_product', 'part_number', 'evaluation_reason', 'remarks'
+            'product_name', 'part_number', 'evaluation_reason', 'remarks'
         ]
         
         for field in updatable_fields:

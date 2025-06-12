@@ -1,5 +1,5 @@
 """
-API package for SSD Evaluation System
+API package for Product Evaluation System
 Contains all REST API endpoints organized by functionality
 """
 

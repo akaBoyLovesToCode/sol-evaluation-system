@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# MySQL Docker Management Script for SSD Evaluation System
+# MySQL Docker Management Script for Product Evaluation System
 # This script provides convenient commands to manage the MySQL Docker container
 
 set -e  # Exit on any error
@@ -14,8 +14,8 @@ NC='\033[0m' # No Color
 
 # Configuration variables
 COMPOSE_FILE="docker-compose.yml"
-MYSQL_CONTAINER="ssd_evaluation_mysql"
-PHPMYADMIN_CONTAINER="ssd_evaluation_phpmyadmin"
+MYSQL_CONTAINER="evaluation_mysql"
+PHPMYADMIN_CONTAINER="evaluation_phpmyadmin"
 
 # Function to print colored output
 print_status() {
@@ -57,7 +57,7 @@ start_mysql() {
         print_status "Waiting for MySQL to be ready..."
         timeout=60
         while [ $timeout -gt 0 ]; do
-            if docker exec "$MYSQL_CONTAINER" mysqladmin ping -h localhost -u root -pssd_eval_root_2024 >/dev/null 2>&1; then
+            if docker exec "$MYSQL_CONTAINER" mysqladmin ping -h localhost -u root -peval_root_2024 >/dev/null 2>&1; then
                 print_status "MySQL is ready!"
                 break
             fi
@@ -72,9 +72,9 @@ start_mysql() {
         
         print_status "MySQL is running on port 3306"
         print_status "phpMyAdmin is available at http://localhost:8080"
-        print_status "Database: ssd_evaluation"
-        print_status "Username: ssd_eval_user"
-        print_status "Password: ssd_eval_pass_2024"
+        print_status "Database: evaluation"
+        print_status "Username: eval_user"
+        print_status "Password: eval_pass_2024"
     fi
 }
 
@@ -118,7 +118,7 @@ connect_mysql() {
     fi
     
     print_status "Connecting to MySQL as root user..."
-    docker exec -it "$MYSQL_CONTAINER" mysql -u root -pssd_eval_root_2024 ssd_evaluation
+    docker exec -it "$MYSQL_CONTAINER" mysql -u root -peval_root_2024 evaluation
 }
 
 # Function to backup database
@@ -135,10 +135,10 @@ backup_mysql() {
     mkdir -p backups
     
     # Generate backup filename with timestamp
-    backup_file="backups/ssd_evaluation_$(date +%Y%m%d_%H%M%S).sql"
+    backup_file="backups/evaluation_$(date +%Y%m%d_%H%M%S).sql"
     
     print_status "Creating backup: $backup_file"
-    docker exec "$MYSQL_CONTAINER" mysqldump -u root -pssd_eval_root_2024 --single-transaction --routines --triggers ssd_evaluation > "$backup_file"
+    docker exec "$MYSQL_CONTAINER" mysqldump -u root -peval_root_2024 --single-transaction --routines --triggers evaluation > "$backup_file"
     
     print_status "Backup created successfully: $backup_file"
 }
@@ -173,7 +173,7 @@ restore_mysql() {
     fi
     
     print_status "Restoring from backup: $backup_file"
-    docker exec -i "$MYSQL_CONTAINER" mysql -u root -pssd_eval_root_2024 ssd_evaluation < "$backup_file"
+    docker exec -i "$MYSQL_CONTAINER" mysql -u root -peval_root_2024 evaluation < "$backup_file"
     
     print_status "Database restored successfully"
 }
@@ -208,14 +208,14 @@ clean_mysql() {
     docker-compose -f "$COMPOSE_FILE" down -v --remove-orphans
     
     print_status "Removing named volumes..."
-    docker volume rm ssd_evaluation_mysql_data 2>/dev/null || true
+    docker volume rm evaluation_mysql_data 2>/dev/null || true
     
     print_status "Cleanup completed"
 }
 
 # Function to show help
 show_help() {
-    echo "MySQL Docker Management Script for SSD Evaluation System"
+    echo "MySQL Docker Management Script for Product Evaluation System"
     echo ""
     echo "Usage: $0 <command> [options]"
     echo ""
@@ -239,9 +239,9 @@ show_help() {
     echo ""
     echo "Connection Information:"
     echo "  MySQL Host: localhost:3306"
-    echo "  Database: ssd_evaluation"
-    echo "  Username: ssd_eval_user"
-    echo "  Password: ssd_eval_pass_2024"
+    echo "  Database: evaluation"
+    echo "  Username: eval_user"
+    echo "  Password: eval_pass_2024"
     echo "  phpMyAdmin: http://localhost:8080"
 }
 

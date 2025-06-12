@@ -121,7 +121,7 @@ class Message(db.Model):
         level_text = 'Part Leader' if approval_level == 'part' else 'Group Leader'
         
         title = f'Approval Request: {evaluation.evaluation_number}'
-        content = (f'Evaluation {evaluation.evaluation_number} for {evaluation.ssd_product} '
+        content = (f'Evaluation {evaluation.evaluation_number} for {evaluation.product_name} '
                   f'requires {level_text} approval.\n\n'
                   f'Evaluation Type: {evaluation.evaluation_type.replace("_", " ").title()}\n'
                   f'Part Number: {evaluation.part_number}\n'
@@ -157,7 +157,7 @@ class Message(db.Model):
         content = (f'Evaluation {evaluation.evaluation_number} status has changed '
                   f'from "{old_status.replace("_", " ").title()}" '
                   f'to "{new_status.replace("_", " ").title()}".\n\n'
-                  f'Product: {evaluation.ssd_product}\n'
+                  f'Product: {evaluation.product_name}\n'
                   f'Part Number: {evaluation.part_number}')
         
         message = Message(

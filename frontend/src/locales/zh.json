@@ -26,16 +26,16 @@
     "logout": "退出登录",
     "username": "用户名",
     "password": "密码",
-    "loginTitle": "SSD评价管理系统",
+    "loginTitle": "产品评价管理系统",
     "loginSuccess": "登录成功",
     "loginFailed": "登录失败"
   },
   "system": {
-    "name": "SSD评价",
-    "fullName": "SSD评价管理系统"
+    "name": "产品评价",
+    "fullName": "产品评价管理系统"
   },
   "login": {
-    "title": "SSD评价管理系统",
+    "title": "产品评价管理系统",
     "subtitle": "请登录您的账户",
     "username": "用户名",
     "password": "密码",
@@ -87,10 +87,10 @@
   },
   "evaluation": {
     "title": "评价管理",
-    "description": "管理和查看所有SSD产品评价",
+    "description": "管理和查看所有产品评价",
     "evaluationNumber": "评价编号",
     "evaluationType": "评价类型",
-    "ssdProduct": "SSD产品",
+    "product": "产品",
     "partNumber": "料号",
     "evaluator": "评价人",
     "startDate": "开始日期",
@@ -108,6 +108,7 @@
       "evaluationNumber": "请输入评价编号",
       "evaluationType": "请选择评价类型",
       "status": "请选择状态",
+      "product": "请输入产品名称",
       "evaluator": "请输入评价人",
       "startDate": "开始日期",
       "endDate": "结束日期",

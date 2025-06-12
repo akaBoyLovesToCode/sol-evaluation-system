@@ -274,7 +274,7 @@ const fetchRecentActivities = async () => {
       id: evaluation.id,
       type: 'evaluation',
               title: `评价 ${evaluation.evaluation_number}`,
-      description: `${evaluation.evaluator_name} - ${evaluation.ssd_product}`,
+      description: `${evaluation.evaluator_name} - ${evaluation.product_name}`,
       timestamp: evaluation.created_at,
       status: evaluation.status
     }))

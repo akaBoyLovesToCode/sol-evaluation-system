@@ -1,6 +1,6 @@
-# SSD评估管理系统 - 前端
+# 产品评估管理系统 - 前端
 
-基于Vue 3 + Element Plus + Tailwind CSS构建的SSD产品评估管理系统前端应用。
+基于Vue 3 + Element Plus + Tailwind CSS构建的产品评估管理系统前端应用。
 
 ## 技术栈
 

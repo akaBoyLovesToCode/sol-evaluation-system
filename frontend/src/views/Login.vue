@@ -3,7 +3,7 @@
     <div class="login-box">
       <div class="login-header">
         <div class="logo-placeholder">
-          <div class="logo-text">SSD</div>
+          <div class="logo-text">EVAL</div>
         </div>
         <h1 class="title">{{ $t('login.title') }}</h1>
         <p class="subtitle">{{ $t('login.subtitle') }}</p>
@@ -201,7 +201,7 @@ const changeLanguage = (lang) => {
 }
 
 .login-box:hover {
-  transform: translateY(-8px);
+  /* Remove x/y movement, keep shadow effect */
   box-shadow: 0 40px 80px rgba(0, 0, 0, 0.25);
 }
 
@@ -269,7 +269,7 @@ const changeLanguage = (lang) => {
 
 .login-form :deep(.el-input__wrapper:hover) {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
+  /* Remove x/y movement, keep shadow effect */
 }
 
 .login-form :deep(.el-input__wrapper.is-focus) {

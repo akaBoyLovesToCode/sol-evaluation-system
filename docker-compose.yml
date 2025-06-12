@@ -4,18 +4,18 @@ services:
   mysql:
     # Use MySQL 8.0 as specified in README.md requirements
     image: mysql:8.0
-    container_name: ssd_evaluation_mysql
+    container_name: evaluation_mysql
     restart: unless-stopped
     
     # Environment variables for MySQL configuration
     environment:
       # Root password for MySQL admin access
-      MYSQL_ROOT_PASSWORD: ssd_eval_root_2024
+      MYSQL_ROOT_PASSWORD: eval_root_2024
       # Create the database as specified in README.md
-      MYSQL_DATABASE: ssd_evaluation
+      MYSQL_DATABASE: evaluation
       # Create a dedicated user for the application
-      MYSQL_USER: ssd_eval_user
-      MYSQL_PASSWORD: ssd_eval_pass_2024
+      MYSQL_USER: eval_user
+      MYSQL_PASSWORD: eval_pass_2024
       # Set timezone to UTC for consistency
       TZ: UTC
     
@@ -52,7 +52,7 @@ services:
   # Optional: phpMyAdmin for database management (can be removed in production)
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
-    container_name: ssd_evaluation_phpmyadmin
+    container_name: evaluation_phpmyadmin
     restart: unless-stopped
     
     # Environment variables for phpMyAdmin
@@ -60,8 +60,8 @@ services:
       PMA_HOST: mysql
       PMA_PORT: 3306
       PMA_USER: root
-      PMA_PASSWORD: ssd_eval_root_2024
-      MYSQL_ROOT_PASSWORD: ssd_eval_root_2024
+      PMA_PASSWORD: eval_root_2024
+      MYSQL_ROOT_PASSWORD: eval_root_2024
     
     # Port mapping for web interface
     ports:
@@ -76,9 +76,9 @@ services:
 volumes:
   mysql_data:
     driver: local
-    name: ssd_evaluation_mysql_data
+    name: evaluation_mysql_data
 
 # Network configuration
 networks:
   default:
-    name: ssd_evaluation_network 
+    name: evaluation_network 

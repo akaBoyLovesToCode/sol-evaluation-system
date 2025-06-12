@@ -26,16 +26,16 @@
     "logout": "로그아웃",
     "username": "사용자명",
     "password": "비밀번호",
-    "loginTitle": "SSD 평가 관리 시스템",
+    "loginTitle": "제품 평가 관리 시스템",
     "loginSuccess": "로그인 성공",
     "loginFailed": "로그인 실패"
   },
   "system": {
-    "name": "SSD 평가",
-    "fullName": "SSD 평가 관리 시스템"
+    "name": "제품 평가",
+    "fullName": "제품 평가 관리 시스템"
   },
   "login": {
-    "title": "SSD 평가 관리 시스템",
+    "title": "제품 평가 관리 시스템",
     "subtitle": "계정에 로그인하세요",
     "username": "사용자명",
     "password": "비밀번호",
@@ -87,10 +87,10 @@
   },
   "evaluation": {
     "title": "평가 관리",
-    "description": "모든 SSD 제품 평가를 관리하고 조회합니다",
+    "description": "모든 제품 평가를 관리하고 조회합니다",
     "evaluationNumber": "평가 번호",
     "evaluationType": "평가 유형",
-    "ssdProduct": "SSD 제품",
+    "product": "제품",
     "partNumber": "부품 번호",
     "evaluator": "평가자",
     "startDate": "시작 날짜",
@@ -108,6 +108,7 @@
       "evaluationNumber": "평가 번호를 입력하세요",
       "evaluationType": "평가 유형을 선택하세요",
       "status": "상태를 선택하세요",
+      "product": "제품명을 입력하세요",
       "evaluator": "평가자를 입력하세요",
       "startDate": "시작 날짜",
       "endDate": "종료 날짜",

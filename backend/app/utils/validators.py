@@ -96,16 +96,16 @@ def validate_evaluation_data(data, evaluation_type):
     errors = []
     
     # Required fields for all evaluations
-    required_fields = ['ssd_product', 'part_number', 'start_date']
+    required_fields = ['product_name', 'part_number', 'start_date']
     
     for field in required_fields:
         if not data.get(field):
             errors.append(f'{field.replace("_", " ").title()} is required')
     
-    # Validate SSD product name
-    ssd_product = data.get('ssd_product', '').strip()
-    if ssd_product and len(ssd_product) > 100:
-        errors.append('SSD product name is too long (max 100 characters)')
+    # Validate product name
+    product_name = data.get('product_name', data.get('ssd_product', '')).strip()
+    if product_name and len(product_name) > 100:
+        errors.append('Product name is too long (max 100 characters)')
     
     # Validate part number
     part_number = data.get('part_number', '').strip()

@@ -9,14 +9,14 @@ class Config:
     """Base configuration class"""
     
     # Basic Flask configuration
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'ssd-evaluation-secret-key-2024'
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'evaluation-secret-key-2024'
     
     # Database configuration
     MYSQL_HOST = os.environ.get('MYSQL_HOST') or 'localhost'
     MYSQL_PORT = os.environ.get('MYSQL_PORT') or 3306
     MYSQL_USER = os.environ.get('MYSQL_USER') or 'root'
-    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD') or 'ssd_eval_root_2024'
-    MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE') or 'ssd_evaluation'
+    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD') or 'eval_root_2024'
+    MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE') or 'evaluation'
     
     SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}?charset=utf8mb4'
     SQLALCHEMY_TRACK_MODIFICATIONS = False

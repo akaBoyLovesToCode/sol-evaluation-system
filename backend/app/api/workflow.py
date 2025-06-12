@@ -1,5 +1,5 @@
 """
-Workflow API endpoints for SSD Evaluation System
+Workflow API endpoints for Product Evaluation System
 
 This module handles workflow-related API endpoints including status transitions,
 approvals, and workflow statistics.

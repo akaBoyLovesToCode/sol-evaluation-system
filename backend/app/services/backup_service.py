@@ -1,5 +1,5 @@
 """
-Backup Service for SSD Evaluation System
+Backup Service for Product Evaluation System
 
 This service handles data backup system as specified in Phase 4 requirements.
 Manages database backups, file backups, and backup scheduling.
@@ -43,7 +43,7 @@ class BackupService:
             # Generate backup filename
             timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
             if not backup_name:
-                backup_name = f"ssd_evaluation_db_{timestamp}"
+                backup_name = f"evaluation_db_{timestamp}"
             
             backup_dir = current_app.config.get('BACKUP_FOLDER', 'backups')
             if not os.path.exists(backup_dir):
@@ -138,7 +138,7 @@ class BackupService:
             # Generate backup filename
             timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
             if not backup_name:
-                backup_name = f"ssd_evaluation_files_{timestamp}"
+                backup_name = f"evaluation_files_{timestamp}"
             
             backup_dir = current_app.config.get('BACKUP_FOLDER', 'backups')
             if not os.path.exists(backup_dir):
@@ -200,7 +200,7 @@ class BackupService:
         try:
             timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
             if not backup_name:
-                backup_name = f"ssd_evaluation_full_{timestamp}"
+                backup_name = f"evaluation_full_{timestamp}"
             
             backup_paths = []
             

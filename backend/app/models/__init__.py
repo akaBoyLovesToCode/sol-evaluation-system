@@ -1,5 +1,5 @@
 """
-Database models package for SSD Evaluation System
+Database models package for Product Evaluation System
 """
 
 from .user import User

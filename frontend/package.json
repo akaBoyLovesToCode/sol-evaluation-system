@@ -1,7 +1,7 @@
 {
-  "name": "ssd-evaluation-frontend",
+  "name": "evaluation-frontend",
   "version": "1.0.0",
-  "description": "SSD Product Evaluation Management System - Frontend",
+  "description": "Product Evaluation Management System - Frontend",
   "type": "module",
   "private": true,
   "scripts": {

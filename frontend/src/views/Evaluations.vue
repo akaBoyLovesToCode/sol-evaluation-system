@@ -64,6 +64,15 @@
           </el-select>
         </el-form-item>
         
+        <el-form-item :label="$t('evaluation.product')">
+          <el-input
+            v-model="searchForm.product"
+            :placeholder="$t('evaluation.placeholders.product')"
+            clearable
+            style="width: 150px"
+          />
+        </el-form-item>
+        
         <el-form-item :label="$t('evaluation.evaluator')">
           <el-input
             v-model="searchForm.evaluator"
@@ -128,7 +137,7 @@
         <el-table-column
           prop="evaluation_number"
           :label="$t('evaluation.evaluationNumber')"
-          width="140"
+          width="180"
           sortable="custom"
         >
           <template #default="{ row }">
@@ -144,7 +153,7 @@
         <el-table-column
           prop="evaluation_type"
           :label="$t('evaluation.evaluationType')"
-          width="100"
+          width="120"
         >
           <template #default="{ row }">
             <el-tag :type="row.evaluation_type === 'new_product' ? 'primary' : 'success'">
@@ -154,27 +163,27 @@
         </el-table-column>
         
         <el-table-column
-          prop="ssd_product"
-          :label="$t('evaluation.ssdProduct')"
-          width="120"
+          prop="product_name"
+          :label="$t('evaluation.product')"
+          width="150"
         />
         
         <el-table-column
           prop="part_number"
           :label="$t('evaluation.partNumber')"
-          width="120"
+          width="220"
         />
         
         <el-table-column
           prop="evaluator_name"
           :label="$t('evaluation.evaluator')"
-          width="100"
+          width="120"
         />
         
         <el-table-column
           prop="status"
           :label="$t('common.status')"
-          width="120"
+          width="140"
         >
           <template #default="{ row }">
             <el-tag :type="getStatusTagType(row.status)">
@@ -186,7 +195,7 @@
         <el-table-column
           prop="start_date"
           :label="$t('evaluation.startDate')"
-          width="110"
+          width="130"
           sortable="custom"
         >
           <template #default="{ row }">
@@ -197,7 +206,7 @@
         <el-table-column
           prop="end_date"
           :label="$t('evaluation.endDate')"
-          width="110"
+          width="130"
         >
           <template #default="{ row }">
             {{ row.end_date ? formatDate(row.end_date) : '-' }}
@@ -207,7 +216,7 @@
         <el-table-column
           prop="progress"
           :label="$t('evaluation.progress')"
-          width="100"
+          width="120"
         >
           <template #default="{ row }">
             <el-progress 
@@ -219,74 +228,7 @@
           </template>
         </el-table-column>
         
-        <el-table-column
-          :label="$t('evaluation.operation')"
-          width="200"
-          fixed="right"
-        >
-          <template #default="{ row }">
-            <el-button
-              type="primary"
-              size="small"
-              :icon="View"
-              @click="$router.push(`/evaluations/${row.id}`)"
-            >
-              {{ $t('common.view') }}
-            </el-button>
-            
-            <el-button
-              v-if="canEdit(row)"
-              type="warning"
-              size="small"
-              :icon="Edit"
-              @click="handleEdit(row)"
-            >
-              {{ $t('common.edit') }}
-            </el-button>
-            
-            <el-dropdown 
-              v-if="canOperate(row)"
-              @command="(command) => handleOperation(command, row)"
-            >
-              <el-button size="small" :icon="MoreFilled">
-                {{ $t('common.more') }}
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item 
-                    v-if="canApprove(row)" 
-                    command="approve"
-                    :icon="Check"
-                  >
-                    {{ $t('common.approve') }}
-                  </el-dropdown-item>
-                  <el-dropdown-item 
-                    v-if="canPause(row)" 
-                    command="pause"
-                    :icon="VideoPause"
-                  >
-                    {{ $t('common.pause') }}
-                  </el-dropdown-item>
-                  <el-dropdown-item 
-                    v-if="canResume(row)" 
-                    command="resume"
-                    :icon="VideoPlay"
-                  >
-                    {{ $t('common.resume') }}
-                  </el-dropdown-item>
-                  <el-dropdown-item 
-                    v-if="canCancel(row)" 
-                    command="cancel"
-                    :icon="Close"
-                    divided
-                  >
-                    {{ $t('common.cancel') }}
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </template>
-        </el-table-column>
+
       </el-table>
       
       <!-- 分页 -->
@@ -332,6 +274,7 @@ const searchForm = reactive({
   evaluation_number: '',
   evaluation_type: '',
   status: '',
+  product: '',
   evaluator: '',
   dateRange: null
 })
@@ -375,6 +318,9 @@ const fetchEvaluations = async () => {
     }
     if (searchForm.status) {
       params.status = searchForm.status
+    }
+    if (searchForm.product) {
+      params.product = searchForm.product
     }
     if (searchForm.evaluator) {
       params.evaluator_id = searchForm.evaluator
@@ -491,29 +437,53 @@ const handleExport = async () => {
   try {
     exportLoading.value = true
     
-    const params = { ...searchForm }
-    if (searchForm.dateRange && searchForm.dateRange.length === 2) {
-      params.start_date_from = searchForm.dateRange[0]
-      params.start_date_to = searchForm.dateRange[1]
+    // Client-side export using current table data
+    if (tableData.value.length === 0) {
+      ElMessage.warning('没有数据可导出')
+      return
     }
     
-    const response = await api.get('/evaluations/export', {
-      params,
-      responseType: 'blob'
-    })
+    // Prepare CSV data
+         const headers = [
+       t('evaluation.evaluationNumber'),
+       t('evaluation.evaluationType'), 
+       t('evaluation.product'),
+       t('evaluation.partNumber'),
+       t('evaluation.evaluator'),
+       t('common.status'),
+       t('evaluation.startDate'),
+       t('evaluation.endDate'),
+       t('evaluation.progress')
+     ].join(',')
     
-    // 创建下载链接
-    const blob = new Blob([response.data])
+         const rows = tableData.value.map(row => [
+       row.evaluation_number || '',
+       t(`evaluation.type.${row.evaluation_type}`) || '',
+       row.product_name || '',
+       row.part_number || '',
+       row.evaluator_name || '',
+       t(`status.${row.status}`) || '',
+       formatDate(row.start_date) || '',
+       formatDate(row.end_date) || '',
+       `${row.progress || 0}%`
+     ].map(cell => `"${cell}"`).join(','))
+    
+    const csvContent = [headers, ...rows].join('\n')
+    
+    // Create and download CSV file
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `evaluations_${new Date().toISOString().split('T')[0]}.xlsx`
+    link.download = `evaluations_${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(link)
     link.click()
+    document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
     
-    ElMessage.success('导出成功')
+    ElMessage.success(t('evaluation.exportSuccess') || '导出成功')
   } catch (error) {
-    ElMessage.error('导出失败')
+    ElMessage.error(t('evaluation.exportError') || '导出失败')
     console.error('Export failed:', error)
   } finally {
     exportLoading.value = false
@@ -632,7 +602,7 @@ onMounted(() => {
 }
 
 .filter-card:hover {
-  transform: translateY(-4px);
+  transform: none !important; /* Force remove x/y movement */
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
 }
 
@@ -692,7 +662,7 @@ onMounted(() => {
 }
 
 .table-card:hover {
-  transform: translateY(-4px);
+  transform: none !important; /* Force remove x/y movement */
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
 }
 
@@ -726,6 +696,21 @@ onMounted(() => {
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
   font-weight: 600;
   color: #2c3e50;
+  text-align: center; /* Center align all table headers */
+}
+
+.table-card :deep(.el-table th .cell) {
+  text-align: center; /* Ensure header text is centered */
+}
+
+/* Center align all table data cells */
+.table-card :deep(.el-table td) {
+  text-align: center; /* Center align all table data */
+}
+
+.table-card :deep(.el-table td .cell) {
+  text-align: center; /* Ensure cell content is centered */
+  justify-content: center; /* Center flex content */
 }
 
 .table-card :deep(.el-table tr:hover > td) {
@@ -774,6 +759,17 @@ onMounted(() => {
 .pagination-container :deep(.el-pagination .btn-prev:hover) {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Expand table width and improve column spacing */
+.table-card :deep(.el-table) {
+  width: 100%;
+  min-width: 1200px; /* Ensure minimum width to prevent wrapping */
+}
+
+/* Force remove x/y movement from evaluation number links */
+.evaluations-page .table-card :deep(.el-table .el-link:hover) {
+  transform: none !important; /* Force remove x/y movement */
 }
 
 /* 响应式设计 */

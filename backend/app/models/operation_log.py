@@ -165,7 +165,7 @@ class OperationLog(db.Model):
             operation_type=operation_type,
             target_type='evaluation',
             target_id=evaluation.id,
-            target_description=f'{evaluation.evaluation_number} - {evaluation.ssd_product}',
+            target_description=f'{evaluation.evaluation_number} - {evaluation.product_name}',
             operation_description=operation_descriptions.get(operation_type, f'{operation_type} evaluation'),
             old_data=old_data,
             new_data=evaluation.to_dict() if operation_type in ['create', 'update'] else None,

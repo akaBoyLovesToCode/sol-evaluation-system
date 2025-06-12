@@ -5,7 +5,7 @@
       <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar">
         <div class="logo-container">
           <div v-if="!isCollapse" class="logo">{{ $t('system.name') }}</div>
-          <div v-else class="logo-mini">SSD</div>
+          <div v-else class="logo-mini">EVAL</div>
         </div>
         
         <el-menu

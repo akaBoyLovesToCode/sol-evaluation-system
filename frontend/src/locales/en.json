@@ -26,16 +26,16 @@
     "logout": "Logout",
     "username": "Username",
     "password": "Password",
-    "loginTitle": "SSD Evaluation Management System",
+    "loginTitle": "Product Evaluation Management System",
     "loginSuccess": "Login successful",
     "loginFailed": "Login failed"
   },
   "system": {
-    "name": "SSD Evaluation",
-    "fullName": "SSD Evaluation Management System"
+    "name": "Product Evaluation",
+    "fullName": "Product Evaluation Management System"
   },
   "login": {
-    "title": "SSD Evaluation Management System",
+    "title": "Product Evaluation Management System",
     "subtitle": "Please login to your account",
     "username": "Username",
     "password": "Password",
@@ -87,10 +87,10 @@
   },
   "evaluation": {
     "title": "Evaluation Management",
-    "description": "Manage and view all SSD product evaluations",
+    "description": "Manage and view all product evaluations",
     "evaluationNumber": "Evaluation Number",
     "evaluationType": "Evaluation Type",
-    "ssdProduct": "SSD Product",
+    "product": "Product",
     "partNumber": "Part Number",
     "evaluator": "Evaluator",
     "startDate": "Start Date",
@@ -108,6 +108,7 @@
       "evaluationNumber": "Enter evaluation number",
       "evaluationType": "Select evaluation type",
       "status": "Select status",
+      "product": "Enter product name",
       "evaluator": "Enter evaluator",
       "startDate": "Start Date",
       "endDate": "End Date",

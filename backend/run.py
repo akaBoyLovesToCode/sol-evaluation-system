@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SSD Evaluation System - Flask Application Entry Point
+Product Evaluation System - Flask Application Entry Point
 
 This script starts the Flask development server.
 For production deployment, use a WSGI server like Gunicorn.
@@ -34,7 +34,7 @@ def init_db():
         if not admin_user:
             admin_user = User(
                 username='admin',
-                email='admin@ssd-evaluation.local',
+                email='admin@evaluation.local',
                 password='admin123',  # Change this in production!
                 full_name='System Administrator',
                 role='admin',
@@ -168,7 +168,7 @@ def backup_db():
         
         # Generate backup filename
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        backup_file = os.path.join(backup_dir, f'ssd_evaluation_backup_{timestamp}.sql')
+        backup_file = os.path.join(backup_dir, f'evaluation_backup_{timestamp}.sql')
         
         # Create mysqldump command
         cmd = [
@@ -220,7 +220,7 @@ if __name__ == '__main__':
     port = int(os.environ.get('FLASK_PORT', 5001))
     debug = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
 
-    print("🚀 Starting SSD Evaluation System...")
+    print("🚀 Starting Product Evaluation System...")
     print(f"   Server: http://{host}:{port}")
     print(f"   Debug mode: {debug}")
     print(f"   Environment: {os.environ.get('FLASK_ENV', 'development')}")

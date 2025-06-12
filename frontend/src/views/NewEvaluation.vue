@@ -2,7 +2,7 @@
   <div class="new-evaluation-page">
     <div class="page-header">
       <h1 class="page-title">新建评价</h1>
-      <p class="page-description">创建新的SSD产品评价项目</p>
+              <p class="page-description">创建新的产品评价项目</p>
     </div>
 
     <el-form
@@ -27,8 +27,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="SSD产品" prop="ssd_product">
-              <el-input v-model="form.ssd_product" placeholder="请输入SSD产品名称" />
+                    <el-form-item label="产品名称" prop="product_name">
+          <el-input v-model="form.product_name" placeholder="请输入产品名称" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -202,7 +202,7 @@ const submitting = ref(false)
 
 const form = reactive({
   evaluation_type: '',
-  ssd_product: '',
+  product_name: '',
   part_number: '',
   start_date: '',
   expected_end_date: '',
@@ -221,8 +221,8 @@ const rules = {
   evaluation_type: [
     { required: true, message: '请选择评价类型', trigger: 'change' }
   ],
-  ssd_product: [
-    { required: true, message: '请输入SSD产品名称', trigger: 'blur' }
+  product_name: [
+    { required: true, message: '请输入产品名称', trigger: 'blur' }
   ],
   part_number: [
     { required: true, message: '请输入料号', trigger: 'blur' }
@@ -278,7 +278,7 @@ const handleSave = async (submit = false) => {
     
     const data = {
       evaluation_type: form.evaluation_type,
-      ssd_product: form.ssd_product,
+      product_name: form.product_name,
       part_number: form.part_number,
       start_date: form.start_date,
       evaluation_reason: form.reason,

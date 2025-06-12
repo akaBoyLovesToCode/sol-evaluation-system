@@ -280,7 +280,7 @@ def get_detailed_statistics():
         
         # Product statistics
         product_stats = db.session.query(
-            Evaluation.ssd_product,
+            Evaluation.product_name,
             func.count(Evaluation.id).label('count')
         ).filter(
             Evaluation.start_date >= start_date,
@@ -293,7 +293,7 @@ def get_detailed_statistics():
             )
         
         product_stats = product_stats.group_by(
-            Evaluation.ssd_product
+            Evaluation.product_name
         ).order_by(func.count(Evaluation.id).desc()).limit(10).all()
         
         # Evaluator performance (for leaders)
@@ -406,7 +406,7 @@ def get_evaluation_status_report():
         pending_evaluations = db.session.query(
             Evaluation.id,
             Evaluation.evaluation_number,
-            Evaluation.ssd_product,
+            Evaluation.product_name,
             Evaluation.status,
             User.full_name.label('evaluator_name'),
             func.datediff(func.current_date(), Evaluation.start_date).label('days_pending')
@@ -452,7 +452,7 @@ def get_evaluation_status_report():
                     {
                         'id': eval_id,
                         'evaluation_number': eval_number,
-                        'ssd_product': product,
+                        'product_name': product,
                         'status': status,
                         'evaluator_name': evaluator,
                         'days_pending': days_pending

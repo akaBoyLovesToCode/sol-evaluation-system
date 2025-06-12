@@ -23,7 +23,7 @@ class EvaluationType(Enum):
 
 class Evaluation(db.Model):
     """
-    Main evaluation model for SSD product evaluations
+    Main evaluation model for product evaluations
     
     Supports two types of evaluations:
     1. New Product: DOE, PPQ, PRQ (parallel) -> Part Leader -> Group Leader approval
@@ -41,7 +41,7 @@ class Evaluation(db.Model):
                                nullable=False)
     
     # Product information
-    ssd_product = db.Column(db.String(100), nullable=False)
+    product_name = db.Column(db.String(100), nullable=False)
     part_number = db.Column(db.String(50), nullable=False)
     
     # Evaluation details
@@ -70,7 +70,7 @@ class Evaluation(db.Model):
     details = db.relationship('EvaluationDetail', backref='evaluation', lazy='dynamic', cascade='all, delete-orphan')
     results = db.relationship('EvaluationResult', backref='evaluation', lazy='dynamic', cascade='all, delete-orphan')
     
-    def __init__(self, evaluation_number, evaluation_type, ssd_product, part_number, 
+    def __init__(self, evaluation_number, evaluation_type, product_name, part_number, 
                  evaluator_id, start_date, **kwargs):
         """
         Initialize evaluation with required fields
@@ -78,14 +78,14 @@ class Evaluation(db.Model):
         Args:
             evaluation_number (str): Unique evaluation identifier
             evaluation_type (str): Type of evaluation ('new_product' or 'mass_production')
-            ssd_product (str): SSD product name
+            product_name (str): Product name
             part_number (str): Product part number
             evaluator_id (int): ID of the evaluator
             start_date (date): Evaluation start date
         """
         self.evaluation_number = evaluation_number
         self.evaluation_type = evaluation_type
-        self.ssd_product = ssd_product
+        self.product_name = product_name
         self.part_number = part_number
         self.evaluator_id = evaluator_id
         self.start_date = start_date
@@ -185,7 +185,7 @@ class Evaluation(db.Model):
             'id': self.id,
             'evaluation_number': self.evaluation_number,
             'evaluation_type': self.evaluation_type,
-            'ssd_product': self.ssd_product,
+            'product_name': self.product_name,
             'part_number': self.part_number,
             'evaluation_reason': self.evaluation_reason,
             'remarks': self.remarks,

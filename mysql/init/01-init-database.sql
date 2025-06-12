@@ -1,8 +1,8 @@
--- Initial database setup for SSD Evaluation System
+-- Initial database setup for Product Evaluation System
 -- This script runs automatically when the MySQL container starts for the first time
 
 -- Ensure we're using the correct database
-USE ssd_evaluation;
+USE evaluation;
 
 -- Set session variables for consistent character handling
 SET NAMES utf8mb4;
@@ -12,11 +12,11 @@ SET CHARACTER SET utf8mb4;
 -- (The main user is already created via environment variables)
 
 -- Grant necessary privileges to the application user
-GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES, LOCK TABLES ON ssd_evaluation.* TO 'ssd_eval_user'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES, LOCK TABLES ON evaluation.* TO 'eval_user'@'%';
 
 -- Create a read-only user for reporting purposes
-CREATE USER IF NOT EXISTS 'ssd_eval_readonly'@'%' IDENTIFIED BY 'ssd_eval_readonly_2024';
-GRANT SELECT ON ssd_evaluation.* TO 'ssd_eval_readonly'@'%';
+CREATE USER IF NOT EXISTS 'eval_readonly'@'%' IDENTIFIED BY 'eval_readonly_2024';
+GRANT SELECT ON evaluation.* TO 'eval_readonly'@'%';
 
 -- Flush privileges to ensure changes take effect
 FLUSH PRIVILEGES;

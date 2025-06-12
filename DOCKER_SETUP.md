@@ -1,6 +1,6 @@
-# MySQL Docker Setup for SSD Evaluation System
+# MySQL Docker Setup for Product Evaluation System
 
-This document explains how to set up and use the MySQL Docker container for testing the SSD Evaluation Management System.
+This document explains how to set up and use the MySQL Docker container for testing the Product Evaluation Management System.
 
 ## Prerequisites
 
@@ -29,14 +29,14 @@ This will:
 **Web Interface (phpMyAdmin)**
 - Open browser: http://localhost:8080
 - Username: `root`
-- Password: `ssd_eval_root_2024`
+- Password: `eval_root_2024`
 
 **Application Connection**
 - Host: `localhost`
 - Port: `3306`
-- Database: `ssd_evaluation`
-- Username: `ssd_eval_user`
-- Password: `ssd_eval_pass_2024`
+- Database: `evaluation`
+- Username: `eval_user`
+- Password: `eval_pass_2024`
 
 ## Management Commands
 
@@ -54,7 +54,7 @@ This will:
 Add to your Flask configuration:
 
 ```python
-SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://ssd_eval_user:ssd_eval_pass_2024@localhost:3306/ssd_evaluation'
+SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://eval_user:eval_pass_2024@localhost:3306/evaluation'
 ```
 
 Required packages in `requirements.txt`:

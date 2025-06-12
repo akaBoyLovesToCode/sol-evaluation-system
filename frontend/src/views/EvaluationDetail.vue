@@ -8,7 +8,7 @@
             {{ $t(`status.${evaluation.status}`) }}
           </el-tag>
         </h1>
-        <p class="page-description">{{ evaluation.ssd_product }}</p>
+        <p class="page-description">{{ evaluation.product_name }}</p>
       </div>
       <div class="header-right">
         <el-button 
@@ -88,8 +88,8 @@
                   {{ $t(`evaluation.type.${evaluation.evaluation_type}`) }}
                 </el-tag>
               </el-descriptions-item>
-              <el-descriptions-item label="SSD产品">
-                {{ evaluation.ssd_product }}
+                          <el-descriptions-item label="产品名称">
+              {{ evaluation.product_name }}
               </el-descriptions-item>
               <el-descriptions-item label="料号">
                 {{ evaluation.part_number }}

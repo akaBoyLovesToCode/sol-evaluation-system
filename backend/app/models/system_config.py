@@ -166,7 +166,7 @@ class SystemConfig(db.Model):
         """Initialize default system configurations"""
         default_configs = [
             # General settings
-            ('system_name', 'SSD Evaluation System', 'string', 'System name', 'general', True),
+            ('system_name', 'Product Evaluation System', 'string', 'System name', 'general', True),
             ('system_version', '1.0.0', 'string', 'System version', 'general', True),
             ('default_language', 'en', 'string', 'Default system language', 'general', True),
             ('timezone', 'UTC', 'string', 'System timezone', 'general', True),

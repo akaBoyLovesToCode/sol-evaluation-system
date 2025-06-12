@@ -1,5 +1,5 @@
 """
-Workflow Service for SSD Evaluation System
+Workflow Service for Product Evaluation System
 
 This service handles the evaluation workflow engine, approval processes,
 and status management as specified in Phase 2 requirements.
@@ -257,7 +257,7 @@ class WorkflowService:
                 result.append({
                     'id': eval.id,
                     'evaluation_number': eval.evaluation_number,
-                    'ssd_product': eval.ssd_product,
+                    'product_name': eval.product_name,
                     'part_number': eval.part_number,
                     'evaluation_type': eval.evaluation_type,
                     'status': eval.status,
