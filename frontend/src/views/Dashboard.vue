@@ -41,27 +41,27 @@
       <div class="left-content">
         <!-- 评价状态分布图表 -->
         <AnimatedContainer type="fadeInLeft" delay="0.4s">
-          <el-card class="chart-card">
-            <template #header>
-              <div class="card-header">
-                <span>{{ $t('dashboard.statusDistribution') }}</span>
-                <el-button text @click="refreshCharts">
-                  <el-icon><Refresh /></el-icon>
-                </el-button>
-              </div>
-            </template>
-            <div ref="statusChartRef" class="chart-container"></div>
-          </el-card>
+        <el-card class="chart-card">
+          <template #header>
+            <div class="card-header">
+              <span>{{ $t('dashboard.statusDistribution') }}</span>
+              <el-button text @click="refreshCharts">
+                <el-icon><Refresh /></el-icon>
+              </el-button>
+            </div>
+          </template>
+          <div ref="statusChartRef" class="chart-container"></div>
+        </el-card>
         </AnimatedContainer>
 
         <!-- 月度评价趋势 -->
         <AnimatedContainer type="fadeInLeft" delay="0.6s">
-          <el-card class="chart-card">
-            <template #header>
-              <span>{{ $t('dashboard.monthlyTrend') }}</span>
-            </template>
-            <div ref="trendChartRef" class="chart-container"></div>
-          </el-card>
+        <el-card class="chart-card">
+          <template #header>
+            <span>{{ $t('dashboard.monthlyTrend') }}</span>
+          </template>
+          <div ref="trendChartRef" class="chart-container"></div>
+        </el-card>
         </AnimatedContainer>
       </div>
 
@@ -69,95 +69,95 @@
       <div class="right-content">
         <!-- 快速操作 -->
         <AnimatedContainer type="fadeInRight" delay="0.4s">
-          <el-card class="quick-actions">
-            <template #header>
-              <span>{{ $t('dashboard.quickActions') }}</span>
-            </template>
-            <div class="actions-grid">
-              <el-button 
-                type="primary" 
-                :icon="Plus" 
-                @click="$router.push('/evaluations/new')"
-                class="action-button"
-              >
-                {{ $t('dashboard.newEvaluation') }}
-              </el-button>
-              <el-button 
-                :icon="Document" 
-                @click="$router.push('/evaluations')"
-                class="action-button"
-              >
-                {{ $t('dashboard.viewEvaluations') }}
-              </el-button>
-              <el-button 
-                :icon="DataAnalysis" 
-                @click="$router.push('/reports')"
-                class="action-button"
-              >
-                {{ $t('dashboard.viewReports') }}
-              </el-button>
-              <el-button 
-                :icon="Message" 
-                @click="$router.push('/messages')"
-                class="action-button"
-              >
-                {{ $t('dashboard.viewMessages') }}
-              </el-button>
-            </div>
-          </el-card>
+        <el-card class="quick-actions">
+          <template #header>
+            <span>{{ $t('dashboard.quickActions') }}</span>
+          </template>
+          <div class="actions-grid">
+            <el-button 
+              type="primary" 
+              :icon="Plus" 
+              @click="$router.push('/evaluations/new')"
+              class="action-button"
+            >
+              {{ $t('dashboard.newEvaluation') }}
+            </el-button>
+            <el-button 
+              :icon="Document" 
+              @click="$router.push('/evaluations')"
+              class="action-button"
+            >
+              {{ $t('dashboard.viewEvaluations') }}
+            </el-button>
+            <el-button 
+              :icon="DataAnalysis" 
+              @click="$router.push('/reports')"
+              class="action-button"
+            >
+              {{ $t('dashboard.viewReports') }}
+            </el-button>
+            <el-button 
+              :icon="Message" 
+              @click="$router.push('/messages')"
+              class="action-button"
+            >
+              {{ $t('dashboard.viewMessages') }}
+            </el-button>
+          </div>
+        </el-card>
         </AnimatedContainer>
 
         <!-- 待处理事项 -->
         <AnimatedContainer type="fadeInRight" delay="0.6s">
-          <el-card class="pending-items">
-            <template #header>
-              <span>{{ $t('dashboard.pendingItems') }}</span>
-            </template>
-            <div class="pending-list" v-loading="pendingLoading">
-              <div 
-                v-for="item in pendingItems" 
-                :key="item.id"
-                class="pending-item"
-                @click="handlePendingItemClick(item)"
-              >
-                <div class="item-info">
-                  <div class="item-title">{{ item.title }}</div>
-                  <div class="item-meta">
-                    <el-tag :type="getStatusTagType(item.status)" size="small">
-                      {{ $t(`status.${item.status}`) }}
-                    </el-tag>
-                    <span class="item-date">{{ formatDate(item.created_at) }}</span>
-                  </div>
+        <el-card class="pending-items">
+          <template #header>
+            <span>{{ $t('dashboard.pendingItems') }}</span>
+          </template>
+          <div class="pending-list" v-loading="pendingLoading">
+            <div 
+              v-for="item in pendingItems" 
+              :key="item.id"
+              class="pending-item"
+              @click="handlePendingItemClick(item)"
+            >
+              <div class="item-info">
+                <div class="item-title">{{ item.title }}</div>
+                <div class="item-meta">
+                  <el-tag :type="getStatusTagType(item.status)" size="small">
+                    {{ $t(`status.${item.status}`) }}
+                  </el-tag>
+                  <span class="item-date">{{ formatDate(item.created_at) }}</span>
                 </div>
-                <el-icon class="item-arrow"><ArrowRight /></el-icon>
               </div>
-              <div v-if="pendingItems.length === 0" class="empty-state">
-                <el-empty :description="$t('dashboard.noPendingItems')" />
-              </div>
+              <el-icon class="item-arrow"><ArrowRight /></el-icon>
             </div>
-          </el-card>
+            <div v-if="pendingItems.length === 0" class="empty-state">
+              <el-empty :description="$t('dashboard.noPendingItems')" />
+            </div>
+          </div>
+        </el-card>
         </AnimatedContainer>
 
         <!-- 最近活动 -->
         <AnimatedContainer type="fadeInRight" delay="0.8s">
-          <el-card class="recent-activities">
-            <template #header>
-              <span>{{ $t('dashboard.recentActivities') }}</span>
-            </template>
-            <el-timeline class="activity-timeline">
-              <el-timeline-item
-                v-for="activity in recentActivities"
-                :key="activity.id"
-                :timestamp="formatDate(activity.created_at)"
-                :type="getActivityType(activity.action)"
-              >
-                <div class="activity-content">
-                  <div class="activity-title">{{ activity.description }}</div>
-                  <div class="activity-user">{{ activity.user_name }}</div>
-                </div>
-              </el-timeline-item>
-            </el-timeline>
-          </el-card>
+        <el-card class="recent-activities">
+          <template #header>
+            <span>{{ $t('dashboard.recentActivities') }}</span>
+          </template>
+          <el-timeline class="activity-timeline">
+            <el-timeline-item
+              v-for="activity in recentActivities"
+              :key="activity.id"
+              :timestamp="formatDate(activity.created_at)"
+              :type="getActivityType(activity.action)"
+            >
+              <div class="activity-content">
+                <div class="activity-title">{{ activity.description }}</div>
+                <div class="activity-user">{{ activity.user_name }}</div>
+              </div>
+            </el-timeline-item>
+          </el-timeline>
+        </el-card>
         </AnimatedContainer>
       </div>
     </div>

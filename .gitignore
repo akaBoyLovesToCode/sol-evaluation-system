@@ -125,6 +125,7 @@ pnpm-lock.yaml
 
 # IDE
 .vscode/
+.cursor/
 .idea/
 *.swp
 *.swo

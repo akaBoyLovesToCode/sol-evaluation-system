@@ -19,8 +19,8 @@
 
     <!-- 搜索和筛选 -->
     <AnimatedContainer type="fadeInUp" delay="0.1s">
-      <el-card class="filter-card">
-        <el-form :model="searchForm" inline class="search-form">
+    <el-card class="filter-card">
+      <el-form :model="searchForm" inline class="search-form">
         <el-form-item :label="$t('evaluation.evaluationNumber')">
           <el-input
             v-model="searchForm.evaluation_number"
@@ -94,14 +94,14 @@
             {{ $t('evaluation.reset') }}
           </el-button>
         </el-form-item>
-        </el-form>
-      </el-card>
+      </el-form>
+    </el-card>
     </AnimatedContainer>
 
     <!-- 数据表格 -->
     <AnimatedContainer type="fadeInUp" delay="0.3s">
-      <el-card class="table-card">
-        <template #header>
+    <el-card class="table-card">
+      <template #header>
         <div class="table-header">
           <span>{{ $t('evaluation.list') }}</span>
           <div class="table-actions">
@@ -301,7 +301,7 @@
           @current-change="handleCurrentChange"
         />
       </div>
-      </el-card>
+    </el-card>
     </AnimatedContainer>
   </div>
 </template>
