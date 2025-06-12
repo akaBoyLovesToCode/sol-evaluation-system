@@ -19,7 +19,10 @@
     "more": "더보기",
     "approve": "승인",
     "pause": "일시정지",
-    "resume": "재개"
+    "resume": "재개",
+    "other": "기타",
+    "confirmCancel": "취소 확인",
+    "responseError": "응답 데이터 형식 오류"
   },
   "auth": {
     "login": "로그인",
@@ -47,7 +50,16 @@
   "validation": {
     "required": "{field}은(는) 필수입니다",
     "length": "길이는 {min}-{max}자 사이여야 합니다",
-    "minLength": "길이는 최소 {min}자 이상이어야 합니다"
+    "minLength": "길이는 최소 {min}자 이상이어야 합니다",
+    "requiredField": {
+      "type": "평가 유형을 선택하세요",
+      "productName": "제품명을 입력하세요",
+      "partNumber": "부품 번호를 입력하세요",
+      "startDate": "시작 날짜를 선택하세요",
+      "expectedEndDate": "예상 종료 날짜를 선택하세요",
+      "reason": "평가 이유를 선택하세요",
+      "description": "평가 설명을 입력하세요"
+    }
   },
   "menu": {
     "dashboard": "대시보드",
@@ -78,22 +90,45 @@
     "newEvaluations": "새 평가",
     "loadError": "데이터 로드 실패"
   },
-  "navigation": {
-    "dashboard": "대시보드",
-    "evaluations": "평가 관리",
-    "users": "사용자 관리",
-    "reports": "보고서",
-    "settings": "설정"
-  },
+
   "evaluation": {
     "title": "평가 관리",
     "description": "모든 제품 평가를 관리하고 조회합니다",
+    "new": {
+      "title": "새 평가",
+      "description": "새로운 제품 평가 프로젝트를 생성합니다"
+    },
+    "basicInfo": "기본 정보",
+    "technicalSpec": "기술 사양",
+    "process": "평가 프로세스",
+    "newProductProcess": "신제품 평가 프로세스",
+    "massProductionProcess": "양산 평가 프로세스",
+    "newProductNote": "참고: 신제품 평가는 Part Leader와 Group Leader의 2단계 승인이 필요합니다",
+    "massProductionNote": "참고: 양산 평가는 승인 없이 바로 완료됩니다",
+    "saveDraft": "초안 저장",
+    "submit": "평가 제출",
+    "saveSuccess": "저장 성공",
+    "saveError": "저장 실패",
+    "submitSuccess": "평가 제출 성공",
+    "submitError": "제출 실패",
+    "cancelConfirm": "정말 취소하시겠습니까? 저장되지 않은 데이터가 손실됩니다.",
     "evaluationNumber": "평가 번호",
+    "typeLabel": "평가 유형",
     "evaluationType": "평가 유형",
-    "product": "제품",
-    "partNumber": "부품 번호",
-    "evaluator": "평가자",
+    "productName": "제품명",
+    "partNumber": "P/N",
     "startDate": "시작 날짜",
+    "expectedEndDate": "예상 종료 날짜",
+    "reason": "평가 이유",
+    "descriptionLabel": "평가 설명",
+    "pgmVersion": "PGM 버전",
+    "materialInfo": "재료 정보",
+    "capacity": "용량",
+    "interfaceType": "인터페이스 유형",
+    "formFactor": "폼 팩터",
+    "temperatureGrade": "온도 등급",
+    "product": "제품",
+    "evaluator": "평가자",
     "endDate": "종료 날짜",
     "dateRange": "날짜 범위",
     "progress": "진행률",
@@ -104,26 +139,72 @@
     "reset": "재설정",
     "newProduct": "신제품",
     "massProduction": "양산",
+    "placeholder": {
+      "productName": "제품명을 입력하세요",
+      "partNumber": "부품 번호를 입력하세요",
+      "startDate": "시작 날짜를 선택하세요",
+      "expectedEndDate": "예상 종료 날짜를 선택하세요",
+      "reason": "평가 이유를 선택하세요",
+      "description": "평가 설명을 입력하세요",
+      "pgmVersion": "PGM 버전을 입력하세요",
+      "materialInfo": "재료 정보를 입력하세요",
+      "capacity": "용량을 입력하세요",
+      "interfaceType": "인터페이스 유형을 선택하세요",
+      "formFactor": "폼 팩터를 선택하세요",
+      "temperatureGrade": "온도 등급을 선택하세요",
+      "evaluationNumber": "평가 번호를 입력하세요",
+      "evaluationType": "평가 유형을 선택하세요",
+      "status": "상태를 선택하세요",
+      "evaluator": "평가자를 입력하세요"
+    },
     "placeholders": {
+      "productName": "제품명을 입력하세요",
+      "partNumber": "부품 번호를 입력하세요",
+      "startDate": "시작 날짜를 선택하세요",
+      "expectedEndDate": "예상 종료 날짜를 선택하세요",
+      "reason": "평가 이유를 선택하세요",
+      "description": "평가 설명을 입력하세요",
+      "pgmVersion": "PGM 버전을 입력하세요",
+      "materialInfo": "재료 정보를 입력하세요",
+      "capacity": "용량을 입력하세요",
+      "interfaceType": "인터페이스 유형을 선택하세요",
+      "formFactor": "폼 팩터를 선택하세요",
+      "temperatureGrade": "온도 등급을 선택하세요",
       "evaluationNumber": "평가 번호를 입력하세요",
       "evaluationType": "평가 유형을 선택하세요",
       "status": "상태를 선택하세요",
       "product": "제품명을 입력하세요",
       "evaluator": "평가자를 입력하세요",
-      "startDate": "시작 날짜",
-      "endDate": "종료 날짜",
-      "rangeSeparator": "~"
+      "rangeSeparator": "～",
+      "endDate": "종료 날짜"
     },
     "type": {
       "new_product": "신제품",
       "mass_production": "양산"
     },
-    "process": {
-      "doe": "DOE",
-      "ppq": "PPQ", 
-      "prq": "PRQ",
+    "reasons": {
+      "new_product_development": "신제품 개발",
+      "quality_improvement": "품질 개선",
+      "cost_optimization": "비용 최적화",
+      "customer_requirement": "고객 요구사항",
+      "other": "기타"
+    },
+    "formFactors": {
+      "2_5_inch": "2.5인치",
+      "m2_2280": "M.2 2280",
+      "m2_2242": "M.2 2242"
+    },
+    "temperatureGrades": {
+      "commercial": "상업용 (0°C ~ 70°C)",
+      "industrial": "산업용 (-40°C ~ 85°C)",
+      "extended": "확장형 (-40°C ~ 105°C)"
+    },
+    "processes": {
+      "doe": "DOE (실험 설계)",
+      "ppq": "PPQ (생산 부품 승인)",
+      "prq": "PRQ (생산 준비도 승인)",
       "production_test": "생산 테스트",
-      "aql": "AQL"
+      "aql": "AQL (허용 품질 수준)"
     }
   },
   "status": {

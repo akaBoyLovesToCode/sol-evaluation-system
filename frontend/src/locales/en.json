@@ -19,7 +19,10 @@
     "more": "More",
     "approve": "Approve",
     "pause": "Pause",
-    "resume": "Resume"
+    "resume": "Resume",
+    "other": "Other",
+    "confirmCancel": "Confirm Cancel",
+    "responseError": "Response data format error"
   },
   "auth": {
     "login": "Login",
@@ -47,7 +50,16 @@
   "validation": {
     "required": "{field} is required",
     "length": "Length must be between {min}-{max} characters",
-    "minLength": "Length must be at least {min} characters"
+    "minLength": "Length must be at least {min} characters",
+    "requiredField": {
+      "type": "Please select evaluation type",
+      "productName": "Please enter product name",
+      "partNumber": "Please enter part number",
+      "startDate": "Please select start date",
+      "expectedEndDate": "Please select expected end date",
+      "reason": "Please select evaluation reason",
+      "description": "Please enter evaluation description"
+    }
   },
   "menu": {
     "dashboard": "Dashboard",
@@ -78,22 +90,45 @@
     "newEvaluations": "New Evaluations",
     "loadError": "Failed to load data"
   },
-  "navigation": {
-    "dashboard": "Dashboard",
-    "evaluations": "Evaluations",
-    "users": "Users",
-    "reports": "Reports",
-    "settings": "Settings"
-  },
+
   "evaluation": {
     "title": "Evaluation Management",
     "description": "Manage and view all product evaluations",
+    "new": {
+      "title": "New Evaluation",
+      "description": "Create a new product evaluation project"
+    },
+    "basicInfo": "Basic Information",
+    "technicalSpec": "Technical Specifications",
+    "process": "Evaluation Process",
+    "newProductProcess": "New Product Evaluation Process",
+    "massProductionProcess": "Mass Production Evaluation Process",
+    "newProductNote": "Note: New product evaluations require two-level approval from Part Leader and Group Leader",
+    "massProductionNote": "Note: Mass production evaluations are completed directly without approval",
+    "saveDraft": "Save Draft",
+    "submit": "Submit Evaluation",
+    "saveSuccess": "Saved successfully",
+    "saveError": "Save failed",
+    "submitSuccess": "Evaluation submitted successfully",
+    "submitError": "Submit failed",
+    "cancelConfirm": "Are you sure you want to cancel? Unsaved data will be lost.",
     "evaluationNumber": "Evaluation Number",
+    "typeLabel": "Evaluation Type",
     "evaluationType": "Evaluation Type",
-    "product": "Product",
-    "partNumber": "Part Number",
-    "evaluator": "Evaluator",
+    "productName": "Product Name",
+    "partNumber": "P/N",
     "startDate": "Start Date",
+    "expectedEndDate": "Expected End Date",
+    "reason": "Evaluation Reason",
+    "descriptionLabel": "Evaluation Description",
+    "pgmVersion": "PGM Version",
+    "materialInfo": "Material Information",
+    "capacity": "Capacity",
+    "interfaceType": "Interface Type",
+    "formFactor": "Form Factor",
+    "temperatureGrade": "Temperature Grade",
+    "product": "Product",
+    "evaluator": "Evaluator",
     "endDate": "End Date",
     "dateRange": "Date Range",
     "progress": "Progress",
@@ -104,26 +139,72 @@
     "reset": "Reset",
     "newProduct": "New Product",
     "massProduction": "Mass Production",
+    "placeholder": {
+      "productName": "Enter product name",
+      "partNumber": "Enter part number",
+      "startDate": "Select start date",
+      "expectedEndDate": "Select expected end date",
+      "reason": "Select evaluation reason",
+      "description": "Enter evaluation description",
+      "pgmVersion": "Enter PGM version",
+      "materialInfo": "Enter material information",
+      "capacity": "Enter capacity",
+      "interfaceType": "Select interface type",
+      "formFactor": "Select form factor",
+      "temperatureGrade": "Select temperature grade",
+      "evaluationNumber": "Enter evaluation number",
+      "evaluationType": "Select evaluation type",
+      "status": "Select status",
+      "evaluator": "Enter evaluator"
+    },
     "placeholders": {
+      "productName": "Enter product name",
+      "partNumber": "Enter part number",
+      "startDate": "Select start date",
+      "expectedEndDate": "Select expected end date",
+      "reason": "Select evaluation reason",
+      "description": "Enter evaluation description",
+      "pgmVersion": "Enter PGM version",
+      "materialInfo": "Enter material information",
+      "capacity": "Enter capacity",
+      "interfaceType": "Select interface type",
+      "formFactor": "Select form factor",
+      "temperatureGrade": "Select temperature grade",
       "evaluationNumber": "Enter evaluation number",
       "evaluationType": "Select evaluation type",
       "status": "Select status",
       "product": "Enter product name",
       "evaluator": "Enter evaluator",
-      "startDate": "Start Date",
-      "endDate": "End Date",
-      "rangeSeparator": "to"
+      "rangeSeparator": "～",
+      "endDate": "End date"
     },
     "type": {
       "new_product": "New Product",
       "mass_production": "Mass Production"
     },
-    "process": {
-      "doe": "DOE",
-      "ppq": "PPQ", 
-      "prq": "PRQ",
+    "reasons": {
+      "new_product_development": "New Product Development",
+      "quality_improvement": "Quality Improvement",
+      "cost_optimization": "Cost Optimization",
+      "customer_requirement": "Customer Requirement",
+      "other": "Other"
+    },
+    "formFactors": {
+      "2_5_inch": "2.5 inch",
+      "m2_2280": "M.2 2280",
+      "m2_2242": "M.2 2242"
+    },
+    "temperatureGrades": {
+      "commercial": "Commercial (0°C ~ 70°C)",
+      "industrial": "Industrial (-40°C ~ 85°C)",
+      "extended": "Extended (-40°C ~ 105°C)"
+    },
+    "processes": {
+      "doe": "DOE (Design of Experiments)",
+      "ppq": "PPQ (Production Part Qualification)",
+      "prq": "PRQ (Production Readiness Qualification)",
       "production_test": "Production Test",
-      "aql": "AQL"
+      "aql": "AQL (Acceptable Quality Level)"
     }
   },
   "status": {

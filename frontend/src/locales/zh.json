@@ -19,7 +19,10 @@
     "more": "更多",
     "approve": "审批",
     "pause": "暂停",
-    "resume": "恢复"
+    "resume": "恢复",
+    "other": "其他",
+    "confirmCancel": "确认取消",
+    "responseError": "响应数据格式错误"
   },
   "auth": {
     "login": "登录",
@@ -47,7 +50,16 @@
   "validation": {
     "required": "{field}不能为空",
     "length": "长度必须在{min}-{max}个字符之间",
-    "minLength": "长度不能少于{min}个字符"
+    "minLength": "长度不能少于{min}个字符",
+    "requiredField": {
+      "type": "请选择评价类型",
+      "productName": "请输入产品名称",
+      "partNumber": "请输入料号",
+      "startDate": "请选择开始日期",
+      "expectedEndDate": "请选择预计结束日期",
+      "reason": "请选择评价原因",
+      "description": "请输入评价描述"
+    }
   },
   "menu": {
     "dashboard": "仪表板",
@@ -58,13 +70,7 @@
     "profile": "个人资料",
     "logout": "退出登录"
   },
-  "navigation": {
-    "dashboard": "仪表盘",
-    "evaluations": "评价管理",
-    "users": "用户管理",
-    "reports": "报表分析",
-    "settings": "系统设置"
-  },
+
   "dashboard": {
     "description": "查看系统概览和关键指标",
     "totalEvaluations": "总评价数",
@@ -88,12 +94,41 @@
   "evaluation": {
     "title": "评价管理",
     "description": "管理和查看所有产品评价",
+    "new": {
+      "title": "新建评价",
+      "description": "创建新的产品评价项目"
+    },
+    "basicInfo": "基本信息",
+    "technicalSpec": "技术规格",
+    "process": "评价流程",
+    "newProductProcess": "新产品评价流程",
+    "massProductionProcess": "量产评价流程",
+    "newProductNote": "注：新产品评价需要经过Part Leader和Group Leader两级审批",
+    "massProductionNote": "注：量产评价通过后无需审批，直接完成",
+    "saveDraft": "保存草稿",
+    "submit": "提交评价",
+    "saveSuccess": "保存成功",
+    "saveError": "保存失败",
+    "submitSuccess": "评价提交成功",
+    "submitError": "提交失败",
+    "cancelConfirm": "确定要取消吗？未保存的数据将丢失。",
     "evaluationNumber": "评价编号",
+    "typeLabel": "评价类型",
     "evaluationType": "评价类型",
-    "product": "产品",
-    "partNumber": "料号",
-    "evaluator": "评价人",
+    "productName": "产品名称",
+    "partNumber": "P/N",
     "startDate": "开始日期",
+    "expectedEndDate": "预计结束日期",
+    "reason": "评价原因",
+    "descriptionLabel": "评价描述",
+    "pgmVersion": "PGM版本",
+    "materialInfo": "材料信息",
+    "capacity": "容量",
+    "interfaceType": "接口类型",
+    "formFactor": "外形规格",
+    "temperatureGrade": "温度等级",
+    "product": "产品",
+    "evaluator": "评价人",
     "endDate": "结束日期",
     "dateRange": "日期范围",
     "progress": "进度",
@@ -104,26 +139,72 @@
     "reset": "重置",
     "newProduct": "新产品",
     "massProduction": "量产",
+    "placeholder": {
+      "productName": "请输入产品名称",
+      "partNumber": "请输入料号",
+      "startDate": "选择开始日期",
+      "expectedEndDate": "选择预计结束日期",
+      "reason": "请选择评价原因",
+      "description": "请输入评价描述",
+      "pgmVersion": "请输入PGM版本",
+      "materialInfo": "请输入材料信息",
+      "capacity": "请输入容量",
+      "interfaceType": "请选择接口类型",
+      "formFactor": "请选择外形规格",
+      "temperatureGrade": "请选择温度等级",
+      "evaluationNumber": "请输入评价编号",
+      "evaluationType": "请选择评价类型",
+      "status": "请选择状态",
+      "evaluator": "请输入评价人"
+    },
     "placeholders": {
+      "productName": "请输入产品名称",
+      "partNumber": "请输入料号",
+      "startDate": "选择开始日期",
+      "expectedEndDate": "选择预计结束日期",
+      "reason": "请选择评价原因",
+      "description": "请输入评价描述",
+      "pgmVersion": "请输入PGM版本",
+      "materialInfo": "请输入材料信息",
+      "capacity": "请输入容量",
+      "interfaceType": "请选择接口类型",
+      "formFactor": "请选择外形规格",
+      "temperatureGrade": "请选择温度等级",
       "evaluationNumber": "请输入评价编号",
       "evaluationType": "请选择评价类型",
       "status": "请选择状态",
       "product": "请输入产品名称",
       "evaluator": "请输入评价人",
-      "startDate": "开始日期",
-      "endDate": "结束日期",
-      "rangeSeparator": "至"
+      "rangeSeparator": "～",
+      "endDate": "结束日期"
     },
     "type": {
       "new_product": "新产品",
       "mass_production": "量产"
     },
-    "process": {
-      "doe": "DOE",
-      "ppq": "PPQ", 
-      "prq": "PRQ",
+    "reasons": {
+      "new_product_development": "新产品开发",
+      "quality_improvement": "质量改进",
+      "cost_optimization": "成本优化",
+      "customer_requirement": "客户要求",
+      "other": "其他"
+    },
+    "formFactors": {
+      "2_5_inch": "2.5寸",
+      "m2_2280": "M.2 2280",
+      "m2_2242": "M.2 2242"
+    },
+    "temperatureGrades": {
+      "commercial": "商业级 (0°C ~ 70°C)",
+      "industrial": "工业级 (-40°C ~ 85°C)",
+      "extended": "扩展级 (-40°C ~ 105°C)"
+    },
+    "processes": {
+      "doe": "DOE (Design of Experiments)",
+      "ppq": "PPQ (Production Part Qualification)",
+      "prq": "PRQ (Production Readiness Qualification)",
       "production_test": "生产测试",
-      "aql": "AQL"
+      "aql": "AQL (Acceptable Quality Level)"
     }
   },
   "status": {

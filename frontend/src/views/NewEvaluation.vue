@@ -1,8 +1,12 @@
 <template>
-  <div class="new-evaluation-page">
+  <div class="new-evaluation-page" v-loading="loading">
     <div class="page-header">
-      <h1 class="page-title">新建评价</h1>
-              <p class="page-description">创建新的产品评价项目</p>
+      <h1 class="page-title">
+        {{ isEditMode ? '编辑评价' : $t('evaluation.new.title') }}
+      </h1>
+      <p class="page-description">
+        {{ isEditMode ? '修改评价信息' : $t('evaluation.new.description') }}
+      </p>
     </div>
 
     <el-form
@@ -14,37 +18,37 @@
     >
       <el-card class="form-section fade-in-up" style="animation-delay: 0.1s">
         <template #header>
-          <span>基本信息</span>
+          <span>{{ $t('evaluation.basicInfo') }}</span>
         </template>
         
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="评价类型" prop="evaluation_type">
+            <el-form-item :label="$t('evaluation.typeLabel')" prop="evaluation_type">
               <el-radio-group v-model="form.evaluation_type" @change="handleTypeChange">
-                <el-radio value="new_product">新产品</el-radio>
-                <el-radio value="mass_production">量产</el-radio>
+                <el-radio value="new_product">{{ $t('evaluation.type.new_product') }}</el-radio>
+                <el-radio value="mass_production">{{ $t('evaluation.type.mass_production') }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-                    <el-form-item label="产品名称" prop="product_name">
-          <el-input v-model="form.product_name" placeholder="请输入产品名称" />
+            <el-form-item :label="$t('evaluation.productName')" prop="product_name">
+              <el-input v-model="form.product_name" :placeholder="$t('evaluation.placeholder.productName')" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="料号" prop="part_number">
-              <el-input v-model="form.part_number" placeholder="请输入料号" />
+            <el-form-item label="P/N" prop="part_number">
+              <el-input v-model="form.part_number" :placeholder="$t('evaluation.placeholder.partNumber')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="开始日期" prop="start_date">
+            <el-form-item :label="$t('evaluation.startDate')" prop="start_date">
               <el-date-picker
                 v-model="form.start_date"
                 type="date"
-                placeholder="选择开始日期"
+                :placeholder="$t('evaluation.placeholder.startDate')"
                 format="YYYY-MM-DD"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
@@ -55,11 +59,11 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="预计结束日期" prop="expected_end_date">
+            <el-form-item :label="$t('evaluation.expectedEndDate')" prop="expected_end_date">
               <el-date-picker
                 v-model="form.expected_end_date"
                 type="date"
-                placeholder="选择预计结束日期"
+                :placeholder="$t('evaluation.placeholder.expectedEndDate')"
                 format="YYYY-MM-DD"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
@@ -67,78 +71,78 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="评价原因" prop="reason">
-              <el-select v-model="form.reason" placeholder="请选择评价原因" style="width: 100%">
-                <el-option label="新产品开发" value="new_product_development" />
-                <el-option label="质量改进" value="quality_improvement" />
-                <el-option label="成本优化" value="cost_optimization" />
-                <el-option label="客户要求" value="customer_requirement" />
-                <el-option label="其他" value="other" />
+            <el-form-item :label="$t('evaluation.reason')" prop="reason">
+              <el-select v-model="form.reason" :placeholder="$t('evaluation.placeholder.reason')" style="width: 100%">
+                <el-option :label="$t('evaluation.reasons.new_product_development')" value="new_product_development" />
+                <el-option :label="$t('evaluation.reasons.quality_improvement')" value="quality_improvement" />
+                <el-option :label="$t('evaluation.reasons.cost_optimization')" value="cost_optimization" />
+                <el-option :label="$t('evaluation.reasons.customer_requirement')" value="customer_requirement" />
+                <el-option :label="$t('evaluation.reasons.other')" value="other" />
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-form-item label="评价描述" prop="description">
+        <el-form-item :label="$t('evaluation.descriptionLabel')" prop="description">
           <el-input
             v-model="form.description"
             type="textarea"
             :rows="3"
-            placeholder="请输入评价描述"
+            :placeholder="$t('evaluation.placeholder.description')"
           />
         </el-form-item>
       </el-card>
 
       <el-card class="form-section fade-in-up" style="animation-delay: 0.3s">
         <template #header>
-          <span>技术规格</span>
+          <span>{{ $t('evaluation.technicalSpec') }}</span>
         </template>
         
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="PGM版本" prop="pgm_version">
-              <el-input v-model="form.pgm_version" placeholder="请输入PGM版本" />
+            <el-form-item :label="$t('evaluation.pgmVersion')" prop="pgm_version">
+              <el-input v-model="form.pgm_version" :placeholder="$t('evaluation.placeholder.pgmVersion')" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="材料信息" prop="material_info">
-              <el-input v-model="form.material_info" placeholder="请输入材料信息" />
+            <el-form-item :label="$t('evaluation.materialInfo')" prop="material_info">
+              <el-input v-model="form.material_info" :placeholder="$t('evaluation.placeholder.materialInfo')" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="容量" prop="capacity">
-              <el-input v-model="form.capacity" placeholder="请输入容量" />
+            <el-form-item :label="$t('evaluation.capacity')" prop="capacity">
+              <el-input v-model="form.capacity" :placeholder="$t('evaluation.placeholder.capacity')" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="接口类型" prop="interface_type">
-              <el-select v-model="form.interface_type" placeholder="请选择接口类型" style="width: 100%">
+            <el-form-item :label="$t('evaluation.interfaceType')" prop="interface_type">
+              <el-select v-model="form.interface_type" :placeholder="$t('evaluation.placeholder.interfaceType')" style="width: 100%">
                 <el-option label="SATA" value="SATA" />
                 <el-option label="NVMe" value="NVMe" />
                 <el-option label="PCIe" value="PCIe" />
-                <el-option label="其他" value="other" />
+                <el-option :label="$t('common.other')" value="other" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="外形规格" prop="form_factor">
-              <el-select v-model="form.form_factor" placeholder="请选择外形规格" style="width: 100%">
-                <el-option label="2.5寸" value="2.5" />
-                <el-option label="M.2 2280" value="M.2_2280" />
-                <el-option label="M.2 2242" value="M.2_2242" />
-                <el-option label="其他" value="other" />
+            <el-form-item :label="$t('evaluation.formFactor')" prop="form_factor">
+              <el-select v-model="form.form_factor" :placeholder="$t('evaluation.placeholder.formFactor')" style="width: 100%">
+                <el-option :label="$t('evaluation.formFactors.2_5_inch')" value="2.5" />
+                <el-option :label="$t('evaluation.formFactors.m2_2280')" value="M.2_2280" />
+                <el-option :label="$t('evaluation.formFactors.m2_2242')" value="M.2_2242" />
+                <el-option :label="$t('common.other')" value="other" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="温度等级" prop="temperature_grade">
-              <el-select v-model="form.temperature_grade" placeholder="请选择温度等级" style="width: 100%">
-                <el-option label="商业级 (0°C ~ 70°C)" value="commercial" />
-                <el-option label="工业级 (-40°C ~ 85°C)" value="industrial" />
-                <el-option label="扩展级 (-40°C ~ 105°C)" value="extended" />
+            <el-form-item :label="$t('evaluation.temperatureGrade')" prop="temperature_grade">
+              <el-select v-model="form.temperature_grade" :placeholder="$t('evaluation.placeholder.temperatureGrade')" style="width: 100%">
+                <el-option :label="$t('evaluation.temperatureGrades.commercial')" value="commercial" />
+                <el-option :label="$t('evaluation.temperatureGrades.industrial')" value="industrial" />
+                <el-option :label="$t('evaluation.temperatureGrades.extended')" value="extended" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -147,42 +151,42 @@
 
       <el-card class="form-section fade-in-up" v-if="form.evaluation_type" style="animation-delay: 0.5s">
         <template #header>
-          <span>评价流程</span>
+          <span>{{ $t('evaluation.process') }}</span>
         </template>
         
         <div class="process-selection">
           <div v-if="form.evaluation_type === 'new_product'" class="process-group">
-            <h4>新产品评价流程</h4>
+            <h4>{{ $t('evaluation.newProductProcess') }}</h4>
             <el-checkbox-group v-model="form.processes">
-              <el-checkbox value="doe">DOE (Design of Experiments)</el-checkbox>
-              <el-checkbox value="ppq">PPQ (Production Part Qualification)</el-checkbox>
-              <el-checkbox value="prq">PRQ (Production Readiness Qualification)</el-checkbox>
+              <el-checkbox value="doe">{{ $t('evaluation.processes.doe') }}</el-checkbox>
+              <el-checkbox value="ppq">{{ $t('evaluation.processes.ppq') }}</el-checkbox>
+              <el-checkbox value="prq">{{ $t('evaluation.processes.prq') }}</el-checkbox>
             </el-checkbox-group>
             <p class="process-note">
-              注：新产品评价需要经过Part Leader和Group Leader两级审批
+              {{ $t('evaluation.newProductNote') }}
             </p>
           </div>
           
           <div v-else-if="form.evaluation_type === 'mass_production'" class="process-group">
-            <h4>量产评价流程</h4>
+            <h4>{{ $t('evaluation.massProductionProcess') }}</h4>
             <el-checkbox-group v-model="form.processes">
-              <el-checkbox value="production_test">生产测试</el-checkbox>
-              <el-checkbox value="aql">AQL (Acceptable Quality Level)</el-checkbox>
+              <el-checkbox value="production_test">{{ $t('evaluation.processes.production_test') }}</el-checkbox>
+              <el-checkbox value="aql">{{ $t('evaluation.processes.aql') }}</el-checkbox>
             </el-checkbox-group>
             <p class="process-note">
-              注：量产评价通过后无需审批，直接完成
+              {{ $t('evaluation.massProductionNote') }}
             </p>
           </div>
         </div>
       </el-card>
 
       <div class="form-actions fade-in-up" style="animation-delay: 0.7s">
-        <el-button @click="handleCancel">取消</el-button>
+        <el-button @click="handleCancel">{{ $t('common.cancel') }}</el-button>
         <el-button type="primary" @click="handleSave(false)" :loading="saving">
-          保存草稿
+          {{ $t('evaluation.saveDraft') }}
         </el-button>
         <el-button type="success" @click="handleSave(true)" :loading="submitting">
-          提交评价
+          {{ $t('evaluation.submit') }}
         </el-button>
       </div>
     </el-form>
@@ -190,15 +194,23 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '../utils/api'
 
 const router = useRouter()
+const route = useRoute()
+const { t } = useI18n()
 const formRef = ref()
 const saving = ref(false)
 const submitting = ref(false)
+const loading = ref(false)
+
+// 检测是否为编辑模式
+const isEditMode = computed(() => route.name === 'EditEvaluation' && route.params.id)
+const evaluationId = computed(() => route.params.id)
 
 const form = reactive({
   evaluation_type: '',
@@ -217,29 +229,29 @@ const form = reactive({
   processes: []
 })
 
-const rules = {
+const rules = computed(() => ({
   evaluation_type: [
-    { required: true, message: '请选择评价类型', trigger: 'change' }
+    { required: true, message: t('validation.requiredField.type'), trigger: 'change' }
   ],
   product_name: [
-    { required: true, message: '请输入产品名称', trigger: 'blur' }
+    { required: true, message: t('validation.requiredField.productName'), trigger: 'blur' }
   ],
   part_number: [
-    { required: true, message: '请输入料号', trigger: 'blur' }
+    { required: true, message: t('validation.requiredField.partNumber'), trigger: 'blur' }
   ],
   start_date: [
-    { required: true, message: '请选择开始日期', trigger: 'change' }
+    { required: true, message: t('validation.requiredField.startDate'), trigger: 'change' }
   ],
   expected_end_date: [
-    { required: true, message: '请选择预计结束日期', trigger: 'change' }
+    { required: true, message: t('validation.requiredField.expectedEndDate'), trigger: 'change' }
   ],
   reason: [
-    { required: true, message: '请选择评价原因', trigger: 'change' }
+    { required: true, message: t('validation.requiredField.reason'), trigger: 'change' }
   ],
   description: [
-    { required: true, message: '请输入评价描述', trigger: 'blur' }
+    { required: true, message: t('validation.requiredField.description'), trigger: 'blur' }
   ]
-}
+}))
 
 const handleTypeChange = (type) => {
   form.processes = []
@@ -253,11 +265,11 @@ const handleTypeChange = (type) => {
 const handleCancel = async () => {
   try {
     await ElMessageBox.confirm(
-      '确定要取消吗？未保存的数据将丢失。',
-      '确认取消',
+      t('evaluation.cancelConfirm'),
+      t('common.confirmCancel'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       }
     )
@@ -273,8 +285,8 @@ const handleSave = async (submit = false) => {
   try {
     await formRef.value.validate()
     
-    const loading = submit ? submitting : saving
-    loading.value = true
+    const loadingRef = submit ? submitting : saving
+    loadingRef.value = true
     
     const data = {
       evaluation_type: form.evaluation_type,
@@ -286,21 +298,29 @@ const handleSave = async (submit = false) => {
       status: submit ? 'in_progress' : 'draft'
     }
     
-    const response = await api.post('/evaluations', data)
-    
-    ElMessage.success(submit ? '评价提交成功' : '保存成功')
-    
-    // 检查响应数据结构
-    if (response.data && response.data.data && response.data.data.evaluation && response.data.data.evaluation.id) {
-      router.push(`/evaluations/${response.data.data.evaluation.id}`)
+    let response
+    if (isEditMode.value) {
+      // 编辑模式：使用PUT请求更新
+      response = await api.put(`/evaluations/${evaluationId.value}`, data)
     } else {
+      // 新建模式：使用POST请求创建
+      response = await api.post('/evaluations', data)
+    }
+    
+    ElMessage.success(submit ? t('evaluation.submitSuccess') : t('evaluation.saveSuccess'))
+    
+    // 检查响应数据结构并跳转
+    const targetId = isEditMode.value ? evaluationId.value : response.data?.data?.evaluation?.id
+    if (targetId) {
+      router.push(`/evaluations/${targetId}`)
+    } else if (!isEditMode.value) {
       console.error('Invalid response structure:', response.data)
-      ElMessage.error('响应数据格式错误')
+      ElMessage.error(t('common.responseError'))
     }
     
   } catch (error) {
     if (error.name !== 'ValidationError') {
-      ElMessage.error(submit ? '提交失败' : '保存失败')
+      ElMessage.error(submit ? t('evaluation.submitError') : t('evaluation.saveError'))
       console.error('Save failed:', error)
     }
   } finally {
@@ -308,6 +328,47 @@ const handleSave = async (submit = false) => {
     submitting.value = false
   }
 }
+
+// 获取评价数据（编辑模式）
+const fetchEvaluation = async () => {
+  if (!isEditMode.value) return
+  
+  try {
+    loading.value = true
+    const response = await api.get(`/evaluations/${evaluationId.value}`)
+    const evaluation = response.data.data.evaluation
+    
+    // 填充表单数据
+    Object.assign(form, {
+      evaluation_type: evaluation.evaluation_type || '',
+      product_name: evaluation.product_name || '',
+      part_number: evaluation.part_number || '',
+      start_date: evaluation.start_date || '',
+      expected_end_date: evaluation.expected_end_date || '',
+      reason: evaluation.reason || '',
+      description: evaluation.description || evaluation.remarks || '',
+      pgm_version: evaluation.pgm_version || '',
+      material_info: evaluation.material_info || '',
+      capacity: evaluation.capacity || '',
+      interface_type: evaluation.interface_type || '',
+      form_factor: evaluation.form_factor || '',
+      temperature_grade: evaluation.temperature_grade || '',
+      processes: evaluation.processes || []
+    })
+    
+  } catch (error) {
+    ElMessage.error('获取评价数据失败')
+    console.error('Failed to fetch evaluation:', error)
+    router.push('/evaluations')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 组件挂载时执行
+onMounted(() => {
+  fetchEvaluation()
+})
 </script>
 
 <style scoped>

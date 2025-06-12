@@ -29,6 +29,12 @@ const routes = [
         component: () => import('../views/NewEvaluation.vue')
       },
       {
+        path: '/evaluations/:id/edit',
+        name: 'EditEvaluation',
+        component: () => import('../views/NewEvaluation.vue'),
+        props: true
+      },
+      {
         path: '/evaluations/:id',
         name: 'EvaluationDetail',
         component: () => import('../views/EvaluationDetail.vue'),
