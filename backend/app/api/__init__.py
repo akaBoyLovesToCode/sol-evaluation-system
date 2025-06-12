@@ -9,9 +9,4 @@ from .user import user_bp
 from .dashboard import dashboard_bp
 
 # Export all blueprints for easy importing
-__all__ = [
-    'auth_bp',
-    'evaluation_bp', 
-    'user_bp',
-    'dashboard_bp'
-] 
+__all__ = ["auth_bp", "evaluation_bp", "user_bp", "dashboard_bp"]

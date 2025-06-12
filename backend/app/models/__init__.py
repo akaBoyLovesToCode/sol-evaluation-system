@@ -10,11 +10,11 @@ from .system_config import SystemConfig
 
 # Export all models for easy importing
 __all__ = [
-    'User',
-    'Evaluation', 
-    'EvaluationDetail',
-    'EvaluationResult',
-    'Message',
-    'OperationLog',
-    'SystemConfig'
-] 
+    "User",
+    "Evaluation",
+    "EvaluationDetail",
+    "EvaluationResult",
+    "Message",
+    "OperationLog",
+    "SystemConfig",
+]

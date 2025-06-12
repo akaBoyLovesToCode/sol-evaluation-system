@@ -11,8 +11,8 @@ from .analytics_service import AnalyticsService
 from .backup_service import BackupService
 
 __all__ = [
-    'WorkflowService',
-    'NotificationService', 
-    'AnalyticsService',
-    'BackupService'
-] 
+    "WorkflowService",
+    "NotificationService",
+    "AnalyticsService",
+    "BackupService",
+]
