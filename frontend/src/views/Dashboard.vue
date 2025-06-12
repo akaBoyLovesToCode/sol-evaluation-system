@@ -266,17 +266,30 @@ const fetchPendingItems = async () => {
   }
 }
 
+const fetchMonthlyTrend = async () => {
+  try {
+    // 获取更大的日期范围，包括未来数据（测试环境可能有未来日期）
+    const endDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 未来一年
+    const startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 过去一年
+    
+    const response = await api.get(`/dashboard/statistics?start_date=${startDate}&end_date=${endDate}&group_by=month`)
+    return response.data.data
+  } catch (error) {
+    console.error('Failed to fetch monthly trend:', error)
+    return null
+  }
+}
+
 const fetchRecentActivities = async () => {
   try {
     // 使用dashboard overview中的recent_evaluations数据作为活动
     const response = await api.get('/dashboard/overview')
     recentActivities.value = (response.data.data.recent_evaluations || []).map(evaluation => ({
       id: evaluation.id,
-      type: 'evaluation',
-              title: `评价 ${evaluation.evaluation_number}`,
-      description: `${evaluation.evaluator_name} - ${evaluation.product_name}`,
-      timestamp: evaluation.created_at,
-      status: evaluation.status
+      action: 'create',
+      user_name: evaluation.evaluator_name || 'Unknown User',
+      description: `评价 ${evaluation.evaluation_number} - ${evaluation.product_name || 'Unknown Product'}`,
+      created_at: evaluation.created_at
     }))
   } catch (error) {
     console.error('Failed to fetch recent activities:', error)
@@ -323,10 +336,29 @@ const initStatusChart = (data) => {
   statusChart.setOption(option)
 }
 
-const initTrendChart = (data) => {
+const initTrendChart = async () => {
   if (!trendChartRef.value) return
 
   trendChart = echarts.init(trendChartRef.value)
+  
+  // 获取月度趋势数据
+  const trendData = await fetchMonthlyTrend()
+  
+  let periods = []
+  let newEvaluations = []
+  let completedEvaluations = []
+  
+  if (trendData && trendData.evaluations_over_time) {
+    periods = trendData.evaluations_over_time.map(item => item.period)
+    newEvaluations = trendData.evaluations_over_time.map(item => item.count)
+    
+    // 计算已完成评价数
+    if (trendData.completion_rates) {
+      completedEvaluations = trendData.completion_rates.map(item => item.completed || 0)
+    } else {
+      completedEvaluations = new Array(periods.length).fill(0)
+    }
+  }
   
   const option = {
     tooltip: {
@@ -337,7 +369,7 @@ const initTrendChart = (data) => {
     },
     xAxis: {
       type: 'category',
-      data: data.monthly_trend?.months || []
+      data: periods
     },
     yAxis: {
       type: 'value'
@@ -346,12 +378,20 @@ const initTrendChart = (data) => {
       {
         name: t('dashboard.newEvaluations'),
         type: 'line',
-        data: data.monthly_trend?.new_evaluations || []
+        data: newEvaluations,
+        smooth: true,
+        itemStyle: {
+          color: '#409EFF'
+        }
       },
       {
         name: t('dashboard.completedEvaluations'),
         type: 'line',
-        data: data.monthly_trend?.completed_evaluations || []
+        data: completedEvaluations,
+        smooth: true,
+        itemStyle: {
+          color: '#67C23A'
+        }
       }
     ]
   }
@@ -363,7 +403,7 @@ const refreshCharts = async () => {
   const data = await fetchDashboardData()
   if (data) {
     initStatusChart(data)
-    initTrendChart(data)
+    await initTrendChart()
   }
 }
 
@@ -395,7 +435,18 @@ const getActivityType = (action) => {
 }
 
 const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleString()
+  if (!dateString) return '--'
+  
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) {
+      return '--'
+    }
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+  } catch (error) {
+    console.error('Date formatting error:', error)
+    return '--'
+  }
 }
 
 onMounted(async () => {
@@ -405,7 +456,7 @@ onMounted(async () => {
   
   if (data) {
     initStatusChart(data)
-    initTrendChart(data)
+    await initTrendChart()
   }
   
   fetchPendingItems()

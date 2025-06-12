@@ -214,119 +214,110 @@ def get_detailed_statistics():
         if not current_user.has_permission("part_leader"):
             base_query = base_query.filter(Evaluation.evaluator_id == current_user_id)
 
-        # Evaluations over time
-        if group_by == "month":
-            date_format = "%Y-%m"
-            date_trunc = func.date_format(Evaluation.start_date, "%Y-%m")
-        elif group_by == "week":
-            date_format = "%Y-W%u"
-            date_trunc = func.date_format(Evaluation.start_date, "%Y-W%u")
-        else:  # day
-            date_format = "%Y-%m-%d"
-            date_trunc = func.date_format(Evaluation.start_date, "%Y-%m-%d")
+        # Get all evaluations and process in Python
+        evaluations = base_query.all()
+        
+        # Process data in Python to avoid SQL compatibility issues
+        period_counts = {}
+        completion_data = {}
+        
+        for evaluation in evaluations:
+            if not evaluation.start_date:
+                continue
+                
+            # Format period based on group_by parameter
+            if group_by == "month":
+                period = evaluation.start_date.strftime("%Y-%m")
+            elif group_by == "week":
+                year, week, _ = evaluation.start_date.isocalendar()
+                period = f"{year}-W{week:02d}"
+            else:  # day
+                period = evaluation.start_date.strftime("%Y-%m-%d")
+            
+            # Count evaluations
+            period_counts[period] = period_counts.get(period, 0) + 1
+            
+            # Count completions
+            if period not in completion_data:
+                completion_data[period] = {"total": 0, "completed": 0}
+            completion_data[period]["total"] += 1
+            if evaluation.status == "completed":
+                completion_data[period]["completed"] += 1
 
-        evaluations_over_time = db.session.query(
-            date_trunc.label("period"), func.count(Evaluation.id).label("count")
-        ).filter(Evaluation.start_date >= start_date, Evaluation.start_date <= end_date)
-
-        if not current_user.has_permission("part_leader"):
-            evaluations_over_time = evaluations_over_time.filter(
-                Evaluation.evaluator_id == current_user_id
-            )
-
-        evaluations_over_time = (
-            evaluations_over_time.group_by(date_trunc).order_by(date_trunc).all()
-        )
-
-        # Completion rate over time
-        completion_rate_data = db.session.query(
-            date_trunc.label("period"),
-            func.count(Evaluation.id).label("total"),
-            func.sum(func.case([(Evaluation.status == "completed", 1)], else_=0)).label(
-                "completed"
-            ),
-        ).filter(Evaluation.start_date >= start_date, Evaluation.start_date <= end_date)
-
-        if not current_user.has_permission("part_leader"):
-            completion_rate_data = completion_rate_data.filter(
-                Evaluation.evaluator_id == current_user_id
-            )
-
-        completion_rate_data = (
-            completion_rate_data.group_by(date_trunc).order_by(date_trunc).all()
-        )
-
+        # Convert to expected format
+        evaluations_over_time = [
+            {"period": period, "count": count}
+            for period, count in sorted(period_counts.items())
+        ]
+        
         # Calculate completion rates
         completion_rates = []
-        for period, total, completed in completion_rate_data:
+        for period, data in sorted(completion_data.items()):
+            total = data["total"]
+            completed = data["completed"]
             rate = (completed / total * 100) if total > 0 else 0
-            completion_rates.append(
-                {
-                    "period": period,
-                    "total": total,
-                    "completed": completed,
-                    "completion_rate": round(rate, 2),
-                }
-            )
+            completion_rates.append({
+                "period": period,
+                "total": total,
+                "completed": completed,
+                "completion_rate": round(rate, 2),
+            })
 
-        # Product statistics
-        product_stats = db.session.query(
-            Evaluation.product_name, func.count(Evaluation.id).label("count")
-        ).filter(Evaluation.start_date >= start_date, Evaluation.start_date <= end_date)
+        # Product statistics - simplified
+        product_counts = {}
+        for evaluation in evaluations:
+            product = evaluation.product_name or "Unknown"
+            product_counts[product] = product_counts.get(product, 0) + 1
+        
+        product_statistics = [
+            {"product": product, "count": count}
+            for product, count in sorted(product_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+        ]
 
-        if not current_user.has_permission("part_leader"):
-            product_stats = product_stats.filter(
-                Evaluation.evaluator_id == current_user_id
-            )
-
-        product_stats = (
-            product_stats.group_by(Evaluation.product_name)
-            .order_by(func.count(Evaluation.id).desc())
-            .limit(10)
-            .all()
-        )
-
-        # Evaluator performance (for leaders)
+        # Evaluator performance - simplified for leaders only
         evaluator_performance = []
         if current_user.has_permission("part_leader"):
-            evaluator_stats = (
-                db.session.query(
-                    User.full_name,
-                    func.count(Evaluation.id).label("total_evaluations"),
-                    func.sum(
-                        func.case([(Evaluation.status == "completed", 1)], else_=0)
-                    ).label("completed_evaluations"),
-                    func.avg(
-                        func.datediff(
-                            func.coalesce(
-                                Evaluation.completion_date, func.current_date()
-                            ),
-                            Evaluation.start_date,
-                        )
-                    ).label("avg_duration"),
-                )
-                .join(User, Evaluation.evaluator_id == User.id)
-                .filter(
-                    Evaluation.start_date >= start_date,
-                    Evaluation.start_date <= end_date,
-                )
-                .group_by(User.id, User.full_name)
-                .order_by(func.count(Evaluation.id).desc())
-                .limit(10)
-                .all()
-            )
-
-            for name, total, completed, avg_duration in evaluator_stats:
-                completion_rate = (completed / total * 100) if total > 0 else 0
-                evaluator_performance.append(
-                    {
-                        "evaluator_name": name,
-                        "total_evaluations": total,
-                        "completed_evaluations": completed,
-                        "completion_rate": round(completion_rate, 2),
-                        "avg_duration_days": round(float(avg_duration or 0), 1),
+            evaluator_data = {}
+            for evaluation in evaluations:
+                evaluator_id = evaluation.evaluator_id
+                evaluator_name = evaluation.evaluator.full_name if evaluation.evaluator else 'Unknown'
+                
+                if evaluator_id not in evaluator_data:
+                    evaluator_data[evaluator_id] = {
+                        'name': evaluator_name,
+                        'total': 0,
+                        'completed': 0,
+                        'durations': []
                     }
-                )
+                
+                evaluator_data[evaluator_id]['total'] += 1
+                
+                if evaluation.status == "completed":
+                    evaluator_data[evaluator_id]['completed'] += 1
+                    
+                    # Calculate duration if both dates exist
+                    if evaluation.start_date and evaluation.completion_date:
+                        duration = (evaluation.completion_date - evaluation.start_date).days
+                        evaluator_data[evaluator_id]['durations'].append(duration)
+            
+            # Convert to expected format
+            for evaluator_id, data in evaluator_data.items():
+                total = data['total']
+                completed = data['completed']
+                completion_rate = (completed / total * 100) if total > 0 else 0
+                avg_duration = sum(data['durations']) / len(data['durations']) if data['durations'] else 0
+                
+                evaluator_performance.append({
+                    "evaluator_name": data['name'],
+                    "total_evaluations": total,
+                    "completed_evaluations": completed,
+                    "completion_rate": round(completion_rate, 2),
+                    "avg_duration_days": round(avg_duration, 1),
+                })
+            
+            # Sort by total evaluations and limit to 10
+            evaluator_performance.sort(key=lambda x: x['total_evaluations'], reverse=True)
+            evaluator_performance = evaluator_performance[:10]
 
         return create_response(
             data={
@@ -335,24 +326,20 @@ def get_detailed_statistics():
                     "end_date": end_date.isoformat(),
                     "group_by": group_by,
                 },
-                "evaluations_over_time": [
-                    {"period": period, "count": count}
-                    for period, count in evaluations_over_time
-                ],
+                "evaluations_over_time": evaluations_over_time,
                 "completion_rates": completion_rates,
-                "product_statistics": [
-                    {"product": product, "count": count}
-                    for product, count in product_stats
-                ],
+                "product_statistics": product_statistics,
                 "evaluator_performance": evaluator_performance,
             },
             message="Detailed statistics retrieved successfully",
         )
 
     except Exception as e:
-        current_app.logger.error(f"Detailed statistics error: {str(e)}")
+        import traceback
+        error_details = traceback.format_exc()
+        current_app.logger.error(f"Detailed statistics error: {str(e)}\n{error_details}")
         return create_response(
-            message="Failed to retrieve detailed statistics", status_code=500
+            message=f"Failed to retrieve detailed statistics: {str(e)}", status_code=500
         )
 
 
