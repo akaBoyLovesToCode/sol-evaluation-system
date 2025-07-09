@@ -22,7 +22,9 @@
     "resume": "재개",
     "other": "기타",
     "confirmCancel": "취소 확인",
-    "responseError": "응답 데이터 형식 오류"
+    "responseError": "응답 데이터 형식 오류",
+    "confirmAction": "작업 확인",
+    "confirmDelete": "삭제 확인"
   },
   "auth": {
     "login": "로그인",
@@ -58,7 +60,8 @@
       "startDate": "시작 날짜를 선택하세요",
       "expectedEndDate": "예상 종료 날짜를 선택하세요",
       "reason": "평가 이유를 선택하세요",
-      "description": "평가 설명을 입력하세요"
+      "description": "평가 설명을 입력하세요",
+      "actualEndDate": "실제 종료일은 비워둘 수 없습니다"
     }
   },
   "menu": {
@@ -155,7 +158,8 @@
       "evaluationNumber": "평가 번호를 입력하세요",
       "evaluationType": "평가 유형을 선택하세요",
       "status": "상태를 선택하세요",
-      "evaluator": "평가자를 입력하세요"
+      "evaluator": "평가자를 입력하세요",
+      "actualEndDate": "실제 종료일을 선택하세요"
     },
     "placeholders": {
       "productName": "제품명을 입력하세요",
@@ -205,7 +209,14 @@
       "prq": "PRQ (생산 준비도 승인)",
       "production_test": "생산 테스트",
       "aql": "AQL (허용 품질 수준)"
-    }
+    },
+    "actualEndDate": "실제 종료일",
+    "finish": "평가 완료",
+    "finishConfirm": "이 평가를 완료하시겠습니까? 완료된 평가는 수정할 수 없습니다.",
+    "finishSuccess": "평가가 성공적으로 완료되었습니다!",
+    "finishError": "평가 완료에 실패했습니다. 다시 시도해주세요.",
+    "deleteConfirm": "이 평가를 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.",
+    "deleteSuccess": "평가가 성공적으로 삭제되었습니다!"
   },
   "status": {
     "draft": "초안",
@@ -231,4 +242,4 @@
     "comingSoon": "보고서 기능 개발 중",
     "comingSoonDesc": "통계 보고서 기능이 개발 중입니다. 곧 만나보실 수 있습니다"
   }
-} 
+}

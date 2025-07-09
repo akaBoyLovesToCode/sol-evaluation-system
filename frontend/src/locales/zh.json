@@ -22,7 +22,9 @@
     "resume": "恢复",
     "other": "其他",
     "confirmCancel": "确认取消",
-    "responseError": "响应数据格式错误"
+    "responseError": "响应数据格式错误",
+    "confirmAction": "确认操作",
+    "confirmDelete": "确认删除"
   },
   "auth": {
     "login": "登录",
@@ -58,7 +60,8 @@
       "startDate": "请选择开始日期",
       "expectedEndDate": "请选择预计结束日期",
       "reason": "请选择评价原因",
-      "description": "请输入评价描述"
+      "description": "请输入评价描述",
+      "actualEndDate": "实际结束日期不能为空"
     }
   },
   "menu": {
@@ -155,7 +158,8 @@
       "evaluationNumber": "请输入评价编号",
       "evaluationType": "请选择评价类型",
       "status": "请选择状态",
-      "evaluator": "请输入评价人"
+      "evaluator": "请输入评价人",
+      "actualEndDate": "请选择实际结束日期"
     },
     "placeholders": {
       "productName": "请输入产品名称",
@@ -205,7 +209,14 @@
       "prq": "PRQ (Production Readiness Qualification)",
       "production_test": "生产测试",
       "aql": "AQL (Acceptable Quality Level)"
-    }
+    },
+    "actualEndDate": "实际结束日期",
+    "finish": "完成评价",
+    "finishConfirm": "确定要完成此评价吗？完成后的评价将无法修改。",
+    "finishSuccess": "评价已成功完成！",
+    "finishError": "完成评价失败，请重试。",
+    "deleteConfirm": "确定要删除此评价吗？删除后将无法恢复。",
+    "deleteSuccess": "评价已成功删除！"
   },
   "status": {
     "draft": "草稿",
@@ -231,4 +242,4 @@
     "comingSoon": "报告功能开发中",
     "comingSoonDesc": "统计报告功能正在开发中，敬请期待"
   }
-} 
+}

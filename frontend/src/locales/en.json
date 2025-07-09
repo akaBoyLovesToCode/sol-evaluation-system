@@ -22,7 +22,9 @@
     "resume": "Resume",
     "other": "Other",
     "confirmCancel": "Confirm Cancel",
-    "responseError": "Response data format error"
+    "responseError": "Response data format error",
+    "confirmAction": "Confirm Action",
+    "confirmDelete": "Confirm Delete"
   },
   "auth": {
     "login": "Login",
@@ -58,7 +60,8 @@
       "startDate": "Please select start date",
       "expectedEndDate": "Please select expected end date",
       "reason": "Please select evaluation reason",
-      "description": "Please enter evaluation description"
+      "description": "Please enter evaluation description",
+      "actualEndDate": "Actual end date cannot be empty"
     }
   },
   "menu": {
@@ -155,7 +158,8 @@
       "evaluationNumber": "Enter evaluation number",
       "evaluationType": "Select evaluation type",
       "status": "Select status",
-      "evaluator": "Enter evaluator"
+      "evaluator": "Enter evaluator",
+      "actualEndDate": "Select actual end date"
     },
     "placeholders": {
       "productName": "Enter product name",
@@ -205,7 +209,14 @@
       "prq": "PRQ (Production Readiness Qualification)",
       "production_test": "Production Test",
       "aql": "AQL (Acceptable Quality Level)"
-    }
+    },
+    "actualEndDate": "Actual End Date",
+    "finish": "Finish Evaluation",
+    "finishConfirm": "Are you sure you want to finish this evaluation? A finished evaluation cannot be modified.",
+    "finishSuccess": "Evaluation completed successfully!",
+    "finishError": "Failed to finish evaluation, please try again.",
+    "deleteConfirm": "Are you sure you want to delete this evaluation? It cannot be recovered after deletion.",
+    "deleteSuccess": "Evaluation deleted successfully!"
   },
   "status": {
     "draft": "Draft",
@@ -231,4 +242,4 @@
     "comingSoon": "Report Feature Under Development",
     "comingSoonDesc": "The statistical report feature is under development, please stay tuned"
   }
-} 
+}
