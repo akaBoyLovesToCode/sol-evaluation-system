@@ -344,15 +344,21 @@ const canReject = computed(() => {
 })
 
 const canPause = computed(() => {
-  return evaluation.value?.status === 'in_progress'
+  if (!evaluation.value) return false
+  return evaluation.value.status === 'in_progress' && 
+         (authStore.user.id === evaluation.value.evaluator_id || authStore.isAdmin)
 })
 
 const canResume = computed(() => {
-  return evaluation.value?.status === 'paused'
+  if (!evaluation.value) return false
+  return evaluation.value.status === 'paused' && 
+         (authStore.user.id === evaluation.value.evaluator_id || authStore.isAdmin)
 })
 
 const canCancel = computed(() => {
-  return ['in_progress', 'paused', 'pending_approval'].includes(evaluation.value?.status)
+  if (!evaluation.value) return false
+  return ['in_progress', 'paused', 'pending_approval'].includes(evaluation.value.status) &&
+         (authStore.user.id === evaluation.value.evaluator_id || authStore.isAdmin)
 })
 
 const processSteps = computed(() => {
@@ -421,7 +427,19 @@ const handleOperation = async (command) => {
       type: 'warning'
     })
     
-    await api.put(`/evaluations/${evaluation.value.id}/${command}`)
+    // Call appropriate API endpoint based on command
+    if (command === 'approve') {
+      await api.post(`/evaluations/${evaluation.value.id}/approve`)
+    } else if (command === 'reject') {
+      await api.post(`/evaluations/${evaluation.value.id}/reject`)
+    } else if (command === 'pause') {
+      await api.put(`/evaluations/${evaluation.value.id}/status`, { status: 'paused' })
+    } else if (command === 'resume') {
+      await api.put(`/evaluations/${evaluation.value.id}/status`, { status: 'in_progress' })
+    } else if (command === 'cancel') {
+      await api.put(`/evaluations/${evaluation.value.id}/status`, { status: 'cancelled' })
+    }
+    
     ElMessage.success('操作成功')
     fetchEvaluation()
     
@@ -516,8 +534,14 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
-onMounted(() => {
-  fetchEvaluation()
+onMounted(async () => {
+  // 首先确保用户信息已加载
+  if (!authStore.user && authStore.token) {
+    await authStore.checkAuth()
+  }
+  
+  // 然后获取评估信息
+  await fetchEvaluation()
 })
 </script>
 
