@@ -70,6 +70,21 @@
               />
             </el-form-item>
           </el-col>
+          <el-col :span="12" v-if="isEditMode">
+            <el-form-item :label="$t('evaluation.actualEndDate')" prop="end_date">
+              <el-date-picker
+                v-model="form.end_date"
+                type="date"
+                :placeholder="$t('evaluation.placeholder.actualEndDate')"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item :label="$t('evaluation.reason')" prop="reason">
               <el-select v-model="form.reason" :placeholder="$t('evaluation.placeholder.reason')" style="width: 100%">
@@ -182,12 +197,29 @@
 
       <div class="form-actions fade-in-up" style="animation-delay: 0.7s">
         <el-button @click="handleCancel">{{ $t('common.cancel') }}</el-button>
-        <el-button type="primary" @click="handleSave(false)" :loading="saving">
-          {{ $t('evaluation.saveDraft') }}
-        </el-button>
-        <el-button type="success" @click="handleSave(true)" :loading="submitting">
-          {{ $t('evaluation.submit') }}
-        </el-button>
+        
+        <!-- Create Mode Buttons -->
+        <template v-if="!isEditMode">
+          <el-button type="primary" @click="handleSave(false)" :loading="saving">
+            {{ $t('evaluation.saveDraft') }}
+          </el-button>
+          <el-button type="success" @click="handleSave(true)" :loading="submitting">
+            {{ $t('evaluation.submit') }}
+          </el-button>
+        </template>
+
+        <!-- Edit Mode Buttons -->
+        <template v-if="isEditMode">
+          <el-button type="danger" @click="handleDelete" :loading="deleting">
+            {{ $t('common.delete') }}
+          </el-button>
+          <el-button type="primary" @click="handleSave(false)" :loading="saving">
+            {{ $t('common.save') }}
+          </el-button>
+          <el-button type="success" @click="handleFinish" :loading="finishing">
+            {{ $t('evaluation.finish') }}
+          </el-button>
+        </template>
       </div>
     </el-form>
   </div>
@@ -207,6 +239,8 @@ const formRef = ref()
 const saving = ref(false)
 const submitting = ref(false)
 const loading = ref(false)
+const deleting = ref(false)
+const finishing = ref(false)
 
 // 检测是否为编辑模式
 const isEditMode = computed(() => route.name === 'EditEvaluation' && route.params.id)
@@ -218,6 +252,7 @@ const form = reactive({
   part_number: '',
   start_date: '',
   expected_end_date: '',
+  end_date: '', // Actual end date
   reason: '',
   description: '',
   pgm_version: '',
@@ -250,6 +285,16 @@ const rules = computed(() => ({
   ],
   description: [
     { required: true, message: t('validation.requiredField.description'), trigger: 'blur' }
+  ],
+  end_date: [
+    // Conditional validation: required only when finishing
+    { validator: (rule, value, callback) => {
+      if (finishing.value && !value) {
+        callback(new Error(t('validation.requiredField.actualEndDate')))
+      } else {
+        callback()
+      }
+    }, trigger: 'change' }
   ]
 }))
 
@@ -275,9 +320,27 @@ const handleCancel = async () => {
     )
     router.push('/evaluations')
   } catch {
-    // 用户取消
+    // User cancelled
   }
 }
+
+const buildPayload = () => ({
+  evaluation_type: form.evaluation_type,
+  product_name: form.product_name,
+  part_number: form.part_number,
+  start_date: form.start_date,
+  expected_end_date: form.expected_end_date,
+  end_date: form.end_date || null,
+  reason: form.reason,
+  description: form.description,
+  pgm_version: form.pgm_version,
+  material_info: form.material_info,
+  capacity: form.capacity,
+  interface_type: form.interface_type,
+  form_factor: form.form_factor,
+  temperature_grade: form.temperature_grade,
+  processes: form.processes,
+})
 
 const handleSave = async (submit = false) => {
   if (!formRef.value) return
@@ -288,39 +351,36 @@ const handleSave = async (submit = false) => {
     const loadingRef = submit ? submitting : saving
     loadingRef.value = true
     
-    const data = {
-      evaluation_type: form.evaluation_type,
-      product_name: form.product_name,
-      part_number: form.part_number,
-      start_date: form.start_date,
-      evaluation_reason: form.reason,
-      remarks: form.description,
-      status: submit ? 'in_progress' : 'draft'
+    const payload = buildPayload()
+    
+    // Determine status based on action
+    if (isEditMode.value) {
+      // In edit mode, "Save" keeps the current status, it doesn't revert to draft
+      // The backend should handle preserving the status if not provided.
+    } else {
+      payload.status = submit ? 'in_progress' : 'draft'
     }
     
     let response
     if (isEditMode.value) {
-      // 编辑模式：使用PUT请求更新
-      response = await api.put(`/evaluations/${evaluationId.value}`, data)
+      response = await api.put(`/evaluations/${evaluationId.value}`, payload)
+      ElMessage.success(t('common.saveSuccess'))
+      // Stay on the page after saving in edit mode
     } else {
-      // 新建模式：使用POST请求创建
-      response = await api.post('/evaluations', data)
-    }
-    
-    ElMessage.success(submit ? t('evaluation.submitSuccess') : t('evaluation.saveSuccess'))
-    
-    // 检查响应数据结构并跳转
-    const targetId = isEditMode.value ? evaluationId.value : response.data?.data?.evaluation?.id
-    if (targetId) {
-      router.push(`/evaluations/${targetId}`)
-    } else if (!isEditMode.value) {
-      console.error('Invalid response structure:', response.data)
-      ElMessage.error(t('common.responseError'))
+      response = await api.post('/evaluations', payload)
+      ElMessage.success(submit ? t('evaluation.submitSuccess') : t('evaluation.saveSuccess'))
+      const targetId = response.data?.data?.evaluation?.id
+      if (targetId) {
+        router.push(`/evaluations/${targetId}`)
+      } else {
+        console.error('Invalid response structure:', response.data)
+        ElMessage.error(t('common.responseError'))
+      }
     }
     
   } catch (error) {
     if (error.name !== 'ValidationError') {
-      ElMessage.error(submit ? t('evaluation.submitError') : t('evaluation.saveError'))
+      ElMessage.error(isEditMode.value ? t('common.saveError') : (submit ? t('evaluation.submitError') : t('evaluation.saveError')))
       console.error('Save failed:', error)
     }
   } finally {
@@ -329,7 +389,67 @@ const handleSave = async (submit = false) => {
   }
 }
 
-// 获取评价数据（编辑模式）
+const handleFinish = async () => {
+  if (!formRef.value) return
+  finishing.value = true // To trigger validation
+  
+  try {
+    await formRef.value.validate()
+    
+    await ElMessageBox.confirm(
+      t('evaluation.finishConfirm'),
+      t('common.confirmAction'),
+      { type: 'info' }
+    )
+    
+    const payload = buildPayload()
+    payload.status = 'finished'
+    
+    await api.put(`/evaluations/${evaluationId.value}`, payload)
+    
+    ElMessage.success(t('evaluation.finishSuccess'))
+    router.push(`/evaluations/${evaluationId.value}`)
+    
+  } catch (error) {
+    if (error && error.name !== 'ValidationError' && error !== 'cancel') {
+      ElMessage.error(t('evaluation.finishError'))
+      console.error('Finish failed:', error)
+    }
+  } finally {
+    finishing.value = false
+  }
+}
+
+const handleDelete = async () => {
+  if (!isEditMode.value) return
+  
+  try {
+    await ElMessageBox.confirm(
+      t('evaluation.deleteConfirm'),
+      t('common.confirmDelete'),
+      {
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning'
+      }
+    )
+    
+    deleting.value = true
+    await api.delete(`/evaluations/${evaluationId.value}`)
+    
+    ElMessage.success(t('evaluation.deleteSuccess'))
+    router.push('/evaluations')
+    
+  } catch (error) {
+    if (error && error !== 'cancel') {
+      ElMessage.error(t('common.deleteError'))
+      console.error('Delete failed:', error)
+    }
+  } finally {
+    deleting.value = false
+  }
+}
+
 const fetchEvaluation = async () => {
   if (!isEditMode.value) return
   
@@ -338,14 +458,14 @@ const fetchEvaluation = async () => {
     const response = await api.get(`/evaluations/${evaluationId.value}`)
     const evaluation = response.data.data.evaluation
     
-    // 填充表单数据
     Object.assign(form, {
       evaluation_type: evaluation.evaluation_type || '',
       product_name: evaluation.product_name || '',
       part_number: evaluation.part_number || '',
       start_date: evaluation.start_date || '',
       expected_end_date: evaluation.expected_end_date || '',
-      reason: evaluation.reason || '',
+      end_date: evaluation.end_date || '',
+      reason: evaluation.reason || evaluation.evaluation_reason || '',
       description: evaluation.description || evaluation.remarks || '',
       pgm_version: evaluation.pgm_version || '',
       material_info: evaluation.material_info || '',
@@ -365,7 +485,6 @@ const fetchEvaluation = async () => {
   }
 }
 
-// 组件挂载时执行
 onMounted(() => {
   fetchEvaluation()
 })
@@ -566,6 +685,17 @@ onMounted(() => {
   box-shadow: 0 8px 24px rgba(67, 233, 123, 0.4);
 }
 
+.form-actions .el-button--danger {
+    background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+    border-color: transparent;
+    color: white;
+}
+
+.form-actions .el-button--danger:hover {
+  box-shadow: 0 8px 24px rgba(255, 117, 140, 0.4);
+}
+
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .evaluation-form {
@@ -582,3 +712,4 @@ onMounted(() => {
   }
 }
 </style> 
+ 
