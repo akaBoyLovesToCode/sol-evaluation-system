@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mysql:
     # Use MySQL 8.0 as specified in README.md requirements
@@ -10,12 +8,12 @@ services:
     # Environment variables for MySQL configuration
     environment:
       # Root password for MySQL admin access
-      MYSQL_ROOT_PASSWORD: eval_root_2024
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       # Create the database as specified in README.md
       MYSQL_DATABASE: evaluation
       # Create a dedicated user for the application
       MYSQL_USER: eval_user
-      MYSQL_PASSWORD: eval_pass_2024
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       # Set timezone to UTC for consistency
       TZ: UTC
     
@@ -49,28 +47,7 @@ services:
       interval: 30s
       start_period: 40s
 
-  # Optional: phpMyAdmin for database management (can be removed in production)
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin:latest
-    container_name: evaluation_phpmyadmin
-    restart: unless-stopped
-    
-    # Environment variables for phpMyAdmin
-    environment:
-      PMA_HOST: mysql
-      PMA_PORT: 3306
-      PMA_USER: root
-      PMA_PASSWORD: eval_root_2024
-      MYSQL_ROOT_PASSWORD: eval_root_2024
-    
-    # Port mapping for web interface
-    ports:
-      - "8080:80"
-    
-    # Ensure MySQL starts before phpMyAdmin
-    depends_on:
-      mysql:
-        condition: service_healthy
+  
 
 # Named volumes for data persistence
 volumes:

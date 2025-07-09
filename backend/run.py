@@ -7,10 +7,11 @@ For production deployment, use a WSGI server like Gunicorn.
 """
 
 import os
+
+import click
 from app import create_app, db
 from app.models import SystemConfig
 from flask.cli import with_appcontext
-import click
 
 # Create Flask application
 app = create_app()
