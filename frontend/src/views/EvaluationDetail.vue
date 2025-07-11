@@ -17,14 +17,15 @@
           :icon="Edit"
           @click="$router.push(`/evaluations/${evaluation.id}/edit`)"
         >
-          编辑
+          {{ $t('common.edit') }}
         </el-button>
+        
         <el-dropdown 
           v-if="canOperate"
           @command="handleOperation"
         >
           <el-button type="primary" :icon="MoreFilled">
-            操作
+            {{ $t('common.operations') }}
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
@@ -33,28 +34,28 @@
                 command="approve"
                 :icon="Check"
               >
-                审批通过
+                {{ $t('evaluation.approve') }}
               </el-dropdown-item>
               <el-dropdown-item 
                 v-if="canReject" 
                 command="reject"
                 :icon="Close"
               >
-                审批拒绝
+                {{ $t('evaluation.reject') }}
               </el-dropdown-item>
               <el-dropdown-item 
                 v-if="canPause" 
                 command="pause"
                 :icon="VideoPause"
               >
-                暂停
+                {{ $t('evaluation.pause') }}
               </el-dropdown-item>
               <el-dropdown-item 
                 v-if="canResume" 
                 command="resume"
                 :icon="VideoPlay"
               >
-                恢复
+                {{ $t('evaluation.resume') }}
               </el-dropdown-item>
               <el-dropdown-item 
                 v-if="canCancel" 
@@ -62,7 +63,7 @@
                 :icon="Close"
                 divided
               >
-                取消
+                {{ $t('evaluation.cancel') }}
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -74,42 +75,42 @@
       <el-row :gutter="20">
         <!-- 左侧主要内容 -->
         <el-col :span="16">
-          <!-- 基本信息 -->
+          <!-- {{ $t('evaluation.basicInformation') }} -->
           <el-card class="info-card">
             <template #header>
-              <span>基本信息</span>
+              <span>{{ $t('evaluation.basicInformation') }}</span>
             </template>
             <el-descriptions :column="2" border>
-              <el-descriptions-item label="评价编号">
+              <el-descriptions-item :label="$t('evaluation.evaluationNumber')">
                 {{ evaluation.evaluation_number }}
               </el-descriptions-item>
-              <el-descriptions-item label="评价类型">
+              <el-descriptions-item :label="$t('evaluation.evaluationType')">
                 <el-tag :type="evaluation.evaluation_type === 'new_product' ? 'primary' : 'success'">
                   {{ $t(`evaluation.type.${evaluation.evaluation_type}`) }}
                 </el-tag>
               </el-descriptions-item>
-                          <el-descriptions-item label="产品名称">
+                          <el-descriptions-item :label="$t('evaluation.productName')">
               {{ evaluation.product_name }}
               </el-descriptions-item>
-              <el-descriptions-item label="料号">
+              <el-descriptions-item :label="$t('evaluation.partNumber')">
                 {{ evaluation.part_number }}
               </el-descriptions-item>
-              <el-descriptions-item label="评价人">
+              <el-descriptions-item :label="$t('evaluation.evaluator')">
                 {{ evaluation.evaluator_name }}
               </el-descriptions-item>
-              <el-descriptions-item label="开始日期">
+              <el-descriptions-item :label="$t('evaluation.startDate')">
                 {{ formatDate(evaluation.start_date) }}
               </el-descriptions-item>
-              <el-descriptions-item label="预计结束日期">
+              <el-descriptions-item :label="$t('evaluation.expectedEndDate')">
                 {{ formatDate(evaluation.expected_end_date) }}
               </el-descriptions-item>
-              <el-descriptions-item label="实际结束日期">
+              <el-descriptions-item :label="$t('evaluation.actualEndDate')">
                 {{ evaluation.end_date ? formatDate(evaluation.end_date) : '-' }}
               </el-descriptions-item>
-              <el-descriptions-item label="评价原因">
+              <el-descriptions-item :label="$t('evaluation.reason')">
                 {{ getReasonText(evaluation.reason) }}
               </el-descriptions-item>
-              <el-descriptions-item label="进度">
+              <el-descriptions-item :label="$t('evaluation.progress')">
                 <el-progress 
                   :percentage="evaluation.progress || 0" 
                   :stroke-width="8"
@@ -118,42 +119,42 @@
             </el-descriptions>
             
             <div class="description-section" v-if="evaluation.description">
-              <h4>评价描述</h4>
+              <h4>{{ $t('evaluation.evaluationDescription') }}</h4>
               <p>{{ evaluation.description }}</p>
             </div>
           </el-card>
 
-          <!-- 技术规格 -->
+          <!-- {{ $t('evaluation.technicalSpecifications') }} -->
           <el-card class="info-card">
             <template #header>
-              <span>技术规格</span>
+              <span>{{ $t('evaluation.technicalSpecifications') }}</span>
             </template>
             <el-descriptions :column="2" border>
-              <el-descriptions-item label="PGM版本">
+              <el-descriptions-item :label="$t('evaluation.pgmVersion')">
                 {{ evaluation.pgm_version || '-' }}
               </el-descriptions-item>
-              <el-descriptions-item label="材料信息">
+              <el-descriptions-item :label="$t('evaluation.materialInfo')">
                 {{ evaluation.material_info || '-' }}
               </el-descriptions-item>
-              <el-descriptions-item label="容量">
+              <el-descriptions-item :label="$t('evaluation.capacity')">
                 {{ evaluation.capacity || '-' }}
               </el-descriptions-item>
-              <el-descriptions-item label="接口类型">
+              <el-descriptions-item :label="$t('evaluation.interfaceType')">
                 {{ evaluation.interface_type || '-' }}
               </el-descriptions-item>
-              <el-descriptions-item label="外形规格">
+              <el-descriptions-item :label="$t('evaluation.formFactor')">
                 {{ evaluation.form_factor || '-' }}
               </el-descriptions-item>
-              <el-descriptions-item label="温度等级">
+              <el-descriptions-item :label="$t('evaluation.temperatureGrade')">
                 {{ getTemperatureGradeText(evaluation.temperature_grade) }}
               </el-descriptions-item>
             </el-descriptions>
           </el-card>
 
-          <!-- 评价流程 -->
+          <!-- {{ $t('evaluation.evaluationProcess') }} -->
           <el-card class="info-card">
             <template #header>
-              <span>评价流程</span>
+              <span>{{ $t('evaluation.evaluationProcess') }}</span>
             </template>
             <div class="process-timeline">
               <el-timeline>
@@ -178,10 +179,10 @@
             </div>
           </el-card>
 
-          <!-- 评价结果 -->
+          <!-- {{ $t('evaluation.evaluationResults') }} -->
           <el-card class="info-card" v-if="evaluation.results && evaluation.results.length > 0">
             <template #header>
-              <span>评价结果</span>
+              <span>{{ $t('evaluation.evaluationResults') }}</span>
             </template>
             <div class="results-section">
               <div 
@@ -192,13 +193,13 @@
                 <div class="result-header">
                   <h4>{{ result.test_item }}</h4>
                   <el-tag :type="result.result === 'pass' ? 'success' : 'danger'">
-                    {{ result.result === 'pass' ? '通过' : '失败' }}
+                    {{ result.result === 'pass' ? $t('evaluation.pass') : $t('evaluation.fail') }}
                   </el-tag>
                 </div>
                 <div class="result-content">
-                  <p><strong>测试条件：</strong>{{ result.test_conditions }}</p>
-                  <p><strong>测试结果：</strong>{{ result.test_result }}</p>
-                  <p v-if="result.remarks"><strong>备注：</strong>{{ result.remarks }}</p>
+                  <p><strong>{{ $t('evaluation.testConditions') }}：</strong>{{ result.test_conditions }}</p>
+                  <p><strong>{{ $t('evaluation.testResult') }}：</strong>{{ result.test_result }}</p>
+                  <p v-if="result.remarks"><strong>{{ $t('evaluation.remarks') }}：</strong>{{ result.remarks }}</p>
                 </div>
               </div>
             </div>
@@ -207,49 +208,49 @@
 
         <!-- 右侧边栏 -->
         <el-col :span="8">
-          <!-- 状态信息 -->
+          <!-- {{ $t('evaluation.statusInformation') }} -->
           <el-card class="sidebar-card">
             <template #header>
-              <span>状态信息</span>
+              <span>{{ $t('evaluation.statusInformation') }}</span>
             </template>
             <div class="status-info">
               <div class="status-item">
-                <span class="label">当前状态：</span>
+                <span class="label">{{ $t('evaluation.currentStatus') }}：</span>
                 <el-tag :type="getStatusTagType(evaluation.status)">
                   {{ $t(`status.${evaluation.status}`) }}
                 </el-tag>
               </div>
               <div class="status-item">
-                <span class="label">创建时间：</span>
+                <span class="label">{{ $t('evaluation.createdAt') }}：</span>
                 <span>{{ formatDateTime(evaluation.created_at) }}</span>
               </div>
               <div class="status-item">
-                <span class="label">更新时间：</span>
+                <span class="label">{{ $t('evaluation.updatedAt') }}：</span>
                 <span>{{ formatDateTime(evaluation.updated_at) }}</span>
               </div>
               <div class="status-item" v-if="evaluation.approved_by">
-                <span class="label">审批人：</span>
+                <span class="label">{{ $t('evaluation.approvedBy') }}：</span>
                 <span>{{ evaluation.approved_by }}</span>
               </div>
               <div class="status-item" v-if="evaluation.approved_at">
-                <span class="label">审批时间：</span>
+                <span class="label">{{ $t('evaluation.approvedAt') }}：</span>
                 <span>{{ formatDateTime(evaluation.approved_at) }}</span>
               </div>
             </div>
           </el-card>
 
-          <!-- 相关文件 -->
+          <!-- {{ $t('evaluation.relatedFiles') }} -->
           <el-card class="sidebar-card">
             <template #header>
               <div class="card-header">
-                <span>相关文件</span>
+                <span>{{ $t('evaluation.relatedFiles') }}</span>
                 <el-button 
                   v-if="canEdit"
                   size="small" 
                   :icon="Plus"
                   @click="handleUploadFile"
                 >
-                  上传
+                  {{ $t('evaluation.upload') }}
                 </el-button>
               </div>
             </template>
@@ -273,15 +274,15 @@
                 />
               </div>
               <div v-if="!evaluation.files || evaluation.files.length === 0" class="empty-files">
-                暂无相关文件
+                {{ $t('evaluation.noRelatedFiles') }}
               </div>
             </div>
           </el-card>
 
-          <!-- 操作日志 -->
+          <!-- {{ $t('evaluation.operationLogs') }} -->
           <el-card class="sidebar-card">
             <template #header>
-              <span>操作日志</span>
+              <span>{{ $t('evaluation.operationLogs') }}</span>
             </template>
             <div class="logs-list">
               <el-timeline>
@@ -386,7 +387,7 @@ const fetchEvaluation = async () => {
     const response = await api.get(`/evaluations/${route.params.id}`)
     evaluation.value = response.data.data.evaluation
   } catch (error) {
-    ElMessage.error('获取评价详情失败')
+    ElMessage.error(t('evaluation.getEvaluationDetailsFailed'))
     console.error('Failed to fetch evaluation:', error)
   } finally {
     loading.value = false
@@ -400,30 +401,30 @@ const handleOperation = async (command) => {
     
     switch (command) {
       case 'approve':
-        message = '确认审批通过此评价？'
-        confirmText = '审批通过'
+        message = t('evaluation.confirmApprove')
+        confirmText = t('evaluation.approve')
         break
       case 'reject':
-        message = '确认拒绝此评价？'
-        confirmText = '拒绝'
+        message = t('evaluation.confirmReject')
+        confirmText = t('evaluation.reject')
         break
       case 'pause':
-        message = '确认暂停此评价？'
-        confirmText = '暂停'
+        message = t('evaluation.confirmPause')
+        confirmText = t('evaluation.pause')
         break
       case 'resume':
-        message = '确认恢复此评价？'
-        confirmText = '恢复'
+        message = t('evaluation.confirmResume')
+        confirmText = t('evaluation.resume')
         break
       case 'cancel':
-        message = '确认取消此评价？此操作不可撤销。'
-        confirmText = '取消'
+        message = t('evaluation.confirmCancel')
+        confirmText = t('evaluation.cancel')
         break
     }
     
-    await ElMessageBox.confirm(message, '确认操作', {
+    await ElMessageBox.confirm(message, t('common.confirmAction'), {
       confirmButtonText: confirmText,
-      cancelButtonText: '取消',
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
     
@@ -440,12 +441,12 @@ const handleOperation = async (command) => {
       await api.put(`/evaluations/${evaluation.value.id}/status`, { status: 'cancelled' })
     }
     
-    ElMessage.success('操作成功')
+    ElMessage.success(t('evaluation.operationSuccess'))
     fetchEvaluation()
     
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('操作失败')
+      ElMessage.error(t('evaluation.operationFailed'))
       console.error('Operation failed:', error)
     }
   }
@@ -453,12 +454,12 @@ const handleOperation = async (command) => {
 
 const handleUploadFile = () => {
   // TODO: 实现文件上传功能
-  ElMessage.info('文件上传功能开发中')
+  ElMessage.info(t('evaluation.fileUploadInDevelopment'))
 }
 
 const handleDownloadFile = (file) => {
   // TODO: 实现文件下载功能
-  ElMessage.info('文件下载功能开发中')
+  ElMessage.info(t('evaluation.fileDownloadInDevelopment'))
 }
 
 const getStatusTagType = (status) => {
@@ -475,43 +476,34 @@ const getStatusTagType = (status) => {
 }
 
 const getReasonText = (reason) => {
-  const reasonMap = {
-    'new_product_development': '新产品开发',
-    'quality_improvement': '质量改进',
-    'cost_optimization': '成本优化',
-    'customer_requirement': '客户要求',
-    'other': '其他'
+  if (reason && t(`evaluation.reasons.${reason}`)) {
+    return t(`evaluation.reasons.${reason}`)
   }
-  return reasonMap[reason] || reason
+  return reason || '-'
 }
 
 const getTemperatureGradeText = (grade) => {
-  const gradeMap = {
-    'commercial': '商业级 (0°C ~ 70°C)',
-    'industrial': '工业级 (-40°C ~ 85°C)',
-    'extended': '扩展级 (-40°C ~ 105°C)'
+  if (grade && t(`evaluation.temperatureGrades.${grade}`)) {
+    return t(`evaluation.temperatureGrades.${grade}`)
   }
-  return gradeMap[grade] || grade || '-'
+  return grade || '-'
 }
 
 const getProcessTitle = (process) => {
-  const titleMap = {
-    'doe': 'DOE (Design of Experiments)',
-    'ppq': 'PPQ (Production Part Qualification)',
-    'prq': 'PRQ (Production Readiness Qualification)',
-    'production_test': '生产测试',
-    'aql': 'AQL (Acceptable Quality Level)'
+  if (process && t(`evaluation.processes.${process}`)) {
+    return t(`evaluation.processes.${process}`)
   }
-  return titleMap[process] || process
+  return process
 }
 
 const getProcessDescription = (process) => {
+  // Process descriptions are technical and don't need i18n for now
   const descMap = {
-    'doe': '实验设计，优化产品参数',
-    'ppq': '生产件批准，验证生产工艺',
-    'prq': '生产准备度确认，确保量产就绪',
-    'production_test': '生产测试，验证产品质量',
-    'aql': '可接受质量水平测试'
+    'doe': 'Design of Experiments - Optimize product parameters',
+    'ppq': 'Production Part Qualification - Verify production process',
+    'prq': 'Production Readiness Qualification - Ensure production readiness',
+    'production_test': 'Production testing - Verify product quality',
+    'aql': 'Acceptable Quality Level testing'
   }
   return descMap[process] || ''
 }

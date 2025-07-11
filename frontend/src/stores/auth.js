@@ -53,7 +53,14 @@ export const useAuthStore = defineStore('auth', () => {
     
     try {
       const response = await api.get('/auth/me')
-      user.value = response.data
+      // Handle different response structures
+      if (response.data.data) {
+        user.value = response.data.data
+      } else if (response.data.user) {
+        user.value = response.data.user
+      } else {
+        user.value = response.data
+      }
       return true
     } catch (error) {
       logout()
