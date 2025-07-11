@@ -402,10 +402,7 @@ const handleFinish = async () => {
       { type: 'info' }
     )
     
-    const payload = buildPayload()
-    payload.status = 'finished'
-    
-    await api.put(`/evaluations/${evaluationId.value}`, payload)
+    await api.put(`/evaluations/${evaluationId.value}/status`, { status: 'completed' })
     
     ElMessage.success(t('evaluation.finishSuccess'))
     router.push(`/evaluations/${evaluationId.value}`)
