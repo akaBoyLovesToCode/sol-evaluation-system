@@ -4,6 +4,7 @@
     "cancel": "Cancel",
     "save": "Save",
     "edit": "Edit",
+    "delete": "Delete",
     "search": "Search",
     "operations": "Operations",
     "status": "Status",
@@ -14,10 +15,12 @@
     "resume": "Resume",
     "other": "Other",
     "confirmCancel": "Confirm Cancel",
+    "confirmDelete": "Confirm Delete",
     "responseError": "Response data format error",
     "confirmAction": "Confirm Action",
     "saveSuccess": "Save successful",
-    "saveError": "Save failed"
+    "saveError": "Save failed",
+    "deleteError": "Delete failed"
   },
   "system": {
     "name": "Product Evaluation"
@@ -158,6 +161,12 @@
     "confirmResume": "Are you sure you want to resume this evaluation?",
     "confirmCancel": "Are you sure you want to cancel this evaluation? This action cannot be undone.",
     "getEvaluationDetailsFailed": "Failed to get evaluation details",
+    "finish": "Finish Evaluation",
+    "finishConfirm": "Are you sure you want to finish this evaluation? A finished evaluation cannot be modified.",
+    "finishSuccess": "Evaluation completed successfully!",
+    "finishError": "Failed to finish evaluation, please try again.",
+    "deleteConfirm": "Are you sure you want to delete this evaluation? It cannot be recovered after deletion.",
+    "deleteSuccess": "Evaluation deleted successfully!",
     "placeholders": {
       "evaluationNumber": "Enter evaluation number",
       "evaluationType": "Select evaluation type",
@@ -172,7 +181,13 @@
       "expectedEndDate": "Select expected end date",
       "reason": "Select evaluation reason",
       "description": "Enter evaluation description",
-      "actualEndDate": "Select actual end date"
+      "actualEndDate": "Select actual end date",
+      "pgmVersion": "Enter PGM version",
+      "materialInfo": "Enter material information",
+      "capacity": "Enter capacity",
+      "interfaceType": "Select interface type",
+      "formFactor": "Select form factor",
+      "temperatureGrade": "Select temperature grade"
     },
     "type": {
       "new_product": "New Product",

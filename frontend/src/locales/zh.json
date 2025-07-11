@@ -4,6 +4,7 @@
     "cancel": "取消",
     "save": "保存",
     "edit": "编辑",
+    "delete": "删除",
     "search": "搜索",
     "operations": "操作",
     "status": "状态",
@@ -14,10 +15,12 @@
     "resume": "恢复",
     "other": "其他",
     "confirmCancel": "确认取消",
+    "confirmDelete": "确认删除",
     "responseError": "响应数据格式错误",
     "confirmAction": "确认操作",
     "saveSuccess": "保存成功",
-    "saveError": "保存失败"
+    "saveError": "保存失败",
+    "deleteError": "删除失败"
   },
   "system": {
     "name": "产品评价"
@@ -158,6 +161,12 @@
     "confirmResume": "确认恢复此评价？",
     "confirmCancel": "确认取消此评价？此操作不可撤销。",
     "getEvaluationDetailsFailed": "获取评价详情失败",
+    "finish": "完成评价",
+    "finishConfirm": "确定要完成此评价吗？完成后的评价将无法修改。",
+    "finishSuccess": "评价已成功完成！",
+    "finishError": "完成评价失败，请重试。",
+    "deleteConfirm": "确定要删除此评价吗？删除后将无法恢复。",
+    "deleteSuccess": "评价已成功删除！",
     "placeholders": {
       "evaluationNumber": "请输入评价编号",
       "evaluationType": "请选择评价类型",
@@ -172,7 +181,13 @@
       "expectedEndDate": "选择预计结束日期",
       "reason": "请选择评价原因",
       "description": "请输入评价描述",
-      "actualEndDate": "请选择实际结束日期"
+      "actualEndDate": "请选择实际结束日期",
+      "pgmVersion": "请输入PGM版本",
+      "materialInfo": "请输入材料信息",
+      "capacity": "请输入容量",
+      "interfaceType": "请选择接口类型",
+      "formFactor": "请选择外形规格",
+      "temperatureGrade": "请选择温度等级"
     },
     "type": {
       "new_product": "新产品",

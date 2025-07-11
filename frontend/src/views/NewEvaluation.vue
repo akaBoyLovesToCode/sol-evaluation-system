@@ -32,7 +32,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('evaluation.productName')" prop="product_name">
-              <el-input v-model="form.product_name" :placeholder="$t('evaluation.placeholder.productName')" />
+              <el-input v-model="form.product_name" :placeholder="$t('evaluation.placeholders.productName')" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -40,7 +40,7 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="P/N" prop="part_number">
-              <el-input v-model="form.part_number" :placeholder="$t('evaluation.placeholder.partNumber')" />
+              <el-input v-model="form.part_number" :placeholder="$t('evaluation.placeholders.partNumber')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -48,7 +48,7 @@
               <el-date-picker
                 v-model="form.start_date"
                 type="date"
-                :placeholder="$t('evaluation.placeholder.startDate')"
+                :placeholder="$t('evaluation.placeholders.startDate')"
                 format="YYYY-MM-DD"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
@@ -63,7 +63,7 @@
               <el-date-picker
                 v-model="form.expected_end_date"
                 type="date"
-                :placeholder="$t('evaluation.placeholder.expectedEndDate')"
+                :placeholder="$t('evaluation.placeholders.expectedEndDate')"
                 format="YYYY-MM-DD"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
@@ -75,7 +75,7 @@
               <el-date-picker
                 v-model="form.end_date"
                 type="date"
-                :placeholder="$t('evaluation.placeholder.actualEndDate')"
+                :placeholder="$t('evaluation.placeholders.actualEndDate')"
                 format="YYYY-MM-DD"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
@@ -87,7 +87,7 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item :label="$t('evaluation.reason')" prop="reason">
-              <el-select v-model="form.reason" :placeholder="$t('evaluation.placeholder.reason')" style="width: 100%">
+              <el-select v-model="form.reason" :placeholder="$t('evaluation.placeholders.reason')" style="width: 100%">
                 <el-option :label="$t('evaluation.reasons.new_product_development')" value="new_product_development" />
                 <el-option :label="$t('evaluation.reasons.quality_improvement')" value="quality_improvement" />
                 <el-option :label="$t('evaluation.reasons.cost_optimization')" value="cost_optimization" />
@@ -103,7 +103,7 @@
             v-model="form.description"
             type="textarea"
             :rows="3"
-            :placeholder="$t('evaluation.placeholder.description')"
+            :placeholder="$t('evaluation.placeholders.description')"
           />
         </el-form-item>
       </el-card>
@@ -116,17 +116,17 @@
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item :label="$t('evaluation.pgmVersion')" prop="pgm_version">
-              <el-input v-model="form.pgm_version" :placeholder="$t('evaluation.placeholder.pgmVersion')" />
+              <el-input v-model="form.pgm_version" :placeholder="$t('evaluation.placeholders.pgmVersion')" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item :label="$t('evaluation.materialInfo')" prop="material_info">
-              <el-input v-model="form.material_info" :placeholder="$t('evaluation.placeholder.materialInfo')" />
+              <el-input v-model="form.material_info" :placeholder="$t('evaluation.placeholders.materialInfo')" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item :label="$t('evaluation.capacity')" prop="capacity">
-              <el-input v-model="form.capacity" :placeholder="$t('evaluation.placeholder.capacity')" />
+              <el-input v-model="form.capacity" :placeholder="$t('evaluation.placeholders.capacity')" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -134,7 +134,7 @@
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item :label="$t('evaluation.interfaceType')" prop="interface_type">
-              <el-select v-model="form.interface_type" :placeholder="$t('evaluation.placeholder.interfaceType')" style="width: 100%">
+              <el-select v-model="form.interface_type" :placeholder="$t('evaluation.placeholders.interfaceType')" style="width: 100%">
                 <el-option label="SATA" value="SATA" />
                 <el-option label="NVMe" value="NVMe" />
                 <el-option label="PCIe" value="PCIe" />
@@ -144,7 +144,7 @@
           </el-col>
           <el-col :span="8">
             <el-form-item :label="$t('evaluation.formFactor')" prop="form_factor">
-              <el-select v-model="form.form_factor" :placeholder="$t('evaluation.placeholder.formFactor')" style="width: 100%">
+              <el-select v-model="form.form_factor" :placeholder="$t('evaluation.placeholders.formFactor')" style="width: 100%">
                 <el-option :label="$t('evaluation.formFactors.2_5_inch')" value="2.5" />
                 <el-option :label="$t('evaluation.formFactors.m2_2280')" value="M.2_2280" />
                 <el-option :label="$t('evaluation.formFactors.m2_2242')" value="M.2_2242" />
@@ -154,7 +154,7 @@
           </el-col>
           <el-col :span="8">
             <el-form-item :label="$t('evaluation.temperatureGrade')" prop="temperature_grade">
-              <el-select v-model="form.temperature_grade" :placeholder="$t('evaluation.placeholder.temperatureGrade')" style="width: 100%">
+              <el-select v-model="form.temperature_grade" :placeholder="$t('evaluation.placeholders.temperatureGrade')" style="width: 100%">
                 <el-option :label="$t('evaluation.temperatureGrades.commercial')" value="commercial" />
                 <el-option :label="$t('evaluation.temperatureGrades.industrial')" value="industrial" />
                 <el-option :label="$t('evaluation.temperatureGrades.extended')" value="extended" />

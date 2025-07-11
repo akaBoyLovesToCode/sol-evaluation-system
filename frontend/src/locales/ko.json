@@ -4,6 +4,7 @@
     "cancel": "취소",
     "save": "저장",
     "edit": "편집",
+    "delete": "삭제",
     "search": "검색",
     "operations": "작업",
     "status": "상태",
@@ -14,10 +15,12 @@
     "resume": "재개",
     "other": "기타",
     "confirmCancel": "취소 확인",
+    "confirmDelete": "삭제 확인",
     "responseError": "응답 데이터 형식 오류",
     "confirmAction": "작업 확인",
     "saveSuccess": "저장 성공",
-    "saveError": "저장 실패"
+    "saveError": "저장 실패",
+    "deleteError": "삭제 실패"
   },
   "system": {
     "name": "제품 평가"
@@ -158,6 +161,12 @@
     "confirmResume": "이 평가를 재개하시겠습니까?",
     "confirmCancel": "이 평가를 취소하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
     "getEvaluationDetailsFailed": "평가 상세 정보 가져오기 실패",
+    "finish": "평가 완료",
+    "finishConfirm": "이 평가를 완료하시겠습니까? 완료된 평가는 수정할 수 없습니다.",
+    "finishSuccess": "평가가 성공적으로 완료되었습니다!",
+    "finishError": "평가 완료에 실패했습니다. 다시 시도해주세요.",
+    "deleteConfirm": "이 평가를 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.",
+    "deleteSuccess": "평가가 성공적으로 삭제되었습니다!",
     "placeholders": {
       "evaluationNumber": "평가 번호를 입력하세요",
       "evaluationType": "평가 유형을 선택하세요",
@@ -172,7 +181,13 @@
       "expectedEndDate": "예상 종료 날짜를 선택하세요",
       "reason": "평가 이유를 선택하세요",
       "description": "평가 설명을 입력하세요",
-      "actualEndDate": "실제 종료일을 선택하세요"
+      "actualEndDate": "실제 종료일을 선택하세요",
+      "pgmVersion": "PGM 버전을 입력하세요",
+      "materialInfo": "재료 정보를 입력하세요",
+      "capacity": "용량을 입력하세요",
+      "interfaceType": "인터페이스 유형을 선택하세요",
+      "formFactor": "폼 팩터를 선택하세요",
+      "temperatureGrade": "온도 등급을 선택하세요"
     },
     "type": {
       "new_product": "신제품",
