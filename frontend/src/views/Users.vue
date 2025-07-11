@@ -1,15 +1,15 @@
 <template>
   <div class="users-page">
     <div class="page-header">
-      <h1>用户管理</h1>
-      <p>管理系统用户和权限设置</p>
+      <h1>{{ $t('users.title') }}</h1>
+      <p>{{ $t('users.description') }}</p>
     </div>
 
     <el-card>
       <div class="coming-soon">
         <el-icon size="64"><User /></el-icon>
-        <h2>用户管理功能开发中</h2>
-        <p>用户管理功能正在开发中，敬请期待</p>
+        <h2>{{ $t('users.comingSoon') }}</h2>
+        <p>{{ $t('users.comingSoonDesc') }}</p>
       </div>
     </el-card>
   </div>
