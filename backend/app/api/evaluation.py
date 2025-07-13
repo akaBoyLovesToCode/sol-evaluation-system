@@ -35,6 +35,8 @@ def get_evaluations():
     - ssd_product: Filter by product name (deprecated, use 'product' instead)
     - start_date_from: Filter by start date (from)
     - start_date_to: Filter by start date (to)
+    - sort_by: Sort column (evaluation_number, start_date, end_date, created_at, product_name, status, evaluation_type, evaluator_name)
+    - sort_order: Sort order (asc, desc) default: desc
     """
     try:
         current_user_id = get_current_user_id()
@@ -91,8 +93,37 @@ def get_evaluations():
         for condition in filter_conditions:
             query = query.filter(condition)
 
-        # Order by creation date (newest first)
-        query = query.order_by(Evaluation.created_at.desc())
+        # Handle sorting
+        sort_by = request.args.get("sort_by")
+        sort_order = request.args.get("sort_order", "desc")
+        
+        # Define allowed sort columns and their mappings
+        sort_column_mapping = {
+            "evaluation_number": Evaluation.evaluation_number,
+            "start_date": Evaluation.start_date,
+            "completion_date": Evaluation.completion_date,
+            "created_at": Evaluation.created_at,
+            "product_name": Evaluation.product_name,
+            "status": Evaluation.status,
+            "evaluation_type": Evaluation.evaluation_type,
+            "evaluator_name": User.full_name  # For joined field
+        }
+        
+        if sort_by and sort_by in sort_column_mapping:
+            sort_column = sort_column_mapping[sort_by]
+            
+            # For evaluator_name, we need to join the User table
+            if sort_by == "evaluator_name":
+                query = query.join(User, Evaluation.evaluator_id == User.id)
+            
+            # Apply sort order
+            if sort_order.lower() == "asc":
+                query = query.order_by(sort_column.asc())
+            else:
+                query = query.order_by(sort_column.desc())
+        else:
+            # Default sort: by creation date (newest first)
+            query = query.order_by(Evaluation.created_at.desc())
 
         # Get total count for pagination
         total_count = query.count()

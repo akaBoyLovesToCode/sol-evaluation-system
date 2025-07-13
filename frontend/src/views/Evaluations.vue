@@ -166,6 +166,7 @@
           prop="product_name"
           :label="$t('evaluation.product')"
           width="150"
+          sortable="custom"
         />
         
         <el-table-column
@@ -178,12 +179,14 @@
           prop="evaluator_name"
           :label="$t('evaluation.evaluator')"
           width="120"
+          sortable="custom"
         />
         
         <el-table-column
           prop="status"
           :label="$t('common.status')"
           width="140"
+          sortable="custom"
         >
           <template #default="{ row }">
             <el-tag :type="getStatusTagType(row.status)">
