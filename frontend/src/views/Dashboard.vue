@@ -165,7 +165,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, markRaw } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, markRaw } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
@@ -173,7 +173,7 @@ import {
   Document, DataAnalysis, User, CircleCheck,
   Plus, Message, Refresh, ArrowUp, ArrowDown, ArrowRight
 } from '@element-plus/icons-vue'
-import * as echarts from 'echarts'
+import { createPieChart, createLineChart, makeResponsive, disposeChart } from '../utils/charts'
 import api from '../utils/api'
 import { useAuthStore } from '../stores/auth'
 import AnimatedContainer from '../components/AnimatedContainer.vue'
@@ -226,6 +226,8 @@ const recentActivities = ref([])
 
 let statusChart = null
 let trendChart = null
+let statusChartCleanup = null
+let trendChartCleanup = null
 
 const fetchDashboardData = async () => {
   try {
@@ -299,49 +301,42 @@ const fetchRecentActivities = async () => {
 const initStatusChart = (data) => {
   if (!statusChartRef.value) return
 
-  statusChart = echarts.init(statusChartRef.value)
-  
-  const option = {
-    tooltip: {
-      trigger: 'item',
-      formatter: '{a} <br/>{b}: {c} ({d}%)'
-    },
-    legend: {
-      orient: 'vertical',
-      left: 'left'
-    },
-    series: [
-      {
-        name: t('dashboard.evaluationStatus'),
-        type: 'pie',
-        radius: '50%',
-        data: [
-          { value: data.status_distribution?.in_progress || 0, name: t('status.in_progress') },
-          { value: data.status_distribution?.pending_approval || 0, name: t('status.pending_approval') },
-          { value: data.status_distribution?.completed || 0, name: t('status.completed') },
-          { value: data.status_distribution?.paused || 0, name: t('status.paused') },
-          { value: data.status_distribution?.cancelled || 0, name: t('status.cancelled') }
-        ],
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowOffsetX: 0,
-            shadowColor: 'rgba(0, 0, 0, 0.5)'
-          }
-        }
-      }
-    ]
+  // Dispose existing chart and cleanup
+  if (statusChart) {
+    disposeChart(statusChart, statusChartCleanup)
   }
-  
-  statusChart.setOption(option)
+
+  const chartData = [
+    { value: data.status_distribution?.in_progress || 0, name: t('status.in_progress') },
+    { value: data.status_distribution?.pending_approval || 0, name: t('status.pending_approval') },
+    { value: data.status_distribution?.completed || 0, name: t('status.completed') },
+    { value: data.status_distribution?.paused || 0, name: t('status.paused') },
+    { value: data.status_distribution?.cancelled || 0, name: t('status.cancelled') }
+  ]
+
+  statusChart = createPieChart(statusChartRef.value, chartData, {
+    seriesName: t('dashboard.evaluationStatus'),
+    customOptions: {
+      legend: {
+        orient: 'vertical',
+        left: 'left'
+      }
+    }
+  })
+
+  // Make chart responsive
+  statusChartCleanup = makeResponsive(statusChart, statusChartRef.value)
 }
 
 const initTrendChart = async () => {
   if (!trendChartRef.value) return
 
-  trendChart = echarts.init(trendChartRef.value)
-  
-  // 获取月度趋势数据
+  // Dispose existing chart and cleanup
+  if (trendChart) {
+    disposeChart(trendChart, trendChartCleanup)
+  }
+
+  // Get monthly trend data
   const trendData = await fetchMonthlyTrend()
   
   let periods = []
@@ -352,7 +347,7 @@ const initTrendChart = async () => {
     periods = trendData.evaluations_over_time.map(item => item.period)
     newEvaluations = trendData.evaluations_over_time.map(item => item.count)
     
-    // 计算已完成评价数
+    // Calculate completed evaluations
     if (trendData.completion_rates) {
       completedEvaluations = trendData.completion_rates.map(item => item.completed || 0)
     } else {
@@ -360,43 +355,27 @@ const initTrendChart = async () => {
     }
   }
   
-  const option = {
-    tooltip: {
-      trigger: 'axis'
-    },
-    legend: {
-      data: [t('dashboard.newEvaluations'), t('dashboard.completedEvaluations')]
-    },
-    xAxis: {
-      type: 'category',
-      data: periods
-    },
-    yAxis: {
-      type: 'value'
-    },
+  const chartData = {
+    xAxis: periods,
     series: [
       {
         name: t('dashboard.newEvaluations'),
-        type: 'line',
-        data: newEvaluations,
-        smooth: true,
-        itemStyle: {
-          color: '#409EFF'
-        }
+        data: newEvaluations
       },
       {
         name: t('dashboard.completedEvaluations'),
-        type: 'line',
-        data: completedEvaluations,
-        smooth: true,
-        itemStyle: {
-          color: '#67C23A'
-        }
+        data: completedEvaluations
       }
     ]
   }
-  
-  trendChart.setOption(option)
+
+  trendChart = createLineChart(trendChartRef.value, chartData, {
+    colors: ['#409EFF', '#67C23A'],
+    showArea: false
+  })
+
+  // Make chart responsive
+  trendChartCleanup = makeResponsive(trendChart, trendChartRef.value)
 }
 
 const refreshCharts = async () => {
@@ -461,12 +440,12 @@ onMounted(async () => {
   
   fetchPendingItems()
   fetchRecentActivities()
-  
-  // 监听窗口大小变化
-  window.addEventListener('resize', () => {
-    statusChart?.resize()
-    trendChart?.resize()
-  })
+})
+
+onUnmounted(() => {
+  // Clean up charts and event listeners
+  disposeChart(statusChart, statusChartCleanup)
+  disposeChart(trendChart, trendChartCleanup)
 })
 </script>
 

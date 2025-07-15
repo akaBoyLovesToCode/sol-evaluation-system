@@ -19,7 +19,6 @@
     "element-plus": "^2.10.4",
     "pinia": "^3.0.3",
     "vue": "^3.5.17",
-    "vue-echarts": "^7.0.3",
     "vue-i18n": "^11.1.9",
     "vue-router": "^4.5.1"
   },

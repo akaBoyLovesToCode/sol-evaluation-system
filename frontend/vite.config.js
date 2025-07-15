@@ -29,7 +29,7 @@ export default defineConfig({
         manualChunks: {
           vendor: ['vue', 'vue-router', 'pinia'],
           elementPlus: ['element-plus', '@element-plus/icons-vue'],
-          charts: ['echarts', 'vue-echarts'],
+          charts: ['echarts'],
         },
       },
     },
