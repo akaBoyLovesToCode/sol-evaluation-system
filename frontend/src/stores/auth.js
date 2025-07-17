@@ -5,6 +5,7 @@ import api from '../utils/api'
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
   const token = ref(localStorage.getItem('token'))
+  const refreshToken = ref(localStorage.getItem('refreshToken'))
   
   const isAuthenticated = computed(() => !!token.value)
   
@@ -25,10 +26,12 @@ export const useAuthStore = defineStore('auth', () => {
   const login = async (credentials) => {
     try {
       const response = await api.post('/auth/login', credentials)
-      const { access_token, user: userData } = response.data
+      const { access_token, refresh_token, user: userData } = response.data
       
       token.value = access_token
+      refreshToken.value = refresh_token
       localStorage.setItem('token', access_token)
+      localStorage.setItem('refreshToken', refresh_token)
       user.value = userData
       
       return { success: true }
@@ -42,8 +45,10 @@ export const useAuthStore = defineStore('auth', () => {
   
   const logout = () => {
     token.value = null
+    refreshToken.value = null
     user.value = null
     localStorage.removeItem('token')
+    localStorage.removeItem('refreshToken')
   }
   
   const checkAuth = async () => {
@@ -92,10 +97,34 @@ export const useAuthStore = defineStore('auth', () => {
       }
     }
   }
+
+  const refreshAccessToken = async () => {
+    if (!refreshToken.value) {
+      return false
+    }
+    
+    try {
+      const response = await api.post('/auth/refresh', {}, {
+        headers: {
+          'Authorization': `Bearer ${refreshToken.value}`
+        }
+      })
+      
+      const { access_token } = response.data
+      token.value = access_token
+      localStorage.setItem('token', access_token)
+      
+      return true
+    } catch (error) {
+      logout()
+      return false
+    }
+  }
   
   return {
     user,
     token,
+    refreshToken,
     isAuthenticated,
     hasRole,
     canApprove,
@@ -106,6 +135,7 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     checkAuth,
     updateProfile,
-    changePassword
+    changePassword,
+    refreshAccessToken
   }
 }) 
