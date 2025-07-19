@@ -126,6 +126,7 @@ pnpm-lock.yaml
 # IDE
 .vscode/
 .cursor/
+.kiro/
 .idea/
 *.swp
 *.swo
@@ -170,5 +171,5 @@ mysql/data/
 .docker/
 
 # Docker volumes and runtime data
-# Note: We keep docker-compose.yml and mysql/conf.d/, mysql/init/ 
+# Note: We keep docker-compose.yml and mysql/conf.d/, mysql/init/
 # in version control as they are configuration, not data
