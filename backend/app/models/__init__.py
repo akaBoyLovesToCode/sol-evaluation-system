@@ -2,6 +2,7 @@
 Database models package for Product Evaluation System
 """
 
+from app import db
 from .user import User
 from .evaluation import Evaluation, EvaluationDetail, EvaluationResult
 from .message import Message
@@ -10,6 +11,7 @@ from .system_config import SystemConfig
 
 # Export all models for easy importing
 __all__ = [
+    "db",
     "User",
     "Evaluation",
     "EvaluationDetail",
