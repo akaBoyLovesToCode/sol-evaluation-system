@@ -96,6 +96,11 @@
               </el-select>
             </el-form-item>
           </el-col>
+          <el-col :span="12">
+            <el-form-item :label="$t('evaluation.processStep')" prop="process_step">
+              <el-input v-model="form.process_step" :placeholder="$t('evaluation.placeholders.processStep')" />
+            </el-form-item>
+          </el-col>
         </el-row>
 
         <el-form-item :label="$t('evaluation.descriptionLabel')" prop="description">
@@ -254,6 +259,7 @@ const form = reactive({
   expected_end_date: '',
   end_date: '', // Actual end date
   reason: '',
+  process_step: '', // Process step identifier (e.g., M031)
   description: '',
   pgm_version: '',
   material_info: '',
@@ -279,6 +285,9 @@ const rules = computed(() => ({
   ],
   expected_end_date: [
     { required: true, message: t('validation.requiredField.expectedEndDate'), trigger: 'change' }
+  ],
+  process_step: [
+    { required: true, message: t('validation.requiredField.processStep'), trigger: 'blur' }
   ],
   reason: [
     { required: true, message: t('validation.requiredField.reason'), trigger: 'change' }
@@ -332,7 +341,10 @@ const buildPayload = () => ({
   expected_end_date: form.expected_end_date,
   end_date: form.end_date || null,
   reason: form.reason,
+  process_step: form.process_step,
+  evaluation_reason: form.reason, // Map reason to evaluation_reason for backend compatibility
   description: form.description,
+  remarks: form.description, // Map description to remarks for backend compatibility
   pgm_version: form.pgm_version,
   material_info: form.material_info,
   capacity: form.capacity,
@@ -463,6 +475,7 @@ const fetchEvaluation = async () => {
       expected_end_date: evaluation.expected_end_date || '',
       end_date: evaluation.end_date || '',
       reason: evaluation.reason || evaluation.evaluation_reason || '',
+      process_step: evaluation.process_step || '',
       description: evaluation.description || evaluation.remarks || '',
       pgm_version: evaluation.pgm_version || '',
       material_info: evaluation.material_info || '',
