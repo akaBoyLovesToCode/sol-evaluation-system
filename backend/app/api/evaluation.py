@@ -1,554 +1,794 @@
+"""
+API endpoints for evaluation management.
+"""
 from flask import Blueprint, request, jsonify, current_app
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.models import db
+from app.models.evaluation import Evaluation, EvaluationStatus
+from app.models.user import User
+from app.models.operation_log import OperationLog, OperationType
 from datetime import datetime
-from app import db
-from app.models import Evaluation, EvaluationDetail, EvaluationResult, User, Message
-from app.utils.decorators import require_role, validate_json, handle_exceptions
-from app.utils.validators import validate_evaluation_data, validate_evaluation_detail
-from app.utils.helpers import (
-    generate_evaluation_number,
-    parse_date_string,
-    calculate_pagination,
-    build_query_filters,
-    create_response,
-    get_current_user_id,
-)
+import json
 
-# Create evaluation blueprint
-evaluation_bp = Blueprint("evaluation", __name__)
+evaluation_bp = Blueprint('evaluation', __name__)
 
+def generate_evaluation_number():
+    """
+    Generate a unique evaluation number in format: EVAL-YYYYMMDD-NNNN
+    """
+    today = datetime.now()
+    date_str = today.strftime('%Y%m%d')
+    
+    # Find the highest number for today
+    today_prefix = f"EVAL-{date_str}-"
+    latest_eval = db.session.query(Evaluation)\
+        .filter(Evaluation.evaluation_number.like(f"{today_prefix}%"))\
+        .order_by(Evaluation.evaluation_number.desc())\
+        .first()
+    
+    if latest_eval:
+        # Extract the number part and increment
+        try:
+            last_number = int(latest_eval.evaluation_number.split('-')[-1])
+            next_number = last_number + 1
+        except (ValueError, IndexError):
+            next_number = 1
+    else:
+        next_number = 1
+    
+    return f"EVAL-{date_str}-{next_number:04d}"
 
-@evaluation_bp.route("", methods=["GET"])
+@evaluation_bp.route('', methods=['GET'])
 @jwt_required()
-@handle_exceptions
 def get_evaluations():
     """
-    Get list of evaluations with filtering and pagination
-
-    Query parameters:
-    - page: Page number (default: 1)
-    - per_page: Items per page (default: 20)
-    - status: Filter by status
-    - evaluation_type: Filter by type
-    - evaluator_id: Filter by evaluator
-    - product: Filter by product name
-    - ssd_product: Filter by product name (deprecated, use 'product' instead)
-    - start_date_from: Filter by start date (from)
-    - start_date_to: Filter by start date (to)
-    - sort_by: Sort column (evaluation_number, start_date, end_date, created_at, product_name, status, evaluation_type, evaluator_name)
-    - sort_order: Sort order (asc, desc) default: desc
+    Get a list of evaluations with optional filtering.
+    ---
+    tags:
+      - Evaluations
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+        description: Page number for pagination
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+          default: 10
+        description: Number of items per page
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum: [draft, in_progress, pending_part_approval, pending_group_approval, completed, paused, cancelled, rejected]
+        description: Filter by evaluation status
+      - name: evaluation_type
+        in: query
+        schema:
+          type: string
+          enum: [new_product, mass_production]
+        description: Filter by evaluation type
+      - name: product_name
+        in: query
+        schema:
+          type: string
+        description: Filter by product name (partial match)
+      - name: evaluator_id
+        in: query
+        schema:
+          type: integer
+        description: Filter by evaluator ID
+    responses:
+      200:
+        description: List of evaluations
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    evaluations:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          evaluation_number:
+                            type: string
+                          evaluation_type:
+                            type: string
+                          product_name:
+                            type: string
+                          part_number:
+                            type: string
+                          status:
+                            type: string
+                          start_date:
+                            type: string
+                            format: date
+                          expected_end_date:
+                            type: string
+                            format: date
+                          actual_end_date:
+                            type: string
+                            format: date
+                          process_step:
+                            type: string
+                          evaluator_name:
+                            type: string
+                    total:
+                      type: integer
+                    page:
+                      type: integer
+                    per_page:
+                      type: integer
+                    pages:
+                      type: integer
+      401:
+        description: Unauthorized
+      500:
+        description: Internal server error
     """
     try:
-        current_user_id = get_current_user_id()
-        current_user = User.query.get(current_user_id)
-
         # Get query parameters
-        page = request.args.get("page", 1, type=int)
-        per_page = request.args.get("per_page", 20, type=int)
-
-        # Build base query
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        status = request.args.get('status')
+        evaluation_type = request.args.get('evaluation_type')
+        product_name = request.args.get('product_name')
+        evaluator_id = request.args.get('evaluator_id', type=int)
+        
+        # Build query
         query = Evaluation.query
-
-        # Apply role-based filtering
-        if not current_user.has_permission("part_leader"):
-            # Regular users can only see their own evaluations
-            query = query.filter(Evaluation.evaluator_id == current_user_id)
-
+        
         # Apply filters
-        filters = {}
-
-        if request.args.get("status"):
-            filters["status"] = request.args.get("status")
-
-        if request.args.get("evaluation_type"):
-            filters["evaluation_type"] = request.args.get("evaluation_type")
-
-        if request.args.get("evaluator_id"):
-            filters["evaluator_id"] = request.args.get("evaluator_id", type=int)
-
-        # Support both new product field and deprecated ssd_product field
-        if request.args.get("product"):
-            filters["product_name"] = {"like": request.args.get("product")}
-        elif request.args.get("ssd_product"):
-            filters["product_name"] = {"like": request.args.get("ssd_product")}
-
-        # Date range filters
-        start_date_from = request.args.get("start_date_from")
-        start_date_to = request.args.get("start_date_to")
-
-        if start_date_from:
-            date_from = parse_date_string(start_date_from)
-            if date_from:
-                filters["start_date"] = filters.get("start_date", {})
-                filters["start_date"]["gte"] = date_from
-
-        if start_date_to:
-            date_to = parse_date_string(start_date_to)
-            if date_to:
-                filters["start_date"] = filters.get("start_date", {})
-                filters["start_date"]["lte"] = date_to
-
-        # Apply filters to query
-        filter_conditions = build_query_filters(Evaluation, filters)
-        for condition in filter_conditions:
-            query = query.filter(condition)
-
-        # Handle sorting
-        sort_by = request.args.get("sort_by")
-        sort_order = request.args.get("sort_order", "desc")
+        if status:
+            query = query.filter(Evaluation.status == status)
+        if evaluation_type:
+            query = query.filter(Evaluation.evaluation_type == evaluation_type)
+        if product_name:
+            query = query.filter(Evaluation.product_name.ilike(f'%{product_name}%'))
+        if evaluator_id:
+            query = query.filter(Evaluation.evaluator_id == evaluator_id)
         
-        # Define allowed sort columns and their mappings
-        sort_column_mapping = {
-            "evaluation_number": Evaluation.evaluation_number,
-            "start_date": Evaluation.start_date,
-            "completion_date": Evaluation.completion_date,
-            "created_at": Evaluation.created_at,
-            "product_name": Evaluation.product_name,
-            "status": Evaluation.status,
-            "evaluation_type": Evaluation.evaluation_type,
-            "evaluator_name": User.full_name  # For joined field
-        }
-        
-        if sort_by and sort_by in sort_column_mapping:
-            sort_column = sort_column_mapping[sort_by]
-            
-            # For evaluator_name, we need to join the User table
-            if sort_by == "evaluator_name":
-                query = query.join(User, Evaluation.evaluator_id == User.id)
-            
-            # Apply sort order
-            if sort_order.lower() == "asc":
-                query = query.order_by(sort_column.asc())
-            else:
-                query = query.order_by(sort_column.desc())
-        else:
-            # Default sort: by creation date (newest first)
-            query = query.order_by(Evaluation.created_at.desc())
-
-        # Get total count for pagination
-        total_count = query.count()
-
-        # Apply pagination
-        pagination_info = calculate_pagination(page, per_page, total_count)
-        evaluations = query.offset(pagination_info["offset"]).limit(per_page).all()
-
-        # Convert to dictionaries
-        evaluation_list = []
-        for evaluation in evaluations:
-            eval_dict = evaluation.to_dict()
-            # Add evaluator name
-            eval_dict["evaluator_name"] = evaluation.evaluator.full_name
-            evaluation_list.append(eval_dict)
-
-        return create_response(
-            data={"evaluations": evaluation_list, "pagination": pagination_info},
-            message="Evaluations retrieved successfully",
+        # Paginate results
+        paginated_evaluations = query.order_by(Evaluation.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
         )
-
+        
+        # Format response
+        evaluations = []
+        for evaluation in paginated_evaluations.items:
+            evaluator = User.query.get(evaluation.evaluator_id)
+            evaluator_name = evaluator.full_name if evaluator else "Unknown"
+            
+            evaluation_data = evaluation.to_dict()
+            evaluation_data['evaluator_name'] = evaluator_name
+            evaluations.append(evaluation_data)
+        
+        # Log operation
+        user_id = get_jwt_identity()
+        log = OperationLog(
+            user_id=user_id,
+            operation_type=OperationType.VIEW.value,
+            target_type='evaluation_list',
+            target_id=None,
+            target_description='Viewed evaluation list',
+            operation_description=f'User viewed evaluation list with filters: {request.args}',
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string,
+            success=True
+        )
+        db.session.add(log)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'evaluations': evaluations,
+                'total': paginated_evaluations.total,
+                'page': page,
+                'per_page': per_page,
+                'pages': paginated_evaluations.pages
+            }
+        })
     except Exception as e:
-        current_app.logger.error(f"Get evaluations error: {str(e)}")
-        return create_response(
-            message="Failed to retrieve evaluations", status_code=500
-        )
+        current_app.logger.error(f"Error getting evaluations: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to get evaluations',
+            'error': str(e)
+        }), 500
 
 
-@evaluation_bp.route("/<int:evaluation_id>", methods=["GET"])
+@evaluation_bp.route('/<int:evaluation_id>', methods=['GET'])
 @jwt_required()
-@handle_exceptions
 def get_evaluation(evaluation_id):
-    """Get single evaluation by ID with details"""
+    """
+    Get details of a specific evaluation.
+    ---
+    tags:
+      - Evaluations
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: evaluation_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the evaluation to retrieve
+    responses:
+      200:
+        description: Evaluation details
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    evaluation:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        evaluation_number:
+                          type: string
+                        evaluation_type:
+                          type: string
+                        product_name:
+                          type: string
+                        part_number:
+                          type: string
+                        status:
+                          type: string
+                        start_date:
+                          type: string
+                          format: date
+                        expected_end_date:
+                          type: string
+                          format: date
+                        actual_end_date:
+                          type: string
+                          format: date
+                        process_step:
+                          type: string
+                        evaluator_name:
+                          type: string
+                        logs:
+                          type: array
+                          items:
+                            type: object
+      404:
+        description: Evaluation not found
+      401:
+        description: Unauthorized
+      500:
+        description: Internal server error
+    """
     try:
-        current_user_id = get_current_user_id()
-        current_user = User.query.get(current_user_id)
-
         evaluation = Evaluation.query.get(evaluation_id)
+        
         if not evaluation:
-            return create_response(message="Evaluation not found", status_code=404)
-
-        # Check permissions
-        if (
-            not current_user.has_permission("part_leader")
-            and evaluation.evaluator_id != current_user_id
-        ):
-            return create_response(message="Permission denied", status_code=403)
-
-        # Get evaluation with details
-        eval_dict = evaluation.to_dict(include_details=True)
-        eval_dict["evaluator_name"] = evaluation.evaluator.full_name
-
-        # Add approver names if available
-        if evaluation.part_approver_id:
-            part_approver = User.query.get(evaluation.part_approver_id)
-            eval_dict["part_approver_name"] = (
-                part_approver.full_name if part_approver else None
-            )
-
-        if evaluation.group_approver_id:
-            group_approver = User.query.get(evaluation.group_approver_id)
-            eval_dict["group_approver_name"] = (
-                group_approver.full_name if group_approver else None
-            )
-
-        return create_response(
-            data={"evaluation": eval_dict}, message="Evaluation retrieved successfully"
+            return jsonify({
+                'success': False,
+                'message': 'Evaluation not found'
+            }), 404
+        
+        # Get evaluator name
+        evaluator = User.query.get(evaluation.evaluator_id)
+        evaluator_name = evaluator.full_name if evaluator else "Unknown"
+        
+        # Get evaluation data
+        evaluation_data = evaluation.to_dict()
+        evaluation_data['evaluator_name'] = evaluator_name
+        
+        # Get operation logs
+        logs = []
+        for log in evaluation.operation_logs:
+            user = User.query.get(log.user_id)
+            log_data = log.to_dict()
+            log_data['user_name'] = user.full_name if user else "Unknown"
+            logs.append(log_data)
+        
+        evaluation_data['logs'] = logs
+        
+        # Log operation
+        user_id = get_jwt_identity()
+        log = OperationLog(
+            user_id=user_id,
+            operation_type=OperationType.VIEW.value,
+            target_type='evaluation',
+            target_id=evaluation_id,
+            target_description=f'Viewed evaluation {evaluation.evaluation_number}',
+            operation_description=f'User viewed evaluation details',
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string,
+            success=True
         )
-
+        db.session.add(log)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'evaluation': evaluation_data
+            }
+        })
     except Exception as e:
-        current_app.logger.error(f"Get evaluation error: {str(e)}")
-        return create_response(message="Failed to retrieve evaluation", status_code=500)
+        current_app.logger.error(f"Error getting evaluation: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to get evaluation',
+            'error': str(e)
+        }), 500
 
 
-@evaluation_bp.route("", methods=["POST"])
+@evaluation_bp.route('', methods=['POST'])
 @jwt_required()
-@validate_json(
-    required_fields=["evaluation_type", "product_name", "part_number", "start_date"]
-)
-@handle_exceptions
 def create_evaluation():
-    """Create new evaluation"""
+    """
+    Create a new evaluation.
+    ---
+    tags:
+      - Evaluations
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - evaluation_type
+              - product_name
+              - part_number
+              - start_date
+              - expected_end_date
+              - process_step
+            properties:
+              evaluation_number:
+                type: string
+                description: Unique evaluation number (auto-generated if not provided)
+              evaluation_type:
+                type: string
+                enum: [new_product, mass_production]
+                description: Type of evaluation
+              product_name:
+                type: string
+                description: Name of the product
+              part_number:
+                type: string
+                description: Part number
+              evaluation_reason:
+                type: string
+                description: Reason for the evaluation
+              description:
+                type: string
+                description: Detailed description
+              start_date:
+                type: string
+                format: date
+                description: Start date of the evaluation
+              expected_end_date:
+                type: string
+                format: date
+                description: Expected end date of the evaluation
+              process_step:
+                type: string
+                description: Process step identifier (e.g., M031)
+              status:
+                type: string
+                enum: [draft, in_progress]
+                description: Initial status (defaults to draft)
+    responses:
+      201:
+        description: Evaluation created successfully
+      400:
+        description: Invalid request data
+      401:
+        description: Unauthorized
+      500:
+        description: Internal server error
+    """
     try:
-        current_user_id = get_current_user_id()
-        data = request.get_json()
-
-        # Validate evaluation data
-        validation_result = validate_evaluation_data(data, data["evaluation_type"])
-        if not validation_result["valid"]:
-            return create_response(
-                message="Validation failed",
-                errors=validation_result["errors"],
-                status_code=400,
-            )
-
-        # Parse start date
-        start_date = parse_date_string(data["start_date"])
-        if not start_date:
-            return create_response(
-                message="Invalid start date format. Use YYYY-MM-DD", status_code=400
-            )
-
-        # Generate evaluation number
-        evaluation_number = generate_evaluation_number()
-
+        data = request.json
+        user_id = get_jwt_identity()
+        
+        # Validate required fields (evaluation_number is now optional)
+        required_fields = ['evaluation_type', 'product_name', 
+                          'part_number', 'start_date', 'expected_end_date', 'process_step']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify({
+                    'success': False,
+                    'message': f'Missing required field: {field}'
+                }), 400
+        
+        # Generate evaluation number if not provided
+        evaluation_number = data.get('evaluation_number')
+        if not evaluation_number:
+            evaluation_number = generate_evaluation_number()
+        
         # Create evaluation
         evaluation = Evaluation(
             evaluation_number=evaluation_number,
-            evaluation_type=data["evaluation_type"],
-            product_name=data.get("product_name", data.get("ssd_product", "")).strip(),
-            part_number=data["part_number"].strip(),
-            evaluator_id=current_user_id,
-            start_date=start_date,
-            evaluation_reason=data.get("evaluation_reason", "").strip(),
-            remarks=data.get("remarks", "").strip(),
-            status=data.get("status", "draft"),
+            evaluation_type=data['evaluation_type'],
+            product_name=data['product_name'],
+            part_number=data['part_number'],
+            evaluation_reason=data.get('evaluation_reason', ''),
+            description=data.get('description', ''),
+            status=data.get('status', EvaluationStatus.DRAFT.value),
+            start_date=datetime.strptime(data['start_date'], '%Y-%m-%d').date(),
+            expected_end_date=datetime.strptime(data['expected_end_date'], '%Y-%m-%d').date(),
+            process_step=data['process_step'],
+            evaluator_id=user_id
         )
-
+        
         db.session.add(evaluation)
-        db.session.flush()  # Get the ID
-
-        # Add evaluation details if provided
-        details_data = data.get("details", [])
-        for detail_data in details_data:
-            detail_type = detail_data.get("detail_type")
-            if not detail_type:
-                continue
-
-            # Validate detail data
-            detail_validation = validate_evaluation_detail(detail_data, detail_type)
-            if not detail_validation["valid"]:
-                db.session.rollback()
-                return create_response(
-                    message="Detail validation failed",
-                    errors=detail_validation["errors"],
-                    status_code=400,
-                )
-
-            # Create detail
-            detail = EvaluationDetail(
-                evaluation_id=evaluation.id,
-                detail_type=detail_type,
-                pgm_version_before=detail_data.get("pgm_version_before"),
-                pgm_version_after=detail_data.get("pgm_version_after"),
-                material_name=detail_data.get("material_name"),
-                material_number=detail_data.get("material_number"),
-                equipment_name=detail_data.get("equipment_name"),
-                equipment_number=detail_data.get("equipment_number"),
-            )
-            db.session.add(detail)
-
         db.session.commit()
-
-        return create_response(
-            data={"evaluation": evaluation.to_dict(include_details=True)},
-            message="Evaluation created successfully",
-            status_code=201,
+        
+        # Log operation
+        log = OperationLog(
+            user_id=user_id,
+            operation_type=OperationType.CREATE.value,
+            target_type='evaluation',
+            target_id=evaluation.id,
+            target_description=f'Created evaluation {evaluation.evaluation_number}',
+            operation_description='User created a new evaluation',
+            new_data=json.dumps(evaluation.to_dict()),
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string,
+            success=True
         )
-
+        db.session.add(log)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Evaluation created successfully',
+            'data': {
+                'evaluation': evaluation.to_dict()
+            }
+        }), 201
     except Exception as e:
-        current_app.logger.error(f"Create evaluation error: {str(e)}")
         db.session.rollback()
-        return create_response(message="Failed to create evaluation", status_code=500)
+        current_app.logger.error(f"Error creating evaluation: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to create evaluation',
+            'error': str(e)
+        }), 500
 
 
-@evaluation_bp.route("/<int:evaluation_id>", methods=["PUT"])
+@evaluation_bp.route('/<int:evaluation_id>', methods=['PUT'])
 @jwt_required()
-@validate_json()
-@handle_exceptions
 def update_evaluation(evaluation_id):
-    """Update evaluation"""
+    """
+    Update an existing evaluation.
+    ---
+    tags:
+      - Evaluations
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: evaluation_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the evaluation to update
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              product_name:
+                type: string
+                description: Name of the product
+              part_number:
+                type: string
+                description: Part number
+              evaluation_reason:
+                type: string
+                description: Reason for the evaluation
+              description:
+                type: string
+                description: Detailed description
+              expected_end_date:
+                type: string
+                format: date
+                description: Expected end date of the evaluation
+              process_step:
+                type: string
+                description: Process step identifier (e.g., M031)
+    responses:
+      200:
+        description: Evaluation updated successfully
+      400:
+        description: Invalid request data
+      401:
+        description: Unauthorized
+      404:
+        description: Evaluation not found
+      500:
+        description: Internal server error
+    """
     try:
-        current_user_id = get_current_user_id()
-        current_user = User.query.get(current_user_id)
-        data = request.get_json()
-
+        data = request.json
+        user_id = get_jwt_identity()
+        
         evaluation = Evaluation.query.get(evaluation_id)
+        
         if not evaluation:
-            return create_response(message="Evaluation not found", status_code=404)
-
-        # Check permissions
-        can_edit = (
-            evaluation.evaluator_id == current_user_id  # Owner
-            or current_user.has_permission("admin")  # Admin
-            or (
-                current_user.has_permission("part_leader")
-                and evaluation.status == "in_progress"
-            )  # Leader for in-progress
-        )
-
-        if not can_edit:
-            return create_response(message="Permission denied", status_code=403)
-
-        # Cannot edit completed or cancelled evaluations
-        if evaluation.status in ["completed", "cancelled"]:
-            return create_response(
-                message="Cannot edit completed or cancelled evaluations",
-                status_code=400,
-            )
-
+            return jsonify({
+                'success': False,
+                'message': 'Evaluation not found'
+            }), 404
+        
+        # Check if user is authorized to update the evaluation
+        if evaluation.evaluator_id != user_id and not User.query.get(user_id).is_admin():
+            return jsonify({
+                'success': False,
+                'message': 'Unauthorized to update this evaluation'
+            }), 403
+        
+        # Check if evaluation can be updated
+        if evaluation.status not in [EvaluationStatus.DRAFT.value, EvaluationStatus.IN_PROGRESS.value]:
+            return jsonify({
+                'success': False,
+                'message': f'Cannot update evaluation in {evaluation.status} status'
+            }), 400
+        
+        # Store old data for logging
+        old_data = evaluation.to_dict()
+        
         # Update fields
-        updatable_fields = [
-            "product_name",
-            "part_number",
-            "evaluation_reason",
-            "remarks",
-        ]
-
-        for field in updatable_fields:
-            if field in data:
-                setattr(evaluation, field, data[field])
-
-        # Update start date if provided
-        if "start_date" in data:
-            start_date = parse_date_string(data["start_date"])
-            if start_date:
-                evaluation.start_date = start_date
-
+        if 'product_name' in data:
+            evaluation.product_name = data['product_name']
+        if 'part_number' in data:
+            evaluation.part_number = data['part_number']
+        if 'evaluation_reason' in data:
+            evaluation.evaluation_reason = data['evaluation_reason']
+        if 'description' in data:
+            evaluation.description = data['description']
+        if 'expected_end_date' in data:
+            evaluation.expected_end_date = datetime.strptime(data['expected_end_date'], '%Y-%m-%d').date()
+        if 'process_step' in data:
+            evaluation.process_step = data['process_step']
+        
         db.session.commit()
-
-        return create_response(
-            data={"evaluation": evaluation.to_dict(include_details=True)},
-            message="Evaluation updated successfully",
+        
+        # Log operation
+        log = OperationLog(
+            user_id=user_id,
+            operation_type=OperationType.UPDATE.value,
+            target_type='evaluation',
+            target_id=evaluation.id,
+            target_description=f'Updated evaluation {evaluation.evaluation_number}',
+            operation_description='User updated evaluation details',
+            old_data=json.dumps(old_data),
+            new_data=json.dumps(evaluation.to_dict()),
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string,
+            success=True
         )
-
-    except Exception as e:
-        current_app.logger.error(f"Update evaluation error: {str(e)}")
-        db.session.rollback()
-        return create_response(message="Failed to update evaluation", status_code=500)
-
-
-@evaluation_bp.route("/<int:evaluation_id>/approve", methods=["POST"])
-@jwt_required()
-@require_role("part_leader")
-@handle_exceptions
-def approve_evaluation(evaluation_id):
-    """Approve evaluation (Part Leader or Group Leader)"""
-    try:
-        current_user_id = get_current_user_id()
-        current_user = User.query.get(current_user_id)
-
-        evaluation = Evaluation.query.get(evaluation_id)
-        if not evaluation:
-            return create_response(message="Evaluation not found", status_code=404)
-
-        # Check if evaluation can be approved
-        if not evaluation.can_be_approved_by(current_user):
-            return create_response(
-                message="Evaluation cannot be approved at this stage or by this user",
-                status_code=400,
-            )
-
-        # Determine approval level
-        if evaluation.status == "pending_part_approval" and current_user.has_permission(
-            "part_leader"
-        ):
-            approval_level = "part"
-        elif (
-            evaluation.status == "pending_group_approval"
-            and current_user.has_permission("group_leader")
-        ):
-            approval_level = "group"
-        else:
-            return create_response(message="Invalid approval request", status_code=400)
-
-        # Approve evaluation
-        old_status = evaluation.status
-        evaluation.approve(current_user_id, approval_level)
-
-        # Create notification for evaluator about approval
-        if evaluation.status == "completed":
-            message = Message.create_status_change(
-                evaluation=evaluation,
-                recipient_id=evaluation.evaluator_id,
-                old_status=old_status,
-                new_status=evaluation.status,
-            )
-            db.session.add(message)
-        elif evaluation.status == "pending_group_approval":
-            # Find group leaders to notify
-            group_leaders = User.query.filter_by(
-                role="group_leader", is_active=True
-            ).all()
-            for leader in group_leaders:
-                message = Message.create_approval_request(
-                    evaluation=evaluation,
-                    recipient_id=leader.id,
-                    approval_level="group",
-                )
-                db.session.add(message)
-
+        db.session.add(log)
         db.session.commit()
-
-        return create_response(
-            data={"evaluation": evaluation.to_dict()},
-            message=f"Evaluation approved by {approval_level} leader",
-        )
-
+        
+        return jsonify({
+            'success': True,
+            'message': 'Evaluation updated successfully',
+            'data': {
+                'evaluation': evaluation.to_dict()
+            }
+        })
     except Exception as e:
-        current_app.logger.error(f"Approve evaluation error: {str(e)}")
         db.session.rollback()
-        return create_response(message="Failed to approve evaluation", status_code=500)
+        current_app.logger.error(f"Error updating evaluation: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to update evaluation',
+            'error': str(e)
+        }), 500
 
 
-@evaluation_bp.route("/<int:evaluation_id>/reject", methods=["POST"])
+@evaluation_bp.route('/<int:evaluation_id>/status', methods=['PUT'])
 @jwt_required()
-@require_role("part_leader")
-@validate_json(optional_fields=["reason"])
-@handle_exceptions
-def reject_evaluation(evaluation_id):
-    """Reject evaluation"""
-    try:
-        current_user_id = get_current_user_id()
-        current_user = User.query.get(current_user_id)
-        data = request.get_json()
-
-        evaluation = Evaluation.query.get(evaluation_id)
-        if not evaluation:
-            return create_response(message="Evaluation not found", status_code=404)
-
-        # Check if evaluation can be rejected
-        if not evaluation.can_be_approved_by(current_user):
-            return create_response(
-                message="Evaluation cannot be rejected by this user", status_code=400
-            )
-
-        # Reject evaluation
-        old_status = evaluation.status
-        evaluation.reject()
-
-        # Add rejection reason to remarks
-        rejection_reason = data.get("reason", "No reason provided")
-        if evaluation.remarks:
-            evaluation.remarks += (
-                f"\n\nRejected by {current_user.full_name}: {rejection_reason}"
-            )
-        else:
-            evaluation.remarks = (
-                f"Rejected by {current_user.full_name}: {rejection_reason}"
-            )
-
-        # Create notification for evaluator
-        message = Message.create_status_change(
-            evaluation=evaluation,
-            recipient_id=evaluation.evaluator_id,
-            old_status=old_status,
-            new_status=evaluation.status,
-        )
-        db.session.add(message)
-
-        db.session.commit()
-
-        return create_response(
-            data={"evaluation": evaluation.to_dict()}, message="Evaluation rejected"
-        )
-
-    except Exception as e:
-        current_app.logger.error(f"Reject evaluation error: {str(e)}")
-        db.session.rollback()
-        return create_response(message="Failed to reject evaluation", status_code=500)
-
-
-@evaluation_bp.route("/<int:evaluation_id>/status", methods=["PUT"])
-@jwt_required()
-@validate_json(required_fields=["status"])
-@handle_exceptions
 def update_evaluation_status(evaluation_id):
-    """Update evaluation status (pause, resume, cancel, complete)"""
+    """
+    Update the status of an evaluation.
+    ---
+    tags:
+      - Evaluations
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: evaluation_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the evaluation to update
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+                enum: [draft, in_progress, pending_part_approval, pending_group_approval, completed, paused, cancelled, rejected]
+                description: New status for the evaluation
+    responses:
+      200:
+        description: Evaluation status updated successfully
+      400:
+        description: Invalid request data or status transition
+      401:
+        description: Unauthorized
+      404:
+        description: Evaluation not found
+      500:
+        description: Internal server error
+    """
     try:
-        current_user_id = get_current_user_id()
-        current_user = User.query.get(current_user_id)
-        data = request.get_json()
-
+        data = request.json
+        user_id = get_jwt_identity()
+        
+        if 'status' not in data:
+            return jsonify({
+                'success': False,
+                'message': 'Status is required'
+            }), 400
+        
         evaluation = Evaluation.query.get(evaluation_id)
+        
         if not evaluation:
-            return create_response(message="Evaluation not found", status_code=404)
-
-        new_status = data["status"]
-
-        # Check permissions
-        can_update = (
-            evaluation.evaluator_id == current_user_id
-            or current_user.has_permission("part_leader")
-        )
-
-        if not can_update:
-            return create_response(message="Permission denied", status_code=403)
-
-        old_status = evaluation.status
-
-        # Update status based on action
-        if new_status == "paused":
-            evaluation.pause()
-        elif new_status == "in_progress":
-            evaluation.resume()
-        elif new_status == "cancelled":
-            evaluation.cancel()
-        elif (
-            new_status == "completed"
-            and evaluation.evaluation_type == "mass_production"
-        ):
-            evaluation.complete()
-        else:
-            return create_response(message="Invalid status transition", status_code=400)
-
-        # Create notification if status changed
-        if old_status != evaluation.status:
-            message = Message.create_status_change(
-                evaluation=evaluation,
-                recipient_id=evaluation.evaluator_id,
-                old_status=old_status,
-                new_status=evaluation.status,
-            )
-            db.session.add(message)
-
+            return jsonify({
+                'success': False,
+                'message': 'Evaluation not found'
+            }), 404
+        
+        # Check if user is authorized to update the status
+        user = User.query.get(user_id)
+        if evaluation.evaluator_id != user_id and not user.is_admin():
+            return jsonify({
+                'success': False,
+                'message': 'Unauthorized to update this evaluation status'
+            }), 403
+        
+        # Store old data for logging
+        old_data = evaluation.to_dict()
+        
+        # Update status
+        new_status = data['status']
+        evaluation.status = new_status
+        
+        # Set actual end date if status is completed
+        if new_status == EvaluationStatus.COMPLETED.value:
+            evaluation.actual_end_date = datetime.now().date()
+        
         db.session.commit()
-
-        return create_response(
-            data={"evaluation": evaluation.to_dict()},
-            message=f"Evaluation status updated to {evaluation.status}",
+        
+        # Log operation
+        log = OperationLog(
+            user_id=user_id,
+            operation_type=OperationType.UPDATE.value,
+            target_type='evaluation_status',
+            target_id=evaluation.id,
+            target_description=f'Updated status of evaluation {evaluation.evaluation_number}',
+            operation_description=f'User changed evaluation status from {old_data["status"]} to {new_status}',
+            old_data=json.dumps({'status': old_data['status']}),
+            new_data=json.dumps({'status': new_status}),
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string,
+            success=True
         )
-
+        db.session.add(log)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Evaluation status updated successfully',
+            'data': {
+                'evaluation': evaluation.to_dict()
+            }
+        })
     except Exception as e:
-        current_app.logger.error(f"Update evaluation status error: {str(e)}")
         db.session.rollback()
-        return create_response(
-            message="Failed to update evaluation status", status_code=500
-        )
+        current_app.logger.error(f"Error updating evaluation status: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to update evaluation status',
+            'error': str(e)
+        }), 500
+
+
+@evaluation_bp.route('/<int:evaluation_id>/logs', methods=['GET'])
+@jwt_required()
+def get_evaluation_logs(evaluation_id):
+    """
+    Get operation logs for a specific evaluation.
+    ---
+    tags:
+      - Evaluations
+      - Operation Logs
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: evaluation_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the evaluation to get logs for
+    responses:
+      200:
+        description: Operation logs for the evaluation
+      401:
+        description: Unauthorized
+      404:
+        description: Evaluation not found
+      500:
+        description: Internal server error
+    """
+    try:
+        user_id = get_jwt_identity()
+        
+        evaluation = Evaluation.query.get(evaluation_id)
+        
+        if not evaluation:
+            return jsonify({
+                'success': False,
+                'message': 'Evaluation not found'
+            }), 404
+        
+        # Get operation logs
+        logs_query = OperationLog.query.filter_by(
+            target_type='evaluation',
+            target_id=evaluation_id
+        ).order_by(OperationLog.created_at.desc())
+        
+        logs = []
+        for log in logs_query.all():
+            user = User.query.get(log.user_id)
+            log_data = log.to_dict()
+            log_data['user_name'] = user.full_name if user else "Unknown"
+            logs.append(log_data)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'logs': logs
+            }
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error getting evaluation logs: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to get evaluation logs',
+            'error': str(e)
+        }), 500
