@@ -187,7 +187,8 @@
       "capacity": "请输入容量",
       "interfaceType": "请选择接口类型",
       "formFactor": "请选择外形规格",
-      "temperatureGrade": "请选择温度等级"
+      "temperatureGrade": "请选择温度等级",
+      "processStep": "输入工程"
     },
     "type": {
       "new_product": "新产品",
@@ -216,6 +217,18 @@
       "prq": "PRQ (Production Readiness Qualification)",
       "production_test": "生产测试",
       "aql": "AQL (Acceptable Quality Level)"
+    },
+    "processStep": "评价工程",
+    "complete": "完成",
+    "statusDescriptions": {
+      "draft": "评价处于草稿状态，可以编辑。",
+      "inProgress": "评价正在进行中。",
+      "paused": "评价已暂时暂停。",
+      "pendingPartApproval": "等待Part长审批。",
+      "pendingGroupApproval": "等待Group长审批。",
+      "completed": "评价已成功完成。",
+      "cancelled": "评价已取消。",
+      "rejected": "评价已被拒绝。"
     }
   },
   "status": {
@@ -231,7 +244,57 @@
     "title": "用户管理",
     "description": "管理系统用户和权限设置",
     "comingSoon": "用户管理功能开发中",
-    "comingSoonDesc": "用户管理功能正在开发中，敬请期待"
+    "comingSoonDesc": "用户管理功能正在开发中，敬请期待",
+    "addUser": "添加用户",
+    "createUser": "创建用户",
+    "editUser": "编辑用户",
+    "username": "用户名",
+    "fullName": "姓名",
+    "email": "邮箱",
+    "department": "部门",
+    "position": "职位",
+    "role": "角色",
+    "status": "状态",
+    "password": "密码",
+    "confirmPassword": "确认密码",
+    "active": "激活",
+    "inactive": "未激活",
+    "activate": "激活",
+    "deactivate": "停用",
+    "confirmActivate": "确认激活",
+    "confirmDeactivate": "确认停用",
+    "activateWarning": "确定要激活用户 {username} 吗？",
+    "deactivateWarning": "确定要停用用户 {username} 吗？",
+    "activateSuccess": "用户激活成功",
+    "deactivateSuccess": "用户停用成功",
+    "statusUpdateError": "更新用户状态失败",
+    "confirmDelete": "确认删除",
+    "deleteWarning": "确定要删除用户 {username} 吗？此操作无法撤销。",
+    "deleteSuccess": "用户删除成功",
+    "deleteError": "删除用户失败",
+    "createSuccess": "用户创建成功",
+    "createError": "创建用户失败",
+    "updateSuccess": "用户更新成功",
+    "updateError": "更新用户失败",
+    "fetchError": "获取用户列表失败",
+    "invalidEmail": "请输入有效的邮箱地址",
+    "roles": {
+      "user": "普通用户",
+      "part_leader": "部门负责人",
+      "group_leader": "组长",
+      "admin": "管理员"
+    },
+    "placeholders": {
+      "username": "请输入用户名",
+      "fullName": "请输入姓名",
+      "email": "请输入邮箱地址",
+      "department": "请输入部门",
+      "position": "请输入职位",
+      "role": "请选择角色",
+      "status": "请选择状态",
+      "password": "请输入密码",
+      "confirmPassword": "请确认密码"
+    }
   },
   "messages": {
     "title": "消息中心",
@@ -244,5 +307,37 @@
     "description": "查看评价数据统计和分析报告",
     "comingSoon": "报告功能开发中",
     "comingSoonDesc": "统计报告功能正在开发中，敬请期待"
+  },
+  "profile": {
+    "title": "个人资料",
+    "description": "管理您的个人信息和账户设置",
+    "personalInfo": "个人信息",
+    "accountSettings": "账户设置",
+    "fullName": "姓名",
+    "username": "用户名",
+    "email": "邮箱",
+    "department": "部门",
+    "position": "职位",
+    "role": "角色",
+    "changePassword": "修改密码",
+    "currentPassword": "当前密码",
+    "newPassword": "新密码",
+    "confirmPassword": "确认密码",
+    "updateProfile": "更新资料",
+    "updateSuccess": "资料更新成功",
+    "updateError": "资料更新失败",
+    "passwordChangeSuccess": "密码修改成功",
+    "passwordChangeError": "密码修改失败",
+    "passwordMismatch": "两次输入的新密码不一致",
+    "passwordRequirements": "密码长度至少为8个字符，且必须包含至少一个大写字母、一个小写字母和一个数字",
+    "placeholders": {
+      "fullName": "请输入姓名",
+      "email": "请输入邮箱",
+      "department": "请输入部门",
+      "position": "请输入职位",
+      "currentPassword": "请输入当前密码",
+      "newPassword": "请输入新密码",
+      "confirmPassword": "请确认新密码"
+    }
   }
 }

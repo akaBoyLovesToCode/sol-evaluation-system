@@ -187,7 +187,8 @@
       "capacity": "용량을 입력하세요",
       "interfaceType": "인터페이스 유형을 선택하세요",
       "formFactor": "폼 팩터를 선택하세요",
-      "temperatureGrade": "온도 등급을 선택하세요"
+      "temperatureGrade": "온도 등급을 선택하세요",
+      "processStep": "프로세스 단계를 선택하세요"
     },
     "type": {
       "new_product": "신제품",
@@ -216,6 +217,18 @@
       "prq": "PRQ (생산 준비도 승인)",
       "production_test": "생산 테스트",
       "aql": "AQL (허용 품질 수준)"
+    },
+    "processStep": "평가 Step",
+    "complete": "완료",
+    "statusDescriptions": {
+      "draft": "평가가 초안 상태이며 편집할 수 있습니다.",
+      "inProgress": "평가가 현재 진행 중입니다.",
+      "paused": "평가가 일시적으로 중단되었습니다.",
+      "pendingPartApproval": "파트 리더 승인을 기다리고 있습니다.",
+      "pendingGroupApproval": "그룹 리더 승인을 기다리고 있습니다.",
+      "completed": "평가가 성공적으로 완료되었습니다.",
+      "cancelled": "평가가 취소되었습니다.",
+      "rejected": "평가가 거부되었습니다."
     }
   },
   "status": {
@@ -231,7 +244,57 @@
     "title": "사용자 관리",
     "description": "시스템 사용자 및 권한 설정을 관리합니다",
     "comingSoon": "사용자 관리 기능 개발 중",
-    "comingSoonDesc": "사용자 관리 기능이 개발 중입니다. 곧 만나보실 수 있습니다"
+    "comingSoonDesc": "사용자 관리 기능이 개발 중입니다. 곧 만나보실 수 있습니다",
+    "addUser": "사용자 추가",
+    "createUser": "사용자 생성",
+    "editUser": "사용자 편집",
+    "username": "사용자명",
+    "fullName": "이름",
+    "email": "이메일",
+    "department": "부서",
+    "position": "직위",
+    "role": "역할",
+    "status": "상태",
+    "password": "비밀번호",
+    "confirmPassword": "비밀번호 확인",
+    "active": "활성",
+    "inactive": "비활성",
+    "activate": "활성화",
+    "deactivate": "비활성화",
+    "confirmActivate": "활성화 확인",
+    "confirmDeactivate": "비활성화 확인",
+    "activateWarning": "{username} 사용자를 활성화하시겠습니까?",
+    "deactivateWarning": "{username} 사용자를 비활성화하시겠습니까?",
+    "activateSuccess": "사용자가 성공적으로 활성화되었습니다",
+    "deactivateSuccess": "사용자가 성공적으로 비활성화되었습니다",
+    "statusUpdateError": "사용자 상태 업데이트 실패",
+    "confirmDelete": "삭제 확인",
+    "deleteWarning": "{username} 사용자를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
+    "deleteSuccess": "사용자가 성공적으로 삭제되었습니다",
+    "deleteError": "사용자 삭제 실패",
+    "createSuccess": "사용자가 성공적으로 생성되었습니다",
+    "createError": "사용자 생성 실패",
+    "updateSuccess": "사용자가 성공적으로 업데이트되었습니다",
+    "updateError": "사용자 업데이트 실패",
+    "fetchError": "사용자 목록 가져오기 실패",
+    "invalidEmail": "유효한 이메일 주소를 입력하세요",
+    "roles": {
+      "user": "일반 사용자",
+      "part_leader": "부서 책임자",
+      "group_leader": "그룹 리더",
+      "admin": "관리자"
+    },
+    "placeholders": {
+      "username": "사용자명 입력",
+      "fullName": "이름 입력",
+      "email": "이메일 주소 입력",
+      "department": "부서 입력",
+      "position": "직위 입력",
+      "role": "역할 선택",
+      "status": "상태 선택",
+      "password": "비밀번호 입력",
+      "confirmPassword": "비밀번호 확인"
+    }
   },
   "messages": {
     "title": "메시지 센터",
@@ -244,5 +307,37 @@
     "description": "평가 데이터 통계 및 분석 보고서를 확인하세요",
     "comingSoon": "보고서 기능 개발 중",
     "comingSoonDesc": "통계 보고서 기능이 개발 중입니다. 곧 만나보실 수 있습니다"
+  },
+  "profile": {
+    "title": "사용자 프로필",
+    "description": "개인 정보 및 계정 설정 관리",
+    "personalInfo": "개인 정보",
+    "accountSettings": "계정 설정",
+    "fullName": "이름",
+    "username": "사용자명",
+    "email": "이메일",
+    "department": "부서",
+    "position": "직위",
+    "role": "역할",
+    "changePassword": "비밀번호 변경",
+    "currentPassword": "현재 비밀번호",
+    "newPassword": "새 비밀번호",
+    "confirmPassword": "비밀번호 확인",
+    "updateProfile": "프로필 업데이트",
+    "updateSuccess": "프로필이 성공적으로 업데이트되었습니다",
+    "updateError": "프로필 업데이트 실패",
+    "passwordChangeSuccess": "비밀번호가 성공적으로 변경되었습니다",
+    "passwordChangeError": "비밀번호 변경 실패",
+    "passwordMismatch": "새 비밀번호가 일치하지 않습니다",
+    "passwordRequirements": "비밀번호는 최소 8자 이상이어야 하며, 대문자, 소문자, 숫자를 각각 하나 이상 포함해야 합니다",
+    "placeholders": {
+      "fullName": "이름을 입력하세요",
+      "email": "이메일을 입력하세요",
+      "department": "부서를 입력하세요",
+      "position": "직위를 입력하세요",
+      "currentPassword": "현재 비밀번호를 입력하세요",
+      "newPassword": "새 비밀번호를 입력하세요",
+      "confirmPassword": "비밀번호를 다시 입력하세요"
+    }
   }
 }
