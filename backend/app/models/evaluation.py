@@ -73,7 +73,11 @@ class Evaluation(db.Model):
 
     # Dates
     start_date = db.Column(db.Date, nullable=False)
-    completion_date = db.Column(db.Date)
+    expected_end_date = db.Column(db.Date)  # New field for expected end date
+    actual_end_date = db.Column(db.Date)  # Renamed from completion_date
+    
+    # Process information
+    process_step = db.Column(db.String(20))  # New field for process step identifier (e.g., M031)
 
     # User relationships
     evaluator_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -98,6 +102,15 @@ class Evaluation(db.Model):
         backref="evaluation",
         lazy="dynamic",
         cascade="all, delete-orphan",
+    )
+    operation_logs = db.relationship(
+        "OperationLog",
+        primaryjoin="and_(OperationLog.target_type=='evaluation', "
+                    "OperationLog.target_id==Evaluation.id)",
+        foreign_keys="[OperationLog.target_id]",
+        backref=db.backref("evaluation", uselist=False),
+        lazy="dynamic",
+        viewonly=True
     )
 
     def __init__(
@@ -168,7 +181,7 @@ class Evaluation(db.Model):
         elif approval_level == "group":
             self.group_approver_id = approver_id
             self.status = "completed"
-            self.completion_date = datetime.utcnow().date()
+            self.actual_end_date = datetime.utcnow().date()
 
     def reject(self):
         """Reject the evaluation"""
@@ -177,7 +190,7 @@ class Evaluation(db.Model):
     def complete(self):
         """Mark evaluation as completed (for mass production)"""
         self.status = "completed"
-        self.completion_date = datetime.utcnow().date()
+        self.actual_end_date = datetime.utcnow().date()
 
     def pause(self):
         """Pause the evaluation"""
@@ -229,9 +242,9 @@ class Evaluation(db.Model):
             "remarks": self.remarks,
             "status": self.status,
             "start_date": self.start_date.isoformat() if self.start_date else None,
-            "completion_date": self.completion_date.isoformat()
-            if self.completion_date
-            else None,
+            "expected_end_date": self.expected_end_date.isoformat() if self.expected_end_date else None,
+            "actual_end_date": self.actual_end_date.isoformat() if self.actual_end_date else None,
+            "process_step": self.process_step,
             "evaluator_id": self.evaluator_id,
             "part_approver_id": self.part_approver_id,
             "group_approver_id": self.group_approver_id,

@@ -44,9 +44,10 @@ def create_app(config_name=None):
     socketio.init_app(app, cors_allowed_origins=app.config["CORS_ORIGINS"])
 
     # Register blueprints
-    from app.api import auth_bp, evaluation_bp, user_bp, dashboard_bp
+    from app.api import auth_bp, evaluation_bp, user_bp, dashboard_bp, operation_log_bp
     from app.api.workflow import workflow_bp
     from app.api.notifications import notifications_bp
+    from app.api.swagger import register_api_routes
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(evaluation_bp, url_prefix="/api/evaluations")
@@ -54,6 +55,10 @@ def create_app(config_name=None):
     app.register_blueprint(dashboard_bp, url_prefix="/api/dashboard")
     app.register_blueprint(workflow_bp, url_prefix="/api/workflow")
     app.register_blueprint(notifications_bp, url_prefix="/api/notifications")
+    app.register_blueprint(operation_log_bp, url_prefix="/api/logs")
+    
+    # Register Swagger API documentation
+    register_api_routes(app)
 
     # Configure logging
     if not app.debug and not app.testing:

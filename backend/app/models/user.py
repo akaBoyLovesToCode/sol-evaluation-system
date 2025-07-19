@@ -37,6 +37,7 @@ class User(db.Model):
     # User profile
     full_name = db.Column(db.String(100), nullable=False)
     department = db.Column(db.String(100))
+    position = db.Column(db.String(100))  # New field for user's position/title
     phone = db.Column(db.String(20))
 
     # Role and status
@@ -184,6 +185,7 @@ class User(db.Model):
             "email": self.email,
             "full_name": self.full_name,
             "department": self.department,
+            "position": self.position,
             "phone": self.phone,
             "role": self.role,
             "is_active": self.is_active,
