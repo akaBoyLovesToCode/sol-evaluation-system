@@ -219,21 +219,6 @@
               {{ row.end_date ? formatDate(row.end_date) : "-" }}
             </template>
           </el-table-column>
-
-          <el-table-column
-            prop="progress"
-            :label="$t('evaluation.progress')"
-            width="120"
-          >
-            <template #default="{ row }">
-              <el-progress
-                :percentage="row.progress || 0"
-                :stroke-width="6"
-                :show-text="false"
-              />
-              <span class="progress-text">{{ row.progress || 0 }}%</span>
-            </template>
-          </el-table-column>
         </el-table>
 
         <!-- 分页 -->
@@ -465,7 +450,6 @@ const handleExport = async () => {
       t("common.status"),
       t("evaluation.startDate"),
       t("evaluation.endDate"),
-      t("evaluation.progress"),
     ].join(",");
 
     const rows = tableData.value.map((row) =>
@@ -478,7 +462,6 @@ const handleExport = async () => {
         t(`status.${row.status}`) || "",
         formatDate(row.start_date) || "",
         formatDate(row.end_date) || "",
-        `${row.progress || 0}%`,
       ]
         .map((cell) => `"${cell}"`)
         .join(","),
@@ -763,18 +746,21 @@ onMounted(() => {
 .pagination-container {
   display: flex;
   justify-content: center;
-  margin-top: 24px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-top: 12px;
+  padding: 16px 0;
 }
 
 .pagination-container :deep(.el-pagination) {
   --el-pagination-button-bg-color: transparent;
   --el-pagination-hover-color: #667eea;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
 }
 
 .pagination-container :deep(.el-pagination .btn-next),
@@ -787,6 +773,23 @@ onMounted(() => {
 .pagination-container :deep(.el-pagination .btn-prev:hover) {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Fix all pagination text alignment */
+.pagination-container :deep(.el-pagination .el-pager li),
+.pagination-container :deep(.el-pagination .el-pagination__total),
+.pagination-container :deep(.el-pagination .el-pagination__sizes),
+.pagination-container :deep(.el-pagination .el-pagination__jump) {
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-container :deep(.el-pagination .el-pagination__total),
+.pagination-container :deep(.el-pagination .el-pagination__jump) {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 /* Expand table width and improve column spacing */
