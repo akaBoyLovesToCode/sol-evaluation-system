@@ -385,13 +385,13 @@ def create_user():
         user = User(
             username=data['username'],
             email=data['email'],
+            password=data['password'],
             full_name=data['fullName'],
             role=data['role'],
             department=data.get('department', ''),
             position=data.get('position', ''),
             is_active=data.get('is_active', True)
         )
-        user.set_password(data['password'])
         
         db.session.add(user)
         db.session.commit()
