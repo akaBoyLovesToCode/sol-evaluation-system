@@ -123,14 +123,6 @@
             </el-button>
           </div>
         </div>
-      </div>
-    </el-card>
-
-    <el-card>
-      <template #header>
-        <div class="table-header">
-          <h2>{{ $t('evaluation.list') }}</h2>
-        </div>
       </template>
       
       <el-table
