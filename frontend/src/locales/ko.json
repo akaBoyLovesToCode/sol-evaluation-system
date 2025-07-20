@@ -47,7 +47,8 @@
       "expectedEndDate": "예상 종료 날짜를 선택하세요",
       "reason": "평가 이유를 선택하세요",
       "description": "평가 설명을 입력하세요",
-      "actualEndDate": "실제 종료일은 비워둘 수 없습니다"
+      "actualEndDate": "실제 종료일은 비워둘 수 없습니다",
+      "processStep": "프로세스 단계를 입력하세요"
     }
   },
   "menu": {

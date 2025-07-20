@@ -378,7 +378,7 @@ watch(() => route.path, () => {
   justify-content: space-between;
   padding: 0 32px;
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-  margin: 8px 16px 0 0;
+  margin: 8px 16px 0 16px;
   border-radius: 20px;
   height: 70px;
 }

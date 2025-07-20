@@ -47,7 +47,8 @@
       "expectedEndDate": "Please select expected end date",
       "reason": "Please select evaluation reason",
       "description": "Please enter evaluation description",
-      "actualEndDate": "Actual end date cannot be empty"
+      "actualEndDate": "Actual end date cannot be empty",
+      "processStep": "Please enter process step"
     }
   },
   "menu": {
@@ -175,7 +176,7 @@
     "confirmResume": "Are you sure you want to resume this evaluation?",
     "confirmCancel": "Are you sure you want to cancel this evaluation? This action cannot be undone.",
     "getEvaluationDetailsFailed": "Failed to get evaluation details",
-    "finish": "Finish Evaluation",
+    "finish": "Finish",
     "finishConfirm": "Are you sure you want to finish this evaluation? A finished evaluation cannot be modified.",
     "finishSuccess": "Evaluation completed successfully!",
     "finishError": "Failed to finish evaluation, please try again.",

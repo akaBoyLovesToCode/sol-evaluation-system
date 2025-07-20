@@ -47,7 +47,8 @@
       "expectedEndDate": "请选择预计结束日期",
       "reason": "请选择评价原因",
       "description": "请输入评价描述",
-      "actualEndDate": "实际结束日期不能为空"
+      "actualEndDate": "实际结束日期不能为空",
+      "processStep": "请输入评价工程"
     }
   },
   "menu": {
