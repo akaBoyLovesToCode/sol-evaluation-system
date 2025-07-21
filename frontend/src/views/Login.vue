@@ -5,10 +5,10 @@
         <div class="logo-placeholder">
           <div class="logo-text">EVAL</div>
         </div>
-        <h1 class="title">{{ $t('login.title') }}</h1>
-        <p class="subtitle">{{ $t('login.subtitle') }}</p>
+        <h1 class="title">{{ $t("login.title") }}</h1>
+        <p class="subtitle">{{ $t("login.subtitle") }}</p>
       </div>
-      
+
       <el-form
         ref="loginFormRef"
         :model="loginForm"
@@ -25,7 +25,7 @@
             clearable
           />
         </el-form-item>
-        
+
         <el-form-item prop="password">
           <el-input
             v-model="loginForm.password"
@@ -38,13 +38,13 @@
             @keyup.enter="handleLogin"
           />
         </el-form-item>
-        
+
         <el-form-item>
           <el-checkbox v-model="loginForm.remember">
-            {{ $t('login.remember') }}
+            {{ $t("login.remember") }}
           </el-checkbox>
         </el-form-item>
-        
+
         <el-form-item>
           <el-button
             type="primary"
@@ -53,11 +53,11 @@
             @click="handleLogin"
             class="login-button"
           >
-            {{ $t('login.submit') }}
+            {{ $t("login.submit") }}
           </el-button>
         </el-form-item>
       </el-form>
-      
+
       <div class="login-footer">
         <el-dropdown @command="changeLanguage">
           <el-button text>
@@ -78,85 +78,102 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { ElMessage } from 'element-plus'
-import { User, Lock, Setting } from '@element-plus/icons-vue'
-import { useAuthStore } from '../stores/auth'
+import { ref, reactive, computed, nextTick } from "vue";
+import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { ElMessage } from "element-plus";
+import { User, Lock, Setting } from "@element-plus/icons-vue";
+import { useAuthStore } from "../stores/auth";
 
-const router = useRouter()
-const { t, locale } = useI18n()
-const authStore = useAuthStore()
+const router = useRouter();
+const { t, locale } = useI18n();
+const authStore = useAuthStore();
 
-const loginFormRef = ref()
-const loading = ref(false)
+const loginFormRef = ref();
+const loading = ref(false);
 
 const loginForm = reactive({
-  username: '',
-  password: '',
-  remember: false
-})
+  username: "",
+  password: "",
+  remember: false,
+});
 
 const loginRules = {
   username: [
-    { required: true, message: () => t('validation.required', { field: t('login.username') }), trigger: 'blur' },
-    { min: 3, max: 20, message: () => t('validation.length', { min: 3, max: 20 }), trigger: 'blur' }
+    {
+      required: true,
+      message: () => t("validation.required", { field: t("login.username") }),
+      trigger: "blur",
+    },
+    {
+      min: 3,
+      max: 20,
+      message: () => t("validation.length", { min: 3, max: 20 }),
+      trigger: "blur",
+    },
   ],
   password: [
-    { required: true, message: () => t('validation.required', { field: t('login.password') }), trigger: 'blur' },
-    { min: 6, message: () => t('validation.minLength', { min: 6 }), trigger: 'blur' }
-  ]
-}
+    {
+      required: true,
+      message: () => t("validation.required", { field: t("login.password") }),
+      trigger: "blur",
+    },
+    {
+      min: 6,
+      message: () => t("validation.minLength", { min: 6 }),
+      trigger: "blur",
+    },
+  ],
+};
 
 const currentLanguage = computed(() => {
   const langMap = {
-    zh: '中文',
-    en: 'English',
-    ko: '한국어'
-  }
-  return langMap[locale.value] || '中文'
-})
+    zh: "中文",
+    en: "English",
+    ko: "한국어",
+  };
+  return langMap[locale.value] || "中文";
+});
 
 const handleLogin = async () => {
-  if (!loginFormRef.value) return
-  
+  if (!loginFormRef.value) return;
+
   try {
-    await loginFormRef.value.validate()
-    loading.value = true
-    
+    await loginFormRef.value.validate();
+    loading.value = true;
+
     const result = await authStore.login({
       username: loginForm.username,
-      password: loginForm.password
-    })
-    
+      password: loginForm.password,
+    });
+
     if (result.success) {
-      ElMessage.success(t('login.success'))
-      
+      ElMessage.success(t("login.success"));
+
       // 记住登录状态
       if (loginForm.remember) {
-        localStorage.setItem('rememberLogin', 'true')
+        localStorage.setItem("rememberLogin", "true");
       }
-      
+
       // 等待一个tick确保状态更新完成
-      await nextTick()
-      
+      await nextTick();
+
       // 使用replace而不是push，避免用户按返回键回到登录页
-      router.replace('/')
+      router.replace("/");
     } else {
-      ElMessage.error(result.message || t('login.failed'))
+      ElMessage.error(result.message || t("login.failed"));
     }
   } catch (error) {
-    console.error('Login validation failed:', error)
+    console.error("Login validation failed:", error);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const changeLanguage = (lang) => {
-  locale.value = lang
-  localStorage.setItem('locale', lang)
-}
+  locale.value = lang;
+  localStorage.setItem("locale", lang);
+};
 </script>
 
 <style scoped>
@@ -172,19 +189,28 @@ const changeLanguage = (lang) => {
 }
 
 .login-container::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -50%;
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 70%
+  );
   animation: float 20s ease-in-out infinite;
 }
 
 @keyframes float {
-  0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
-  50% { transform: translate(-50%, -50%) rotate(180deg); }
+  0%,
+  100% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(180deg);
+  }
 }
 
 .login-box {
@@ -342,7 +368,11 @@ const changeLanguage = (lang) => {
 }
 
 .login-footer :deep(.el-dropdown-menu__item:hover) {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.1) 0%,
+    rgba(118, 75, 162, 0.1) 100%
+  );
   transform: translateX(4px);
 }
 
@@ -351,17 +381,17 @@ const changeLanguage = (lang) => {
   .login-container {
     padding: 10px;
   }
-  
+
   .login-box {
     padding: 30px 20px;
   }
-  
+
   .title {
     font-size: 24px;
   }
-  
+
   .subtitle {
     font-size: 14px;
   }
 }
-</style> 
+</style>

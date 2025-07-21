@@ -4,10 +4,10 @@
       <!-- 侧边栏 -->
       <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar">
         <div class="logo-container">
-          <div v-if="!isCollapse" class="logo">{{ $t('system.name') }}</div>
+          <div v-if="!isCollapse" class="logo">{{ $t("system.name") }}</div>
           <div v-else class="logo-mini">EVAL</div>
         </div>
-        
+
         <el-menu
           :default-active="activeMenu"
           :collapse="isCollapse"
@@ -17,48 +17,49 @@
         >
           <el-menu-item index="/">
             <el-icon><House /></el-icon>
-            <template #title>{{ $t('menu.dashboard') }}</template>
+            <template #title>{{ $t("menu.dashboard") }}</template>
           </el-menu-item>
-          
+
           <el-menu-item index="/evaluations">
             <el-icon><Document /></el-icon>
-            <template #title>{{ $t('menu.evaluations') }}</template>
+            <template #title>{{ $t("menu.evaluations") }}</template>
           </el-menu-item>
-          
+
           <el-menu-item index="/reports">
             <el-icon><DataAnalysis /></el-icon>
-            <template #title>{{ $t('menu.reports') }}</template>
+            <template #title>{{ $t("menu.reports") }}</template>
           </el-menu-item>
-          
+
           <el-menu-item index="/messages">
             <el-icon><Message /></el-icon>
-            <template #title>{{ $t('menu.messages') }}</template>
-            <el-badge :value="unreadCount" :hidden="unreadCount === 0" class="message-badge" />
+            <template #title>{{ $t("menu.messages") }}</template>
+            <el-badge
+              :value="unreadCount"
+              :hidden="unreadCount === 0"
+              class="message-badge"
+            />
           </el-menu-item>
-          
-          <el-menu-item 
-            index="/users" 
-            v-if="authStore.isGroupLeader"
-          >
+
+          <el-menu-item index="/users" v-if="authStore.isGroupLeader">
             <el-icon><User /></el-icon>
-            <template #title>{{ $t('menu.users') }}</template>
+            <template #title>{{ $t("menu.users") }}</template>
           </el-menu-item>
         </el-menu>
       </el-aside>
-      
+
       <!-- 主内容区 -->
       <el-container>
         <!-- 顶部栏 -->
         <el-header class="header">
           <div class="header-left">
-            <el-button 
-              :icon="isCollapse ? Expand : Fold" 
+            <el-button
+              :icon="isCollapse ? Expand : Fold"
               @click="toggleSidebar"
               text
             />
             <el-breadcrumb separator="/">
-              <el-breadcrumb-item 
-                v-for="item in breadcrumbs" 
+              <el-breadcrumb-item
+                v-for="item in breadcrumbs"
                 :key="item.path"
                 :to="item.path"
               >
@@ -66,7 +67,7 @@
               </el-breadcrumb-item>
             </el-breadcrumb>
           </div>
-          
+
           <div class="header-right">
             <!-- 语言切换 -->
             <el-dropdown @command="changeLanguage">
@@ -82,7 +83,7 @@
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
-            
+
             <!-- 用户菜单 -->
             <el-dropdown @command="handleUserCommand">
               <div class="user-info">
@@ -96,18 +97,18 @@
                 <el-dropdown-menu>
                   <el-dropdown-item command="profile">
                     <el-icon><User /></el-icon>
-                    {{ $t('menu.profile') }}
+                    {{ $t("menu.profile") }}
                   </el-dropdown-item>
                   <el-dropdown-item divided command="logout">
                     <el-icon><SwitchButton /></el-icon>
-                    {{ $t('menu.logout') }}
+                    {{ $t("menu.logout") }}
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
           </div>
         </el-header>
-        
+
         <!-- 主内容 -->
         <el-main class="main-content">
           <router-view />
@@ -118,106 +119,117 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '../stores/auth'
-import { 
-  House, Document, DataAnalysis, Message, User, 
-  Expand, Fold, Setting, ArrowDown, SwitchButton 
-} from '@element-plus/icons-vue'
+import { ref, computed, watch, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { useAuthStore } from "../stores/auth";
+import {
+  House,
+  Document,
+  DataAnalysis,
+  Message,
+  User,
+  Expand,
+  Fold,
+  Setting,
+  ArrowDown,
+  SwitchButton,
+} from "@element-plus/icons-vue";
 
-const route = useRoute()
-const router = useRouter()
-const { t, locale } = useI18n()
-const authStore = useAuthStore()
+const route = useRoute();
+const router = useRouter();
+const { t, locale } = useI18n();
+const authStore = useAuthStore();
 
-const isCollapse = ref(false)
-const unreadCount = ref(0)
+const isCollapse = ref(false);
+const unreadCount = ref(0);
 
 const activeMenu = computed(() => {
-  const { matched } = route
-  if (matched.length === 0) return '/'
-  
-  let path = matched[matched.length - 1].path
-  if (path === '/evaluations/new' || path.startsWith('/evaluations/')) {
-    return '/evaluations'
+  const { matched } = route;
+  if (matched.length === 0) return "/";
+
+  let path = matched[matched.length - 1].path;
+  if (path === "/evaluations/new" || path.startsWith("/evaluations/")) {
+    return "/evaluations";
   }
-  return path
-})
+  return path;
+});
 
 const currentLanguage = computed(() => {
   const langMap = {
-    zh: '中文',
-    en: 'English',
-    ko: '한국어'
-  }
-  return langMap[locale.value] || '中文'
-})
+    zh: "中文",
+    en: "English",
+    ko: "한국어",
+  };
+  return langMap[locale.value] || "中文";
+});
 
 const breadcrumbs = computed(() => {
-  const matched = route.matched.filter(item => item.meta && item.meta.title)
-  const breadcrumbs = []
-  
-  matched.forEach(item => {
+  const matched = route.matched.filter((item) => item.meta && item.meta.title);
+  const breadcrumbs = [];
+
+  matched.forEach((item) => {
     breadcrumbs.push({
       path: item.path,
-      title: t(item.meta.title)
-    })
-  })
-  
-  return breadcrumbs
-})
+      title: t(item.meta.title),
+    });
+  });
+
+  return breadcrumbs;
+});
 
 const toggleSidebar = () => {
-  isCollapse.value = !isCollapse.value
-  localStorage.setItem('sidebarCollapse', isCollapse.value)
-}
+  isCollapse.value = !isCollapse.value;
+  localStorage.setItem("sidebarCollapse", isCollapse.value);
+};
 
 const changeLanguage = (lang) => {
-  locale.value = lang
-  localStorage.setItem('locale', lang)
-}
+  locale.value = lang;
+  localStorage.setItem("locale", lang);
+};
 
 const handleUserCommand = (command) => {
   switch (command) {
-    case 'profile':
-      router.push('/profile')
-      break
-    case 'logout':
-      authStore.logout()
-      router.push('/login')
-      break
+    case "profile":
+      router.push("/profile");
+      break;
+    case "logout":
+      authStore.logout();
+      router.push("/login");
+      break;
   }
-}
+};
 
 // 获取未读消息数量
 const fetchUnreadCount = async () => {
   try {
     // TODO: 实现获取未读消息数量的API调用
-    unreadCount.value = 0
+    unreadCount.value = 0;
   } catch (error) {
-    console.error('Failed to fetch unread count:', error)
+    console.error("Failed to fetch unread count:", error);
   }
-}
+};
 
 onMounted(() => {
   // 恢复侧边栏状态
-  const savedCollapse = localStorage.getItem('sidebarCollapse')
+  const savedCollapse = localStorage.getItem("sidebarCollapse");
   if (savedCollapse !== null) {
-    isCollapse.value = JSON.parse(savedCollapse)
+    isCollapse.value = JSON.parse(savedCollapse);
   }
-  
+
   // 获取未读消息数量
-  fetchUnreadCount()
-})
+  fetchUnreadCount();
+});
 
 // 监听路由变化，更新未读消息数量
-watch(() => route.path, () => {
-  if (route.path === '/messages') {
-    fetchUnreadCount()
-  }
-})
+watch(
+  () => route.path,
+  () => {
+    if (route.path === "/messages") {
+      fetchUnreadCount();
+    }
+  },
+);
 </script>
 
 <style scoped>
@@ -521,4 +533,4 @@ watch(() => route.path, () => {
   background: rgba(59, 130, 246, 0.1);
   transform: translateX(4px);
 }
-</style> 
+</style>

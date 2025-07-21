@@ -5,15 +5,15 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
-import { useAuthStore } from './stores/auth'
+import { onMounted } from "vue";
+import { useAuthStore } from "./stores/auth";
 
-const authStore = useAuthStore()
+const authStore = useAuthStore();
 
 onMounted(() => {
   // 应用启动时检查登录状态
-  authStore.checkAuth()
-})
+  authStore.checkAuth();
+});
 </script>
 
 <style>
@@ -21,4 +21,4 @@ onMounted(() => {
   min-height: 100vh;
   background-color: #f5f5f5;
 }
-</style> 
+</style>

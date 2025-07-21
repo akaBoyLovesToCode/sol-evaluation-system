@@ -104,13 +104,21 @@
 }
 
 .el-table th {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.1) 0%,
+    rgba(118, 75, 162, 0.1) 100%
+  ) !important;
   font-weight: 600 !important;
   color: #2c3e50 !important;
 }
 
 .el-table tr:hover > td {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.05) 0%,
+    rgba(118, 75, 162, 0.05) 100%
+  ) !important;
 }
 
 .el-dropdown-menu {
@@ -127,7 +135,11 @@
 }
 
 .el-dropdown-menu__item:hover {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.1) 0%,
+    rgba(118, 75, 162, 0.1) 100%
+  ) !important;
   transform: translateX(4px);
 }
 
@@ -211,25 +223,25 @@
   .stats-grid {
     grid-template-columns: 1fr !important;
   }
-  
+
   .page-header {
     flex-direction: column !important;
     gap: 16px !important;
   }
-  
+
   .search-form {
     display: block !important;
   }
-  
+
   .search-form .el-form-item {
     display: block !important;
     margin-bottom: 16px !important;
   }
-  
+
   .search-form .el-form-item__content {
     margin-left: 0 !important;
   }
-  
+
   .table-header {
     flex-direction: column !important;
     gap: 12px !important;
@@ -241,17 +253,17 @@
   .login-container {
     padding: 10px !important;
   }
-  
+
   .login-box {
     padding: 30px 20px !important;
   }
-  
+
   .form-actions {
     flex-direction: column !important;
     align-items: center !important;
   }
-  
+
   .form-actions .el-button {
     width: 200px !important;
   }
-} 
+}

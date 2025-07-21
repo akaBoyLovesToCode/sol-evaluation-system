@@ -1,22 +1,22 @@
 <template>
   <div class="messages-page">
     <div class="page-header">
-      <h1>{{ $t('messages.title') }}</h1>
-      <p>{{ $t('messages.description') }}</p>
+      <h1>{{ $t("messages.title") }}</h1>
+      <p>{{ $t("messages.description") }}</p>
     </div>
 
     <el-card>
       <div class="coming-soon">
         <el-icon size="64"><Message /></el-icon>
-        <h2>{{ $t('messages.comingSoon') }}</h2>
-        <p>{{ $t('messages.comingSoonDesc') }}</p>
+        <h2>{{ $t("messages.comingSoon") }}</h2>
+        <p>{{ $t("messages.comingSoonDesc") }}</p>
       </div>
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { Message } from '@element-plus/icons-vue'
+import { Message } from "@element-plus/icons-vue";
 </script>
 
 <style scoped>
@@ -53,4 +53,4 @@ import { Message } from '@element-plus/icons-vue'
 .coming-soon p {
   margin: 0;
 }
-</style> 
+</style>

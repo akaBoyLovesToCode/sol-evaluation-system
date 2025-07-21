@@ -389,40 +389,46 @@ const userFormRules = computed(() => ({
       trigger: "change",
     },
   ],
-  password: !isEditing.value ? [
-    {
-      required: true,
-      message: t("validation.required", { field: t("users.password") }),
-      trigger: "blur",
-    },
-    {
-      min: 8,
-      message: t("validation.minLength", { min: 8 }),
-      trigger: "blur",
-    },
-    {
-      pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/,
-      message: t("profile.passwordRequirements"),
-      trigger: "blur",
-    },
-  ] : [],
-  confirmPassword: !isEditing.value ? [
-    {
-      required: true,
-      message: t("validation.required", { field: t("users.confirmPassword") }),
-      trigger: "blur",
-    },
-    {
-      validator: (_, value, callback) => {
-        if (value !== userForm.password) {
-          callback(new Error(t("profile.passwordMismatch")));
-        } else {
-          callback();
-        }
-      },
-      trigger: "blur",
-    },
-  ] : [],
+  password: !isEditing.value
+    ? [
+        {
+          required: true,
+          message: t("validation.required", { field: t("users.password") }),
+          trigger: "blur",
+        },
+        {
+          min: 8,
+          message: t("validation.minLength", { min: 8 }),
+          trigger: "blur",
+        },
+        {
+          pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/,
+          message: t("profile.passwordRequirements"),
+          trigger: "blur",
+        },
+      ]
+    : [],
+  confirmPassword: !isEditing.value
+    ? [
+        {
+          required: true,
+          message: t("validation.required", {
+            field: t("users.confirmPassword"),
+          }),
+          trigger: "blur",
+        },
+        {
+          validator: (_, value, callback) => {
+            if (value !== userForm.password) {
+              callback(new Error(t("profile.passwordMismatch")));
+            } else {
+              callback();
+            }
+          },
+          trigger: "blur",
+        },
+      ]
+    : [],
 }));
 
 // Fetch users on component mount
@@ -538,13 +544,12 @@ const saveUser = async () => {
           department: userForm.department,
           position: userForm.position,
           role: userForm.role,
-          is_active: userForm.is_active
+          is_active: userForm.is_active,
         };
 
         if (!isEditing.value) {
           userData.password = userForm.password;
         }
-
 
         if (isEditing.value) {
           await api.put(`/users/${userForm.id}`, userData);
@@ -681,7 +686,9 @@ const getRoleTagType = (role) => {
 /* Remove transform effect on operation buttons */
 .table-card :deep(.el-button) {
   transform: none;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease;
 }
 
 .table-card :deep(.el-button:hover) {
