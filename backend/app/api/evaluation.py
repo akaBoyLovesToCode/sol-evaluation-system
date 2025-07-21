@@ -546,7 +546,7 @@ def update_evaluation(evaluation_id):
             }), 404
         
         # Check if user is authorized to update the evaluation
-        if evaluation.evaluator_id != user_id and not User.query.get(user_id).is_admin():
+        if evaluation.evaluator_id != user_id and not User.query.get(user_id).has_permission("admin"):
             return jsonify({
                 'success': False,
                 'message': 'Unauthorized to update this evaluation'
@@ -674,7 +674,7 @@ def update_evaluation_status(evaluation_id):
         
         # Check if user is authorized to update the status
         user = User.query.get(user_id)
-        if evaluation.evaluator_id != user_id and not user.is_admin():
+        if evaluation.evaluator_id != user_id and not user.has_permission("admin"):
             return jsonify({
                 'success': False,
                 'message': 'Unauthorized to update this evaluation status'
