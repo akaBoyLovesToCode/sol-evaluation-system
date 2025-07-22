@@ -53,7 +53,7 @@ def get_evaluation_logs(evaluation_id):
         # Build query
         query = OperationLog.query.filter(
             OperationLog.target_type == "evaluation",
-            OperationLog.target_id == evaluation_id
+            OperationLog.target_id == evaluation_id,
         )
 
         # Apply filters
@@ -91,7 +91,9 @@ def get_evaluation_logs(evaluation_id):
         )
 
 
-@operation_log_bp.route("/evaluations/<int:evaluation_id>/logs/<int:log_id>", methods=["PUT"])
+@operation_log_bp.route(
+    "/evaluations/<int:evaluation_id>/logs/<int:log_id>", methods=["PUT"]
+)
 @jwt_required()
 @require_role("admin")
 @validate_json(required_fields=["operation_description"])
@@ -115,7 +117,7 @@ def update_evaluation_log(evaluation_id, log_id):
         log = OperationLog.query.filter(
             OperationLog.id == log_id,
             OperationLog.target_type == "evaluation",
-            OperationLog.target_id == evaluation_id
+            OperationLog.target_id == evaluation_id,
         ).first()
 
         if not log:
@@ -130,12 +132,12 @@ def update_evaluation_log(evaluation_id, log_id):
 
         # Log this update operation
         ip_address = request.remote_addr
-        user_agent = request.headers.get('User-Agent')
+        user_agent = request.headers.get("User-Agent")
         OperationLog.log_system_operation(
             user_id=current_user_id,
             operation_description=f"Updated operation log {log_id} for evaluation {evaluation_id}",
             operation_data={"log_id": log_id, "evaluation_id": evaluation_id},
-            ip_address=ip_address
+            ip_address=ip_address,
         )
 
         db.session.commit()

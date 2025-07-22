@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -81,7 +82,7 @@ class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     WTF_CSRF_ENABLED = False
-    
+
     # Override MySQL-specific engine options for SQLite compatibility
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_pre_ping": True,

@@ -56,7 +56,7 @@ def create_app(config_name=None):
     app.register_blueprint(workflow_bp, url_prefix="/api/workflow")
     app.register_blueprint(notifications_bp, url_prefix="/api/notifications")
     app.register_blueprint(operation_log_bp, url_prefix="/api/logs")
-    
+
     # Register Swagger API documentation
     register_api_routes(app)
 

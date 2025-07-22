@@ -216,15 +216,15 @@ def get_detailed_statistics():
 
         # Get all evaluations and process in Python
         evaluations = base_query.all()
-        
+
         # Process data in Python to avoid SQL compatibility issues
         period_counts = {}
         completion_data = {}
-        
+
         for evaluation in evaluations:
             if not evaluation.start_date:
                 continue
-                
+
             # Format period based on group_by parameter
             if group_by == "month":
                 period = evaluation.start_date.strftime("%Y-%m")
@@ -233,10 +233,10 @@ def get_detailed_statistics():
                 period = f"{year}-W{week:02d}"
             else:  # day
                 period = evaluation.start_date.strftime("%Y-%m-%d")
-            
+
             # Count evaluations
             period_counts[period] = period_counts.get(period, 0) + 1
-            
+
             # Count completions
             if period not in completion_data:
                 completion_data[period] = {"total": 0, "completed": 0}
@@ -249,29 +249,33 @@ def get_detailed_statistics():
             {"period": period, "count": count}
             for period, count in sorted(period_counts.items())
         ]
-        
+
         # Calculate completion rates
         completion_rates = []
         for period, data in sorted(completion_data.items()):
             total = data["total"]
             completed = data["completed"]
             rate = (completed / total * 100) if total > 0 else 0
-            completion_rates.append({
-                "period": period,
-                "total": total,
-                "completed": completed,
-                "completion_rate": round(rate, 2),
-            })
+            completion_rates.append(
+                {
+                    "period": period,
+                    "total": total,
+                    "completed": completed,
+                    "completion_rate": round(rate, 2),
+                }
+            )
 
         # Product statistics - simplified
         product_counts = {}
         for evaluation in evaluations:
             product = evaluation.product_name or "Unknown"
             product_counts[product] = product_counts.get(product, 0) + 1
-        
+
         product_statistics = [
             {"product": product, "count": count}
-            for product, count in sorted(product_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+            for product, count in sorted(
+                product_counts.items(), key=lambda x: x[1], reverse=True
+            )[:10]
         ]
 
         # Evaluator performance - simplified for leaders only
@@ -280,43 +284,57 @@ def get_detailed_statistics():
             evaluator_data = {}
             for evaluation in evaluations:
                 evaluator_id = evaluation.evaluator_id
-                evaluator_name = evaluation.evaluator.full_name if evaluation.evaluator else 'Unknown'
-                
+                evaluator_name = (
+                    evaluation.evaluator.full_name
+                    if evaluation.evaluator
+                    else "Unknown"
+                )
+
                 if evaluator_id not in evaluator_data:
                     evaluator_data[evaluator_id] = {
-                        'name': evaluator_name,
-                        'total': 0,
-                        'completed': 0,
-                        'durations': []
+                        "name": evaluator_name,
+                        "total": 0,
+                        "completed": 0,
+                        "durations": [],
                     }
-                
-                evaluator_data[evaluator_id]['total'] += 1
-                
+
+                evaluator_data[evaluator_id]["total"] += 1
+
                 if evaluation.status == "completed":
-                    evaluator_data[evaluator_id]['completed'] += 1
-                    
+                    evaluator_data[evaluator_id]["completed"] += 1
+
                     # Calculate duration if both dates exist
                     if evaluation.start_date and evaluation.completion_date:
-                        duration = (evaluation.completion_date - evaluation.start_date).days
-                        evaluator_data[evaluator_id]['durations'].append(duration)
-            
+                        duration = (
+                            evaluation.completion_date - evaluation.start_date
+                        ).days
+                        evaluator_data[evaluator_id]["durations"].append(duration)
+
             # Convert to expected format
             for evaluator_id, data in evaluator_data.items():
-                total = data['total']
-                completed = data['completed']
+                total = data["total"]
+                completed = data["completed"]
                 completion_rate = (completed / total * 100) if total > 0 else 0
-                avg_duration = sum(data['durations']) / len(data['durations']) if data['durations'] else 0
-                
-                evaluator_performance.append({
-                    "evaluator_name": data['name'],
-                    "total_evaluations": total,
-                    "completed_evaluations": completed,
-                    "completion_rate": round(completion_rate, 2),
-                    "avg_duration_days": round(avg_duration, 1),
-                })
-            
+                avg_duration = (
+                    sum(data["durations"]) / len(data["durations"])
+                    if data["durations"]
+                    else 0
+                )
+
+                evaluator_performance.append(
+                    {
+                        "evaluator_name": data["name"],
+                        "total_evaluations": total,
+                        "completed_evaluations": completed,
+                        "completion_rate": round(completion_rate, 2),
+                        "avg_duration_days": round(avg_duration, 1),
+                    }
+                )
+
             # Sort by total evaluations and limit to 10
-            evaluator_performance.sort(key=lambda x: x['total_evaluations'], reverse=True)
+            evaluator_performance.sort(
+                key=lambda x: x["total_evaluations"], reverse=True
+            )
             evaluator_performance = evaluator_performance[:10]
 
         return create_response(
@@ -336,8 +354,11 @@ def get_detailed_statistics():
 
     except Exception as e:
         import traceback
+
         error_details = traceback.format_exc()
-        current_app.logger.error(f"Detailed statistics error: {str(e)}\n{error_details}")
+        current_app.logger.error(
+            f"Detailed statistics error: {str(e)}\n{error_details}"
+        )
         return create_response(
             message=f"Failed to retrieve detailed statistics: {str(e)}", status_code=500
         )

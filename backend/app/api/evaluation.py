@@ -1,6 +1,7 @@
 """
 API endpoints for evaluation management.
 """
+
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import db
@@ -10,35 +11,39 @@ from app.models.operation_log import OperationLog, OperationType
 from datetime import datetime
 import json
 
-evaluation_bp = Blueprint('evaluation', __name__)
+evaluation_bp = Blueprint("evaluation", __name__)
+
 
 def generate_evaluation_number():
     """
     Generate a unique evaluation number in format: EVAL-YYYYMMDD-NNNN
     """
     today = datetime.now()
-    date_str = today.strftime('%Y%m%d')
-    
+    date_str = today.strftime("%Y%m%d")
+
     # Find the highest number for today
     today_prefix = f"EVAL-{date_str}-"
-    latest_eval = db.session.query(Evaluation)\
-        .filter(Evaluation.evaluation_number.like(f"{today_prefix}%"))\
-        .order_by(Evaluation.evaluation_number.desc())\
+    latest_eval = (
+        db.session.query(Evaluation)
+        .filter(Evaluation.evaluation_number.like(f"{today_prefix}%"))
+        .order_by(Evaluation.evaluation_number.desc())
         .first()
-    
+    )
+
     if latest_eval:
         # Extract the number part and increment
         try:
-            last_number = int(latest_eval.evaluation_number.split('-')[-1])
+            last_number = int(latest_eval.evaluation_number.split("-")[-1])
             next_number = last_number + 1
         except (ValueError, IndexError):
             next_number = 1
     else:
         next_number = 1
-    
+
     return f"EVAL-{date_str}-{next_number:04d}"
 
-@evaluation_bp.route('', methods=['GET'])
+
+@evaluation_bp.route("", methods=["GET"])
 @jwt_required()
 def get_evaluations():
     """
@@ -142,77 +147,77 @@ def get_evaluations():
     """
     try:
         # Get query parameters
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 10, type=int)
-        status = request.args.get('status')
-        evaluation_type = request.args.get('evaluation_type')
-        product_name = request.args.get('product_name')
-        evaluator_id = request.args.get('evaluator_id', type=int)
-        
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 10, type=int)
+        status = request.args.get("status")
+        evaluation_type = request.args.get("evaluation_type")
+        product_name = request.args.get("product_name")
+        evaluator_id = request.args.get("evaluator_id", type=int)
+
         # Build query
         query = Evaluation.query
-        
+
         # Apply filters
         if status:
             query = query.filter(Evaluation.status == status)
         if evaluation_type:
             query = query.filter(Evaluation.evaluation_type == evaluation_type)
         if product_name:
-            query = query.filter(Evaluation.product_name.ilike(f'%{product_name}%'))
+            query = query.filter(Evaluation.product_name.ilike(f"%{product_name}%"))
         if evaluator_id:
             query = query.filter(Evaluation.evaluator_id == evaluator_id)
-        
+
         # Paginate results
         paginated_evaluations = query.order_by(Evaluation.created_at.desc()).paginate(
             page=page, per_page=per_page, error_out=False
         )
-        
+
         # Format response
         evaluations = []
         for evaluation in paginated_evaluations.items:
             evaluator = User.query.get(evaluation.evaluator_id)
             evaluator_name = evaluator.full_name if evaluator else "Unknown"
-            
+
             evaluation_data = evaluation.to_dict()
-            evaluation_data['evaluator_name'] = evaluator_name
+            evaluation_data["evaluator_name"] = evaluator_name
             evaluations.append(evaluation_data)
-        
+
         # Log operation
         user_id = get_jwt_identity()
         log = OperationLog(
             user_id=user_id,
             operation_type=OperationType.VIEW.value,
-            target_type='evaluation_list',
+            target_type="evaluation_list",
             target_id=None,
-            target_description='Viewed evaluation list',
-            operation_description=f'User viewed evaluation list with filters: {request.args}',
+            target_description="Viewed evaluation list",
+            operation_description=f"User viewed evaluation list with filters: {request.args}",
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
-            success=True
+            success=True,
         )
         db.session.add(log)
         db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'data': {
-                'evaluations': evaluations,
-                'total': paginated_evaluations.total,
-                'page': page,
-                'per_page': per_page,
-                'pages': paginated_evaluations.pages
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "evaluations": evaluations,
+                    "total": paginated_evaluations.total,
+                    "page": page,
+                    "per_page": per_page,
+                    "pages": paginated_evaluations.pages,
+                },
             }
-        })
+        )
     except Exception as e:
         current_app.logger.error(f"Error getting evaluations: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': 'Failed to get evaluations',
-            'error': str(e)
-        }), 500
+        return jsonify(
+            {"success": False, "message": "Failed to get evaluations", "error": str(e)}
+        ), 500
 
 
-@evaluation_bp.route('/<int:evaluation_id>', methods=['GET'])
+@evaluation_bp.route("/<int:evaluation_id>", methods=["GET"])
 @jwt_required()
 def get_evaluation(evaluation_id):
     """
@@ -284,63 +289,53 @@ def get_evaluation(evaluation_id):
     """
     try:
         evaluation = Evaluation.query.get(evaluation_id)
-        
+
         if not evaluation:
-            return jsonify({
-                'success': False,
-                'message': 'Evaluation not found'
-            }), 404
-        
+            return jsonify({"success": False, "message": "Evaluation not found"}), 404
+
         # Get evaluator name
         evaluator = User.query.get(evaluation.evaluator_id)
         evaluator_name = evaluator.full_name if evaluator else "Unknown"
-        
+
         # Get evaluation data
         evaluation_data = evaluation.to_dict()
-        evaluation_data['evaluator_name'] = evaluator_name
-        
+        evaluation_data["evaluator_name"] = evaluator_name
+
         # Get operation logs
         logs = []
         for log in evaluation.operation_logs:
             user = User.query.get(log.user_id)
             log_data = log.to_dict()
-            log_data['user_name'] = user.full_name if user else "Unknown"
+            log_data["user_name"] = user.full_name if user else "Unknown"
             logs.append(log_data)
-        
-        evaluation_data['logs'] = logs
-        
+
+        evaluation_data["logs"] = logs
+
         # Log operation
         user_id = get_jwt_identity()
         log = OperationLog(
             user_id=user_id,
             operation_type=OperationType.VIEW.value,
-            target_type='evaluation',
+            target_type="evaluation",
             target_id=evaluation_id,
-            target_description=f'Viewed evaluation {evaluation.evaluation_number}',
-            operation_description=f'User viewed evaluation details',
+            target_description=f"Viewed evaluation {evaluation.evaluation_number}",
+            operation_description=f"User viewed evaluation details",
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
-            success=True
+            success=True,
         )
         db.session.add(log)
         db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'data': {
-                'evaluation': evaluation_data
-            }
-        })
+
+        return jsonify({"success": True, "data": {"evaluation": evaluation_data}})
     except Exception as e:
         current_app.logger.error(f"Error getting evaluation: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': 'Failed to get evaluation',
-            'error': str(e)
-        }), 500
+        return jsonify(
+            {"success": False, "message": "Failed to get evaluation", "error": str(e)}
+        ), 500
 
 
-@evaluation_bp.route('', methods=['POST'])
+@evaluation_bp.route("", methods=["POST"])
 @jwt_required()
 def create_evaluation():
     """
@@ -411,74 +406,83 @@ def create_evaluation():
     try:
         data = request.json
         user_id = get_jwt_identity()
-        
+
         # Validate required fields (evaluation_number is now optional)
-        required_fields = ['evaluation_type', 'product_name', 
-                          'part_number', 'start_date', 'expected_end_date', 'process_step']
+        required_fields = [
+            "evaluation_type",
+            "product_name",
+            "part_number",
+            "start_date",
+            "expected_end_date",
+            "process_step",
+        ]
         for field in required_fields:
             if field not in data or not data[field]:
-                return jsonify({
-                    'success': False,
-                    'message': f'Missing required field: {field}'
-                }), 400
-        
+                return jsonify(
+                    {"success": False, "message": f"Missing required field: {field}"}
+                ), 400
+
         # Generate evaluation number if not provided
-        evaluation_number = data.get('evaluation_number')
+        evaluation_number = data.get("evaluation_number")
         if not evaluation_number:
             evaluation_number = generate_evaluation_number()
-        
+
         # Create evaluation
         evaluation = Evaluation(
             evaluation_number=evaluation_number,
-            evaluation_type=data['evaluation_type'],
-            product_name=data['product_name'],
-            part_number=data['part_number'],
-            evaluation_reason=data.get('evaluation_reason', ''),
-            description=data.get('description', ''),
-            status=data.get('status', EvaluationStatus.DRAFT.value),
-            start_date=datetime.strptime(data['start_date'], '%Y-%m-%d').date(),
-            expected_end_date=datetime.strptime(data['expected_end_date'], '%Y-%m-%d').date(),
-            process_step=data['process_step'],
-            evaluator_id=user_id
+            evaluation_type=data["evaluation_type"],
+            product_name=data["product_name"],
+            part_number=data["part_number"],
+            evaluation_reason=data.get("evaluation_reason", ""),
+            description=data.get("description", ""),
+            status=data.get("status", EvaluationStatus.DRAFT.value),
+            start_date=datetime.strptime(data["start_date"], "%Y-%m-%d").date(),
+            expected_end_date=datetime.strptime(
+                data["expected_end_date"], "%Y-%m-%d"
+            ).date(),
+            process_step=data["process_step"],
+            evaluator_id=user_id,
         )
-        
+
         db.session.add(evaluation)
         db.session.commit()
-        
+
         # Log operation
         log = OperationLog(
             user_id=user_id,
             operation_type=OperationType.CREATE.value,
-            target_type='evaluation',
+            target_type="evaluation",
             target_id=evaluation.id,
-            target_description=f'Created evaluation {evaluation.evaluation_number}',
-            operation_description='User created a new evaluation',
+            target_description=f"Created evaluation {evaluation.evaluation_number}",
+            operation_description="User created a new evaluation",
             new_data=json.dumps(evaluation.to_dict()),
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
-            success=True
+            success=True,
         )
         db.session.add(log)
         db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Evaluation created successfully',
-            'data': {
-                'evaluation': evaluation.to_dict()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Evaluation created successfully",
+                "data": {"evaluation": evaluation.to_dict()},
             }
-        }), 201
+        ), 201
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error creating evaluation: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': 'Failed to create evaluation',
-            'error': str(e)
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "message": "Failed to create evaluation",
+                "error": str(e),
+            }
+        ), 500
 
 
-@evaluation_bp.route('/<int:evaluation_id>', methods=['PUT'])
+@evaluation_bp.route("/<int:evaluation_id>", methods=["PUT"])
 @jwt_required()
 def update_evaluation(evaluation_id):
     """
@@ -536,83 +540,90 @@ def update_evaluation(evaluation_id):
     try:
         data = request.json
         user_id = get_jwt_identity()
-        
+
         evaluation = Evaluation.query.get(evaluation_id)
-        
+
         if not evaluation:
-            return jsonify({
-                'success': False,
-                'message': 'Evaluation not found'
-            }), 404
-        
+            return jsonify({"success": False, "message": "Evaluation not found"}), 404
+
         # Check if user is authorized to update the evaluation
-        if evaluation.evaluator_id != user_id and not User.query.get(user_id).has_permission("admin"):
-            return jsonify({
-                'success': False,
-                'message': 'Unauthorized to update this evaluation'
-            }), 403
-        
+        if evaluation.evaluator_id != user_id and not User.query.get(
+            user_id
+        ).has_permission("admin"):
+            return jsonify(
+                {"success": False, "message": "Unauthorized to update this evaluation"}
+            ), 403
+
         # Check if evaluation can be updated
-        if evaluation.status not in [EvaluationStatus.DRAFT.value, EvaluationStatus.IN_PROGRESS.value]:
-            return jsonify({
-                'success': False,
-                'message': f'Cannot update evaluation in {evaluation.status} status'
-            }), 400
-        
+        if evaluation.status not in [
+            EvaluationStatus.DRAFT.value,
+            EvaluationStatus.IN_PROGRESS.value,
+        ]:
+            return jsonify(
+                {
+                    "success": False,
+                    "message": f"Cannot update evaluation in {evaluation.status} status",
+                }
+            ), 400
+
         # Store old data for logging
         old_data = evaluation.to_dict()
-        
+
         # Update fields
-        if 'product_name' in data:
-            evaluation.product_name = data['product_name']
-        if 'part_number' in data:
-            evaluation.part_number = data['part_number']
-        if 'evaluation_reason' in data:
-            evaluation.evaluation_reason = data['evaluation_reason']
-        if 'description' in data:
-            evaluation.description = data['description']
-        if 'expected_end_date' in data:
-            evaluation.expected_end_date = datetime.strptime(data['expected_end_date'], '%Y-%m-%d').date()
-        if 'process_step' in data:
-            evaluation.process_step = data['process_step']
-        
+        if "product_name" in data:
+            evaluation.product_name = data["product_name"]
+        if "part_number" in data:
+            evaluation.part_number = data["part_number"]
+        if "evaluation_reason" in data:
+            evaluation.evaluation_reason = data["evaluation_reason"]
+        if "description" in data:
+            evaluation.description = data["description"]
+        if "expected_end_date" in data:
+            evaluation.expected_end_date = datetime.strptime(
+                data["expected_end_date"], "%Y-%m-%d"
+            ).date()
+        if "process_step" in data:
+            evaluation.process_step = data["process_step"]
+
         db.session.commit()
-        
+
         # Log operation
         log = OperationLog(
             user_id=user_id,
             operation_type=OperationType.UPDATE.value,
-            target_type='evaluation',
+            target_type="evaluation",
             target_id=evaluation.id,
-            target_description=f'Updated evaluation {evaluation.evaluation_number}',
-            operation_description='User updated evaluation details',
+            target_description=f"Updated evaluation {evaluation.evaluation_number}",
+            operation_description="User updated evaluation details",
             old_data=json.dumps(old_data),
             new_data=json.dumps(evaluation.to_dict()),
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
-            success=True
+            success=True,
         )
         db.session.add(log)
         db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Evaluation updated successfully',
-            'data': {
-                'evaluation': evaluation.to_dict()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Evaluation updated successfully",
+                "data": {"evaluation": evaluation.to_dict()},
             }
-        })
+        )
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error updating evaluation: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': 'Failed to update evaluation',
-            'error': str(e)
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "message": "Failed to update evaluation",
+                "error": str(e),
+            }
+        ), 500
 
 
-@evaluation_bp.route('/<int:evaluation_id>/status', methods=['PUT'])
+@evaluation_bp.route("/<int:evaluation_id>/status", methods=["PUT"])
 @jwt_required()
 def update_evaluation_status(evaluation_id):
     """
@@ -657,77 +668,75 @@ def update_evaluation_status(evaluation_id):
     try:
         data = request.json
         user_id = get_jwt_identity()
-        
-        if 'status' not in data:
-            return jsonify({
-                'success': False,
-                'message': 'Status is required'
-            }), 400
-        
+
+        if "status" not in data:
+            return jsonify({"success": False, "message": "Status is required"}), 400
+
         evaluation = Evaluation.query.get(evaluation_id)
-        
+
         if not evaluation:
-            return jsonify({
-                'success': False,
-                'message': 'Evaluation not found'
-            }), 404
-        
+            return jsonify({"success": False, "message": "Evaluation not found"}), 404
+
         # Check if user is authorized to update the status
         user = User.query.get(user_id)
         if evaluation.evaluator_id != user_id and not user.has_permission("admin"):
-            return jsonify({
-                'success': False,
-                'message': 'Unauthorized to update this evaluation status'
-            }), 403
-        
+            return jsonify(
+                {
+                    "success": False,
+                    "message": "Unauthorized to update this evaluation status",
+                }
+            ), 403
+
         # Store old data for logging
         old_data = evaluation.to_dict()
-        
+
         # Update status
-        new_status = data['status']
+        new_status = data["status"]
         evaluation.status = new_status
-        
+
         # Set actual end date if status is completed
         if new_status == EvaluationStatus.COMPLETED.value:
             evaluation.actual_end_date = datetime.now().date()
-        
+
         db.session.commit()
-        
+
         # Log operation
         log = OperationLog(
             user_id=user_id,
             operation_type=OperationType.UPDATE.value,
-            target_type='evaluation_status',
+            target_type="evaluation_status",
             target_id=evaluation.id,
-            target_description=f'Updated status of evaluation {evaluation.evaluation_number}',
-            operation_description=f'User changed evaluation status from {old_data["status"]} to {new_status}',
-            old_data=json.dumps({'status': old_data['status']}),
-            new_data=json.dumps({'status': new_status}),
+            target_description=f"Updated status of evaluation {evaluation.evaluation_number}",
+            operation_description=f"User changed evaluation status from {old_data['status']} to {new_status}",
+            old_data=json.dumps({"status": old_data["status"]}),
+            new_data=json.dumps({"status": new_status}),
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
-            success=True
+            success=True,
         )
         db.session.add(log)
         db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Evaluation status updated successfully',
-            'data': {
-                'evaluation': evaluation.to_dict()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Evaluation status updated successfully",
+                "data": {"evaluation": evaluation.to_dict()},
             }
-        })
+        )
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error updating evaluation status: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': 'Failed to update evaluation status',
-            'error': str(e)
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "message": "Failed to update evaluation status",
+                "error": str(e),
+            }
+        ), 500
 
 
-@evaluation_bp.route('/<int:evaluation_id>/logs', methods=['GET'])
+@evaluation_bp.route("/<int:evaluation_id>/logs", methods=["GET"])
 @jwt_required()
 def get_evaluation_logs(evaluation_id):
     """
@@ -757,38 +766,31 @@ def get_evaluation_logs(evaluation_id):
     """
     try:
         user_id = get_jwt_identity()
-        
+
         evaluation = Evaluation.query.get(evaluation_id)
-        
+
         if not evaluation:
-            return jsonify({
-                'success': False,
-                'message': 'Evaluation not found'
-            }), 404
-        
+            return jsonify({"success": False, "message": "Evaluation not found"}), 404
+
         # Get operation logs
         logs_query = OperationLog.query.filter_by(
-            target_type='evaluation',
-            target_id=evaluation_id
+            target_type="evaluation", target_id=evaluation_id
         ).order_by(OperationLog.created_at.desc())
-        
+
         logs = []
         for log in logs_query.all():
             user = User.query.get(log.user_id)
             log_data = log.to_dict()
-            log_data['user_name'] = user.full_name if user else "Unknown"
+            log_data["user_name"] = user.full_name if user else "Unknown"
             logs.append(log_data)
-        
-        return jsonify({
-            'success': True,
-            'data': {
-                'logs': logs
-            }
-        })
+
+        return jsonify({"success": True, "data": {"logs": logs}})
     except Exception as e:
         current_app.logger.error(f"Error getting evaluation logs: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': 'Failed to get evaluation logs',
-            'error': str(e)
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "message": "Failed to get evaluation logs",
+                "error": str(e),
+            }
+        ), 500
