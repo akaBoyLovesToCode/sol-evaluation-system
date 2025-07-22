@@ -553,7 +553,8 @@ const handleSave = async (submit = false) => {
     if (isEditMode.value) {
       response = await api.put(`/evaluations/${evaluationId.value}`, payload);
       ElMessage.success(t("common.saveSuccess"));
-      // Stay on the page after saving in edit mode
+      // Redirect to detail view after successful save
+      router.push(`/evaluations/${evaluationId.value}`);
     } else {
       response = await api.post("/evaluations", payload);
       ElMessage.success(
