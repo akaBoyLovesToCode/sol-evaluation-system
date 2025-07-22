@@ -5,7 +5,7 @@ API endpoints for evaluation management.
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import db
-from app.models.evaluation import Evaluation, EvaluationStatus
+from app.models.evaluation import Evaluation, EvaluationStatus, EvaluationDetail
 from app.models.user import User
 from app.models.operation_log import OperationLog, OperationType
 from datetime import datetime
@@ -442,6 +442,12 @@ def create_evaluation():
             ).date(),
             process_step=data["process_step"],
             evaluator_id=user_id,
+            pgm_version=data.get("pgm_version"),
+            material_info=data.get("material_info"),
+            capacity=data.get("capacity"),
+            interface_type=data.get("interface_type"),
+            form_factor=data.get("form_factor"),
+            temperature_grade=data.get("temperature_grade"),
         )
 
         db.session.add(evaluation)
@@ -584,6 +590,20 @@ def update_evaluation(evaluation_id):
             ).date()
         if "process_step" in data:
             evaluation.process_step = data["process_step"]
+        
+        # Update technical specifications
+        if "pgm_version" in data:
+            evaluation.pgm_version = data["pgm_version"]
+        if "material_info" in data:
+            evaluation.material_info = data["material_info"]
+        if "capacity" in data:
+            evaluation.capacity = data["capacity"]
+        if "interface_type" in data:
+            evaluation.interface_type = data["interface_type"]
+        if "form_factor" in data:
+            evaluation.form_factor = data["form_factor"]
+        if "temperature_grade" in data:
+            evaluation.temperature_grade = data["temperature_grade"]
 
         db.session.commit()
 

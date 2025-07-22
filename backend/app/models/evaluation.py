@@ -80,6 +80,14 @@ class Evaluation(db.Model):
     process_step = db.Column(
         db.String(20)
     )  # New field for process step identifier (e.g., M031)
+    
+    # Technical specifications
+    pgm_version = db.Column(db.String(100))  # PGM version
+    material_info = db.Column(db.String(200))  # Material information
+    capacity = db.Column(db.String(100))  # Capacity
+    interface_type = db.Column(db.String(100))  # Interface type
+    form_factor = db.Column(db.String(100))  # Form factor
+    temperature_grade = db.Column(db.String(50))  # Temperature grade
 
     # User relationships
     evaluator_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -251,6 +259,12 @@ class Evaluation(db.Model):
             if self.actual_end_date
             else None,
             "process_step": self.process_step,
+            "pgm_version": self.pgm_version,
+            "material_info": self.material_info,
+            "capacity": self.capacity,
+            "interface_type": self.interface_type,
+            "form_factor": self.form_factor,
+            "temperature_grade": self.temperature_grade,
             "evaluator_id": self.evaluator_id,
             "part_approver_id": self.part_approver_id,
             "group_approver_id": self.group_approver_id,
