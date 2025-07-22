@@ -328,7 +328,6 @@
                 <el-timeline-item
                   v-for="log in filteredLogs"
                   :key="log.id"
-                  size="small"
                   :icon="getOperationIcon(log.operation_type)"
                   :color="getOperationColor(log.operation_type)"
                 >

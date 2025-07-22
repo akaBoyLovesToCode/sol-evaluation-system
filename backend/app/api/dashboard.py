@@ -304,9 +304,9 @@ def get_detailed_statistics():
                     evaluator_data[evaluator_id]["completed"] += 1
 
                     # Calculate duration if both dates exist
-                    if evaluation.start_date and evaluation.completion_date:
+                    if evaluation.start_date and evaluation.actual_end_date:
                         duration = (
-                            evaluation.completion_date - evaluation.start_date
+                            evaluation.actual_end_date - evaluation.start_date
                         ).days
                         evaluator_data[evaluator_id]["durations"].append(duration)
 
@@ -523,10 +523,10 @@ def get_productivity_report():
                             (
                                 and_(
                                     Evaluation.status == "completed",
-                                    Evaluation.completion_date.isnot(None),
+                                    Evaluation.actual_end_date.isnot(None),
                                 ),
                                 func.datediff(
-                                    Evaluation.completion_date, Evaluation.start_date
+                                    Evaluation.actual_end_date, Evaluation.start_date
                                 ),
                             )
                         ],
@@ -555,10 +555,10 @@ def get_productivity_report():
                             (
                                 and_(
                                     Evaluation.status == "completed",
-                                    Evaluation.completion_date.isnot(None),
+                                    Evaluation.actual_end_date.isnot(None),
                                 ),
                                 func.datediff(
-                                    Evaluation.completion_date, Evaluation.start_date
+                                    Evaluation.actual_end_date, Evaluation.start_date
                                 ),
                             )
                         ],
@@ -598,10 +598,10 @@ def get_productivity_report():
                             (
                                 and_(
                                     Evaluation.status == "completed",
-                                    Evaluation.completion_date.isnot(None),
+                                    Evaluation.actual_end_date.isnot(None),
                                 ),
                                 func.datediff(
-                                    Evaluation.completion_date, Evaluation.start_date
+                                    Evaluation.actual_end_date, Evaluation.start_date
                                 ),
                             )
                         ],
