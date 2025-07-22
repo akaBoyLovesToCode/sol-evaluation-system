@@ -5,15 +5,17 @@ This service handles the evaluation workflow engine, approval processes,
 and status management as specified in Phase 2 requirements.
 """
 
+from datetime import datetime
 from typing import Dict, List, Optional, Tuple
-from datetime import datetime, timedelta
-from sqlalchemy import and_, or_
+
 from flask import current_app
+from sqlalchemy import and_
+
 from app import db
 from app.models.evaluation import Evaluation, EvaluationStatus, EvaluationType
-from app.models.user import User, UserRole
+from app.models.message import Message, MessageType
 from app.models.operation_log import OperationLog, OperationType
-from app.models.message import Message, MessageType, MessageStatus
+from app.models.user import User, UserRole
 
 
 class WorkflowService:
@@ -198,7 +200,7 @@ class WorkflowService:
 
             # Set completion time if completed
             if new_status == EvaluationStatus.COMPLETED:
-                evaluation.completion_date = datetime.utcnow().date()
+                evaluation.actual_end_date = datetime.utcnow().date()
 
             # Log the operation
             log_entry = OperationLog(
