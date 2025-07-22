@@ -239,6 +239,7 @@
     "operations": {
       "created": "Created evaluation",
       "updated": "Updated evaluation",
+      "statusChanged": "Changed evaluation status",
       "deleted": "Deleted evaluation",
       "approved": "Approved evaluation",
       "rejected": "Rejected evaluation",

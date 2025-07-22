@@ -225,7 +225,8 @@
     "operations": {
       "created": "创建了评价",
       "updated": "更新了评价",
-      "deleted": "删除了评价", 
+      "statusChanged": "更改了评价状态",
+      "deleted": "删除了评价",
       "approved": "批准了评价",
       "rejected": "拒绝了评价",
       "viewed": "查看了评价",

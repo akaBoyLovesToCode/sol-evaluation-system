@@ -108,7 +108,9 @@
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.actualEndDate')">
                 {{
-                  evaluation.actual_end_date ? formatDate(evaluation.actual_end_date) : "-"
+                  evaluation.actual_end_date
+                    ? formatDate(evaluation.actual_end_date)
+                    : "-"
                 }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.reason')">
@@ -327,13 +329,17 @@
                   v-for="log in filteredLogs"
                   :key="log.id"
                   size="small"
-                  :dot="getOperationIcon(log.operation_type)"
+                  :icon="getOperationIcon(log.operation_type)"
                   :color="getOperationColor(log.operation_type)"
                 >
                   <div class="log-content">
-                    <div class="log-time">{{ formatDateTime(log.created_at) }}</div>
+                    <div class="log-time">
+                      {{ formatDateTime(log.created_at) }}
+                    </div>
                     <div class="log-user">{{ log.user_name }}</div>
-                    <div class="log-action">{{ getOperationDescription(log) }}</div>
+                    <div class="log-action">
+                      {{ getOperationDescription(log) }}
+                    </div>
                   </div>
                 </el-timeline-item>
               </el-timeline>
@@ -460,27 +466,40 @@ const processSteps = computed(() => {
 
 const filteredLogs = computed(() => {
   if (!evaluation.value?.logs) return [];
-  
+
   // If admin and showAllLogs is true, return all logs
   if (authStore.isAdmin && showAllLogs.value) {
     return evaluation.value.logs;
   }
-  
+
   // Filter for critical operations only
-  const criticalOperationTypes = ['create', 'update', 'delete', 'approve', 'reject'];
-  return evaluation.value.logs.filter(log => {
+  const criticalOperationTypes = [
+    "create",
+    "update",
+    "delete",
+    "approve",
+    "reject",
+  ];
+  return evaluation.value.logs.filter((log) => {
     // Include critical operation types
     if (criticalOperationTypes.includes(log.operation_type)) {
       return true;
     }
-    
+
     // Include status changes (usually update operations with specific descriptions)
-    if (log.operation_type === 'update' && log.operation_description) {
+    if (log.operation_type === "update" && log.operation_description) {
       const description = log.operation_description.toLowerCase();
-      const statusKeywords = ['status', 'pause', 'resume', 'complete', 'cancel', 'finish'];
-      return statusKeywords.some(keyword => description.includes(keyword));
+      const statusKeywords = [
+        "status",
+        "pause",
+        "resume",
+        "complete",
+        "cancel",
+        "finish",
+      ];
+      return statusKeywords.some((keyword) => description.includes(keyword));
     }
-    
+
     return false;
   });
 });
@@ -652,39 +671,50 @@ const getOperationIcon = (operationType) => {
 
 const getOperationColor = (operationType) => {
   const colorMap = {
-    create: '#67C23A',
-    update: '#E6A23C', 
-    delete: '#F56C6C',
-    approve: '#67C23A',
-    reject: '#F56C6C',
-    view: '#909399',
-    login: '#409EFF',
-    logout: '#909399',
-    export: '#409EFF',
+    create: "#67C23A",
+    update: "#E6A23C",
+    delete: "#F56C6C",
+    approve: "#67C23A",
+    reject: "#F56C6C",
+    view: "#909399",
+    login: "#409EFF",
+    logout: "#909399",
+    export: "#409EFF",
   };
-  return colorMap[operationType] || '#409EFF';
+  return colorMap[operationType] || "#409EFF";
 };
 
 const getOperationDescription = (log) => {
-  // Use operation_description if available, fallback to a generated description
-  if (log.operation_description) {
-    return log.operation_description;
+  // First, try to use a more descriptive translation based on operation type and context
+  if (log.operation_type === "create") {
+    return t("evaluation.operations.created");
+  } else if (log.operation_type === "update") {
+    // Check if it's a status change
+    if (
+      log.operation_description &&
+      log.operation_description.toLowerCase().includes("status")
+    ) {
+      return t("evaluation.operations.statusChanged");
+    }
+    return t("evaluation.operations.updated");
+  } else if (log.operation_type === "delete") {
+    return t("evaluation.operations.deleted");
+  } else if (log.operation_type === "approve") {
+    return t("evaluation.operations.approved");
+  } else if (log.operation_type === "reject") {
+    return t("evaluation.operations.rejected");
+  } else if (log.operation_type === "view") {
+    return t("evaluation.operations.viewed");
+  } else if (log.operation_type === "login") {
+    return t("evaluation.operations.loggedIn");
+  } else if (log.operation_type === "logout") {
+    return t("evaluation.operations.loggedOut");
+  } else if (log.operation_type === "export") {
+    return t("evaluation.operations.exported");
   }
-  
-  // Fallback description generation
-  const typeDescriptions = {
-    create: t('evaluation.operations.created'),
-    update: t('evaluation.operations.updated'),
-    delete: t('evaluation.operations.deleted'),
-    approve: t('evaluation.operations.approved'),
-    reject: t('evaluation.operations.rejected'),
-    view: t('evaluation.operations.viewed'),
-    login: t('evaluation.operations.loggedIn'),
-    logout: t('evaluation.operations.loggedOut'),
-    export: t('evaluation.operations.exported'),
-  };
-  
-  return typeDescriptions[log.operation_type] || t('evaluation.operations.unknown');
+
+  // Fallback to original description if available, or unknown
+  return log.operation_description || t("evaluation.operations.unknown");
 };
 
 onMounted(async () => {
@@ -928,20 +958,19 @@ onMounted(async () => {
   text-align: center;
 }
 
-.logs-list :deep(.el-timeline-item__dot) {
+.logs-list :deep(.el-timeline-item__node) {
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
-  border: 2px solid;
   border-radius: 50%;
+  border: 2px solid;
   background: white;
 }
 
-.logs-list :deep(.el-timeline-item__dot) .el-icon {
+.logs-list :deep(.el-timeline-item__node .el-icon) {
   font-size: 10px;
-  color: inherit;
 }
 
 /* 响应式设计 */

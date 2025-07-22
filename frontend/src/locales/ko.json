@@ -224,7 +224,8 @@
     "noOperationLogs": "운영 로그가 없습니다",
     "operations": {
       "created": "평가를 생성했습니다",
-      "updated": "평가를 수정했습니다", 
+      "updated": "평가를 수정했습니다",
+      "statusChanged": "평가 상태를 변경했습니다",
       "deleted": "평가를 삭제했습니다",
       "approved": "평가를 승인했습니다",
       "rejected": "평가를 거부했습니다",
