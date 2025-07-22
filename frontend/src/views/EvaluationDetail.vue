@@ -108,11 +108,11 @@
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.actualEndDate')">
                 {{
-                  evaluation.end_date ? formatDate(evaluation.end_date) : "-"
+                  evaluation.actual_end_date ? formatDate(evaluation.actual_end_date) : "-"
                 }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.reason')">
-                {{ getReasonText(evaluation.reason) }}
+                {{ getReasonText(evaluation.evaluation_reason) }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.progress')">
                 <el-progress

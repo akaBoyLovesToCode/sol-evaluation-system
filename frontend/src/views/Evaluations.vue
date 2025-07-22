@@ -211,12 +211,12 @@
           </el-table-column>
 
           <el-table-column
-            prop="end_date"
+            prop="actual_end_date"
             :label="$t('evaluation.endDate')"
             width="130"
           >
             <template #default="{ row }">
-              {{ row.end_date ? formatDate(row.end_date) : "-" }}
+              {{ row.actual_end_date ? formatDate(row.actual_end_date) : "-" }}
             </template>
           </el-table-column>
         </el-table>
@@ -461,7 +461,7 @@ const handleExport = async () => {
         row.evaluator_name || "",
         t(`status.${row.status}`) || "",
         formatDate(row.start_date) || "",
-        formatDate(row.end_date) || "",
+        formatDate(row.actual_end_date) || "",
       ]
         .map((cell) => `"${cell}"`)
         .join(","),
