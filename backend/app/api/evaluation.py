@@ -434,7 +434,7 @@ def create_evaluation():
             product_name=data["product_name"],
             part_number=data["part_number"],
             evaluation_reason=data.get("evaluation_reason", ""),
-            description=data.get("description", ""),
+            remarks=data.get("remarks", data.get("description", "")),
             status=data.get("status", EvaluationStatus.DRAFT.value),
             start_date=datetime.strptime(data["start_date"], "%Y-%m-%d").date(),
             expected_end_date=datetime.strptime(
@@ -582,8 +582,8 @@ def update_evaluation(evaluation_id):
             evaluation.part_number = data["part_number"]
         if "evaluation_reason" in data:
             evaluation.evaluation_reason = data["evaluation_reason"]
-        if "description" in data:
-            evaluation.description = data["description"]
+        if "description" in data or "remarks" in data:
+            evaluation.remarks = data.get("remarks", data.get("description", ""))
         if "expected_end_date" in data:
             evaluation.expected_end_date = datetime.strptime(
                 data["expected_end_date"], "%Y-%m-%d"
