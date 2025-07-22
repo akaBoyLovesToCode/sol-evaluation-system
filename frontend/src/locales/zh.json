@@ -219,6 +219,21 @@
       "production_test": "生产测试",
       "aql": "AQL (Acceptable Quality Level)"
     },
+    "showAllLogs": "所有日志",
+    "showCriticalLogs": "仅重要日志",
+    "noOperationLogs": "暂无操作日志",
+    "operations": {
+      "created": "创建了评价",
+      "updated": "更新了评价",
+      "deleted": "删除了评价", 
+      "approved": "批准了评价",
+      "rejected": "拒绝了评价",
+      "viewed": "查看了评价",
+      "loggedIn": "用户登录",
+      "loggedOut": "用户登出",
+      "exported": "导出了数据",
+      "unknown": "未知操作"
+    },
     "processStep": "评价工程",
     "complete": "完成",
     "statusDescriptions": {

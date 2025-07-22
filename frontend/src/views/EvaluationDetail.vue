@@ -310,22 +310,39 @@
           <!-- {{ $t('evaluation.operationLogs') }} -->
           <el-card class="sidebar-card">
             <template #header>
-              <span>{{ $t("evaluation.operationLogs") }}</span>
+              <div class="card-header">
+                <span>{{ $t("evaluation.operationLogs") }}</span>
+                <el-switch
+                  v-if="authStore.isAdmin"
+                  v-model="showAllLogs"
+                  size="small"
+                  :active-text="$t('evaluation.showAllLogs')"
+                  :inactive-text="$t('evaluation.showCriticalLogs')"
+                />
+              </div>
             </template>
             <div class="logs-list">
               <el-timeline>
                 <el-timeline-item
-                  v-for="log in evaluation.logs"
+                  v-for="log in filteredLogs"
                   :key="log.id"
-                  :timestamp="formatDateTime(log.created_at)"
                   size="small"
+                  :dot="getOperationIcon(log.operation_type)"
+                  :color="getOperationColor(log.operation_type)"
                 >
                   <div class="log-content">
-                    <span class="log-user">{{ log.user_name }}</span>
-                    <span class="log-action">{{ log.description }}</span>
+                    <div class="log-time">{{ formatDateTime(log.created_at) }}</div>
+                    <div class="log-user">{{ log.user_name }}</div>
+                    <div class="log-action">{{ getOperationDescription(log) }}</div>
                   </div>
                 </el-timeline-item>
               </el-timeline>
+              <div v-if="filteredLogs.length === 0" class="empty-logs">
+                <el-empty
+                  :image-size="60"
+                  :description="$t('evaluation.noOperationLogs')"
+                />
+              </div>
             </div>
           </el-card>
         </el-col>
@@ -349,6 +366,14 @@ import {
   Plus,
   Document,
   Download,
+  View,
+  CirclePlus,
+  EditPen,
+  Delete,
+  CircleCheck,
+  CircleClose,
+  User,
+  Download as DownloadIcon,
 } from "@element-plus/icons-vue";
 import api from "../utils/api";
 import { useAuthStore } from "../stores/auth";
@@ -360,6 +385,7 @@ const authStore = useAuthStore();
 
 const loading = ref(false);
 const evaluation = ref(null);
+const showAllLogs = ref(false);
 
 const canEdit = computed(() => {
   if (!evaluation.value) return false;
@@ -430,6 +456,33 @@ const processSteps = computed(() => {
   });
 
   return steps;
+});
+
+const filteredLogs = computed(() => {
+  if (!evaluation.value?.logs) return [];
+  
+  // If admin and showAllLogs is true, return all logs
+  if (authStore.isAdmin && showAllLogs.value) {
+    return evaluation.value.logs;
+  }
+  
+  // Filter for critical operations only
+  const criticalOperationTypes = ['create', 'update', 'delete', 'approve', 'reject'];
+  return evaluation.value.logs.filter(log => {
+    // Include critical operation types
+    if (criticalOperationTypes.includes(log.operation_type)) {
+      return true;
+    }
+    
+    // Include status changes (usually update operations with specific descriptions)
+    if (log.operation_type === 'update' && log.operation_description) {
+      const description = log.operation_description.toLowerCase();
+      const statusKeywords = ['status', 'pause', 'resume', 'complete', 'cancel', 'finish'];
+      return statusKeywords.some(keyword => description.includes(keyword));
+    }
+    
+    return false;
+  });
 });
 
 const fetchEvaluation = async () => {
@@ -580,6 +633,58 @@ const formatFileSize = (bytes) => {
   const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
+
+const getOperationIcon = (operationType) => {
+  const iconMap = {
+    create: CirclePlus,
+    update: EditPen,
+    delete: Delete,
+    approve: CircleCheck,
+    reject: CircleClose,
+    view: View,
+    login: User,
+    logout: User,
+    export: DownloadIcon,
+  };
+  return iconMap[operationType] || EditPen;
+};
+
+const getOperationColor = (operationType) => {
+  const colorMap = {
+    create: '#67C23A',
+    update: '#E6A23C', 
+    delete: '#F56C6C',
+    approve: '#67C23A',
+    reject: '#F56C6C',
+    view: '#909399',
+    login: '#409EFF',
+    logout: '#909399',
+    export: '#409EFF',
+  };
+  return colorMap[operationType] || '#409EFF';
+};
+
+const getOperationDescription = (log) => {
+  // Use operation_description if available, fallback to a generated description
+  if (log.operation_description) {
+    return log.operation_description;
+  }
+  
+  // Fallback description generation
+  const typeDescriptions = {
+    create: t('evaluation.operations.created'),
+    update: t('evaluation.operations.updated'),
+    delete: t('evaluation.operations.deleted'),
+    approve: t('evaluation.operations.approved'),
+    reject: t('evaluation.operations.rejected'),
+    view: t('evaluation.operations.viewed'),
+    login: t('evaluation.operations.loggedIn'),
+    logout: t('evaluation.operations.loggedOut'),
+    export: t('evaluation.operations.exported'),
+  };
+  
+  return typeDescriptions[log.operation_type] || t('evaluation.operations.unknown');
 };
 
 onMounted(async () => {
@@ -799,6 +904,13 @@ onMounted(async () => {
   gap: 4px;
 }
 
+.log-time {
+  font-size: 12px;
+  color: #909399;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
 .log-user {
   font-weight: 600;
   color: #2c3e50;
@@ -806,8 +918,30 @@ onMounted(async () => {
 }
 
 .log-action {
-  color: #7f8c8d;
+  color: #606266;
   font-size: 13px;
+  line-height: 1.4;
+}
+
+.empty-logs {
+  padding: 20px 0;
+  text-align: center;
+}
+
+.logs-list :deep(.el-timeline-item__dot) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 2px solid;
+  border-radius: 50%;
+  background: white;
+}
+
+.logs-list :deep(.el-timeline-item__dot) .el-icon {
+  font-size: 10px;
+  color: inherit;
 }
 
 /* 响应式设计 */

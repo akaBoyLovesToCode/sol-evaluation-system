@@ -219,6 +219,21 @@
       "production_test": "생산 테스트",
       "aql": "AQL (허용 품질 수준)"
     },
+    "showAllLogs": "모든 로그",
+    "showCriticalLogs": "중요 로그만",
+    "noOperationLogs": "운영 로그가 없습니다",
+    "operations": {
+      "created": "평가를 생성했습니다",
+      "updated": "평가를 수정했습니다", 
+      "deleted": "평가를 삭제했습니다",
+      "approved": "평가를 승인했습니다",
+      "rejected": "평가를 거부했습니다",
+      "viewed": "평가를 조회했습니다",
+      "loggedIn": "사용자가 로그인했습니다",
+      "loggedOut": "사용자가 로그아웃했습니다",
+      "exported": "데이터를 내보냈습니다",
+      "unknown": "알 수 없는 작업"
+    },
     "processStep": "평가 Step",
     "complete": "완료",
     "statusDescriptions": {

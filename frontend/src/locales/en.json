@@ -232,6 +232,21 @@
       "prq": "PRQ (Production Readiness Qualification)",
       "production_test": "Production Test",
       "aql": "AQL (Acceptable Quality Level)"
+    },
+    "showAllLogs": "All Logs",
+    "showCriticalLogs": "Critical Only",
+    "noOperationLogs": "No operation logs available",
+    "operations": {
+      "created": "Created evaluation",
+      "updated": "Updated evaluation",
+      "deleted": "Deleted evaluation",
+      "approved": "Approved evaluation",
+      "rejected": "Rejected evaluation",
+      "viewed": "Viewed evaluation",
+      "loggedIn": "User logged in",
+      "loggedOut": "User logged out",
+      "exported": "Exported data",
+      "unknown": "Unknown operation"
     }
   },
   "status": {
