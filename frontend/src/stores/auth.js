@@ -38,9 +38,27 @@ export const useAuthStore = defineStore("auth", () => {
 
       return { success: true };
     } catch (error) {
+      let errorMessage = "Login failed";
+
+      if (error.response?.data?.error) {
+        // Use the specific error message from backend
+        errorMessage = error.response.data.error;
+      } else if (error.response?.data?.message) {
+        // Fallback to message field if error field doesn't exist
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 401) {
+        errorMessage = "Invalid username or password";
+      } else if (error.response?.status === 400) {
+        errorMessage = "Please provide username and password";
+      } else if (error.response?.status >= 500) {
+        errorMessage = "Server error, please try again later";
+      } else if (!error.response) {
+        errorMessage = "Network error, please check your connection";
+      }
+
       return {
         success: false,
-        message: error.response?.data?.message || "Login failed",
+        message: errorMessage,
       };
     }
   };

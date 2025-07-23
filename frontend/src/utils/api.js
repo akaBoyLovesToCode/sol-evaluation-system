@@ -34,6 +34,11 @@ api.interceptors.response.use(
     if (response) {
       switch (response.status) {
         case 401:
+          // 如果是login端点失败，让组件处理错误
+          if (config.url === "/auth/login") {
+            break;
+          }
+
           // 如果是refresh端点失败，直接登出
           if (config.url === "/auth/refresh") {
             localStorage.removeItem("token");
