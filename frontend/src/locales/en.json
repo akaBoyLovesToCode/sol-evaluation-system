@@ -33,7 +33,14 @@
     "remember": "Remember me",
     "submit": "Login",
     "success": "Login successful",
-    "failed": "Login failed"
+    "failed": "Login failed",
+    "errors": {
+      "invalidCredentials": "Invalid username or password",
+      "missingCredentials": "Please provide username and password",
+      "serverError": "Server error, please try again later",
+      "networkError": "Network error, please check your connection",
+      "accountInactive": "Account is inactive"
+    }
   },
   "validation": {
     "required": "{field} is required",

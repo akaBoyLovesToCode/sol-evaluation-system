@@ -33,7 +33,14 @@
     "remember": "로그인 상태 유지",
     "submit": "로그인",
     "success": "로그인 성공",
-    "failed": "로그인 실패"
+    "failed": "로그인 실패",
+    "errors": {
+      "invalidCredentials": "사용자명 또는 비밀번호가 틀렸습니다",
+      "missingCredentials": "사용자명과 비밀번호를 입력하세요",
+      "serverError": "서버 오류가 발생했습니다. 다시 시도하세요",
+      "networkError": "네트워크 오류가 발생했습니다. 연결을 확인하세요",
+      "accountInactive": "계정이 비활성화되었습니다"
+    }
   },
   "validation": {
     "required": "{field}은(는) 필수입니다",

@@ -25,7 +25,7 @@ export const useAuthStore = defineStore("auth", () => {
     hasRole(["admin", "group_leader", "part_leader"]),
   );
 
-  const login = async (credentials) => {
+  const login = async (credentials, t) => {
     try {
       const response = await api.post("/auth/login", credentials);
       const { access_token, refresh_token, user: userData } = response.data;
@@ -38,22 +38,44 @@ export const useAuthStore = defineStore("auth", () => {
 
       return { success: true };
     } catch (error) {
-      let errorMessage = "Login failed";
+      let errorMessage = t ? t("login.failed") : "Login failed";
 
       if (error.response?.data?.error) {
-        // Use the specific error message from backend
-        errorMessage = error.response.data.error;
+        // Map backend error messages to localized messages
+        const backendError = error.response.data.error;
+        if (backendError === "Invalid username or password") {
+          errorMessage = t
+            ? t("login.errors.invalidCredentials")
+            : backendError;
+        } else if (backendError === "Account is inactive") {
+          errorMessage = t ? t("login.errors.accountInactive") : backendError;
+        } else if (backendError === "Username and password are required") {
+          errorMessage = t
+            ? t("login.errors.missingCredentials")
+            : backendError;
+        } else {
+          // Use the backend message as-is if no specific mapping exists
+          errorMessage = backendError;
+        }
       } else if (error.response?.data?.message) {
         // Fallback to message field if error field doesn't exist
         errorMessage = error.response.data.message;
       } else if (error.response?.status === 401) {
-        errorMessage = "Invalid username or password";
+        errorMessage = t
+          ? t("login.errors.invalidCredentials")
+          : "Invalid username or password";
       } else if (error.response?.status === 400) {
-        errorMessage = "Please provide username and password";
+        errorMessage = t
+          ? t("login.errors.missingCredentials")
+          : "Please provide username and password";
       } else if (error.response?.status >= 500) {
-        errorMessage = "Server error, please try again later";
+        errorMessage = t
+          ? t("login.errors.serverError")
+          : "Server error, please try again later";
       } else if (!error.response) {
-        errorMessage = "Network error, please check your connection";
+        errorMessage = t
+          ? t("login.errors.networkError")
+          : "Network error, please check your connection";
       }
 
       return {

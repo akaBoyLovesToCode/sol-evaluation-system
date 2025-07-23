@@ -142,10 +142,13 @@ const handleLogin = async () => {
     await loginFormRef.value.validate();
     loading.value = true;
 
-    const result = await authStore.login({
-      username: loginForm.username,
-      password: loginForm.password,
-    });
+    const result = await authStore.login(
+      {
+        username: loginForm.username,
+        password: loginForm.password,
+      },
+      t,
+    );
 
     if (result.success) {
       ElMessage.success(t("login.success"));
