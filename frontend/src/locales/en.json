@@ -354,6 +354,7 @@
     "updateError": "Failed to update profile",
     "passwordChangeSuccess": "Password changed successfully",
     "passwordChangeError": "Failed to change password",
+    "redirectingToLogin": "Redirecting to login page in 3 seconds...",
     "passwordMismatch": "New passwords do not match",
     "passwordRequirements": "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, and one number",
     "placeholders": {

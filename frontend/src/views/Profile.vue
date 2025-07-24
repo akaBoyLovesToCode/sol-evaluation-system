@@ -139,12 +139,14 @@
 
 <script setup>
 import { ref, reactive, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth";
 import { Edit } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
+const router = useRouter();
 const authStore = useAuthStore();
 const editPersonalInfo = ref(false);
 
@@ -308,11 +310,25 @@ const changePassword = async () => {
 
       if (result.success) {
         ElMessage.success(t("profile.passwordChangeSuccess"));
+        
+        // Show redirect notification
+        ElMessage({
+          message: t("profile.redirectingToLogin"),
+          type: "info",
+          duration: 3000,
+        });
+
         // Reset form
         passwordData.currentPassword = "";
         passwordData.newPassword = "";
         passwordData.confirmPassword = "";
         passwordForm.value.resetFields();
+
+        // Logout and redirect after 3 seconds
+        setTimeout(async () => {
+          await authStore.logout();
+          router.push("/login");
+        }, 3000);
       } else {
         ElMessage.error(result.message || t("profile.passwordChangeError"));
       }

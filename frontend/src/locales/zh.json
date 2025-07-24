@@ -352,6 +352,7 @@
     "updateError": "资料更新失败",
     "passwordChangeSuccess": "密码修改成功",
     "passwordChangeError": "密码修改失败",
+    "redirectingToLogin": "3秒后将跳转到登录页面...",
     "passwordMismatch": "两次输入的新密码不一致",
     "passwordRequirements": "密码长度至少为8个字符，且必须包含至少一个大写字母、一个小写字母和一个数字",
     "placeholders": {
