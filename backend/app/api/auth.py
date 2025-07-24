@@ -1,16 +1,16 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
-    jwt_required,
-    get_jwt_identity,
     get_jwt,
+    get_jwt_identity,
+    jwt_required,
 )
-from datetime import datetime, timedelta
+
 from app import db
-from app.models import User, OperationLog
-from app.utils.validators import validate_email, validate_password
+from app.models import OperationLog, User
 from app.utils.helpers import get_client_ip, get_user_agent
+from app.utils.validators import validate_email, validate_password
 
 # Create authentication blueprint
 auth_bp = Blueprint("auth", __name__)
@@ -178,7 +178,7 @@ def get_current_user():
         return jsonify({"error": "Internal server error"}), 500
 
 
-@auth_bp.route("/change-password", methods=["POST"])
+@auth_bp.route("/change-password", methods=["PUT"])
 @jwt_required()
 def change_password():
     """
@@ -222,16 +222,14 @@ def change_password():
             return jsonify({"error": "Current password is incorrect"}), 401
 
         # Update password
-        old_data = {"password_changed": False}
         user.set_password(new_password)
         db.session.commit()
 
         # Log password change
-        OperationLog.log_evaluation_operation(
+        OperationLog.log_system_operation(
             user_id=current_user_id,
-            operation_type="update",
-            evaluation=user,  # This will need adjustment for proper logging
-            old_data=old_data,
+            operation_description="Password changed",
+            operation_data={"username": user.username},
             ip_address=get_client_ip(request),
         )
 

@@ -130,7 +130,7 @@ export const useAuthStore = defineStore("auth", () => {
 
   const changePassword = async (passwordData) => {
     try {
-      await api.put("/auth/password", passwordData);
+      await api.put("/auth/change-password", passwordData);
       return { success: true };
     } catch (error) {
       return {

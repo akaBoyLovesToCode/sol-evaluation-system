@@ -342,7 +342,7 @@ const fetchEvaluations = async () => {
 
     // 后端返回的数据结构是 { data: { evaluations: [...], pagination: {...} } }
     tableData.value = data.evaluations || [];
-    pagination.total = data.pagination?.total_count || 0;
+    pagination.total = data.total || 0;
   } catch (error) {
     ElMessage.error("获取评价列表失败");
     console.error("Failed to fetch evaluations:", error);

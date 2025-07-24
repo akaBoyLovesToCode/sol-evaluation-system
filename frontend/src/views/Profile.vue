@@ -302,8 +302,8 @@ const changePassword = async () => {
       }
 
       const result = await authStore.changePassword({
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword,
+        current_password: passwordData.currentPassword,
+        new_password: passwordData.newPassword,
       });
 
       if (result.success) {
