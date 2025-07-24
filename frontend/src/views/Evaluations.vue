@@ -180,6 +180,16 @@
           />
 
           <el-table-column
+            prop="evaluation_reason"
+            :label="$t('evaluation.reason')"
+            width="140"
+          >
+            <template #default="{ row }">
+              {{ row.evaluation_reason ? $t(`evaluation.reasons.${row.evaluation_reason}`) : '-' }}
+            </template>
+          </el-table-column>
+
+          <el-table-column
             prop="evaluator_name"
             :label="$t('evaluation.evaluator')"
             width="120"
