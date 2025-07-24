@@ -444,11 +444,19 @@ const handleExport = async () => {
   try {
     exportLoading.value = true;
 
-    // Client-side export using current table data
-    if (tableData.value.length === 0) {
+    // Determine data to export: selected rows or all data
+    const dataToExport = selectedRows.value.length > 0 ? selectedRows.value : tableData.value;
+    
+    if (dataToExport.length === 0) {
       ElMessage.warning("没有数据可导出");
       return;
     }
+
+    // Show message about what's being exported
+    const exportMessage = selectedRows.value.length > 0 
+      ? `导出选中的 ${selectedRows.value.length} 条评价记录` 
+      : `导出全部 ${tableData.value.length} 条评价记录`;
+    console.log(exportMessage);
 
     // Prepare CSV data
     const headers = [
@@ -456,18 +464,20 @@ const handleExport = async () => {
       t("evaluation.evaluationType"),
       t("evaluation.product"),
       t("evaluation.partNumber"),
+      t("evaluation.reason"),
       t("evaluation.evaluator"),
       t("common.status"),
       t("evaluation.startDate"),
       t("evaluation.endDate"),
     ].join(",");
 
-    const rows = tableData.value.map((row) =>
+    const rows = dataToExport.map((row) =>
       [
         row.evaluation_number || "",
         t(`evaluation.type.${row.evaluation_type}`) || "",
         row.product_name || "",
         row.part_number || "",
+        row.evaluation_reason ? t(`evaluation.reasons.${row.evaluation_reason}`) : "",
         row.evaluator_name || "",
         t(`status.${row.status}`) || "",
         formatDate(row.start_date) || "",
@@ -486,7 +496,10 @@ const handleExport = async () => {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `evaluations_${new Date().toISOString().split("T")[0]}.csv`;
+    const filename = selectedRows.value.length > 0 
+      ? `evaluations_selected_${new Date().toISOString().split("T")[0]}.csv`
+      : `evaluations_all_${new Date().toISOString().split("T")[0]}.csv`;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
