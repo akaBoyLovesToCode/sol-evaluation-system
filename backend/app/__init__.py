@@ -14,12 +14,37 @@ from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from flask_socketio import SocketIO
 
+# OpenTelemetry imports
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+
 # Initialize extensions
 db = SQLAlchemy()
 migrate = Migrate()
 jwt = JWTManager()
 cors = CORS()
 socketio = SocketIO()
+
+
+def init_tracing() -> None:
+    """Initialize OpenTelemetry tracing for observability."""
+    # Set up tracer provider
+    trace.set_tracer_provider(TracerProvider())
+    tracer = trace.get_tracer_provider()
+    
+    # Configure Jaeger exporter
+    jaeger_exporter = JaegerExporter(
+        agent_host_name=os.getenv("JAEGER_HOST", "localhost"),
+        agent_port=int(os.getenv("JAEGER_PORT", "6831")),
+    )
+    
+    # Add batch span processor
+    span_processor = BatchSpanProcessor(jaeger_exporter)
+    tracer.add_span_processor(span_processor)
 
 
 def create_app(config_name: Optional[str] = None) -> Flask:
@@ -48,6 +73,12 @@ def create_app(config_name: Optional[str] = None) -> Flask:
     jwt.init_app(app)
     cors.init_app(app, origins=app.config["CORS_ORIGINS"])
     socketio.init_app(app, cors_allowed_origins=app.config["CORS_ORIGINS"])
+
+    # Initialize OpenTelemetry tracing
+    if os.getenv("ENABLE_TRACING", "false").lower() == "true":
+        init_tracing()
+        FlaskInstrumentor().instrument_app(app)
+        SQLAlchemyInstrumentor().instrument(engine=db.engine)
 
     # Register blueprints
     from app.api import auth_bp, evaluation_bp, user_bp, dashboard_bp, operation_log_bp
