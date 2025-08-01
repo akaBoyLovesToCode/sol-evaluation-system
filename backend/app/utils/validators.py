@@ -1,16 +1,21 @@
+"""Input validation utilities for the Product Evaluation System."""
+
+from __future__ import annotations
+
 import re
+from typing import Dict, Optional
+
 from app.models import SystemConfig
 
 
-def validate_email(email):
-    """
-    Validate email address format
+def validate_email(email: Optional[str]) -> Dict[str, any]:
+    """Validate email address format.
 
     Args:
-        email (str): Email address to validate
+        email: Email address to validate.
 
     Returns:
-        dict: Validation result with 'valid' boolean and 'message' string
+        Validation result with 'valid' boolean and 'message' string.
     """
     if not email:
         return {"valid": False, "message": "Email is required"}
@@ -30,15 +35,14 @@ def validate_email(email):
     return {"valid": True, "message": "Valid email"}
 
 
-def validate_password(password):
-    """
-    Validate password strength
+def validate_password(password: Optional[str]) -> Dict[str, any]:
+    """Validate password strength.
 
     Args:
-        password (str): Password to validate
+        password: Password to validate.
 
     Returns:
-        dict: Validation result with 'valid' boolean and 'message' string
+        Validation result with 'valid' boolean and 'message' string.
     """
     if not password:
         return {"valid": False, "message": "Password is required"}
@@ -67,14 +71,14 @@ def validate_password(password):
 
 
 def validate_username(username):
-    """
-    Validate username format
+    """Validate username format
 
     Args:
         username (str): Username to validate
 
     Returns:
         dict: Validation result with 'valid' boolean and 'message' string
+
     """
     if not username:
         return {"valid": False, "message": "Username is required"}
@@ -99,8 +103,7 @@ def validate_username(username):
 
 
 def validate_evaluation_data(data, evaluation_type):
-    """
-    Validate evaluation data based on type
+    """Validate evaluation data based on type
 
     Args:
         data (dict): Evaluation data to validate
@@ -108,6 +111,7 @@ def validate_evaluation_data(data, evaluation_type):
 
     Returns:
         dict: Validation result with 'valid' boolean and 'errors' list
+
     """
     errors = []
 
@@ -150,8 +154,7 @@ def validate_evaluation_data(data, evaluation_type):
 
 
 def validate_evaluation_detail(detail_data, detail_type):
-    """
-    Validate evaluation detail data based on type
+    """Validate evaluation detail data based on type
 
     Args:
         detail_data (dict): Detail data to validate
@@ -159,6 +162,7 @@ def validate_evaluation_detail(detail_data, detail_type):
 
     Returns:
         dict: Validation result with 'valid' boolean and 'errors' list
+
     """
     errors = []
 
@@ -213,8 +217,7 @@ def validate_evaluation_detail(detail_data, detail_type):
 
 
 def validate_date_range(start_date, end_date):
-    """
-    Validate date range
+    """Validate date range
 
     Args:
         start_date (date): Start date
@@ -222,6 +225,7 @@ def validate_date_range(start_date, end_date):
 
     Returns:
         dict: Validation result with 'valid' boolean and 'message' string
+
     """
     if not start_date:
         return {"valid": False, "message": "Start date is required"}

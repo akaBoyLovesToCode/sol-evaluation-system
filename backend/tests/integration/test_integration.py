@@ -1,5 +1,4 @@
-"""
-Integration tests for the entire application.
+"""Integration tests for the entire application.
 """
 
 import pytest

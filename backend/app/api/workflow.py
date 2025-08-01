@@ -1,5 +1,4 @@
-"""
-Workflow API endpoints for Product Evaluation System
+"""Workflow API endpoints for Product Evaluation System
 
 This module handles workflow-related API endpoints including status transitions,
 approvals, and workflow statistics.
@@ -21,8 +20,7 @@ workflow_bp = Blueprint("workflow", __name__)
 @jwt_required()
 @validate_json(["evaluation_id", "new_status"])
 def transition_evaluation_status():
-    """
-    Transition an evaluation to a new status
+    """Transition an evaluation to a new status
 
     Required JSON fields:
     - evaluation_id: int
@@ -75,8 +73,7 @@ def transition_evaluation_status():
 @workflow_bp.route("/pending-approvals", methods=["GET"])
 @jwt_required()
 def get_pending_approvals():
-    """
-    Get evaluations pending approval for the current user
+    """Get evaluations pending approval for the current user
     """
     try:
         current_user_id = get_current_user_id()
@@ -97,8 +94,7 @@ def get_pending_approvals():
 @jwt_required()
 @role_required(["Admin", "Group Leader", "Part Leader"])
 def get_workflow_statistics():
-    """
-    Get workflow statistics (for leaders and admins)
+    """Get workflow statistics (for leaders and admins)
     """
     try:
         # Get workflow statistics
@@ -115,8 +111,7 @@ def get_workflow_statistics():
 @jwt_required()
 @validate_json(["evaluation_id", "new_status"])
 def check_transition_permission():
-    """
-    Check if current user can transition an evaluation to a new status
+    """Check if current user can transition an evaluation to a new status
 
     Required JSON fields:
     - evaluation_id: int
@@ -172,8 +167,7 @@ def check_transition_permission():
 @jwt_required()
 @role_required(["Admin", "Group Leader"])
 def trigger_auto_assignment():
-    """
-    Trigger automatic assignment of unassigned evaluations
+    """Trigger automatic assignment of unassigned evaluations
     (Admin and Group Leader only)
     """
     try:
@@ -192,8 +186,7 @@ def trigger_auto_assignment():
 @role_required(["Admin", "Group Leader", "Part Leader"])
 @validate_json(["evaluation_ids", "new_status"])
 def bulk_transition_status():
-    """
-    Transition multiple evaluations to a new status
+    """Transition multiple evaluations to a new status
     (Leaders and Admin only)
 
     Required JSON fields:
@@ -259,8 +252,7 @@ def bulk_transition_status():
 @workflow_bp.route("/history/<int:evaluation_id>", methods=["GET"])
 @jwt_required()
 def get_workflow_history(evaluation_id):
-    """
-    Get workflow history for a specific evaluation
+    """Get workflow history for a specific evaluation
     """
     try:
         # Check if evaluation exists

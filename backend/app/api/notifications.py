@@ -1,5 +1,4 @@
-"""
-Notifications API endpoints for Product Evaluation System
+"""Notifications API endpoints for Product Evaluation System
 
 This module handles notification-related API endpoints including message management,
 notification preferences, and in-app messaging.
@@ -19,8 +18,7 @@ notifications_bp = Blueprint("notifications", __name__)
 @notifications_bp.route("/", methods=["GET"])
 @jwt_required()
 def get_user_notifications():
-    """
-    Get notifications for the current user
+    """Get notifications for the current user
 
     Query parameters:
     - limit: int (default: 50)
@@ -70,8 +68,7 @@ def get_user_notifications():
 @notifications_bp.route("/unread-count", methods=["GET"])
 @jwt_required()
 def get_unread_count():
-    """
-    Get count of unread notifications for the current user
+    """Get count of unread notifications for the current user
     """
     try:
         current_user_id = get_current_user_id()
@@ -88,8 +85,7 @@ def get_unread_count():
 @notifications_bp.route("/<int:message_id>/read", methods=["PUT"])
 @jwt_required()
 def mark_notification_as_read(message_id):
-    """
-    Mark a specific notification as read
+    """Mark a specific notification as read
     """
     try:
         current_user_id = get_current_user_id()
@@ -111,8 +107,7 @@ def mark_notification_as_read(message_id):
 @notifications_bp.route("/mark-all-read", methods=["PUT"])
 @jwt_required()
 def mark_all_notifications_as_read():
-    """
-    Mark all notifications as read for the current user
+    """Mark all notifications as read for the current user
     """
     try:
         current_user_id = get_current_user_id()
@@ -131,8 +126,7 @@ def mark_all_notifications_as_read():
 @notifications_bp.route("/<int:message_id>", methods=["DELETE"])
 @jwt_required()
 def delete_notification(message_id):
-    """
-    Delete a specific notification
+    """Delete a specific notification
     """
     try:
         current_user_id = get_current_user_id()
@@ -158,8 +152,7 @@ def delete_notification(message_id):
 @jwt_required()
 @validate_json(["recipient_id", "title", "content"])
 def send_notification():
-    """
-    Send a notification to another user
+    """Send a notification to another user
 
     Required JSON fields:
     - recipient_id: int
@@ -219,8 +212,7 @@ def send_notification():
 @role_required(["Admin", "Group Leader", "Part Leader"])
 @validate_json(["recipient_ids", "title", "content"])
 def send_bulk_notification():
-    """
-    Send a notification to multiple users (Leaders and Admin only)
+    """Send a notification to multiple users (Leaders and Admin only)
 
     Required JSON fields:
     - recipient_ids: List[int]
@@ -280,8 +272,7 @@ def send_bulk_notification():
 @jwt_required()
 @role_required(["Admin"])
 def get_notification_statistics():
-    """
-    Get notification system statistics (Admin only)
+    """Get notification system statistics (Admin only)
     """
     try:
         stats = NotificationService.get_notification_statistics()
@@ -297,8 +288,7 @@ def get_notification_statistics():
 @jwt_required()
 @role_required(["Admin"])
 def cleanup_old_notifications():
-    """
-    Clean up old notifications (Admin only)
+    """Clean up old notifications (Admin only)
 
     Optional JSON fields:
     - days_to_keep: int (default: 90)
@@ -329,8 +319,7 @@ def cleanup_old_notifications():
 @jwt_required()
 @role_required(["Admin", "Group Leader"])
 def send_reminder_notifications():
-    """
-    Send reminder notifications for overdue evaluations
+    """Send reminder notifications for overdue evaluations
     (Admin and Group Leader only)
     """
     try:
@@ -348,8 +337,7 @@ def send_reminder_notifications():
 @jwt_required()
 @role_required(["Admin"])
 def send_daily_digest(user_id):
-    """
-    Send daily digest to a specific user (Admin only)
+    """Send daily digest to a specific user (Admin only)
     """
     try:
         success = NotificationService.send_daily_digest(user_id)

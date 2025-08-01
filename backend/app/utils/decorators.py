@@ -6,14 +6,14 @@ from app.utils.helpers import get_client_ip, get_current_user_id
 
 
 def require_role(required_role):
-    """
-    Decorator to require specific user role for endpoint access
+    """Decorator to require specific user role for endpoint access
 
     Args:
         required_role (str): Required role ('admin', 'group_leader', 'part_leader', 'user')
 
     Returns:
         function: Decorated function
+
     """
 
     def decorator(f):
@@ -45,38 +45,35 @@ def require_role(required_role):
 
 
 def require_admin(f):
-    """
-    Decorator to require admin role
+    """Decorator to require admin role
     Shortcut for @require_role('admin')
     """
     return require_role("admin")(f)
 
 
 def require_group_leader(f):
-    """
-    Decorator to require group leader role or higher
+    """Decorator to require group leader role or higher
     Shortcut for @require_role('group_leader')
     """
     return require_role("group_leader")(f)
 
 
 def require_part_leader(f):
-    """
-    Decorator to require part leader role or higher
+    """Decorator to require part leader role or higher
     Shortcut for @require_role('part_leader')
     """
     return require_role("part_leader")(f)
 
 
 def role_required(allowed_roles):
-    """
-    Decorator to require one of the specified roles
+    """Decorator to require one of the specified roles
 
     Args:
         allowed_roles (list): List of allowed roles
 
     Returns:
         function: Decorated function
+
     """
 
     def decorator(f):
@@ -130,8 +127,7 @@ def role_required(allowed_roles):
 
 
 def log_operation(operation_type, target_type, get_target_id=None, get_old_data=None):
-    """
-    Decorator to automatically log operations
+    """Decorator to automatically log operations
 
     Args:
         operation_type (str): Type of operation ('create', 'update', 'delete', etc.)
@@ -141,6 +137,7 @@ def log_operation(operation_type, target_type, get_target_id=None, get_old_data=
 
     Returns:
         function: Decorated function
+
     """
 
     def decorator(f):
@@ -192,8 +189,7 @@ def log_operation(operation_type, target_type, get_target_id=None, get_old_data=
 
 
 def handle_exceptions(f):
-    """
-    Decorator to handle common exceptions and return standardized error responses
+    """Decorator to handle common exceptions and return standardized error responses
     """
 
     @wraps(f)
@@ -217,8 +213,7 @@ def handle_exceptions(f):
 
 
 def validate_json(required_fields=None, optional_fields=None):
-    """
-    Decorator to validate JSON request data
+    """Decorator to validate JSON request data
 
     Args:
         required_fields (list): List of required field names
@@ -226,6 +221,7 @@ def validate_json(required_fields=None, optional_fields=None):
 
     Returns:
         function: Decorated function
+
     """
 
     def decorator(f):
@@ -270,8 +266,7 @@ def validate_json(required_fields=None, optional_fields=None):
 
 
 def rate_limit(max_requests=100, window_seconds=3600):
-    """
-    Simple rate limiting decorator (in production, use Redis-based solution)
+    """Simple rate limiting decorator (in production, use Redis-based solution)
 
     Args:
         max_requests (int): Maximum requests allowed
@@ -279,6 +274,7 @@ def rate_limit(max_requests=100, window_seconds=3600):
 
     Returns:
         function: Decorated function
+
     """
     # Simple in-memory storage (not suitable for production)
     request_counts = {}
@@ -331,14 +327,14 @@ def rate_limit(max_requests=100, window_seconds=3600):
 
 
 def cache_response(timeout=300):
-    """
-    Simple response caching decorator (in production, use Redis)
+    """Simple response caching decorator (in production, use Redis)
 
     Args:
         timeout (int): Cache timeout in seconds
 
     Returns:
         function: Decorated function
+
     """
     # Simple in-memory cache (not suitable for production)
     cache = {}

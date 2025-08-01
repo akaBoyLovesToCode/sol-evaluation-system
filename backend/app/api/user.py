@@ -1,5 +1,4 @@
-"""
-API endpoints for user management.
+"""API endpoints for user management.
 """
 
 from flask import Blueprint, request, jsonify, current_app
@@ -16,13 +15,13 @@ user_bp = Blueprint("user", __name__)
 @user_bp.route("", methods=["GET"])
 @jwt_required()
 def get_users():
-    """
-    Get a list of users with optional filtering.
+    """Get a list of users with optional filtering.
     ---
     tags:
       - Users
     security:
       - bearerAuth: []
+
     parameters:
       - name: page
         in: query
@@ -101,6 +100,7 @@ def get_users():
         description: Forbidden - User is not an admin
       500:
         description: Internal server error
+
     """
     try:
         # Check if user is admin
@@ -177,13 +177,13 @@ def get_users():
 @user_bp.route("/<int:user_id>", methods=["GET"])
 @jwt_required()
 def get_user(user_id):
-    """
-    Get details of a specific user.
+    """Get details of a specific user.
     ---
     tags:
       - Users
     security:
       - bearerAuth: []
+
     parameters:
       - name: user_id
         in: path
@@ -232,6 +232,7 @@ def get_user(user_id):
         description: User not found
       500:
         description: Internal server error
+
     """
     try:
         # Check if user is admin or the requested user
@@ -279,8 +280,7 @@ def get_user(user_id):
 @user_bp.route("", methods=["POST"])
 @jwt_required()
 def create_user():
-    """
-    Create a new user.
+    """Create a new user.
     ---
     tags:
       - Users
@@ -417,13 +417,13 @@ def create_user():
 @user_bp.route("/<int:user_id>", methods=["PUT"])
 @jwt_required()
 def update_user(user_id):
-    """
-    Update an existing user.
+    """Update an existing user.
     ---
     tags:
       - Users
     security:
       - bearerAuth: []
+
     parameters:
       - name: user_id
         in: path
@@ -471,6 +471,7 @@ def update_user(user_id):
         description: User not found
       500:
         description: Internal server error
+
     """
     try:
         # Check if user is admin or the requested user
@@ -570,13 +571,13 @@ def update_user(user_id):
 @user_bp.route("/<int:user_id>/status", methods=["PUT"])
 @jwt_required()
 def update_user_status(user_id):
-    """
-    Update a user's active status.
+    """Update a user's active status.
     ---
     tags:
       - Users
     security:
       - bearerAuth: []
+
     parameters:
       - name: user_id
         in: path
@@ -609,6 +610,7 @@ def update_user_status(user_id):
         description: User not found
       500:
         description: Internal server error
+
     """
     try:
         # Check if user is admin
@@ -679,13 +681,13 @@ def update_user_status(user_id):
 @user_bp.route("/<int:user_id>", methods=["DELETE"])
 @jwt_required()
 def delete_user(user_id):
-    """
-    Delete a user.
+    """Delete a user.
     ---
     tags:
       - Users
     security:
       - bearerAuth: []
+
     parameters:
       - name: user_id
         in: path
@@ -704,6 +706,7 @@ def delete_user(user_id):
         description: User not found
       500:
         description: Internal server error
+
     """
     try:
         # Check if user is admin
@@ -755,8 +758,7 @@ def delete_user(user_id):
 @user_bp.route("/profile", methods=["GET"])
 @jwt_required()
 def get_profile():
-    """
-    Get the current user's profile.
+    """Get the current user's profile.
     ---
     tags:
       - Users
@@ -820,8 +822,7 @@ def get_profile():
 @user_bp.route("/profile", methods=["PUT"])
 @jwt_required()
 def update_profile():
-    """
-    Update the current user's profile.
+    """Update the current user's profile.
     ---
     tags:
       - Users
@@ -926,8 +927,7 @@ def update_profile():
 @user_bp.route("/password", methods=["PUT"])
 @jwt_required()
 def change_password():
-    """
-    Change the current user's password.
+    """Change the current user's password.
     ---
     tags:
       - Users

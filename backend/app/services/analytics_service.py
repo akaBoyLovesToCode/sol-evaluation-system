@@ -1,5 +1,4 @@
-"""
-Analytics Service for Product Evaluation System
+"""Analytics Service for Product Evaluation System
 
 This service handles statistical analysis and data visualization as specified
 in Phase 3 requirements. Provides data for charts, reports, and analytics.
@@ -17,8 +16,7 @@ import json
 
 
 class AnalyticsService:
-    """
-    Service class for analytics and statistical analysis
+    """Service class for analytics and statistical analysis
 
     Handles:
     - Statistical analysis of evaluations
@@ -31,8 +29,7 @@ class AnalyticsService:
     def get_evaluation_statistics(
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> Dict:
-        """
-        Get comprehensive evaluation statistics
+        """Get comprehensive evaluation statistics
 
         Args:
             start_date: Optional start date for filtering
@@ -40,6 +37,7 @@ class AnalyticsService:
 
         Returns:
             Dictionary with evaluation statistics
+
         """
         try:
             # Set default date range if not provided (last 12 months)
@@ -130,14 +128,14 @@ class AnalyticsService:
 
     @staticmethod
     def get_monthly_trends(months: int = 12) -> Dict:
-        """
-        Get monthly trends for evaluations
+        """Get monthly trends for evaluations
 
         Args:
             months: Number of months to analyze
 
         Returns:
             Dictionary with monthly trend data
+
         """
         try:
             end_date = datetime.utcnow()
@@ -208,11 +206,11 @@ class AnalyticsService:
 
     @staticmethod
     def get_user_performance_metrics() -> List[Dict]:
-        """
-        Get performance metrics for all users
+        """Get performance metrics for all users
 
         Returns:
             List of user performance dictionaries
+
         """
         try:
             # Get all active users with evaluation assignments
@@ -299,11 +297,11 @@ class AnalyticsService:
 
     @staticmethod
     def get_evaluation_type_analysis() -> Dict:
-        """
-        Get detailed analysis by evaluation type
+        """Get detailed analysis by evaluation type
 
         Returns:
             Dictionary with evaluation type analysis
+
         """
         try:
             analysis = {}
@@ -371,11 +369,11 @@ class AnalyticsService:
 
     @staticmethod
     def get_workflow_bottlenecks() -> Dict:
-        """
-        Identify workflow bottlenecks and delays
+        """Identify workflow bottlenecks and delays
 
         Returns:
             Dictionary with bottleneck analysis
+
         """
         try:
             bottlenecks = {}
@@ -468,11 +466,11 @@ class AnalyticsService:
 
     @staticmethod
     def generate_dashboard_data() -> Dict:
-        """
-        Generate comprehensive dashboard data
+        """Generate comprehensive dashboard data
 
         Returns:
             Dictionary with all dashboard data
+
         """
         try:
             dashboard_data = {}
@@ -510,8 +508,7 @@ class AnalyticsService:
     def export_analytics_data(
         start_date: datetime, end_date: datetime, format_type: str = "json"
     ) -> Tuple[bool, str, Optional[str]]:
-        """
-        Export analytics data for reporting
+        """Export analytics data for reporting
 
         Args:
             start_date: Start date for data export
@@ -520,6 +517,7 @@ class AnalyticsService:
 
         Returns:
             Tuple of (success: bool, message: str, data: Optional[str])
+
         """
         try:
             # Get comprehensive analytics data
@@ -558,14 +556,14 @@ class AnalyticsService:
 
     @staticmethod
     def _convert_to_csv(data: Dict) -> str:
-        """
-        Convert analytics data to CSV format
+        """Convert analytics data to CSV format
 
         Args:
             data: Analytics data dictionary
 
         Returns:
             CSV formatted string
+
         """
         try:
             csv_lines = []
@@ -608,11 +606,11 @@ class AnalyticsService:
 
     @staticmethod
     def get_predictive_insights() -> Dict:
-        """
-        Generate predictive insights based on historical data
+        """Generate predictive insights based on historical data
 
         Returns:
             Dictionary with predictive insights
+
         """
         try:
             insights = {}

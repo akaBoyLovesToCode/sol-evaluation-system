@@ -18,8 +18,7 @@ class OperationType(Enum):
 
 
 class OperationLog(db.Model):
-    """
-    Operation log model for tracking user activities and system changes
+    """Operation log model for tracking user activities and system changes
 
     Tracks:
     - User login/logout
@@ -80,13 +79,13 @@ class OperationLog(db.Model):
     )
 
     def __init__(self, user_id, operation_type, target_type, **kwargs):
-        """
-        Initialize operation log with required fields
+        """Initialize operation log with required fields
 
         Args:
             user_id (int): ID of the user performing the operation
             operation_type (str): Type of operation
             target_type (str): Type of target object
+
         """
         self.user_id = user_id
         self.operation_type = operation_type
@@ -101,8 +100,7 @@ class OperationLog(db.Model):
     def log_login(
         user_id, ip_address=None, user_agent=None, success=True, error_message=None
     ):
-        """
-        Log user login attempt
+        """Log user login attempt
 
         Args:
             user_id (int): User ID
@@ -113,6 +111,7 @@ class OperationLog(db.Model):
 
         Returns:
             OperationLog: Created log entry
+
         """
         log = OperationLog(
             user_id=user_id,
@@ -132,8 +131,7 @@ class OperationLog(db.Model):
 
     @staticmethod
     def log_logout(user_id, ip_address=None):
-        """
-        Log user logout
+        """Log user logout
 
         Args:
             user_id (int): User ID
@@ -141,6 +139,7 @@ class OperationLog(db.Model):
 
         Returns:
             OperationLog: Created log entry
+
         """
         log = OperationLog(
             user_id=user_id,
@@ -165,8 +164,7 @@ class OperationLog(db.Model):
         success=True,
         error_message=None,
     ):
-        """
-        Log evaluation-related operations
+        """Log evaluation-related operations
 
         Args:
             user_id (int): User ID
@@ -179,6 +177,7 @@ class OperationLog(db.Model):
 
         Returns:
             OperationLog: Created log entry
+
         """
         operation_descriptions = {
             "create": f"Created evaluation {evaluation.evaluation_number}",
@@ -220,8 +219,7 @@ class OperationLog(db.Model):
         success=True,
         error_message=None,
     ):
-        """
-        Log data export operations
+        """Log data export operations
 
         Args:
             user_id (int): User ID
@@ -233,6 +231,7 @@ class OperationLog(db.Model):
 
         Returns:
             OperationLog: Created log entry
+
         """
         log = OperationLog(
             user_id=user_id,
@@ -258,8 +257,7 @@ class OperationLog(db.Model):
         success=True,
         error_message=None,
     ):
-        """
-        Log system-level operations
+        """Log system-level operations
 
         Args:
             user_id (int): User ID
@@ -271,6 +269,7 @@ class OperationLog(db.Model):
 
         Returns:
             OperationLog: Created log entry
+
         """
         log = OperationLog(
             user_id=user_id,
@@ -288,11 +287,11 @@ class OperationLog(db.Model):
         return log
 
     def to_dict(self):
-        """
-        Convert operation log to dictionary
+        """Convert operation log to dictionary
 
         Returns:
             dict: Operation log data dictionary
+
         """
         return {
             "id": self.id,

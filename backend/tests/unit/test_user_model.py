@@ -1,5 +1,4 @@
-"""
-Unit tests for the User model.
+"""Unit tests for the User model.
 """
 
 import pytest

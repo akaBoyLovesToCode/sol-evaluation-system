@@ -1,5 +1,4 @@
-"""
-Backup Service for Product Evaluation System
+"""Backup Service for Product Evaluation System
 
 This service handles data backup system as specified in Phase 4 requirements.
 Manages database backups, file backups, and backup scheduling.
@@ -17,8 +16,7 @@ import tarfile
 
 
 class BackupService:
-    """
-    Service class for managing data backups
+    """Service class for managing data backups
 
     Handles:
     - Database backups
@@ -32,14 +30,14 @@ class BackupService:
     def create_database_backup(
         backup_name: Optional[str] = None,
     ) -> Tuple[bool, str, Optional[str]]:
-        """
-        Create a database backup
+        """Create a database backup
 
         Args:
             backup_name: Optional custom backup name
 
         Returns:
             Tuple of (success: bool, message: str, backup_path: Optional[str])
+
         """
         try:
             # Generate backup filename
@@ -131,14 +129,14 @@ class BackupService:
     def create_files_backup(
         backup_name: Optional[str] = None,
     ) -> Tuple[bool, str, Optional[str]]:
-        """
-        Create a backup of uploaded files and logs
+        """Create a backup of uploaded files and logs
 
         Args:
             backup_name: Optional custom backup name
 
         Returns:
             Tuple of (success: bool, message: str, backup_path: Optional[str])
+
         """
         try:
             # Generate backup filename
@@ -202,14 +200,14 @@ class BackupService:
     def create_full_backup(
         backup_name: Optional[str] = None,
     ) -> Tuple[bool, str, List[str]]:
-        """
-        Create a full system backup (database + files)
+        """Create a full system backup (database + files)
 
         Args:
             backup_name: Optional custom backup name
 
         Returns:
             Tuple of (success: bool, message: str, backup_paths: List[str])
+
         """
         try:
             timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
@@ -264,11 +262,11 @@ class BackupService:
 
     @staticmethod
     def list_backups() -> List[Dict]:
-        """
-        List all available backups
+        """List all available backups
 
         Returns:
             List of backup information dictionaries
+
         """
         try:
             backup_dir = current_app.config.get("BACKUP_FOLDER", "backups")
@@ -325,14 +323,14 @@ class BackupService:
 
     @staticmethod
     def delete_backup(backup_name: str) -> Tuple[bool, str]:
-        """
-        Delete a backup and its metadata
+        """Delete a backup and its metadata
 
         Args:
             backup_name: Name of the backup to delete
 
         Returns:
             Tuple of (success: bool, message: str)
+
         """
         try:
             backup_dir = current_app.config.get("BACKUP_FOLDER", "backups")
@@ -363,14 +361,14 @@ class BackupService:
 
     @staticmethod
     def cleanup_old_backups(days_to_keep: int = 30) -> Tuple[int, str]:
-        """
-        Clean up old backups to save disk space
+        """Clean up old backups to save disk space
 
         Args:
             days_to_keep: Number of days to keep backups
 
         Returns:
             Tuple of (deleted_count: int, message: str)
+
         """
         try:
             cutoff_date = datetime.utcnow() - timedelta(days=days_to_keep)
@@ -403,11 +401,11 @@ class BackupService:
 
     @staticmethod
     def get_backup_statistics() -> Dict:
-        """
-        Get backup system statistics
+        """Get backup system statistics
 
         Returns:
             Dictionary with backup statistics
+
         """
         try:
             backups = BackupService.list_backups()
@@ -461,11 +459,11 @@ class BackupService:
 
     @staticmethod
     def schedule_automatic_backup() -> bool:
-        """
-        Schedule automatic backup (to be called by a cron job or scheduler)
+        """Schedule automatic backup (to be called by a cron job or scheduler)
 
         Returns:
             bool: Success status
+
         """
         try:
             # Get backup configuration from system config

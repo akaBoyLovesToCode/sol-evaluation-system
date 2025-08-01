@@ -1,10 +1,16 @@
-from datetime import datetime
+from __future__ import annotations
+
+from datetime import datetime, date
 from enum import Enum
+from typing import Dict, Any, List, Optional, TYPE_CHECKING
 from app import db
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 class EvaluationStatus(Enum):
-    """Evaluation status enumeration"""
+    """Evaluation status enumeration."""
 
     DRAFT = "draft"
     IN_PROGRESS = "in_progress"
@@ -17,15 +23,14 @@ class EvaluationStatus(Enum):
 
 
 class EvaluationType(Enum):
-    """Evaluation type enumeration"""
+    """Evaluation type enumeration."""
 
     NEW_PRODUCT = "new_product"
     MASS_PRODUCTION = "mass_production"
 
 
 class Evaluation(db.Model):
-    """
-    Main evaluation model for product evaluations
+    """Main evaluation model for product evaluations.
 
     Supports two types of evaluations:
     1. New Product: DOE, PPQ, PRQ (parallel) -> Part Leader -> Group Leader approval
@@ -125,24 +130,25 @@ class Evaluation(db.Model):
 
     def __init__(
         self,
-        evaluation_number,
-        evaluation_type,
-        product_name,
-        part_number,
-        evaluator_id,
-        start_date,
-        **kwargs,
-    ):
-        """
-        Initialize evaluation with required fields
+        evaluation_number: str,
+        evaluation_type: str,
+        product_name: str,
+        part_number: str,
+        evaluator_id: int,
+        start_date: date,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize evaluation with required fields.
 
         Args:
-            evaluation_number (str): Unique evaluation identifier
-            evaluation_type (str): Type of evaluation ('new_product' or 'mass_production')
-            product_name (str): Product name
-            part_number (str): Product part number
-            evaluator_id (int): ID of the evaluator
-            start_date (date): Evaluation start date
+            evaluation_number: Unique evaluation identifier.
+            evaluation_type: Type of evaluation ('new_product' or 'mass_production').
+            product_name: Product name.
+            part_number: Product part number.
+            evaluator_id: ID of the evaluator.
+            start_date: Evaluation start date.
+            **kwargs: Additional optional fields.
+
         """
         self.evaluation_number = evaluation_number
         self.evaluation_type = evaluation_type
@@ -156,15 +162,15 @@ class Evaluation(db.Model):
             if hasattr(self, key):
                 setattr(self, key, value)
 
-    def can_be_approved_by(self, user):
-        """
-        Check if user can approve this evaluation
+    def can_be_approved_by(self, user: User) -> bool:
+        """Check if user can approve this evaluation.
 
         Args:
-            user (User): User object to check
+            user: User object to check.
 
         Returns:
-            bool: True if user can approve, False otherwise
+            True if user can approve, False otherwise.
+
         """
         if self.evaluation_type == "mass_production":
             return False  # Mass production evaluations don't need approval
@@ -176,13 +182,13 @@ class Evaluation(db.Model):
 
         return False
 
-    def approve(self, approver_id, approval_level):
-        """
-        Approve evaluation at specified level
+    def approve(self, approver_id: int, approval_level: str) -> None:
+        """Approve evaluation at specified level.
 
         Args:
-            approver_id (int): ID of the approver
-            approval_level (str): 'part' or 'group'
+            approver_id: ID of the approver.
+            approval_level: 'part' or 'group'.
+
         """
         if approval_level == "part":
             self.part_approver_id = approver_id
@@ -193,34 +199,34 @@ class Evaluation(db.Model):
             self.status = "completed"
             self.actual_end_date = datetime.utcnow().date()
 
-    def reject(self):
-        """Reject the evaluation"""
+    def reject(self) -> None:
+        """Reject the evaluation."""
         self.status = "rejected"
 
-    def complete(self):
-        """Mark evaluation as completed (for mass production)"""
+    def complete(self) -> None:
+        """Mark evaluation as completed (for mass production)."""
         self.status = "completed"
         self.actual_end_date = datetime.utcnow().date()
 
-    def pause(self):
-        """Pause the evaluation"""
+    def pause(self) -> None:
+        """Pause the evaluation."""
         self.status = "paused"
 
-    def cancel(self):
-        """Cancel the evaluation"""
+    def cancel(self) -> None:
+        """Cancel the evaluation."""
         self.status = "cancelled"
 
-    def resume(self):
-        """Resume paused evaluation"""
+    def resume(self) -> None:
+        """Resume paused evaluation."""
         if self.status == "paused":
             self.status = "in_progress"
 
-    def get_next_approver_role(self):
-        """
-        Get the role of next required approver
+    def get_next_approver_role(self) -> Optional[str]:
+        """Get the role of next required approver.
 
         Returns:
-            str: Role name or None if no approval needed
+            Role name or None if no approval needed.
+
         """
         if self.evaluation_type == "mass_production":
             return None
@@ -232,15 +238,15 @@ class Evaluation(db.Model):
 
         return None
 
-    def to_dict(self, include_details=False):
-        """
-        Convert evaluation to dictionary
+    def to_dict(self, include_details: bool = False) -> Dict[str, Any]:
+        """Convert evaluation to dictionary.
 
         Args:
-            include_details (bool): Whether to include related details and results
+            include_details: Whether to include related details and results.
 
         Returns:
-            dict: Evaluation data dictionary
+            Evaluation data dictionary.
+
         """
         data = {
             "id": self.id,
@@ -278,14 +284,12 @@ class Evaluation(db.Model):
 
         return data
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Evaluation {self.evaluation_number}>"
 
 
 class EvaluationDetail(db.Model):
-    """
-    Detailed information for specific evaluation types (PGM, Material, etc.)
-    """
+    """Detailed information for specific evaluation types (PGM, Material, etc.)."""
 
     __tablename__ = "evaluation_details"
 
@@ -320,8 +324,13 @@ class EvaluationDetail(db.Model):
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
 
-    def to_dict(self):
-        """Convert detail to dictionary"""
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert detail to dictionary.
+        
+        Returns:
+            Detail data dictionary.
+
+        """
         return {
             "id": self.id,
             "evaluation_id": self.evaluation_id,
@@ -336,16 +345,14 @@ class EvaluationDetail(db.Model):
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<EvaluationDetail {self.detail_type} for Evaluation {self.evaluation_id}>"
         )
 
 
 class EvaluationResult(db.Model):
-    """
-    Test results for evaluations (DOE, PPQ, PRQ, Production Test, AQL)
-    """
+    """Test results for evaluations (DOE, PPQ, PRQ, Production Test, AQL)."""
 
     __tablename__ = "evaluation_results"
 
@@ -379,8 +386,13 @@ class EvaluationResult(db.Model):
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
 
-    def to_dict(self):
-        """Convert result to dictionary"""
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert result to dictionary.
+        
+        Returns:
+            Result data dictionary.
+
+        """
         return {
             "id": self.id,
             "evaluation_id": self.evaluation_id,
@@ -393,7 +405,7 @@ class EvaluationResult(db.Model):
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<EvaluationResult {self.result_type} for Evaluation {self.evaluation_id}>"
         )

@@ -1,12 +1,18 @@
+"""Product Evaluation System Flask Application Factory."""
+
+from __future__ import annotations
+
+import logging
+import os
+from logging.handlers import RotatingFileHandler
+from typing import Optional, Tuple, Any
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from flask_socketio import SocketIO
-import os
-import logging
-from logging.handlers import RotatingFileHandler
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -16,15 +22,15 @@ cors = CORS()
 socketio = SocketIO()
 
 
-def create_app(config_name=None):
-    """
-    Application factory pattern for creating Flask app
+def create_app(config_name: Optional[str] = None) -> Flask:
+    """Application factory pattern for creating Flask app.
 
     Args:
-        config_name (str): Configuration name ('development', 'production', 'testing')
+        config_name: Configuration name ('development', 'production', 'testing').
 
     Returns:
-        Flask: Configured Flask application instance
+        Configured Flask application instance.
+
     """
     app = Flask(__name__)
 
@@ -91,18 +97,20 @@ def create_app(config_name=None):
 
     # Register error handlers
     @app.errorhandler(404)
-    def not_found_error(error):
+    def not_found_error(error: Any) -> Tuple[dict[str, str], int]:
+        """Handle 404 not found errors."""
         return {"error": "Resource not found"}, 404
 
     @app.errorhandler(500)
-    def internal_error(error):
+    def internal_error(error: Any) -> Tuple[dict[str, str], int]:
+        """Handle 500 internal server errors."""
         db.session.rollback()
         return {"error": "Internal server error"}, 500
 
     # Health check endpoint
     @app.route("/api/health")
-    def health_check():
-        """Health check endpoint for monitoring"""
+    def health_check() -> dict[str, str]:
+        """Health check endpoint for monitoring."""
         return {"status": "healthy", "message": "Product Evaluation System is running"}
 
     return app

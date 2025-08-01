@@ -1,5 +1,4 @@
-"""
-Services module for Product Evaluation System
+"""Services module for Product Evaluation System
 
 This module contains business logic services that handle complex operations
 and workflows for the evaluation management system.

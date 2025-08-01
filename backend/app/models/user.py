@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 from datetime import datetime
 from enum import Enum
+from typing import Dict, Any, Optional
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 
 
 class UserRole(Enum):
-    """User role enumeration"""
+    """User role enumeration."""
 
     ADMIN = "admin"
     GROUP_LEADER = "group_leader"
@@ -14,8 +17,7 @@ class UserRole(Enum):
 
 
 class User(db.Model):
-    """
-    User model for authentication and authorization
+    """User model for authentication and authorization.
 
     Roles hierarchy (from highest to lowest):
     - admin: System administrator with full access
@@ -85,16 +87,25 @@ class User(db.Model):
     )
     operation_logs = db.relationship("OperationLog", backref="user", lazy="dynamic")
 
-    def __init__(self, username, email, password, full_name, role="user", **kwargs):
-        """
-        Initialize user with required fields
+    def __init__(
+        self, 
+        username: str, 
+        email: str, 
+        password: str, 
+        full_name: str, 
+        role: str = "user", 
+        **kwargs: Any
+    ) -> None:
+        """Initialize user with required fields.
 
         Args:
-            username (str): Unique username
-            email (str): User email address
-            password (str): Plain text password (will be hashed)
-            full_name (str): User's full name
-            role (str): User role (default: 'user')
+            username: Unique username.
+            email: User email address.
+            password: Plain text password (will be hashed).
+            full_name: User's full name.
+            role: User role. Defaults to 'user'.
+            **kwargs: Additional optional fields.
+
         """
         self.username = username
         self.email = email
@@ -107,58 +118,58 @@ class User(db.Model):
             if hasattr(self, key):
                 setattr(self, key, value)
 
-    def set_password(self, password):
-        """
-        Hash and set user password
+    def set_password(self, password: str) -> None:
+        """Hash and set user password.
 
         Args:
-            password (str): Plain text password
+            password: Plain text password.
+
         """
         self.password_hash = generate_password_hash(password)
 
-    def check_password(self, password):
-        """
-        Verify user password
+    def check_password(self, password: str) -> bool:
+        """Verify user password.
 
         Args:
-            password (str): Plain text password to verify
+            password: Plain text password to verify.
 
         Returns:
-            bool: True if password matches, False otherwise
+            True if password matches, False otherwise.
+
         """
         return check_password_hash(self.password_hash, password)
 
-    def update_last_login(self):
-        """Update last login timestamp"""
+    def update_last_login(self) -> None:
+        """Update last login timestamp."""
         self.last_login = datetime.utcnow()
         db.session.commit()
 
-    def has_permission(self, required_role):
-        """
-        Check if user has required permission level
+    def has_permission(self, required_role: str) -> bool:
+        """Check if user has required permission level.
 
         Args:
-            required_role (str): Required role level
+            required_role: Required role level.
 
         Returns:
-            bool: True if user has permission, False otherwise
+            True if user has permission, False otherwise.
+
         """
-        role_hierarchy = {"user": 1, "part_leader": 2, "group_leader": 3, "admin": 4}
+        role_hierarchy: Dict[str, int] = {"user": 1, "part_leader": 2, "group_leader": 3, "admin": 4}
 
         user_level = role_hierarchy.get(self.role, 0)
         required_level = role_hierarchy.get(required_role, 0)
 
         return user_level >= required_level
 
-    def can_approve_evaluation(self, evaluation_type):
-        """
-        Check if user can approve specific evaluation type
+    def can_approve_evaluation(self, evaluation_type: str) -> bool:
+        """Check if user can approve specific evaluation type.
 
         Args:
-            evaluation_type (str): Type of evaluation
+            evaluation_type: Type of evaluation.
 
         Returns:
-            bool: True if user can approve, False otherwise
+            True if user can approve, False otherwise.
+
         """
         if evaluation_type == "new_product":
             # New product evaluations require part_leader or higher
@@ -169,15 +180,15 @@ class User(db.Model):
 
         return False
 
-    def to_dict(self, include_sensitive=False):
-        """
-        Convert user object to dictionary
+    def to_dict(self, include_sensitive: bool = False) -> Dict[str, Any]:
+        """Convert user object to dictionary.
 
         Args:
-            include_sensitive (bool): Whether to include sensitive information
+            include_sensitive: Whether to include sensitive information.
 
         Returns:
-            dict: User data dictionary
+            User data dictionary.
+
         """
         data = {
             "id": self.id,
@@ -199,5 +210,5 @@ class User(db.Model):
 
         return data
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<User {self.username}>"

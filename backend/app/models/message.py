@@ -33,8 +33,7 @@ class MessagePriority(Enum):
 
 
 class Message(db.Model):
-    """
-    Message model for in-app notifications and communication
+    """Message model for in-app notifications and communication
 
     Used for:
     - Approval notifications
@@ -87,14 +86,14 @@ class Message(db.Model):
     evaluation = db.relationship("Evaluation", backref="messages")
 
     def __init__(self, title, content, message_type, recipient_id, **kwargs):
-        """
-        Initialize message with required fields
+        """Initialize message with required fields
 
         Args:
             title (str): Message title
             content (str): Message content
             message_type (str): Type of message
             recipient_id (int): ID of the recipient
+
         """
         self.title = title
         self.content = content
@@ -122,8 +121,7 @@ class Message(db.Model):
 
     @staticmethod
     def create_approval_request(evaluation, recipient_id, approval_level):
-        """
-        Create approval request message
+        """Create approval request message
 
         Args:
             evaluation (Evaluation): Evaluation object
@@ -132,6 +130,7 @@ class Message(db.Model):
 
         Returns:
             Message: Created message object
+
         """
         level_text = "Part Leader" if approval_level == "part" else "Group Leader"
 
@@ -158,8 +157,7 @@ class Message(db.Model):
 
     @staticmethod
     def create_status_change(evaluation, recipient_id, old_status, new_status):
-        """
-        Create status change notification
+        """Create status change notification
 
         Args:
             evaluation (Evaluation): Evaluation object
@@ -169,6 +167,7 @@ class Message(db.Model):
 
         Returns:
             Message: Created message object
+
         """
         title = f"Status Update: {evaluation.evaluation_number}"
         content = (
@@ -192,8 +191,7 @@ class Message(db.Model):
 
     @staticmethod
     def create_system_announcement(title, content, recipient_ids, priority="normal"):
-        """
-        Create system announcement for multiple recipients
+        """Create system announcement for multiple recipients
 
         Args:
             title (str): Announcement title
@@ -203,6 +201,7 @@ class Message(db.Model):
 
         Returns:
             list: List of created message objects
+
         """
         messages = []
         for recipient_id in recipient_ids:
@@ -218,11 +217,11 @@ class Message(db.Model):
         return messages
 
     def to_dict(self):
-        """
-        Convert message to dictionary
+        """Convert message to dictionary
 
         Returns:
             dict: Message data dictionary
+
         """
         return {
             "id": self.id,

@@ -1,5 +1,4 @@
-"""
-Helper functions for testing.
+"""Helper functions for testing.
 """
 
 import json
@@ -9,8 +8,7 @@ from app.models.user import User
 
 
 def create_test_evaluation(session, user_id, **kwargs):
-    """
-    Create a test evaluation with default values.
+    """Create a test evaluation with default values.
 
     Args:
         session: SQLAlchemy session
@@ -19,6 +17,7 @@ def create_test_evaluation(session, user_id, **kwargs):
 
     Returns:
         Evaluation: The created evaluation
+
     """
     defaults = {
         "evaluation_number": f"EV-{datetime.now().strftime('%Y%m%d')}-001",
@@ -46,13 +45,13 @@ def create_test_evaluation(session, user_id, **kwargs):
 
 
 def json_response(response):
-    """
-    Parse JSON response.
+    """Parse JSON response.
 
     Args:
         response: Flask test client response
 
     Returns:
         dict: Parsed JSON response
+
     """
     return json.loads(response.data.decode("utf-8"))

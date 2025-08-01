@@ -1,7 +1,11 @@
-from flask import Blueprint, request, jsonify, current_app
+from __future__ import annotations
+
+from datetime import datetime, timedelta
+from typing import Dict, Any, List, Tuple, Optional
+
+from flask import Blueprint, request, jsonify, current_app, Response
 from flask_jwt_extended import jwt_required
 from sqlalchemy import func, and_, or_
-from datetime import datetime, timedelta
 from app import db
 from app.models import Evaluation, User, Message, OperationLog
 from app.utils.decorators import handle_exceptions, cache_response
@@ -14,16 +18,25 @@ dashboard_bp = Blueprint("dashboard", __name__)
 @dashboard_bp.route("/overview", methods=["GET"])
 @jwt_required()
 @handle_exceptions
-def get_dashboard_overview():
-    """
-    Get dashboard overview statistics
+def get_dashboard_overview() -> Response:
+    """Get dashboard overview statistics.
+
+    Provides comprehensive dashboard data including evaluation counts, status distribution,
+    recent evaluations, pending approvals, and user statistics based on user role.
 
     Returns:
-    - Total evaluations count
-    - Evaluations by status
-    - Recent evaluations
-    - Pending approvals (for leaders)
-    - User statistics (for admins)
+        Response: JSON response containing dashboard overview data including:
+            - total_evaluations: Total count of evaluations visible to user
+            - status_distribution: Breakdown of evaluations by status
+            - type_distribution: Breakdown of evaluations by type
+            - recent_evaluations: Last 10 evaluations
+            - pending_approvals: Pending evaluations for leaders
+            - user_statistics: User stats for admins
+            - unread_messages: Count of unread messages
+            
+    Raises:
+        500: If database operation fails.
+
     """
     try:
         current_user_id = get_current_user_id()
@@ -177,14 +190,28 @@ def get_dashboard_overview():
 @dashboard_bp.route("/statistics", methods=["GET"])
 @jwt_required()
 @handle_exceptions
-def get_detailed_statistics():
-    """
-    Get detailed statistics with date range filtering
+def get_detailed_statistics() -> Response:
+    """Get detailed statistics with date range filtering.
 
-    Query parameters:
-    - start_date: Start date for filtering (YYYY-MM-DD)
-    - end_date: End date for filtering (YYYY-MM-DD)
-    - group_by: Grouping option ('month', 'week', 'day')
+    Provides comprehensive analytics including evaluations over time, completion rates,
+    product statistics, and evaluator performance metrics.
+
+    Query Parameters:
+        start_date (str, optional): Start date for filtering in YYYY-MM-DD format.
+        end_date (str, optional): End date for filtering in YYYY-MM-DD format.
+        group_by (str, optional): Grouping option ('month', 'week', 'day'). Defaults to 'month'.
+
+    Returns:
+        Response: JSON response containing detailed statistics including:
+            - date_range: Applied date range and grouping
+            - evaluations_over_time: Time series data of evaluation counts
+            - completion_rates: Completion rate trends over time
+            - product_statistics: Top products by evaluation count
+            - evaluator_performance: Performance metrics for evaluators (leaders only)
+            
+    Raises:
+        500: If database operation fails.
+
     """
     try:
         current_user_id = get_current_user_id()
@@ -367,11 +394,24 @@ def get_detailed_statistics():
 @dashboard_bp.route("/reports/evaluation-status", methods=["GET"])
 @jwt_required()
 @handle_exceptions
-def get_evaluation_status_report():
-    """
-    Get evaluation status report for management
+def get_evaluation_status_report() -> Response:
+    """Get evaluation status report for management.
 
-    Returns detailed breakdown of evaluation statuses with trends
+    Provides detailed breakdown of evaluation statuses with trends and aging analysis.
+    Only accessible to users with part_leader permission or higher.
+
+    Returns:
+        Response: JSON response containing status report data including:
+            - current_status_distribution: Current status breakdown with percentages
+            - previous_period_comparison: Status distribution from last 30 days
+            - pending_evaluations: List of pending evaluations with age
+            - overdue_count: Count of evaluations overdue (>30 days)
+            - summary: High-level metrics for quick overview
+            
+    Raises:
+        403: If user lacks required permissions.
+        500: If database operation fails.
+
     """
     try:
         current_user_id = get_current_user_id()
@@ -495,9 +535,23 @@ def get_evaluation_status_report():
 @dashboard_bp.route("/reports/productivity", methods=["GET"])
 @jwt_required()
 @handle_exceptions
-def get_productivity_report():
-    """
-    Get productivity report showing evaluation throughput and efficiency
+def get_productivity_report() -> Response:
+    """Get productivity report showing evaluation throughput and efficiency.
+
+    Provides comprehensive productivity analytics including monthly trends,
+    top performer rankings, and department comparisons.
+    Only accessible to users with part_leader permission or higher.
+
+    Returns:
+        Response: JSON response containing productivity data including:
+            - monthly_productivity: Monthly evaluation throughput for last 12 months
+            - top_performers: Ranking of evaluators by completion rate
+            - department_performance: Department-level productivity metrics
+            
+    Raises:
+        403: If user lacks required permissions.
+        500: If database operation fails.
+
     """
     try:
         current_user_id = get_current_user_id()

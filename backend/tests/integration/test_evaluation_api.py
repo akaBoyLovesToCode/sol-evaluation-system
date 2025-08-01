@@ -1,5 +1,4 @@
-"""
-Integration tests for the evaluation API endpoints.
+"""Integration tests for the evaluation API endpoints.
 """
 
 import json

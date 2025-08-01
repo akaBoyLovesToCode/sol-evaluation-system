@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Simple test script to check imports
+"""Simple test script to check imports
 """
 
 try:

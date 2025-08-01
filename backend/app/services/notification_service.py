@@ -1,5 +1,4 @@
-"""
-Notification Service for Product Evaluation System
+"""Notification Service for Product Evaluation System
 
 This service handles in-app notification system as specified in Phase 2 requirements.
 Manages message creation, delivery, and notification preferences.
@@ -16,8 +15,7 @@ from app.models.evaluation import Evaluation
 
 
 class NotificationService:
-    """
-    Service class for managing in-app notifications and messages
+    """Service class for managing in-app notifications and messages
 
     Handles:
     - Message creation and delivery
@@ -35,8 +33,7 @@ class NotificationService:
         message_type: MessageType = MessageType.SYSTEM,
         related_evaluation_id: Optional[int] = None,
     ) -> bool:
-        """
-        Send a notification to a specific user
+        """Send a notification to a specific user
 
         Args:
             sender_id: ID of the sender (can be system user)
@@ -48,6 +45,7 @@ class NotificationService:
 
         Returns:
             bool: Success status
+
         """
         try:
             # Validate users exist
@@ -93,8 +91,7 @@ class NotificationService:
         message_type: MessageType = MessageType.SYSTEM,
         related_evaluation_id: Optional[int] = None,
     ) -> int:
-        """
-        Send notifications to multiple users
+        """Send notifications to multiple users
 
         Args:
             sender_id: ID of the sender
@@ -106,6 +103,7 @@ class NotificationService:
 
         Returns:
             int: Number of notifications sent successfully
+
         """
         try:
             sent_count = 0
@@ -147,8 +145,7 @@ class NotificationService:
     def get_user_notifications(
         user_id: int, limit: int = 50, status_filter: Optional[MessageStatus] = None
     ) -> List[Dict]:
-        """
-        Get notifications for a specific user
+        """Get notifications for a specific user
 
         Args:
             user_id: ID of the user
@@ -157,6 +154,7 @@ class NotificationService:
 
         Returns:
             List of notification dictionaries
+
         """
         try:
             query = Message.query.filter_by(recipient_id=user_id)
@@ -197,8 +195,7 @@ class NotificationService:
 
     @staticmethod
     def mark_as_read(message_id: int, user_id: int) -> bool:
-        """
-        Mark a notification as read
+        """Mark a notification as read
 
         Args:
             message_id: ID of the message
@@ -206,6 +203,7 @@ class NotificationService:
 
         Returns:
             bool: Success status
+
         """
         try:
             message = Message.query.filter_by(
@@ -229,14 +227,14 @@ class NotificationService:
 
     @staticmethod
     def mark_all_as_read(user_id: int) -> int:
-        """
-        Mark all notifications as read for a user
+        """Mark all notifications as read for a user
 
         Args:
             user_id: ID of the user
 
         Returns:
             int: Number of messages marked as read
+
         """
         try:
             unread_messages = Message.query.filter_by(
@@ -259,14 +257,14 @@ class NotificationService:
 
     @staticmethod
     def get_unread_count(user_id: int) -> int:
-        """
-        Get count of unread notifications for a user
+        """Get count of unread notifications for a user
 
         Args:
             user_id: ID of the user
 
         Returns:
             int: Number of unread notifications
+
         """
         try:
             count = Message.query.filter_by(
@@ -281,8 +279,7 @@ class NotificationService:
 
     @staticmethod
     def delete_notification(message_id: int, user_id: int) -> bool:
-        """
-        Delete a notification (soft delete by marking as deleted)
+        """Delete a notification (soft delete by marking as deleted)
 
         Args:
             message_id: ID of the message
@@ -290,6 +287,7 @@ class NotificationService:
 
         Returns:
             bool: Success status
+
         """
         try:
             message = Message.query.filter_by(
@@ -311,8 +309,7 @@ class NotificationService:
 
     @staticmethod
     def send_reminder_notifications():
-        """
-        Send reminder notifications for overdue evaluations
+        """Send reminder notifications for overdue evaluations
         This method can be called by a scheduled task
         """
         try:
@@ -375,14 +372,14 @@ class NotificationService:
 
     @staticmethod
     def send_daily_digest(user_id: int) -> bool:
-        """
-        Send daily digest of activities to a user
+        """Send daily digest of activities to a user
 
         Args:
             user_id: ID of the user
 
         Returns:
             bool: Success status
+
         """
         try:
             user = User.query.get(user_id)
@@ -466,11 +463,11 @@ class NotificationService:
 
     @staticmethod
     def cleanup_old_notifications(days_to_keep: int = 90):
-        """
-        Clean up old notifications to prevent database bloat
+        """Clean up old notifications to prevent database bloat
 
         Args:
             days_to_keep: Number of days to keep notifications
+
         """
         try:
             cutoff_date = datetime.utcnow() - timedelta(days=days_to_keep)
@@ -496,11 +493,11 @@ class NotificationService:
 
     @staticmethod
     def get_notification_statistics() -> Dict:
-        """
-        Get notification statistics for admin dashboard
+        """Get notification statistics for admin dashboard
 
         Returns:
             Dictionary with notification statistics
+
         """
         try:
             stats = {}

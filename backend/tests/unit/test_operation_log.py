@@ -1,5 +1,4 @@
-"""
-Unit tests for the OperationLog model and functionality.
+"""Unit tests for the OperationLog model and functionality.
 """
 
 import json

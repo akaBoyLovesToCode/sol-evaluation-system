@@ -1,15 +1,23 @@
-from datetime import datetime
+"""Helper utility functions for the Product Evaluation System."""
+
+from __future__ import annotations
+
+import re
 import uuid
+from datetime import datetime, date
+from typing import Optional, Any, Dict, List, Tuple, Union
+
+from flask import Request
 from flask_jwt_extended import get_jwt_identity
 from app.models import SystemConfig
 
 
-def get_current_user_id():
-    """
-    Get current user ID from JWT token, converting from string to int
+def get_current_user_id() -> Optional[int]:
+    """Get current user ID from JWT token, converting from string to int.
 
     Returns:
-        int: Current user ID or None if not authenticated
+        Current user ID or None if not authenticated.
+
     """
     try:
         identity = get_jwt_identity()
@@ -18,15 +26,15 @@ def get_current_user_id():
         return None
 
 
-def get_client_ip(request):
-    """
-    Get client IP address from request
+def get_client_ip(request: Request) -> Optional[str]:
+    """Get client IP address from request.
 
     Args:
-        request: Flask request object
+        request: Flask request object.
 
     Returns:
-        str: Client IP address
+        Client IP address.
+
     """
     # Check for forwarded IP (when behind proxy/load balancer)
     if request.headers.get("X-Forwarded-For"):
@@ -37,25 +45,25 @@ def get_client_ip(request):
         return request.remote_addr
 
 
-def get_user_agent(request):
-    """
-    Get user agent string from request
+def get_user_agent(request: Request) -> str:
+    """Get user agent string from request.
 
     Args:
-        request: Flask request object
+        request: Flask request object.
 
     Returns:
-        str: User agent string
+        User agent string.
+
     """
     return request.headers.get("User-Agent", "Unknown")
 
 
-def generate_evaluation_number():
-    """
-    Generate unique evaluation number
+def generate_evaluation_number() -> str:
+    """Generate unique evaluation number.
 
     Returns:
-        str: Unique evaluation number in format PREFIX-YYYYMMDD-XXXX
+        Unique evaluation number in format PREFIX-YYYYMMDD-XXXX.
+
     """
     # Get prefix from system config
     prefix = SystemConfig.get_config("evaluation_number_prefix", "EVAL")
@@ -69,16 +77,16 @@ def generate_evaluation_number():
     return f"{prefix}-{date_str}-{unique_suffix}"
 
 
-def format_datetime(dt, format_string=None):
-    """
-    Format datetime object to string
+def format_datetime(dt: Optional[datetime], format_string: Optional[str] = None) -> Optional[str]:
+    """Format datetime object to string.
 
     Args:
-        dt (datetime): Datetime object to format
-        format_string (str): Format string (optional)
+        dt: Datetime object to format.
+        format_string: Format string (optional).
 
     Returns:
-        str: Formatted datetime string
+        Formatted datetime string.
+
     """
     if not dt:
         return None
@@ -89,16 +97,16 @@ def format_datetime(dt, format_string=None):
     return dt.strftime(format_string)
 
 
-def format_date(date_obj, format_string=None):
-    """
-    Format date object to string
+def format_date(date_obj: Optional[date], format_string: Optional[str] = None) -> Optional[str]:
+    """Format date object to string.
 
     Args:
-        date_obj (date): Date object to format
-        format_string (str): Format string (optional)
+        date_obj: Date object to format.
+        format_string: Format string (optional).
 
     Returns:
-        str: Formatted date string
+        Formatted date string.
+
     """
     if not date_obj:
         return None
@@ -109,16 +117,16 @@ def format_date(date_obj, format_string=None):
     return date_obj.strftime(format_string)
 
 
-def parse_date_string(date_string, format_string="%Y-%m-%d"):
-    """
-    Parse date string to date object
+def parse_date_string(date_string: Optional[str], format_string: str = "%Y-%m-%d") -> Optional[date]:
+    """Parse date string to date object.
 
     Args:
-        date_string (str): Date string to parse
-        format_string (str): Expected format string
+        date_string: Date string to parse.
+        format_string: Expected format string.
 
     Returns:
-        date: Parsed date object or None if parsing fails
+        Parsed date object or None if parsing fails.
+
     """
     if not date_string:
         return None
@@ -129,18 +137,16 @@ def parse_date_string(date_string, format_string="%Y-%m-%d"):
         return None
 
 
-def sanitize_filename(filename):
-    """
-    Sanitize filename for safe file operations
+def sanitize_filename(filename: str) -> str:
+    """Sanitize filename for safe file operations.
 
     Args:
-        filename (str): Original filename
+        filename: Original filename.
 
     Returns:
-        str: Sanitized filename
-    """
-    import re
+        Sanitized filename.
 
+    """
     # Remove or replace unsafe characters
     filename = re.sub(r'[<>:"/\\|?*]', "_", filename)
 
@@ -156,17 +162,17 @@ def sanitize_filename(filename):
     return filename
 
 
-def calculate_pagination(page, per_page, total_count):
-    """
-    Calculate pagination information
+def calculate_pagination(page: int, per_page: int, total_count: int) -> Dict[str, Any]:
+    """Calculate pagination information.
 
     Args:
-        page (int): Current page number (1-based)
-        per_page (int): Items per page
-        total_count (int): Total number of items
+        page: Current page number (1-based).
+        per_page: Items per page.
+        total_count: Total number of items.
 
     Returns:
-        dict: Pagination information
+        Pagination information dictionary.
+
     """
     if page < 1:
         page = 1
@@ -194,16 +200,16 @@ def calculate_pagination(page, per_page, total_count):
     }
 
 
-def build_query_filters(model, filters):
-    """
-    Build SQLAlchemy query filters from dictionary
+def build_query_filters(model: Any, filters: Dict[str, Any]) -> List[Any]:
+    """Build SQLAlchemy query filters from dictionary.
 
     Args:
-        model: SQLAlchemy model class
-        filters (dict): Filter parameters
+        model: SQLAlchemy model class.
+        filters: Filter parameters.
 
     Returns:
-        list: List of filter conditions
+        List of filter conditions.
+
     """
     conditions = []
 
@@ -239,15 +245,15 @@ def build_query_filters(model, filters):
     return conditions
 
 
-def get_enum_values(enum_column):
-    """
-    Get possible values for an enum column
+def get_enum_values(enum_column: Any) -> List[str]:
+    """Get possible values for an enum column.
 
     Args:
-        enum_column: SQLAlchemy enum column
+        enum_column: SQLAlchemy enum column.
 
     Returns:
-        list: List of possible enum values
+        List of possible enum values.
+
     """
     try:
         return [e.name for e in enum_column.type.enums]
@@ -255,20 +261,25 @@ def get_enum_values(enum_column):
         return []
 
 
-def create_response(data=None, message=None, status_code=200, errors=None):
-    """
-    Create standardized API response
+def create_response(
+    data: Optional[Any] = None,
+    message: Optional[str] = None,
+    status_code: int = 200,
+    errors: Optional[Any] = None,
+) -> Tuple[Dict[str, Any], int]:
+    """Create standardized API response.
 
     Args:
-        data: Response data
-        message (str): Response message
-        status_code (int): HTTP status code
-        errors: Error information
+        data: Response data.
+        message: Response message.
+        status_code: HTTP status code.
+        errors: Error information.
 
     Returns:
-        tuple: (response_dict, status_code)
+        Tuple of (response_dict, status_code).
+
     """
-    response = {}
+    response: Dict[str, Any] = {}
 
     if data is not None:
         response["data"] = data
@@ -285,16 +296,16 @@ def create_response(data=None, message=None, status_code=200, errors=None):
     return response, status_code
 
 
-def mask_sensitive_data(data, sensitive_fields=None):
-    """
-    Mask sensitive data in dictionary
+def mask_sensitive_data(data: Dict[str, Any], sensitive_fields: Optional[List[str]] = None) -> Dict[str, Any]:
+    """Mask sensitive data in dictionary.
 
     Args:
-        data (dict): Data dictionary
-        sensitive_fields (list): List of sensitive field names
+        data: Data dictionary.
+        sensitive_fields: List of sensitive field names.
 
     Returns:
-        dict: Data with sensitive fields masked
+        Data with sensitive fields masked.
+
     """
     if sensitive_fields is None:
         sensitive_fields = ["password", "password_hash", "token", "secret"]

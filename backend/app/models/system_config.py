@@ -4,8 +4,7 @@ import json
 
 
 class SystemConfig(db.Model):
-    """
-    System configuration model for storing application settings
+    """System configuration model for storing application settings
 
     Used for:
     - System parameters
@@ -44,13 +43,13 @@ class SystemConfig(db.Model):
     )
 
     def __init__(self, config_key, config_value, config_type="string", **kwargs):
-        """
-        Initialize system config with required fields
+        """Initialize system config with required fields
 
         Args:
             config_key (str): Unique configuration key
             config_value: Configuration value
             config_type (str): Type of the configuration value
+
         """
         self.config_key = config_key
         self.set_value(config_value, config_type)
@@ -61,12 +60,12 @@ class SystemConfig(db.Model):
                 setattr(self, key, value)
 
     def set_value(self, value, config_type=None):
-        """
-        Set configuration value with proper type conversion
+        """Set configuration value with proper type conversion
 
         Args:
             value: Value to set
             config_type (str): Type of the value
+
         """
         if config_type:
             self.config_type = config_type
@@ -81,11 +80,11 @@ class SystemConfig(db.Model):
             self.config_value = str(value)
 
     def get_value(self):
-        """
-        Get configuration value with proper type conversion
+        """Get configuration value with proper type conversion
 
         Returns:
             Properly typed configuration value
+
         """
         if self.config_type == "integer":
             return int(self.config_value)
@@ -100,8 +99,7 @@ class SystemConfig(db.Model):
 
     @staticmethod
     def get_config(key, default=None):
-        """
-        Get configuration value by key
+        """Get configuration value by key
 
         Args:
             key (str): Configuration key
@@ -109,6 +107,7 @@ class SystemConfig(db.Model):
 
         Returns:
             Configuration value or default
+
         """
         config = SystemConfig.query.filter_by(config_key=key).first()
         return config.get_value() if config else default
@@ -122,8 +121,7 @@ class SystemConfig(db.Model):
         category="general",
         is_public=False,
     ):
-        """
-        Set configuration value
+        """Set configuration value
 
         Args:
             key (str): Configuration key
@@ -135,6 +133,7 @@ class SystemConfig(db.Model):
 
         Returns:
             SystemConfig: Configuration object
+
         """
         config = SystemConfig.query.filter_by(config_key=key).first()
 
@@ -162,8 +161,7 @@ class SystemConfig(db.Model):
 
     @staticmethod
     def get_configs_by_category(category, public_only=False):
-        """
-        Get all configurations in a category
+        """Get all configurations in a category
 
         Args:
             category (str): Configuration category
@@ -171,6 +169,7 @@ class SystemConfig(db.Model):
 
         Returns:
             dict: Dictionary of configuration key-value pairs
+
         """
         query = SystemConfig.query.filter_by(category=category)
 
@@ -338,14 +337,14 @@ class SystemConfig(db.Model):
                 )
 
     def to_dict(self, include_value=True):
-        """
-        Convert configuration to dictionary
+        """Convert configuration to dictionary
 
         Args:
             include_value (bool): Whether to include the configuration value
 
         Returns:
             dict: Configuration data dictionary
+
         """
         data = {
             "id": self.id,

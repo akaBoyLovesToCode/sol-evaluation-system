@@ -1,5 +1,4 @@
-"""
-Utility functions package for Product Evaluation System
+"""Utility functions package for Product Evaluation System
 """
 
 # Import commonly used utilities for easy access

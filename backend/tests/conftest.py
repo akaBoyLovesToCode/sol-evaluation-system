@@ -1,5 +1,4 @@
-"""
-Pytest configuration file for the backend tests.
+"""Pytest configuration file for the backend tests.
 """
 
 import os

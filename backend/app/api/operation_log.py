@@ -17,8 +17,7 @@ operation_log_bp = Blueprint("operation_log", __name__)
 @jwt_required()
 @handle_exceptions
 def get_evaluation_logs(evaluation_id):
-    """
-    Get operation logs for a specific evaluation
+    """Get operation logs for a specific evaluation
 
     Query parameters:
     - page: Page number (default: 1)
@@ -99,8 +98,7 @@ def get_evaluation_logs(evaluation_id):
 @validate_json(required_fields=["operation_description"])
 @handle_exceptions
 def update_evaluation_log(evaluation_id, log_id):
-    """
-    Update operation log (admin only)
+    """Update operation log (admin only)
 
     Request body:
     - operation_description: Updated description
@@ -160,8 +158,7 @@ def update_evaluation_log(evaluation_id, log_id):
 @require_role("admin")
 @handle_exceptions
 def get_all_logs():
-    """
-    Get all operation logs (admin only)
+    """Get all operation logs (admin only)
 
     Query parameters:
     - page: Page number (default: 1)

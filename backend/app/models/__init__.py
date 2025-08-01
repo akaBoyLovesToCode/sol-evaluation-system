@@ -1,5 +1,4 @@
-"""
-Database models package for Product Evaluation System
+"""Database models package for Product Evaluation System
 """
 
 from app import db

@@ -1,6 +1,6 @@
-"""
-API package for Product Evaluation System
-Contains all REST API endpoints organized by functionality
+"""API package for Product Evaluation System.
+
+Contains all REST API endpoints organized by functionality.
 """
 
 from .auth import auth_bp

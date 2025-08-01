@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Development Guidelines
+
+- **Python CLI Usage**: Do NOT use "python" cli directly but always use uv.
+
 ## Development Commands
 
 ### Frontend (Vue 3 + Vite)

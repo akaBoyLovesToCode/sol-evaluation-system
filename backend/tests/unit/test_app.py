@@ -1,5 +1,4 @@
-"""
-Basic tests for the Flask application.
+"""Basic tests for the Flask application.
 """
 
 import pytest

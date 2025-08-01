@@ -1,5 +1,4 @@
-"""
-Unit tests for the Evaluation model.
+"""Unit tests for the Evaluation model.
 """
 
 import pytest

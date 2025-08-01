@@ -1,5 +1,4 @@
-"""
-Workflow Service for Product Evaluation System
+"""Workflow Service for Product Evaluation System
 
 This service handles the evaluation workflow engine, approval processes,
 and status management as specified in Phase 2 requirements.
@@ -19,8 +18,7 @@ from app.models.user import User, UserRole
 
 
 class WorkflowService:
-    """
-    Service class for managing evaluation workflows and approval processes
+    """Service class for managing evaluation workflows and approval processes
 
     Handles:
     - Evaluation status transitions
@@ -114,8 +112,7 @@ class WorkflowService:
     def can_transition(
         evaluation: Evaluation, new_status: EvaluationStatus, user: User
     ) -> Tuple[bool, str]:
-        """
-        Check if an evaluation can transition to a new status
+        """Check if an evaluation can transition to a new status
 
         Args:
             evaluation: The evaluation to check
@@ -124,6 +121,7 @@ class WorkflowService:
 
         Returns:
             Tuple of (can_transition: bool, reason: str)
+
         """
         # Convert string status to enum for comparison
         try:
@@ -166,8 +164,7 @@ class WorkflowService:
         user_id: int,
         comment: Optional[str] = None,
     ) -> Tuple[bool, str]:
-        """
-        Transition an evaluation to a new status
+        """Transition an evaluation to a new status
 
         Args:
             evaluation_id: ID of the evaluation
@@ -177,6 +174,7 @@ class WorkflowService:
 
         Returns:
             Tuple of (success: bool, message: str)
+
         """
         try:
             evaluation = Evaluation.query.get(evaluation_id)
@@ -232,14 +230,14 @@ class WorkflowService:
     def _send_status_change_notifications(
         evaluation: Evaluation, old_status: str, new_status: str, actor: User
     ):
-        """
-        Send notifications for status changes
+        """Send notifications for status changes
 
         Args:
             evaluation: The evaluation that changed
             old_status: Previous status
             new_status: New status
             actor: User who made the change
+
         """
         try:
             # Determine who should be notified
@@ -306,14 +304,14 @@ class WorkflowService:
 
     @staticmethod
     def get_pending_approvals(user_id: int) -> List[Dict]:
-        """
-        Get evaluations pending approval for a specific user
+        """Get evaluations pending approval for a specific user
 
         Args:
             user_id: ID of the user
 
         Returns:
             List of evaluations pending approval
+
         """
         try:
             user = User.query.get(user_id)
@@ -364,11 +362,11 @@ class WorkflowService:
 
     @staticmethod
     def get_workflow_statistics() -> Dict:
-        """
-        Get workflow statistics for dashboard
+        """Get workflow statistics for dashboard
 
         Returns:
             Dictionary with workflow statistics
+
         """
         try:
             stats = {}
@@ -415,8 +413,7 @@ class WorkflowService:
 
     @staticmethod
     def auto_assign_evaluations():
-        """
-        Automatically assign evaluations based on workload and availability
+        """Automatically assign evaluations based on workload and availability
         This method can be called by a scheduled task
         """
         try:

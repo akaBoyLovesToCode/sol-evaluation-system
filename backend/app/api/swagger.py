@@ -1,5 +1,4 @@
-"""
-Swagger API documentation configuration.
+"""Swagger API documentation configuration.
 """
 
 from flask import Blueprint, jsonify
@@ -41,11 +40,11 @@ def swagger_json():
 
 # Function to register all API routes with Swagger
 def register_api_routes(app):
-    """
-    Register all API routes with Swagger.
+    """Register all API routes with Swagger.
 
     Args:
         app: Flask application instance
+
     """
     # Import API modules to ensure they are registered with Swagger
     from app.api import evaluation, auth, user, operation_log

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Product Evaluation System - Flask Application Entry Point
+"""Product Evaluation System - Flask Application Entry Point
 
 This script starts the Flask development server.
 For production deployment, use a WSGI server like Gunicorn.
