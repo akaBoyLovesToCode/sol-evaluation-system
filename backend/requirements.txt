@@ -28,6 +28,8 @@ coverage==7.9.2
     # via pytest-cov
 cryptography==45.0.3
     # via backend
+deprecated==1.2.18
+    # via backend
 flask==3.1.1
     # via
     #   backend
@@ -58,6 +60,8 @@ gunicorn==23.0.0
     # via backend
 h11==0.16.0
     # via wsproto
+importlib-metadata==8.7.0
+    # via opentelemetry-api
 iniconfig==2.1.0
     # via pytest
 itsdangerous==2.2.0
@@ -74,10 +78,51 @@ markupsafe==3.0.2
     #   werkzeug
 marshmallow==4.0.0
     # via backend
+opentelemetry-api==1.36.0
+    # via
+    #   backend
+    #   opentelemetry-exporter-jaeger-thrift
+    #   opentelemetry-instrumentation
+    #   opentelemetry-instrumentation-flask
+    #   opentelemetry-instrumentation-sqlalchemy
+    #   opentelemetry-instrumentation-wsgi
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+opentelemetry-exporter-jaeger-thrift==1.21.0
+    # via backend
+opentelemetry-instrumentation==0.57b0
+    # via
+    #   opentelemetry-instrumentation-flask
+    #   opentelemetry-instrumentation-sqlalchemy
+    #   opentelemetry-instrumentation-wsgi
+opentelemetry-instrumentation-flask==0.57b0
+    # via backend
+opentelemetry-instrumentation-sqlalchemy==0.57b0
+    # via backend
+opentelemetry-instrumentation-wsgi==0.57b0
+    # via opentelemetry-instrumentation-flask
+opentelemetry-sdk==1.36.0
+    # via
+    #   backend
+    #   opentelemetry-exporter-jaeger-thrift
+opentelemetry-semantic-conventions==0.57b0
+    # via
+    #   opentelemetry-instrumentation
+    #   opentelemetry-instrumentation-flask
+    #   opentelemetry-instrumentation-sqlalchemy
+    #   opentelemetry-instrumentation-wsgi
+    #   opentelemetry-sdk
+opentelemetry-util-http==0.57b0
+    # via
+    #   opentelemetry-instrumentation-flask
+    #   opentelemetry-instrumentation-wsgi
 packaging==25.0
     # via
     #   apispec
     #   gunicorn
+    #   opentelemetry-instrumentation
+    #   opentelemetry-instrumentation-flask
+    #   opentelemetry-instrumentation-sqlalchemy
     #   pytest
 pluggy==1.6.0
     # via
@@ -121,9 +166,14 @@ sqlalchemy==2.0.41
     # via
     #   alembic
     #   flask-sqlalchemy
+thrift==0.22.0
+    # via opentelemetry-exporter-jaeger-thrift
 typing-extensions==4.14.0
     # via
     #   alembic
+    #   opentelemetry-api
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
     #   sqlalchemy
 tzdata==2025.2 ; sys_platform == 'win32'
     # via tzlocal
@@ -136,5 +186,12 @@ werkzeug==3.1.3
     #   flask-cors
     #   flask-jwt-extended
     #   pytest-flask
+wrapt==1.17.2
+    # via
+    #   deprecated
+    #   opentelemetry-instrumentation
+    #   opentelemetry-instrumentation-sqlalchemy
 wsproto==1.2.0
     # via simple-websocket
+zipp==3.23.0
+    # via importlib-metadata
