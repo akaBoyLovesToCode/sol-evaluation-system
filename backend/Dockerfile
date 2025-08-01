@@ -21,4 +21,4 @@ ENV FLASK_ENV=production
 EXPOSE 5001
 
 # Run with gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "--workers", "2", "run:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5001", "--workers", "2", "run:app"]
