@@ -7,20 +7,45 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def get_database_uri() -> str:
+    """Get database URI based on available environment variables.
+    
+    Checks for Railway PostgreSQL DATABASE_URL first, then falls back to
+    MySQL configuration for local development.
+    
+    Returns:
+        str: Database URI for SQLAlchemy connection.
+        
+    Note:
+        Railway provides postgres:// URLs but SQLAlchemy requires postgresql://.
+        This function handles the conversion automatically.
+    """
+    # Check for Railway PostgreSQL DATABASE_URL first
+    database_url = os.environ.get("DATABASE_URL")
+    if database_url:
+        # Railway provides postgres:// but SQLAlchemy needs postgresql://
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+        return database_url
+    
+    # Fall back to MySQL configuration for development
+    mysql_host = os.environ.get("MYSQL_HOST") or "localhost"
+    mysql_port = os.environ.get("MYSQL_PORT") or 3306
+    mysql_user = os.environ.get("MYSQL_USER") or "root"
+    mysql_password = os.environ.get("MYSQL_PASSWORD") or "eval_root_2024"
+    mysql_database = os.environ.get("MYSQL_DATABASE") or "evaluation"
+    
+    return f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_database}?charset=utf8mb4"
+
+
 class Config:
     """Base configuration class"""
 
     # Basic Flask configuration
     SECRET_KEY = os.environ.get("SECRET_KEY") or "evaluation-secret-key-2024"
 
-    # Database configuration
-    MYSQL_HOST = os.environ.get("MYSQL_HOST") or "localhost"
-    MYSQL_PORT = os.environ.get("MYSQL_PORT") or 3306
-    MYSQL_USER = os.environ.get("MYSQL_USER") or "root"
-    MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD") or "eval_root_2024"
-    MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE") or "evaluation"
-
-    SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}?charset=utf8mb4"
+    # Database configuration - supports both MySQL and PostgreSQL
+    SQLALCHEMY_DATABASE_URI = get_database_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_pre_ping": True,
