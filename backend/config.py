@@ -41,18 +41,20 @@ def get_database_uri() -> str:
 
 def get_cors_origins() -> list[str]:
     """Get CORS origins from environment variable or use defaults."""
+    import logging
+
     cors_origins_env = os.environ.get("CORS_ORIGINS")
-    print(f"DEBUG: Raw CORS_ORIGINS = {cors_origins_env}")  # Debug logging
+    logging.info(f"Raw CORS_ORIGINS environment variable: {cors_origins_env}")
 
     if cors_origins_env:
         # Split by comma and strip whitespace
         origins = [origin.strip() for origin in cors_origins_env.split(",")]
-        print(f"DEBUG: Parsed CORS origins = {origins}")  # Debug logging
+        logging.info(f"Parsed CORS origins: {origins}")
         return origins
 
     # Default origins for development
     default_origins = ["http://localhost:3000", "http://localhost:5173"]
-    print(f"DEBUG: Using default CORS origins = {default_origins}")  # Debug logging
+    logging.info(f"Using default CORS origins: {default_origins}")
     return default_origins
 
 

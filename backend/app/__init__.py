@@ -74,7 +74,7 @@ def create_app(config_name: str | None = None) -> Flask:
 
     # Debug CORS configuration
     cors_origins = app.config["CORS_ORIGINS"]
-    print(f"DEBUG: Flask app CORS_ORIGINS = {cors_origins}")
+    app.logger.info(f"Flask app CORS_ORIGINS configuration: {cors_origins}")
 
     # Initialize CORS with comprehensive settings
     cors.init_app(
