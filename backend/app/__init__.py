@@ -156,4 +156,18 @@ def create_app(config_name: str | None = None) -> Flask:
         """Health check endpoint for monitoring."""
         return {"status": "healthy", "message": "Product Evaluation System is running"}
 
+    # Debug CORS endpoint
+    @app.route("/api/debug/cors")
+    def debug_cors() -> dict[str, any]:
+        """Debug endpoint to check CORS configuration."""
+        return {
+            "cors_origins": app.config.get("CORS_ORIGINS", []),
+            "cors_origins_env": os.environ.get("CORS_ORIGINS", "NOT_SET"),
+            "all_env_vars": {
+                k: v
+                for k, v in os.environ.items()
+                if "CORS" in k or "FRONTEND" in k or "RAILWAY" in k
+            },
+        }
+
     return app

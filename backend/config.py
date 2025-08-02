@@ -52,6 +52,14 @@ def get_cors_origins() -> list[str]:
         logging.info(f"Parsed CORS origins: {origins}")
         return origins
 
+    # Fallback: check for Railway frontend domain environment variable
+    frontend_domain_env = os.environ.get("VITE_API_BASE_URL")
+    if frontend_domain_env and "railway.app" in frontend_domain_env:
+        # Extract the base domain and create frontend URL
+        frontend_url = "https://frontend-production-d9f6.up.railway.app"
+        logging.info(f"Using Railway fallback CORS origin: {frontend_url}")
+        return ["http://localhost:3000", "http://localhost:5173", frontend_url]
+
     # Default origins for development
     default_origins = ["http://localhost:3000", "http://localhost:5173"]
     logging.info(f"Using default CORS origins: {default_origins}")
