@@ -17,8 +17,6 @@ const getApiBaseUrl = () => {
   return '/api';
 };
 
-console.log('API Base URL:', getApiBaseUrl());
-
 const api = axios.create({
   baseURL: getApiBaseUrl(),
   timeout: 10000,
