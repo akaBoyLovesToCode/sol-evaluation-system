@@ -43,26 +43,41 @@ def get_cors_origins() -> list[str]:
     """Get CORS origins from environment variable or use defaults."""
     import logging
 
+    logger = logging.getLogger(__name__)
+
     cors_origins_env = os.environ.get("CORS_ORIGINS")
-    logging.info(f"Raw CORS_ORIGINS environment variable: {cors_origins_env}")
+    logger.info(f"Raw CORS_ORIGINS environment variable: {cors_origins_env}")
 
     if cors_origins_env:
         # Split by comma and strip whitespace
         origins = [origin.strip() for origin in cors_origins_env.split(",")]
-        logging.info(f"Parsed CORS origins: {origins}")
-        return origins
+
+        # Fix Railway domains by adding https:// if missing
+        fixed_origins = []
+        for origin in origins:
+            if origin and not origin.startswith(("http://", "https://")):
+                # Railway domains need https:// prefix
+                if "railway.app" in origin:
+                    origin = f"https://{origin}"
+                else:
+                    # Local development might need http://
+                    origin = f"http://{origin}"
+            fixed_origins.append(origin)
+
+        logger.info(f"Fixed CORS origins: {fixed_origins}")
+        return fixed_origins
 
     # Fallback: check for Railway frontend domain environment variable
     frontend_domain_env = os.environ.get("VITE_API_BASE_URL")
     if frontend_domain_env and "railway.app" in frontend_domain_env:
         # Extract the base domain and create frontend URL
         frontend_url = "https://frontend-production-d9f6.up.railway.app"
-        logging.info(f"Using Railway fallback CORS origin: {frontend_url}")
+        logger.info(f"Using Railway fallback CORS origin: {frontend_url}")
         return ["http://localhost:3000", "http://localhost:5173", frontend_url]
 
     # Default origins for development
     default_origins = ["http://localhost:3000", "http://localhost:5173"]
-    logging.info(f"Using default CORS origins: {default_origins}")
+    logger.info(f"Using default CORS origins: {default_origins}")
     return default_origins
 
 
