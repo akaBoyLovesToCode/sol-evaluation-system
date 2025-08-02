@@ -170,4 +170,38 @@ def create_app(config_name: str | None = None) -> Flask:
             },
         }
 
+    # Auto-initialize database if empty
+    with app.app_context():
+        try:
+            # Check if database is initialized by looking for users table
+            from app.models.user import User
+
+            User.query.first()
+            app.logger.info("Database already initialized")
+        except Exception:
+            # Database is empty, create tables and default data
+            app.logger.info("Database is empty, initializing...")
+            db.create_all()
+
+            # Create default admin user
+            from app.models.user import User
+            from werkzeug.security import generate_password_hash
+            from datetime import datetime
+
+            admin_user = User(
+                username="admin",
+                email="admin@evaluation.system",
+                password_hash=generate_password_hash("admin123"),
+                full_name="System Administrator",
+                role="admin",
+                is_active=True,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+            )
+            db.session.add(admin_user)
+            db.session.commit()
+            app.logger.info(
+                "Database initialized with default admin user (admin/admin123)"
+            )
+
     return app
