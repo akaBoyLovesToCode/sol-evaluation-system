@@ -1,10 +1,26 @@
 import axios from "axios";
 import { ElMessage } from "element-plus";
 
-console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+// Determine API base URL
+const getApiBaseUrl = () => {
+  // Try build-time environment variable first
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  
+  // Fallback: construct from current location for production
+  if (window.location.hostname.includes('railway.app')) {
+    return 'https://sol-evaluation-system.up.railway.app/api';
+  }
+  
+  // Default for local development
+  return '/api';
+};
+
+console.log('API Base URL:', getApiBaseUrl());
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
+  baseURL: getApiBaseUrl(),
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -56,7 +72,7 @@ api.interceptors.response.use(
 
             try {
               const refreshResponse = await axios.post(
-                `${import.meta.env.VITE_API_BASE_URL || "/api"}/auth/refresh`,
+                `${getApiBaseUrl()}/auth/refresh`,
                 {},
                 {
                   headers: {
