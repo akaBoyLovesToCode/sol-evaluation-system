@@ -5,22 +5,22 @@ from __future__ import annotations
 import logging
 import os
 from logging.handlers import RotatingFileHandler
-from typing import Optional, Tuple, Any
+from typing import Any
 
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from flask_jwt_extended import JWTManager
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+from flask_migrate import Migrate
 from flask_socketio import SocketIO
+from flask_sqlalchemy import SQLAlchemy
 
 # OpenTelemetry imports
 from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -35,19 +35,19 @@ def init_tracing() -> None:
     # Set up tracer provider
     trace.set_tracer_provider(TracerProvider())
     tracer = trace.get_tracer_provider()
-    
+
     # Configure Jaeger exporter
     jaeger_exporter = JaegerExporter(
         agent_host_name=os.getenv("JAEGER_HOST", "localhost"),
         agent_port=int(os.getenv("JAEGER_PORT", "6831")),
     )
-    
+
     # Add batch span processor
     span_processor = BatchSpanProcessor(jaeger_exporter)
     tracer.add_span_processor(span_processor)
 
 
-def create_app(config_name: Optional[str] = None) -> Flask:
+def create_app(config_name: str | None = None) -> Flask:
     """Application factory pattern for creating Flask app.
 
     Args:
@@ -71,8 +71,20 @@ def create_app(config_name: Optional[str] = None) -> Flask:
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    cors.init_app(app, origins=app.config["CORS_ORIGINS"])
-    socketio.init_app(app, cors_allowed_origins=app.config["CORS_ORIGINS"])
+
+    # Debug CORS configuration
+    cors_origins = app.config["CORS_ORIGINS"]
+    print(f"DEBUG: Flask app CORS_ORIGINS = {cors_origins}")
+
+    # Initialize CORS with comprehensive settings
+    cors.init_app(
+        app,
+        origins=cors_origins,
+        supports_credentials=True,
+        allow_headers=["Content-Type", "Authorization"],
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    )
+    socketio.init_app(app, cors_allowed_origins=cors_origins)
 
     # Initialize OpenTelemetry tracing
     if os.getenv("ENABLE_TRACING", "false").lower() == "true":
@@ -81,10 +93,10 @@ def create_app(config_name: Optional[str] = None) -> Flask:
         SQLAlchemyInstrumentor().instrument(engine=db.engine)
 
     # Register blueprints
-    from app.api import auth_bp, evaluation_bp, user_bp, dashboard_bp, operation_log_bp
-    from app.api.workflow import workflow_bp
+    from app.api import auth_bp, dashboard_bp, evaluation_bp, operation_log_bp, user_bp
     from app.api.notifications import notifications_bp
     from app.api.swagger import register_api_routes
+    from app.api.workflow import workflow_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(evaluation_bp, url_prefix="/api/evaluations")
@@ -128,12 +140,12 @@ def create_app(config_name: Optional[str] = None) -> Flask:
 
     # Register error handlers
     @app.errorhandler(404)
-    def not_found_error(error: Any) -> Tuple[dict[str, str], int]:
+    def not_found_error(error: Any) -> tuple[dict[str, str], int]:
         """Handle 404 not found errors."""
         return {"error": "Resource not found"}, 404
 
     @app.errorhandler(500)
-    def internal_error(error: Any) -> Tuple[dict[str, str], int]:
+    def internal_error(error: Any) -> tuple[dict[str, str], int]:
         """Handle 500 internal server errors."""
         db.session.rollback()
         return {"error": "Internal server error"}, 500
