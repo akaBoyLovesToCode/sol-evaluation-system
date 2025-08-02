@@ -9,33 +9,45 @@ load_dotenv()
 
 def get_database_uri() -> str:
     """Get database URI based on available environment variables.
-    
+
     Checks for Railway PostgreSQL DATABASE_URL first, then falls back to
     MySQL configuration for local development.
-    
+
     Returns:
         str: Database URI for SQLAlchemy connection.
-        
+
     Note:
         Railway provides postgres:// URLs but SQLAlchemy requires postgresql://.
         This function handles the conversion automatically.
     """
     # Check for Railway PostgreSQL DATABASE_URL first
     database_url = os.environ.get("DATABASE_URL")
+
     if database_url:
         # Railway provides postgres:// but SQLAlchemy needs postgresql://
         if database_url.startswith("postgres://"):
             database_url = database_url.replace("postgres://", "postgresql://", 1)
         return database_url
-    
+
     # Fall back to MySQL configuration for development
     mysql_host = os.environ.get("MYSQL_HOST") or "localhost"
     mysql_port = os.environ.get("MYSQL_PORT") or 3306
     mysql_user = os.environ.get("MYSQL_USER") or "root"
     mysql_password = os.environ.get("MYSQL_PASSWORD") or "eval_root_2024"
     mysql_database = os.environ.get("MYSQL_DATABASE") or "evaluation"
-    
+
     return f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_database}?charset=utf8mb4"
+
+
+def get_cors_origins() -> list[str]:
+    """Get CORS origins from environment variable or use defaults."""
+    cors_origins_env = os.environ.get("CORS_ORIGINS")
+    if cors_origins_env:
+        # Split by comma and strip whitespace
+        return [origin.strip() for origin in cors_origins_env.split(",")]
+
+    # Default origins for development
+    return ["http://localhost:3000", "http://localhost:5173"]
 
 
 class Config:
@@ -62,11 +74,7 @@ class Config:
     JWT_ALGORITHM = "HS256"  # Explicitly set the algorithm
 
     # CORS configuration
-    CORS_ORIGINS = [
-        "http://localhost:3000", 
-        "http://localhost:5173",
-        "https://frontend-production-d9f6.up.railway.app"
-    ]
+    CORS_ORIGINS = get_cors_origins()
 
     # File upload configuration
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
