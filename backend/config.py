@@ -37,7 +37,11 @@ class Config:
     JWT_ALGORITHM = "HS256"  # Explicitly set the algorithm
 
     # CORS configuration
-    CORS_ORIGINS = ["http://localhost:3000", "http://localhost:5173"]
+    CORS_ORIGINS = [
+        "http://localhost:3000", 
+        "http://localhost:5173",
+        "https://frontend-production-d9f6.up.railway.app"
+    ]
 
     # File upload configuration
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
