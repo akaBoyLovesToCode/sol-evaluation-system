@@ -178,30 +178,50 @@ def create_app(config_name: str | None = None) -> Flask:
 
             User.query.first()
             app.logger.info("Database already initialized")
-        except Exception:
-            # Database is empty, create tables and default data
-            app.logger.info("Database is empty, initializing...")
-            db.create_all()
-
-            # Create default admin user
-            from app.models.user import User
-            from werkzeug.security import generate_password_hash
-            from datetime import datetime
-
-            admin_user = User(
-                username="admin",
-                email="admin@evaluation.system",
-                password_hash=generate_password_hash("admin123"),
-                full_name="System Administrator",
-                role="admin",
-                is_active=True,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
-            )
-            db.session.add(admin_user)
-            db.session.commit()
+        except Exception as e:
             app.logger.info(
-                "Database initialized with default admin user (admin/admin123)"
+                f"Database check failed: {str(e)}, attempting initialization..."
             )
+            try:
+                # Database is empty, create tables and default data
+                app.logger.info("Creating database tables...")
+                db.create_all()
+
+                # Create default admin user if it doesn't exist
+                from datetime import datetime
+
+                from werkzeug.security import generate_password_hash
+
+                from app.models.user import User
+
+                try:
+                    admin_user = User.query.filter_by(username="admin").first()
+                    if not admin_user:
+                        admin_user = User(
+                            username="admin",
+                            email="admin@evaluation.system",
+                            password_hash=generate_password_hash("admin123"),
+                            full_name="System Administrator",
+                            role="admin",
+                            is_active=True,
+                            created_at=datetime.utcnow(),
+                            updated_at=datetime.utcnow(),
+                        )
+                        db.session.add(admin_user)
+                        db.session.commit()
+                        app.logger.info(
+                            "Database initialized with default admin user (admin/admin123)"
+                        )
+                    else:
+                        app.logger.info("Admin user already exists")
+                except Exception as user_error:
+                    app.logger.info(
+                        f"Admin user creation handled by another worker: {str(user_error)}"
+                    )
+
+            except Exception as init_error:
+                app.logger.info(
+                    f"Database initialization handled by another worker: {str(init_error)}"
+                )
 
     return app
