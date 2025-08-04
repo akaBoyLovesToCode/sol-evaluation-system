@@ -25,7 +25,6 @@ def create_test_evaluation(session, user_id, **kwargs):
         "product_name": "Test Product",
         "part_number": "TP-001",
         "evaluation_reason": "Testing",
-        "description": "Test evaluation description",
         "status": EvaluationStatus.DRAFT.value,
         "start_date": datetime.now().date(),
         "expected_end_date": (datetime.now() + timedelta(days=30)).date(),

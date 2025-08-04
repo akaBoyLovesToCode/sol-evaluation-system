@@ -52,18 +52,19 @@ def session(db):
     connection = db.engine.connect()
     transaction = connection.begin()
 
-    # Create a session bound to the connection
-    session = db.create_scoped_session(options=dict(bind=connection, binds={}))
+    # Configure the existing session to use our connection
+    original_bind = db.session.bind
+    db.session.configure(bind=connection)
 
-    # Set the session for the db
-    db.session = session
+    yield db.session
 
-    yield session
-
-    # Rollback the transaction
+    # Rollback and cleanup
+    db.session.rollback()
     transaction.rollback()
     connection.close()
-    session.remove()
+    
+    # Restore the original bind
+    db.session.configure(bind=original_bind)
 
 
 @pytest.fixture(scope="function")
@@ -78,10 +79,10 @@ def admin_user(session):
     user = User(
         username="admin",
         email="admin@example.com",
+        password="Password123",
         full_name="Admin User",
         role=UserRole.ADMIN.value,
     )
-    user.set_password("Password123")
     session.add(user)
     session.commit()
     return user
@@ -93,10 +94,10 @@ def regular_user(session):
     user = User(
         username="user",
         email="user@example.com",
+        password="Password123",
         full_name="Regular User",
         role=UserRole.USER.value,
     )
-    user.set_password("Password123")
     session.add(user)
     session.commit()
     return user
@@ -105,13 +106,13 @@ def regular_user(session):
 @pytest.fixture(scope="function")
 def admin_token(admin_user):
     """Create a JWT token for the admin user."""
-    return create_access_token(identity=admin_user.id)
+    return create_access_token(identity=str(admin_user.id))
 
 
 @pytest.fixture(scope="function")
 def user_token(regular_user):
     """Create a JWT token for the regular user."""
-    return create_access_token(identity=regular_user.id)
+    return create_access_token(identity=str(regular_user.id))
 
 
 @pytest.fixture(scope="function")
