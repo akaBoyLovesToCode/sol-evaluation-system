@@ -1,5 +1,19 @@
 // Import any global setup for tests
 import '@testing-library/jest-dom';
+import { config } from '@vue/test-utils';
+import { createApp } from 'vue';
+
+// Configure Vue Test Utils
+global.Vue = createApp;
+
+// Mock i18n
+config.global.mocks = {
+  $t: (key) => key,
+  $tc: (key, count) => key,
+  $te: () => true,
+  $d: (date) => date,
+  $n: (number) => number,
+};
 
 // Mock global objects that might be needed in tests
 global.ResizeObserver = jest.fn().mockImplementation(() => ({

@@ -1,5 +1,4 @@
 import { mount } from '@vue/test-utils';
-import { describe, it, expect } from 'jest';
 
 // A simple Vue component for testing
 const SimpleComponent = {
