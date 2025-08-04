@@ -145,9 +145,10 @@ evaluation-system/
 ## Quick Start
 
 ### Prerequisites
-- Node.js 16+ and npm 8+
-- Python 3.8+
+- Node.js 22+ and npm 10+
+- Python 3.13+
 - MySQL 8.0+
+- uv (Python package manager)
 - Docker (optional, for containerized deployment)
 
 ### Option 1: Manual Setup
@@ -163,12 +164,8 @@ npm run dev
 #### Backend Setup
 ```bash
 cd backend
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies (uv manages virtual environment automatically)
+uv pip sync requirements.txt
 
 # Configure environment (create .env file)
 cp .env.example .env

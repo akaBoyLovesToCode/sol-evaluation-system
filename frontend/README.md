@@ -81,8 +81,8 @@
 
 ## 开发环境要求
 
-- Node.js >= 16.0.0
-- npm >= 8.0.0
+- Node.js >= 22.0.0
+- npm >= 10.0.0
 
 ## 安装和运行
 
@@ -186,6 +186,34 @@ npm run lint
 # 格式化代码
 npm run format
 ```
+
+### 测试
+
+项目配置了Jest测试框架，支持Vue 3组件测试：
+
+```bash
+# 运行测试
+npm test
+
+# 监听模式运行测试
+npm run test:watch  
+
+# 运行测试并生成覆盖率报告
+npm run test:coverage
+```
+
+**测试配置特性：**
+- **Vue 3兼容性** - 使用vue-jest和babel-jest实现Vue 3组件测试
+- **模块解析** - 支持@/路径别名和ES6模块
+- **测试环境** - 配置jsdom环境模拟浏览器API
+- **国际化模拟** - 内置i18n函数mock支持
+- **全局mock** - ResizeObserver等浏览器API的mock支持
+
+测试文件位于 `tests/` 目录下，包含：
+- `tests/setup.js` - 测试环境配置和全局mock
+- `tests/unit/` - 单元测试文件
+- `jest.config.js` - Jest配置文件（Vue 3优化）
+- `babel.config.js` - Babel配置支持ES6模块
 
 ### 国际化
 

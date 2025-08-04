@@ -68,9 +68,9 @@ A Flask + SQLAlchemy + MySQL based backend API service for the evaluation manage
 
 ## Requirements
 
-- Python >= 3.8
+- Python >= 3.13
 - MySQL >= 8.0
-- pip or virtual environment
+- uv (Python package manager)
 
 ## Installation
 
@@ -81,22 +81,14 @@ git clone <repository-url>
 cd evaluation/backend
 ```
 
-### 2. Create virtual environment
+### 2. Install dependencies
 
 ```bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# OR
-venv\Scripts\activate     # Windows
+# uv manages virtual environment automatically
+uv pip sync requirements.txt
 ```
 
-### 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Configure environment
+### 3. Configure environment
 
 Create a `.env` file:
 
@@ -116,7 +108,7 @@ MYSQL_DATABASE=evaluation
 FLASK_ENV=development
 ```
 
-### 5. Database setup
+### 4. Database setup
 
 ```bash
 # Initialize database
@@ -129,7 +121,7 @@ flask db migrate -m "Initial migration"
 flask db upgrade
 ```
 
-### 6. Run the application
+### 5. Run the application
 
 ```bash
 # Development server
@@ -186,13 +178,13 @@ backend/
    tests/               # Test suite
       conftest.py       # Test configuration and fixtures
       helpers.py        # Test helper functions
-      integration/      # Integration tests
-         test_evaluation_api.py # Evaluation API tests
       unit/             # Unit tests
          test_app.py    # Application tests
          test_evaluation_model.py # Evaluation model tests
          test_operation_log.py # Operation log tests
          test_user_model.py # User model tests
+      README.md         # Test suite documentation
+      bug_fixing_process.md # Test maintenance guide
 ```
 
 ## API Documentation
@@ -443,38 +435,63 @@ docker-compose down
 
 ## Testing
 
+### Current Test Status
+
+The backend includes a focused test suite covering core functionality:
+
+- **8 passing tests** covering essential features
+- **Unit tests** for models, services, and business logic
+- **Database testing** with SQLite in-memory database
+- **Authentication testing** with JWT tokens
+
+### Running Tests
+
 ```bash
 # Run all tests
-python -m pytest
+PYTHONPATH=. uv run pytest
+
+# Run with verbose output
+PYTHONPATH=. uv run pytest -v
+
+# Run specific test files
+PYTHONPATH=. uv run pytest tests/unit/test_user_model.py
 
 # Run with coverage
-python -m pytest --cov=app
-
-# Run specific test file
-python -m pytest tests/test_auth.py
+PYTHONPATH=. uv run pytest --cov=app
 ```
 
 ### Test Structure
 
-The project uses pytest for testing with the following structure:
-
 - `tests/conftest.py`: Test fixtures and configuration
 - `tests/helpers.py`: Helper functions for tests
 - `tests/unit/`: Unit tests for individual components
-  - `test_user_model.py`: Tests for User model functionality
-  - `test_evaluation_model.py`: Tests for Evaluation model
-  - `test_operation_log.py`: Tests for operation logging
-- `tests/integration/`: Integration tests for API endpoints
-  - `test_evaluation_api.py`: Tests for evaluation API endpoints
+  - `test_user_model.py`: User model functionality and validation
+  - `test_evaluation_model.py`: Evaluation model and relationships
+  - `test_operation_log.py`: Operation logging functionality
+  - `test_app.py`: Flask application setup
 
-### User Model Tests
+### Test Coverage
 
-The User model tests (`test_user_model.py`) verify:
-- User creation and password hashing
-- Role validation and permissions
-- Profile fields (department, position)
-- Data serialization with to_dict method
-- Password verification functionality
+**User Model Tests** verify:
+- User creation with password hashing
+- Role validation and permissions  
+- Profile field management
+- Data serialization methods
+
+**Evaluation Model Tests** verify:
+- Evaluation creation with required fields
+- Status and type validation
+- Model relationships and data integrity
+- Serialization methods
+
+**Operation Log Tests** verify:
+- Operation logging functionality
+- Data storage and retrieval
+- JSON data handling
+
+### Documentation
+
+See `tests/README.md` for comprehensive test suite documentation and `tests/bug_fixing_process.md` for maintenance guidelines.
 
 ## Monitoring
 
