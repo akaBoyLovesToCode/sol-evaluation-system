@@ -51,7 +51,9 @@ jobs:
         cache-dependency-path: backend/requirements.txt
         
     - name: Install dependencies
-      run: pip install --no-cache-dir -r requirements.txt
+      run: |
+        pip install --no-cache-dir -r requirements.txt
+        pip install ruff
         
     - name: Run linter
       run: ruff check .

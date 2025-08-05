@@ -4,7 +4,7 @@ export default {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   transform: {
-    '^.+\\.vue$': 'vue-jest',
+    '^.+\\.vue$': '@vue/vue3-jest',
     '^.+\\.js$': 'babel-jest',
   },
   moduleFileExtensions: ['vue', 'js', 'json', 'jsx'],
@@ -21,7 +21,7 @@ export default {
   ],
   coverageReporters: ['text', 'lcov'],
   globals: {
-    'vue-jest': {
+    '@vue/vue3-jest': {
       pug: {
         doctype: 'html'
       }
