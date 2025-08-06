@@ -14,16 +14,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
       - name: Deploy backend to Railway
+        uses: bervProject/railway-deploy@main
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          cd backend
-          railway login --token $RAILWAY_TOKEN
-          railway up --service backend
+        with:
+          service: backend
 
   deploy-frontend:
     runs-on: ubuntu-latest
@@ -33,16 +29,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
       - name: Deploy frontend to Railway
+        uses: bervProject/railway-deploy@main
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          cd frontend
-          railway login --token $RAILWAY_TOKEN
-          railway up --service frontend
+        with:
+          service: frontend
 
   health-check:
     runs-on: ubuntu-latest
