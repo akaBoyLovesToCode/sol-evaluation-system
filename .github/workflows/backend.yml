@@ -2,15 +2,15 @@ name: Backend CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
-      - 'backend/**'
-      - '.github/workflows/backend.yml'
+      - "backend/**"
+      - ".github/workflows/backend.yml"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'backend/**'
-      - '.github/workflows/backend.yml'
+      - "backend/**"
+      - ".github/workflows/backend.yml"
 
 defaults:
   run:
@@ -19,11 +19,11 @@ defaults:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
-        python-version: ['3.13']
-    
+        python-version: ["3.13"]
+
     services:
       postgres:
         image: postgres:16
@@ -38,42 +38,42 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'
-        cache-dependency-path: backend/requirements.txt
-        
-    - name: Install dependencies
-      run: |
-        pip install --no-cache-dir -r requirements.txt
-        pip install ruff
-        
-    - name: Run linter
-      run: ruff check .
-        
-    - name: Run formatter check
-      run: ruff format --check .
-        
-    - name: Run tests
-      env:
-        DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_evaluation
-        FLASK_ENV: testing
-        SECRET_KEY: test-secret-key-for-ci
-        JWT_SECRET_KEY: test-jwt-secret-key-for-ci
-      run: pytest --cov=app tests/ --cov-report=xml --cov-report=term-missing
-        
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: backend/coverage.xml
-        flags: backend
-        name: backend-coverage
-        fail_ci_if_error: false
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install --no-cache-dir -r requirements.txt
+          pip install ruff
+
+      - name: Run linter
+        run: ruff check .
+
+      - name: Run formatter check
+        run: ruff format --check .
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_evaluation
+          FLASK_ENV: testing
+          SECRET_KEY: test-secret-key-for-ci
+          JWT_SECRET_KEY: test-jwt-secret-key-for-ci
+        run: pytest --cov=app tests/ --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: false
