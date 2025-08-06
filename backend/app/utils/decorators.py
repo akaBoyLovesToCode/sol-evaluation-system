@@ -1,7 +1,11 @@
+import builtins
+import contextlib
 from functools import wraps
-from flask import jsonify, request, current_app
-from flask_jwt_extended import jwt_required, get_jwt
-from app.models import User, OperationLog
+
+from flask import current_app, jsonify, request
+from flask_jwt_extended import jwt_required
+
+from app.models import OperationLog, User
 from app.utils.helpers import get_client_ip, get_current_user_id
 
 
@@ -91,7 +95,7 @@ def role_required(allowed_roles):
                     return jsonify({"error": "Account is inactive"}), 401
 
                 # Convert role names to lowercase for comparison
-                user_role = user.role.lower()
+                user.role.lower()
                 allowed_roles_lower = [
                     role.lower().replace(" ", "_") for role in allowed_roles
                 ]
@@ -189,8 +193,7 @@ def log_operation(operation_type, target_type, get_target_id=None, get_old_data=
 
 
 def handle_exceptions(f):
-    """Decorator to handle common exceptions and return standardized error responses
-    """
+    """Decorator to handle common exceptions and return standardized error responses"""
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -288,10 +291,8 @@ def rate_limit(max_requests=100, window_seconds=3600):
             client_ip = get_client_ip(request)
             current_user_id = None
 
-            try:
+            with contextlib.suppress(builtins.BaseException):
                 current_user_id = get_current_user_id()
-            except:
-                pass
 
             client_id = (
                 f"{client_ip}:{current_user_id}" if current_user_id else client_ip
@@ -342,9 +343,9 @@ def cache_response(timeout=300):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            from datetime import datetime, timedelta
             import hashlib
             import json
+            from datetime import datetime, timedelta
 
             # Create cache key from function name, args, and request data
             user_id = None
@@ -354,7 +355,7 @@ def cache_response(timeout=300):
                     if request.headers.get("Authorization")
                     else None
                 )
-            except:
+            except Exception:
                 pass  # Ignore JWT errors for caching
 
             cache_key_data = {
@@ -384,7 +385,7 @@ def cache_response(timeout=300):
             # Clean old cache entries (simple cleanup)
             if len(cache) > 1000:  # Arbitrary limit
                 cutoff_time = now - timedelta(seconds=timeout)
-                cache = {k: v for k, v in cache.items() if v[1] > cutoff_time}
+                {k: v for k, v in cache.items() if v[1] > cutoff_time}
 
             return result
 

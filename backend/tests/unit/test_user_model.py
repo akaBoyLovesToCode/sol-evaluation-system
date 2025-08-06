@@ -1,7 +1,5 @@
-"""Unit tests for the User model.
-"""
+"""Unit tests for the User model."""
 
-import pytest
 from app.models.user import User, UserRole
 
 
@@ -10,7 +8,7 @@ def test_user_creation(session):
     user = User(
         username="testuser",
         email="test@example.com",
-        password="Password123", 
+        password="Password123",
         full_name="Test User",
         role=UserRole.USER.value,
     )

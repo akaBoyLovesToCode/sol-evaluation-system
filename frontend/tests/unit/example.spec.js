@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils';
+import { mount } from '@vue/test-utils'
 
 // A simple Vue component for testing
 const SimpleComponent = {
@@ -9,15 +9,15 @@ const SimpleComponent = {
       default: 'Hello World',
     },
   },
-};
+}
 
 describe('Example Test', () => {
   it('renders a message', () => {
-    const message = 'Hello from tests';
+    const message = 'Hello from tests'
     const wrapper = mount(SimpleComponent, {
       props: { message },
-    });
+    })
     
-    expect(wrapper.text()).toContain(message);
-  });
-});
+    expect(wrapper.text()).toContain(message)
+  })
+})

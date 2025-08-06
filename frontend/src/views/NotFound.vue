@@ -21,18 +21,18 @@
 </template>
 
 <script setup>
-import { useRouter } from "vue-router";
-import { House, ArrowLeft } from "@element-plus/icons-vue";
+import { useRouter } from "vue-router"
+import { House, ArrowLeft } from "@element-plus/icons-vue"
 
-const router = useRouter();
+const router = useRouter()
 
 const goHome = () => {
-  router.push("/");
-};
+  router.push("/")
+}
 
 const goBack = () => {
-  router.go(-1);
-};
+  router.go(-1)
+}
 </script>
 
 <style scoped>

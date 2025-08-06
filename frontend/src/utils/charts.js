@@ -1,4 +1,4 @@
-import * as echarts from "echarts";
+import * as echarts from "echarts"
 
 /**
  * Chart utilities for ECharts integration
@@ -17,7 +17,7 @@ export const DEFAULT_COLORS = [
   "#9b59b6", // Purple
   "#1abc9c", // Teal
   "#34495e", // Dark gray
-];
+]
 
 /**
  * Common chart configurations
@@ -42,7 +42,7 @@ export const CHART_CONFIGS = {
     bottom: "3%",
     containLabel: true,
   },
-};
+}
 
 /**
  * Create a pie chart
@@ -53,11 +53,11 @@ export const CHART_CONFIGS = {
  */
 export const createPieChart = (element, data, options = {}) => {
   if (!element) {
-    console.error("Chart element is required");
-    return null;
+    console.error("Chart element is required")
+    return null
   }
 
-  const chart = echarts.init(element);
+  const chart = echarts.init(element)
 
   const defaultOptions = {
     tooltip: {
@@ -90,16 +90,13 @@ export const createPieChart = (element, data, options = {}) => {
       },
     ],
     color: options.colors || DEFAULT_COLORS,
-  };
+  }
 
-  const finalOptions = mergeOptions(
-    defaultOptions,
-    options.customOptions || {},
-  );
-  chart.setOption(finalOptions);
+  const finalOptions = mergeOptions(defaultOptions, options.customOptions || {})
+  chart.setOption(finalOptions)
 
-  return chart;
-};
+  return chart
+}
 
 /**
  * Create a line chart
@@ -110,11 +107,11 @@ export const createPieChart = (element, data, options = {}) => {
  */
 export const createLineChart = (element, data, options = {}) => {
   if (!element) {
-    console.error("Chart element is required");
-    return null;
+    console.error("Chart element is required")
+    return null
   }
 
-  const chart = echarts.init(element);
+  const chart = echarts.init(element)
 
   const defaultOptions = {
     tooltip: {
@@ -181,16 +178,13 @@ export const createLineChart = (element, data, options = {}) => {
         : undefined,
     })),
     color: options.colors || DEFAULT_COLORS,
-  };
+  }
 
-  const finalOptions = mergeOptions(
-    defaultOptions,
-    options.customOptions || {},
-  );
-  chart.setOption(finalOptions);
+  const finalOptions = mergeOptions(defaultOptions, options.customOptions || {})
+  chart.setOption(finalOptions)
 
-  return chart;
-};
+  return chart
+}
 
 /**
  * Create a bar chart
@@ -201,11 +195,11 @@ export const createLineChart = (element, data, options = {}) => {
  */
 export const createBarChart = (element, data, options = {}) => {
   if (!element) {
-    console.error("Chart element is required");
-    return null;
+    console.error("Chart element is required")
+    return null
   }
 
-  const chart = echarts.init(element);
+  const chart = echarts.init(element)
 
   const defaultOptions = {
     tooltip: {
@@ -266,16 +260,13 @@ export const createBarChart = (element, data, options = {}) => {
       },
     })),
     color: options.colors || DEFAULT_COLORS,
-  };
+  }
 
-  const finalOptions = mergeOptions(
-    defaultOptions,
-    options.customOptions || {},
-  );
-  chart.setOption(finalOptions);
+  const finalOptions = mergeOptions(defaultOptions, options.customOptions || {})
+  chart.setOption(finalOptions)
 
-  return chart;
-};
+  return chart
+}
 
 /**
  * Make chart responsive
@@ -284,25 +275,25 @@ export const createBarChart = (element, data, options = {}) => {
  * @returns {Function} Cleanup function
  */
 export const makeResponsive = (chart, element) => {
-  if (!chart || !element) return () => {};
+  if (!chart || !element) return () => {}
 
   const resizeObserver = new ResizeObserver(() => {
-    chart.resize();
-  });
+    chart.resize()
+  })
 
-  resizeObserver.observe(element);
+  resizeObserver.observe(element)
 
   const handleWindowResize = () => {
-    chart.resize();
-  };
+    chart.resize()
+  }
 
-  window.addEventListener("resize", handleWindowResize);
+  window.addEventListener("resize", handleWindowResize)
 
   return () => {
-    resizeObserver.disconnect();
-    window.removeEventListener("resize", handleWindowResize);
-  };
-};
+    resizeObserver.disconnect()
+    window.removeEventListener("resize", handleWindowResize)
+  }
+}
 
 /**
  * Dispose chart and cleanup resources
@@ -311,12 +302,12 @@ export const makeResponsive = (chart, element) => {
  */
 export const disposeChart = (chart, cleanupFn) => {
   if (cleanupFn) {
-    cleanupFn();
+    cleanupFn()
   }
   if (chart) {
-    chart.dispose();
+    chart.dispose()
   }
-};
+}
 
 /**
  * Deep merge chart options
@@ -325,23 +316,23 @@ export const disposeChart = (chart, cleanupFn) => {
  * @returns {Object} Merged object
  */
 function mergeOptions(target, source) {
-  const result = { ...target };
+  const result = { ...target }
 
   for (const key in source) {
-    if (source.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
       if (
         typeof source[key] === "object" &&
         source[key] !== null &&
         !Array.isArray(source[key])
       ) {
-        result[key] = mergeOptions(result[key] || {}, source[key]);
+        result[key] = mergeOptions(result[key] || {}, source[key])
       } else {
-        result[key] = source[key];
+        result[key] = source[key]
       }
     }
   }
 
-  return result;
+  return result
 }
 
 /**
@@ -362,7 +353,7 @@ export const CHART_THEMES = {
     backgroundColor: "#fff",
     textColor: "#333",
   },
-};
+}
 
 /**
  * Export utilities for advanced usage
@@ -375,13 +366,13 @@ export const chartUtils = {
    * @returns {String} Base64 image data
    */
   exportToImage: (chart, options = {}) => {
-    if (!chart) return null;
+    if (!chart) return null
 
     return chart.getDataURL({
       type: options.type || "png",
       pixelRatio: options.pixelRatio || 2,
       backgroundColor: options.backgroundColor || "#fff",
-    });
+    })
   },
 
   /**
@@ -391,14 +382,14 @@ export const chartUtils = {
    * @param {Object} options - Export options
    */
   downloadChart: (chart, filename = "chart", options = {}) => {
-    const dataURL = chartUtils.exportToImage(chart, options);
-    if (!dataURL) return;
+    const dataURL = chartUtils.exportToImage(chart, options)
+    if (!dataURL) return
 
-    const link = document.createElement("a");
-    link.download = `${filename}.${options.type || "png"}`;
-    link.href = dataURL;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const link = document.createElement("a")
+    link.download = `${filename}.${options.type || "png"}`
+    link.href = dataURL
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   },
-};
+}

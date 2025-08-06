@@ -357,10 +357,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useI18n } from "vue-i18n";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ref, computed, onMounted } from "vue"
+import { useRoute, useRouter } from "vue-router"
+import { useI18n } from "vue-i18n"
+import { ElMessage, ElMessageBox } from "element-plus"
 import {
   Edit,
   MoreFilled,
@@ -379,76 +379,72 @@ import {
   CircleClose,
   User,
   Download as DownloadIcon,
-} from "@element-plus/icons-vue";
-import api from "../utils/api";
-import { useAuthStore } from "../stores/auth";
+} from "@element-plus/icons-vue"
+import api from "../utils/api"
+import { useAuthStore } from "../stores/auth"
 
-const route = useRoute();
-const router = useRouter();
-const { t } = useI18n();
-const authStore = useAuthStore();
+const route = useRoute()
+const router = useRouter()
+const { t } = useI18n()
+const authStore = useAuthStore()
 
-const loading = ref(false);
-const evaluation = ref(null);
-const showAllLogs = ref(false);
+const loading = ref(false)
+const evaluation = ref(null)
+const showAllLogs = ref(false)
 
 const canEdit = computed(() => {
-  if (!evaluation.value) return false;
+  if (!evaluation.value) return false
   return (
     evaluation.value.status === "in_progress" &&
     (authStore.user.id === evaluation.value.evaluator_id || authStore.isAdmin)
-  );
-});
+  )
+})
 
 const canOperate = computed(() => {
   return (
     authStore.canApprove || authStore.user.id === evaluation.value?.evaluator_id
-  );
-});
+  )
+})
 
 const canApprove = computed(() => {
-  return (
-    evaluation.value?.status === "pending_approval" && authStore.canApprove
-  );
-});
+  return evaluation.value?.status === "pending_approval" && authStore.canApprove
+})
 
 const canReject = computed(() => {
-  return (
-    evaluation.value?.status === "pending_approval" && authStore.canApprove
-  );
-});
+  return evaluation.value?.status === "pending_approval" && authStore.canApprove
+})
 
 const canPause = computed(() => {
-  if (!evaluation.value) return false;
+  if (!evaluation.value) return false
   return (
     evaluation.value.status === "in_progress" &&
     (authStore.user.id === evaluation.value.evaluator_id || authStore.isAdmin)
-  );
-});
+  )
+})
 
 const canResume = computed(() => {
-  if (!evaluation.value) return false;
+  if (!evaluation.value) return false
   return (
     evaluation.value.status === "paused" &&
     (authStore.user.id === evaluation.value.evaluator_id || authStore.isAdmin)
-  );
-});
+  )
+})
 
 const canCancel = computed(() => {
-  if (!evaluation.value) return false;
+  if (!evaluation.value) return false
   return (
     ["in_progress", "paused", "pending_approval"].includes(
       evaluation.value.status,
     ) &&
     (authStore.user.id === evaluation.value.evaluator_id || authStore.isAdmin)
-  );
-});
+  )
+})
 
 const processSteps = computed(() => {
-  if (!evaluation.value) return [];
+  if (!evaluation.value) return []
 
-  const steps = [];
-  const processes = evaluation.value.processes || [];
+  const steps = []
+  const processes = evaluation.value.processes || []
 
   processes.forEach((process) => {
     steps.push({
@@ -457,18 +453,18 @@ const processSteps = computed(() => {
       timestamp: formatDate(evaluation.value.start_date),
       type: "primary",
       description: getProcessDescription(process),
-    });
-  });
+    })
+  })
 
-  return steps;
-});
+  return steps
+})
 
 const filteredLogs = computed(() => {
-  if (!evaluation.value?.logs) return [];
+  if (!evaluation.value?.logs) return []
 
   // If admin and showAllLogs is true, return all logs
   if (authStore.isAdmin && showAllLogs.value) {
-    return evaluation.value.logs;
+    return evaluation.value.logs
   }
 
   // Filter for critical operations only
@@ -478,16 +474,16 @@ const filteredLogs = computed(() => {
     "delete",
     "approve",
     "reject",
-  ];
+  ]
   return evaluation.value.logs.filter((log) => {
     // Include critical operation types
     if (criticalOperationTypes.includes(log.operation_type)) {
-      return true;
+      return true
     }
 
     // Include status changes (usually update operations with specific descriptions)
     if (log.operation_type === "update" && log.operation_description) {
-      const description = log.operation_description.toLowerCase();
+      const description = log.operation_description.toLowerCase()
       const statusKeywords = [
         "status",
         "pause",
@@ -495,99 +491,99 @@ const filteredLogs = computed(() => {
         "complete",
         "cancel",
         "finish",
-      ];
-      return statusKeywords.some((keyword) => description.includes(keyword));
+      ]
+      return statusKeywords.some((keyword) => description.includes(keyword))
     }
 
-    return false;
-  });
-});
+    return false
+  })
+})
 
 const fetchEvaluation = async () => {
   try {
-    loading.value = true;
-    const response = await api.get(`/evaluations/${route.params.id}`);
-    evaluation.value = response.data.data.evaluation;
+    loading.value = true
+    const response = await api.get(`/evaluations/${route.params.id}`)
+    evaluation.value = response.data.data.evaluation
   } catch (error) {
-    ElMessage.error(t("evaluation.getEvaluationDetailsFailed"));
-    console.error("Failed to fetch evaluation:", error);
+    ElMessage.error(t("evaluation.getEvaluationDetailsFailed"))
+    console.error("Failed to fetch evaluation:", error)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 const handleOperation = async (command) => {
   try {
-    let message = "";
-    let confirmText = "";
+    let message = ""
+    let confirmText = ""
 
     switch (command) {
       case "approve":
-        message = t("evaluation.confirmApprove");
-        confirmText = t("evaluation.approve");
-        break;
+        message = t("evaluation.confirmApprove")
+        confirmText = t("evaluation.approve")
+        break
       case "reject":
-        message = t("evaluation.confirmReject");
-        confirmText = t("evaluation.reject");
-        break;
+        message = t("evaluation.confirmReject")
+        confirmText = t("evaluation.reject")
+        break
       case "pause":
-        message = t("evaluation.confirmPause");
-        confirmText = t("evaluation.pause");
-        break;
+        message = t("evaluation.confirmPause")
+        confirmText = t("evaluation.pause")
+        break
       case "resume":
-        message = t("evaluation.confirmResume");
-        confirmText = t("evaluation.resume");
-        break;
+        message = t("evaluation.confirmResume")
+        confirmText = t("evaluation.resume")
+        break
       case "cancel":
-        message = t("evaluation.confirmCancel");
-        confirmText = t("evaluation.cancel");
-        break;
+        message = t("evaluation.confirmCancel")
+        confirmText = t("evaluation.cancel")
+        break
     }
 
     await ElMessageBox.confirm(message, t("common.confirmAction"), {
       confirmButtonText: confirmText,
       cancelButtonText: t("common.cancel"),
       type: "warning",
-    });
+    })
 
     // Call appropriate API endpoint based on command
     if (command === "approve") {
-      await api.post(`/evaluations/${evaluation.value.id}/approve`);
+      await api.post(`/evaluations/${evaluation.value.id}/approve`)
     } else if (command === "reject") {
-      await api.post(`/evaluations/${evaluation.value.id}/reject`);
+      await api.post(`/evaluations/${evaluation.value.id}/reject`)
     } else if (command === "pause") {
       await api.put(`/evaluations/${evaluation.value.id}/status`, {
         status: "paused",
-      });
+      })
     } else if (command === "resume") {
       await api.put(`/evaluations/${evaluation.value.id}/status`, {
         status: "in_progress",
-      });
+      })
     } else if (command === "cancel") {
       await api.put(`/evaluations/${evaluation.value.id}/status`, {
         status: "cancelled",
-      });
+      })
     }
 
-    ElMessage.success(t("evaluation.operationSuccess"));
-    fetchEvaluation();
+    ElMessage.success(t("evaluation.operationSuccess"))
+    fetchEvaluation()
   } catch (error) {
     if (error !== "cancel") {
-      ElMessage.error(t("evaluation.operationFailed"));
-      console.error("Operation failed:", error);
+      ElMessage.error(t("evaluation.operationFailed"))
+      console.error("Operation failed:", error)
     }
   }
-};
+}
 
 const handleUploadFile = () => {
   // TODO: 实现文件上传功能
-  ElMessage.info(t("evaluation.fileUploadInDevelopment"));
-};
+  ElMessage.info(t("evaluation.fileUploadInDevelopment"))
+}
 
 const handleDownloadFile = (file) => {
   // TODO: 实现文件下载功能
-  ElMessage.info(t("evaluation.fileDownloadInDevelopment"));
-};
+  ElMessage.info(t("evaluation.fileDownloadInDevelopment"))
+}
 
 const getStatusTagType = (status) => {
   const typeMap = {
@@ -598,30 +594,30 @@ const getStatusTagType = (status) => {
     paused: "info",
     cancelled: "danger",
     rejected: "danger",
-  };
-  return typeMap[status] || "info";
-};
+  }
+  return typeMap[status] || "info"
+}
 
 const getReasonText = (reason) => {
   if (reason && t(`evaluation.reasons.${reason}`)) {
-    return t(`evaluation.reasons.${reason}`);
+    return t(`evaluation.reasons.${reason}`)
   }
-  return reason || "-";
-};
+  return reason || "-"
+}
 
 const getTemperatureGradeText = (grade) => {
   if (grade && t(`evaluation.temperatureGrades.${grade}`)) {
-    return t(`evaluation.temperatureGrades.${grade}`);
+    return t(`evaluation.temperatureGrades.${grade}`)
   }
-  return grade || "-";
-};
+  return grade || "-"
+}
 
 const getProcessTitle = (process) => {
   if (process && t(`evaluation.processes.${process}`)) {
-    return t(`evaluation.processes.${process}`);
+    return t(`evaluation.processes.${process}`)
   }
-  return process;
-};
+  return process
+}
 
 const getProcessDescription = (process) => {
   // Process descriptions are technical and don't need i18n for now
@@ -631,27 +627,27 @@ const getProcessDescription = (process) => {
     prq: "Production Readiness Qualification - Ensure production readiness",
     production_test: "Production testing - Verify product quality",
     aql: "Acceptable Quality Level testing",
-  };
-  return descMap[process] || "";
-};
+  }
+  return descMap[process] || ""
+}
 
 const formatDate = (dateString) => {
-  if (!dateString) return "-";
-  return new Date(dateString).toLocaleDateString();
-};
+  if (!dateString) return "-"
+  return new Date(dateString).toLocaleDateString()
+}
 
 const formatDateTime = (dateString) => {
-  if (!dateString) return "-";
-  return new Date(dateString).toLocaleString();
-};
+  if (!dateString) return "-"
+  return new Date(dateString).toLocaleString()
+}
 
 const formatFileSize = (bytes) => {
-  if (!bytes) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
+  if (!bytes) return "0 B"
+  const k = 1024
+  const sizes = ["B", "KB", "MB", "GB"]
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+}
 
 const getOperationIcon = (operationType) => {
   const iconMap = {
@@ -664,9 +660,9 @@ const getOperationIcon = (operationType) => {
     login: User,
     logout: User,
     export: DownloadIcon,
-  };
-  return iconMap[operationType] || EditPen;
-};
+  }
+  return iconMap[operationType] || EditPen
+}
 
 const getOperationColor = (operationType) => {
   const colorMap = {
@@ -679,52 +675,52 @@ const getOperationColor = (operationType) => {
     login: "#409EFF",
     logout: "#909399",
     export: "#409EFF",
-  };
-  return colorMap[operationType] || "#409EFF";
-};
+  }
+  return colorMap[operationType] || "#409EFF"
+}
 
 const getOperationDescription = (log) => {
   // First, try to use a more descriptive translation based on operation type and context
   if (log.operation_type === "create") {
-    return t("evaluation.operations.created");
+    return t("evaluation.operations.created")
   } else if (log.operation_type === "update") {
     // Check if it's a status change
     if (
       log.operation_description &&
       log.operation_description.toLowerCase().includes("status")
     ) {
-      return t("evaluation.operations.statusChanged");
+      return t("evaluation.operations.statusChanged")
     }
-    return t("evaluation.operations.updated");
+    return t("evaluation.operations.updated")
   } else if (log.operation_type === "delete") {
-    return t("evaluation.operations.deleted");
+    return t("evaluation.operations.deleted")
   } else if (log.operation_type === "approve") {
-    return t("evaluation.operations.approved");
+    return t("evaluation.operations.approved")
   } else if (log.operation_type === "reject") {
-    return t("evaluation.operations.rejected");
+    return t("evaluation.operations.rejected")
   } else if (log.operation_type === "view") {
-    return t("evaluation.operations.viewed");
+    return t("evaluation.operations.viewed")
   } else if (log.operation_type === "login") {
-    return t("evaluation.operations.loggedIn");
+    return t("evaluation.operations.loggedIn")
   } else if (log.operation_type === "logout") {
-    return t("evaluation.operations.loggedOut");
+    return t("evaluation.operations.loggedOut")
   } else if (log.operation_type === "export") {
-    return t("evaluation.operations.exported");
+    return t("evaluation.operations.exported")
   }
 
   // Fallback to original description if available, or unknown
-  return log.operation_description || t("evaluation.operations.unknown");
-};
+  return log.operation_description || t("evaluation.operations.unknown")
+}
 
 onMounted(async () => {
   // 首先确保用户信息已加载
   if (!authStore.user && authStore.token) {
-    await authStore.checkAuth();
+    await authStore.checkAuth()
   }
 
   // 然后获取评估信息
-  await fetchEvaluation();
-});
+  await fetchEvaluation()
+})
 </script>
 
 <style scoped>

@@ -1,25 +1,24 @@
-"""API endpoints for evaluation management.
-"""
+"""API endpoints for evaluation management."""
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Dict, Any, Tuple, Optional
 import json
+from datetime import datetime
 
-from flask import Blueprint, request, jsonify, current_app, Response
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import Blueprint, Response, current_app, jsonify, request
+from flask_jwt_extended import get_jwt_identity, jwt_required
+
 from app.models import db
-from app.models.evaluation import Evaluation, EvaluationStatus, EvaluationDetail
-from app.models.user import User
+from app.models.evaluation import Evaluation, EvaluationStatus
 from app.models.operation_log import OperationLog, OperationType
+from app.models.user import User
 
 evaluation_bp = Blueprint("evaluation", __name__)
 
 
 def generate_evaluation_number() -> str:
     """Generate a unique evaluation number in format: EVAL-YYYYMMDD-NNNN.
-    
+
     Returns:
         str: Unique evaluation number formatted as EVAL-YYYYMMDD-NNNN.
 
@@ -51,9 +50,9 @@ def generate_evaluation_number() -> str:
 
 @evaluation_bp.route("", methods=["GET"])
 @jwt_required()
-def get_evaluations() -> Tuple[Response, int]:
+def get_evaluations() -> tuple[Response, int]:
     """Get a list of evaluations with optional filtering.
-    
+
     Query Parameters:
         page (int, optional): Page number for pagination. Defaults to 1.
         per_page (int, optional): Number of items per page. Defaults to 10.
@@ -61,10 +60,10 @@ def get_evaluations() -> Tuple[Response, int]:
         evaluation_type (str, optional): Filter by evaluation type.
         product_name (str, optional): Filter by product name (partial match).
         evaluator_id (int, optional): Filter by evaluator ID.
-    
+
     Returns:
         Tuple[Response, int]: JSON response with evaluation list and HTTP status code.
-        
+
     Raises:
         500: If database operation fails.
     ---
@@ -239,15 +238,15 @@ def get_evaluations() -> Tuple[Response, int]:
 
 @evaluation_bp.route("/<int:evaluation_id>", methods=["GET"])
 @jwt_required()
-def get_evaluation(evaluation_id: int) -> Tuple[Response, int]:
+def get_evaluation(evaluation_id: int) -> tuple[Response, int]:
     """Get details of a specific evaluation.
-    
+
     Args:
         evaluation_id (int): ID of the evaluation to retrieve.
-    
+
     Returns:
         Tuple[Response, int]: JSON response with evaluation details and HTTP status code.
-        
+
     Raises:
         404: If evaluation not found.
         500: If database operation fails.
@@ -349,7 +348,7 @@ def get_evaluation(evaluation_id: int) -> Tuple[Response, int]:
             target_type="evaluation",
             target_id=evaluation_id,
             target_description=f"Viewed evaluation {evaluation.evaluation_number}",
-            operation_description=f"User viewed evaluation details",
+            operation_description="User viewed evaluation details",
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
             success=True,
@@ -367,9 +366,9 @@ def get_evaluation(evaluation_id: int) -> Tuple[Response, int]:
 
 @evaluation_bp.route("", methods=["POST"])
 @jwt_required()
-def create_evaluation() -> Tuple[Response, int]:
+def create_evaluation() -> tuple[Response, int]:
     """Create a new evaluation.
-    
+
     Request Body:
         evaluation_type (str): Type of evaluation ('new_product' or 'mass_production').
         product_name (str): Name of the product.
@@ -381,10 +380,10 @@ def create_evaluation() -> Tuple[Response, int]:
         evaluation_reason (str, optional): Reason for the evaluation.
         description (str, optional): Detailed description.
         status (str, optional): Initial status (defaults to 'draft').
-    
+
     Returns:
         Tuple[Response, int]: JSON response with created evaluation and HTTP status code.
-        
+
     Raises:
         400: If required fields are missing or invalid.
         500: If database operation fails.
@@ -539,12 +538,12 @@ def create_evaluation() -> Tuple[Response, int]:
 
 @evaluation_bp.route("/<int:evaluation_id>", methods=["PUT"])
 @jwt_required()
-def update_evaluation(evaluation_id: int) -> Tuple[Response, int]:
+def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
     """Update an existing evaluation.
-    
+
     Args:
         evaluation_id (int): ID of the evaluation to update.
-    
+
     Request Body:
         product_name (str, optional): Name of the product.
         part_number (str, optional): Part number.
@@ -552,10 +551,10 @@ def update_evaluation(evaluation_id: int) -> Tuple[Response, int]:
         description (str, optional): Detailed description.
         expected_end_date (str, optional): Expected end date in YYYY-MM-DD format.
         process_step (str, optional): Process step identifier.
-    
+
     Returns:
         Tuple[Response, int]: JSON response with updated evaluation and HTTP status code.
-        
+
     Raises:
         400: If evaluation cannot be updated due to status constraints.
         403: If user is not authorized to update the evaluation.
@@ -659,7 +658,7 @@ def update_evaluation(evaluation_id: int) -> Tuple[Response, int]:
             ).date()
         if "process_step" in data:
             evaluation.process_step = data["process_step"]
-        
+
         # Update technical specifications
         if "pgm_version" in data:
             evaluation.pgm_version = data["pgm_version"]
@@ -714,18 +713,18 @@ def update_evaluation(evaluation_id: int) -> Tuple[Response, int]:
 
 @evaluation_bp.route("/<int:evaluation_id>/status", methods=["PUT"])
 @jwt_required()
-def update_evaluation_status(evaluation_id: int) -> Tuple[Response, int]:
+def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
     """Update the status of an evaluation.
-    
+
     Args:
         evaluation_id (int): ID of the evaluation to update.
-    
+
     Request Body:
         status (str): New status for the evaluation.
-    
+
     Returns:
         Tuple[Response, int]: JSON response with updated evaluation and HTTP status code.
-        
+
     Raises:
         400: If status is missing or invalid.
         403: If user is not authorized to update the evaluation status.
@@ -842,15 +841,15 @@ def update_evaluation_status(evaluation_id: int) -> Tuple[Response, int]:
 
 @evaluation_bp.route("/<int:evaluation_id>/logs", methods=["GET"])
 @jwt_required()
-def get_evaluation_logs(evaluation_id: int) -> Tuple[Response, int]:
+def get_evaluation_logs(evaluation_id: int) -> tuple[Response, int]:
     """Get operation logs for a specific evaluation.
-    
+
     Args:
         evaluation_id (int): ID of the evaluation to get logs for.
-    
+
     Returns:
         Tuple[Response, int]: JSON response with operation logs and HTTP status code.
-        
+
     Raises:
         404: If evaluation not found.
         500: If database operation fails.
@@ -879,7 +878,7 @@ def get_evaluation_logs(evaluation_id: int) -> Tuple[Response, int]:
 
     """
     try:
-        user_id = get_jwt_identity()
+        get_jwt_identity()
 
         evaluation = Evaluation.query.get(evaluation_id)
 

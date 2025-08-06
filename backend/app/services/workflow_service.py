@@ -5,7 +5,6 @@ and status management as specified in Phase 2 requirements.
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
 
 from flask import current_app
 from sqlalchemy import and_
@@ -111,7 +110,7 @@ class WorkflowService:
     @staticmethod
     def can_transition(
         evaluation: Evaluation, new_status: EvaluationStatus, user: User
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         """Check if an evaluation can transition to a new status
 
         Args:
@@ -162,8 +161,8 @@ class WorkflowService:
         evaluation_id: int,
         new_status: EvaluationStatus,
         user_id: int,
-        comment: Optional[str] = None,
-    ) -> Tuple[bool, str]:
+        comment: str | None = None,
+    ) -> tuple[bool, str]:
         """Transition an evaluation to a new status
 
         Args:
@@ -303,7 +302,7 @@ class WorkflowService:
             )
 
     @staticmethod
-    def get_pending_approvals(user_id: int) -> List[Dict]:
+    def get_pending_approvals(user_id: int) -> list[dict]:
         """Get evaluations pending approval for a specific user
 
         Args:
@@ -361,7 +360,7 @@ class WorkflowService:
             return []
 
     @staticmethod
-    def get_workflow_statistics() -> Dict:
+    def get_workflow_statistics() -> dict:
         """Get workflow statistics for dashboard
 
         Returns:
@@ -430,7 +429,7 @@ class WorkflowService:
 
             # Get available users (not admins)
             available_users = User.query.filter(
-                and_(User.is_active == True, User.role.in_(["user", "part_leader"]))
+                and_(User.is_active, User.role.in_(["user", "part_leader"]))
             ).all()
 
             if not available_users:

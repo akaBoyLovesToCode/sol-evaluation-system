@@ -4,14 +4,15 @@ This service handles in-app notification system as specified in Phase 2 requirem
 Manages message creation, delivery, and notification preferences.
 """
 
-from typing import Dict, List, Optional
 from datetime import datetime, timedelta
-from sqlalchemy import and_, or_, desc
+
 from flask import current_app
+from sqlalchemy import and_, desc, or_
+
 from app import db
-from app.models.message import Message, MessageType, MessageStatus
-from app.models.user import User, UserRole
 from app.models.evaluation import Evaluation
+from app.models.message import Message, MessageStatus, MessageType
+from app.models.user import User, UserRole
 
 
 class NotificationService:
@@ -31,7 +32,7 @@ class NotificationService:
         title: str,
         content: str,
         message_type: MessageType = MessageType.SYSTEM,
-        related_evaluation_id: Optional[int] = None,
+        related_evaluation_id: int | None = None,
     ) -> bool:
         """Send a notification to a specific user
 
@@ -85,11 +86,11 @@ class NotificationService:
     @staticmethod
     def send_bulk_notification(
         sender_id: int,
-        recipient_ids: List[int],
+        recipient_ids: list[int],
         title: str,
         content: str,
         message_type: MessageType = MessageType.SYSTEM,
-        related_evaluation_id: Optional[int] = None,
+        related_evaluation_id: int | None = None,
     ) -> int:
         """Send notifications to multiple users
 
@@ -115,7 +116,7 @@ class NotificationService:
 
             # Get valid recipients
             valid_recipients = User.query.filter(
-                and_(User.id.in_(recipient_ids), User.is_active == True)
+                and_(User.id.in_(recipient_ids), User.is_active)
             ).all()
 
             # Create messages for all valid recipients
@@ -143,8 +144,8 @@ class NotificationService:
 
     @staticmethod
     def get_user_notifications(
-        user_id: int, limit: int = 50, status_filter: Optional[MessageStatus] = None
-    ) -> List[Dict]:
+        user_id: int, limit: int = 50, status_filter: MessageStatus | None = None
+    ) -> list[dict]:
         """Get notifications for a specific user
 
         Args:
@@ -492,7 +493,7 @@ class NotificationService:
             current_app.logger.error(f"Error cleaning up old notifications: {str(e)}")
 
     @staticmethod
-    def get_notification_statistics() -> Dict:
+    def get_notification_statistics() -> dict:
         """Get notification statistics for admin dashboard
 
         Returns:

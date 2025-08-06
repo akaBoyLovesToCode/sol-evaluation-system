@@ -1,11 +1,12 @@
-"""Pytest configuration file for the backend tests.
-"""
+"""Pytest configuration file for the backend tests."""
 
 import os
+
 import pytest
+from flask_jwt_extended import create_access_token
+
 from app import create_app
 from app.models import db as _db
-from flask_jwt_extended import create_access_token
 from app.models.user import User, UserRole
 
 
@@ -58,11 +59,11 @@ def session(db):
 
     yield db.session
 
-    # Rollback and cleanup
-    db.session.rollback()
+    # Cleanup - remove all data and rollback
+    db.session.remove()
     transaction.rollback()
     connection.close()
-    
+
     # Restore the original bind
     db.session.configure(bind=original_bind)
 
@@ -76,9 +77,12 @@ def client(app):
 @pytest.fixture(scope="function")
 def admin_user(session):
     """Create an admin user for testing."""
+    import uuid
+
+    unique_id = str(uuid.uuid4())[:8]
     user = User(
-        username="admin",
-        email="admin@example.com",
+        username=f"admin_{unique_id}",
+        email=f"admin_{unique_id}@example.com",
         password="Password123",
         full_name="Admin User",
         role=UserRole.ADMIN.value,
@@ -91,9 +95,12 @@ def admin_user(session):
 @pytest.fixture(scope="function")
 def regular_user(session):
     """Create a regular user for testing."""
+    import uuid
+
+    unique_id = str(uuid.uuid4())[:8]
     user = User(
-        username="user",
-        email="user@example.com",
+        username=f"user_{unique_id}",
+        email=f"user_{unique_id}@example.com",
         password="Password123",
         full_name="Regular User",
         role=UserRole.USER.value,

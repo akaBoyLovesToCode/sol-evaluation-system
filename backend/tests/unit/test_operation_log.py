@@ -1,8 +1,5 @@
-"""Unit tests for the OperationLog model and functionality.
-"""
+"""Unit tests for the OperationLog model and functionality."""
 
-import json
-from datetime import datetime
 from app.models.operation_log import OperationLog, OperationType
 
 
@@ -40,7 +37,7 @@ def test_operation_log_creation(session, admin_user):
 def test_operation_log_to_dict(session, admin_user):
     """Test the to_dict method of the OperationLog model."""
     test_data = {"key": "value", "number": 123}
-    
+
     log = OperationLog(
         user_id=admin_user.id,
         operation_type=OperationType.UPDATE.value,
@@ -48,7 +45,7 @@ def test_operation_log_to_dict(session, admin_user):
         target_id=admin_user.id,
         target_description="Updated user profile",
         operation_description="Updated user information",
-        operation_data=test_data,
+        new_data=test_data,
         ip_address="192.168.1.1",
         user_agent="Mozilla/5.0",
         success=True,
@@ -64,7 +61,7 @@ def test_operation_log_to_dict(session, admin_user):
     assert log_dict["target_id"] == admin_user.id
     assert log_dict["target_description"] == "Updated user profile"
     assert log_dict["operation_description"] == "Updated user information"
-    assert log_dict["operation_data"] == test_data
+    assert log_dict["new_data"] == test_data
     assert log_dict["ip_address"] == "192.168.1.1"
     assert log_dict["user_agent"] == "Mozilla/5.0"
     assert log_dict["success"] is True

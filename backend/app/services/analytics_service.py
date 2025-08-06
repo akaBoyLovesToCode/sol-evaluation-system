@@ -4,15 +4,15 @@ This service handles statistical analysis and data visualization as specified
 in Phase 3 requirements. Provides data for charts, reports, and analytics.
 """
 
-from typing import Dict, List, Optional, Tuple
+import json
 from datetime import datetime, timedelta
-from sqlalchemy import and_, or_, func, extract, desc
+
 from flask import current_app
+from sqlalchemy import and_, desc, extract, func
+
 from app import db
 from app.models.evaluation import Evaluation, EvaluationStatus, EvaluationType
-from app.models.user import User, UserRole
-from app.models.operation_log import OperationLog, OperationType
-import json
+from app.models.user import User
 
 
 class AnalyticsService:
@@ -27,8 +27,8 @@ class AnalyticsService:
 
     @staticmethod
     def get_evaluation_statistics(
-        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-    ) -> Dict:
+        start_date: datetime | None = None, end_date: datetime | None = None
+    ) -> dict:
         """Get comprehensive evaluation statistics
 
         Args:
@@ -127,7 +127,7 @@ class AnalyticsService:
             return {}
 
     @staticmethod
-    def get_monthly_trends(months: int = 12) -> Dict:
+    def get_monthly_trends(months: int = 12) -> dict:
         """Get monthly trends for evaluations
 
         Args:
@@ -205,7 +205,7 @@ class AnalyticsService:
             return {}
 
     @staticmethod
-    def get_user_performance_metrics() -> List[Dict]:
+    def get_user_performance_metrics() -> list[dict]:
         """Get performance metrics for all users
 
         Returns:
@@ -296,7 +296,7 @@ class AnalyticsService:
             return []
 
     @staticmethod
-    def get_evaluation_type_analysis() -> Dict:
+    def get_evaluation_type_analysis() -> dict:
         """Get detailed analysis by evaluation type
 
         Returns:
@@ -368,7 +368,7 @@ class AnalyticsService:
             return {}
 
     @staticmethod
-    def get_workflow_bottlenecks() -> Dict:
+    def get_workflow_bottlenecks() -> dict:
         """Identify workflow bottlenecks and delays
 
         Returns:
@@ -465,7 +465,7 @@ class AnalyticsService:
             return {}
 
     @staticmethod
-    def generate_dashboard_data() -> Dict:
+    def generate_dashboard_data() -> dict:
         """Generate comprehensive dashboard data
 
         Returns:
@@ -507,7 +507,7 @@ class AnalyticsService:
     @staticmethod
     def export_analytics_data(
         start_date: datetime, end_date: datetime, format_type: str = "json"
-    ) -> Tuple[bool, str, Optional[str]]:
+    ) -> tuple[bool, str, str | None]:
         """Export analytics data for reporting
 
         Args:
@@ -555,7 +555,7 @@ class AnalyticsService:
             return False, f"Export failed: {str(e)}", None
 
     @staticmethod
-    def _convert_to_csv(data: Dict) -> str:
+    def _convert_to_csv(data: dict) -> str:
         """Convert analytics data to CSV format
 
         Args:
@@ -605,7 +605,7 @@ class AnalyticsService:
             return "Error generating CSV data"
 
     @staticmethod
-    def get_predictive_insights() -> Dict:
+    def get_predictive_insights() -> dict:
         """Generate predictive insights based on historical data
 
         Returns:

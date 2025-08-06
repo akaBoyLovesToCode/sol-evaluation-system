@@ -30,4 +30,4 @@ export default {
   testEnvironmentOptions: {
     customExportConditions: ['node', 'node-addons']
   }
-};
+}

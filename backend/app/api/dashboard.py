@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Tuple, Optional
 
-from flask import Blueprint, request, jsonify, current_app, Response
+from flask import Blueprint, Response, current_app, request
 from flask_jwt_extended import jwt_required
-from sqlalchemy import func, and_, or_
+from sqlalchemy import and_, func, or_
+
 from app import db
-from app.models import Evaluation, User, Message, OperationLog
-from app.utils.decorators import handle_exceptions, cache_response
-from app.utils.helpers import create_response, parse_date_string, get_current_user_id
+from app.models import Evaluation, Message, User
+from app.utils.decorators import handle_exceptions
+from app.utils.helpers import create_response, get_current_user_id, parse_date_string
 
 # Create dashboard blueprint
 dashboard_bp = Blueprint("dashboard", __name__)
@@ -33,7 +33,7 @@ def get_dashboard_overview() -> Response:
             - pending_approvals: Pending evaluations for leaders
             - user_statistics: User stats for admins
             - unread_messages: Count of unread messages
-            
+
     Raises:
         500: If database operation fails.
 
@@ -111,14 +111,7 @@ def get_dashboard_overview() -> Response:
                 pending_query = pending_query.filter(
                     Evaluation.status == "pending_part_approval"
                 )
-            elif current_user.role == "group_leader":
-                pending_query = pending_query.filter(
-                    or_(
-                        Evaluation.status == "pending_part_approval",
-                        Evaluation.status == "pending_group_approval",
-                    )
-                )
-            elif current_user.role == "admin":
+            elif current_user.role == "group_leader" or current_user.role == "admin":
                 pending_query = pending_query.filter(
                     or_(
                         Evaluation.status == "pending_part_approval",
@@ -208,7 +201,7 @@ def get_detailed_statistics() -> Response:
             - completion_rates: Completion rate trends over time
             - product_statistics: Top products by evaluation count
             - evaluator_performance: Performance metrics for evaluators (leaders only)
-            
+
     Raises:
         500: If database operation fails.
 
@@ -407,7 +400,7 @@ def get_evaluation_status_report() -> Response:
             - pending_evaluations: List of pending evaluations with age
             - overdue_count: Count of evaluations overdue (>30 days)
             - summary: High-level metrics for quick overview
-            
+
     Raises:
         403: If user lacks required permissions.
         500: If database operation fails.
@@ -547,7 +540,7 @@ def get_productivity_report() -> Response:
             - monthly_productivity: Monthly evaluation throughput for last 12 months
             - top_performers: Ranking of evaluators by completion rate
             - department_performance: Department-level productivity metrics
-            
+
     Raises:
         403: If user lacks required permissions.
         500: If database operation fails.

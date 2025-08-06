@@ -4,9 +4,10 @@ This module handles notification-related API endpoints including message managem
 notification preferences, and in-app messaging.
 """
 
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import jwt_required
-from app.models.message import MessageType, MessageStatus
+
+from app.models.message import MessageStatus, MessageType
 from app.services.notification_service import NotificationService
 from app.utils.decorators import role_required, validate_json
 from app.utils.helpers import get_current_user_id
@@ -68,8 +69,7 @@ def get_user_notifications():
 @notifications_bp.route("/unread-count", methods=["GET"])
 @jwt_required()
 def get_unread_count():
-    """Get count of unread notifications for the current user
-    """
+    """Get count of unread notifications for the current user"""
     try:
         current_user_id = get_current_user_id()
 
@@ -85,8 +85,7 @@ def get_unread_count():
 @notifications_bp.route("/<int:message_id>/read", methods=["PUT"])
 @jwt_required()
 def mark_notification_as_read(message_id):
-    """Mark a specific notification as read
-    """
+    """Mark a specific notification as read"""
     try:
         current_user_id = get_current_user_id()
 
@@ -107,8 +106,7 @@ def mark_notification_as_read(message_id):
 @notifications_bp.route("/mark-all-read", methods=["PUT"])
 @jwt_required()
 def mark_all_notifications_as_read():
-    """Mark all notifications as read for the current user
-    """
+    """Mark all notifications as read for the current user"""
     try:
         current_user_id = get_current_user_id()
 
@@ -126,8 +124,7 @@ def mark_all_notifications_as_read():
 @notifications_bp.route("/<int:message_id>", methods=["DELETE"])
 @jwt_required()
 def delete_notification(message_id):
-    """Delete a specific notification
-    """
+    """Delete a specific notification"""
     try:
         current_user_id = get_current_user_id()
 
@@ -272,8 +269,7 @@ def send_bulk_notification():
 @jwt_required()
 @role_required(["Admin"])
 def get_notification_statistics():
-    """Get notification system statistics (Admin only)
-    """
+    """Get notification system statistics (Admin only)"""
     try:
         stats = NotificationService.get_notification_statistics()
 
@@ -337,8 +333,7 @@ def send_reminder_notifications():
 @jwt_required()
 @role_required(["Admin"])
 def send_daily_digest(user_id):
-    """Send daily digest to a specific user (Admin only)
-    """
+    """Send daily digest to a specific user (Admin only)"""
     try:
         success = NotificationService.send_daily_digest(user_id)
 

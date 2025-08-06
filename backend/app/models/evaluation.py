@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime, date
+from datetime import date, datetime
 from enum import Enum
-from typing import Dict, Any, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
 from app import db
 
 if TYPE_CHECKING:
@@ -85,7 +86,7 @@ class Evaluation(db.Model):
     process_step = db.Column(
         db.String(20)
     )  # New field for process step identifier (e.g., M031)
-    
+
     # Technical specifications
     pgm_version = db.Column(db.String(100))  # PGM version
     material_info = db.Column(db.String(200))  # Material information
@@ -221,7 +222,7 @@ class Evaluation(db.Model):
         if self.status == "paused":
             self.status = "in_progress"
 
-    def get_next_approver_role(self) -> Optional[str]:
+    def get_next_approver_role(self) -> str | None:
         """Get the role of next required approver.
 
         Returns:
@@ -238,7 +239,7 @@ class Evaluation(db.Model):
 
         return None
 
-    def to_dict(self, include_details: bool = False) -> Dict[str, Any]:
+    def to_dict(self, include_details: bool = False) -> dict[str, Any]:
         """Convert evaluation to dictionary.
 
         Args:
@@ -324,9 +325,9 @@ class EvaluationDetail(db.Model):
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert detail to dictionary.
-        
+
         Returns:
             Detail data dictionary.
 
@@ -386,9 +387,9 @@ class EvaluationResult(db.Model):
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert result to dictionary.
-        
+
         Returns:
             Result data dictionary.
 

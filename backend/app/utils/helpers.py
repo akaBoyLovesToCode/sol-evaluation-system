@@ -4,15 +4,16 @@ from __future__ import annotations
 
 import re
 import uuid
-from datetime import datetime, date
-from typing import Optional, Any, Dict, List, Tuple, Union
+from datetime import date, datetime
+from typing import Any
 
 from flask import Request
 from flask_jwt_extended import get_jwt_identity
+
 from app.models import SystemConfig
 
 
-def get_current_user_id() -> Optional[int]:
+def get_current_user_id() -> int | None:
     """Get current user ID from JWT token, converting from string to int.
 
     Returns:
@@ -26,7 +27,7 @@ def get_current_user_id() -> Optional[int]:
         return None
 
 
-def get_client_ip(request: Request) -> Optional[str]:
+def get_client_ip(request: Request) -> str | None:
     """Get client IP address from request.
 
     Args:
@@ -77,7 +78,9 @@ def generate_evaluation_number() -> str:
     return f"{prefix}-{date_str}-{unique_suffix}"
 
 
-def format_datetime(dt: Optional[datetime], format_string: Optional[str] = None) -> Optional[str]:
+def format_datetime(
+    dt: datetime | None, format_string: str | None = None
+) -> str | None:
     """Format datetime object to string.
 
     Args:
@@ -97,7 +100,7 @@ def format_datetime(dt: Optional[datetime], format_string: Optional[str] = None)
     return dt.strftime(format_string)
 
 
-def format_date(date_obj: Optional[date], format_string: Optional[str] = None) -> Optional[str]:
+def format_date(date_obj: date | None, format_string: str | None = None) -> str | None:
     """Format date object to string.
 
     Args:
@@ -117,7 +120,9 @@ def format_date(date_obj: Optional[date], format_string: Optional[str] = None) -
     return date_obj.strftime(format_string)
 
 
-def parse_date_string(date_string: Optional[str], format_string: str = "%Y-%m-%d") -> Optional[date]:
+def parse_date_string(
+    date_string: str | None, format_string: str = "%Y-%m-%d"
+) -> date | None:
     """Parse date string to date object.
 
     Args:
@@ -162,7 +167,7 @@ def sanitize_filename(filename: str) -> str:
     return filename
 
 
-def calculate_pagination(page: int, per_page: int, total_count: int) -> Dict[str, Any]:
+def calculate_pagination(page: int, per_page: int, total_count: int) -> dict[str, Any]:
     """Calculate pagination information.
 
     Args:
@@ -200,7 +205,7 @@ def calculate_pagination(page: int, per_page: int, total_count: int) -> Dict[str
     }
 
 
-def build_query_filters(model: Any, filters: Dict[str, Any]) -> List[Any]:
+def build_query_filters(model: Any, filters: dict[str, Any]) -> list[Any]:
     """Build SQLAlchemy query filters from dictionary.
 
     Args:
@@ -245,7 +250,7 @@ def build_query_filters(model: Any, filters: Dict[str, Any]) -> List[Any]:
     return conditions
 
 
-def get_enum_values(enum_column: Any) -> List[str]:
+def get_enum_values(enum_column: Any) -> list[str]:
     """Get possible values for an enum column.
 
     Args:
@@ -262,11 +267,11 @@ def get_enum_values(enum_column: Any) -> List[str]:
 
 
 def create_response(
-    data: Optional[Any] = None,
-    message: Optional[str] = None,
+    data: Any | None = None,
+    message: str | None = None,
     status_code: int = 200,
-    errors: Optional[Any] = None,
-) -> Tuple[Dict[str, Any], int]:
+    errors: Any | None = None,
+) -> tuple[dict[str, Any], int]:
     """Create standardized API response.
 
     Args:
@@ -279,7 +284,7 @@ def create_response(
         Tuple of (response_dict, status_code).
 
     """
-    response: Dict[str, Any] = {}
+    response: dict[str, Any] = {}
 
     if data is not None:
         response["data"] = data
@@ -296,7 +301,9 @@ def create_response(
     return response, status_code
 
 
-def mask_sensitive_data(data: Dict[str, Any], sensitive_fields: Optional[List[str]] = None) -> Dict[str, Any]:
+def mask_sensitive_data(
+    data: dict[str, Any], sensitive_fields: list[str] | None = None
+) -> dict[str, Any]:
     """Mask sensitive data in dictionary.
 
     Args:

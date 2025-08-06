@@ -1,5 +1,5 @@
-import { createRouter, createWebHistory } from "vue-router";
-import { useAuthStore } from "../stores/auth";
+import { createRouter, createWebHistory } from "vue-router"
+import { useAuthStore } from "../stores/auth"
 
 const routes = [
   {
@@ -68,48 +68,48 @@ const routes = [
     name: "NotFound",
     component: () => import("../views/NotFound.vue"),
   },
-];
+]
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
-});
+})
 
 // 路由守卫
 router.beforeEach(async (to, from, next) => {
-  const authStore = useAuthStore();
+  const authStore = useAuthStore()
 
   // 如果有token但没有用户信息，尝试获取用户信息
   if (authStore.token && !authStore.user) {
     try {
-      await authStore.checkAuth();
+      await authStore.checkAuth()
     } catch (error) {
-      console.error("Failed to check auth:", error);
+      console.error("Failed to check auth:", error)
     }
   }
 
   // 检查是否需要认证
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next("/login");
-    return;
+    next("/login")
+    return
   }
 
   // 检查是否需要游客状态（如登录页）
   if (to.meta.requiresGuest && authStore.isAuthenticated) {
-    next("/");
-    return;
+    next("/")
+    return
   }
 
   // 检查角色权限
   if (to.meta.requiresRole && authStore.user) {
-    const hasRole = to.meta.requiresRole.includes(authStore.user.role);
+    const hasRole = to.meta.requiresRole.includes(authStore.user.role)
     if (!hasRole) {
-      next("/");
-      return;
+      next("/")
+      return
     }
   }
 
-  next();
-});
+  next()
+})
 
-export default router;
+export default router

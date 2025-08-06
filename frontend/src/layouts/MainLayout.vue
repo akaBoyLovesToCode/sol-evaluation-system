@@ -119,10 +119,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useI18n } from "vue-i18n";
-import { useAuthStore } from "../stores/auth";
+import { ref, computed, watch, onMounted } from "vue"
+import { useRoute, useRouter } from "vue-router"
+import { useI18n } from "vue-i18n"
+import { useAuthStore } from "../stores/auth"
 import {
   House,
   Document,
@@ -134,102 +134,102 @@ import {
   Setting,
   ArrowDown,
   SwitchButton,
-} from "@element-plus/icons-vue";
+} from "@element-plus/icons-vue"
 
-const route = useRoute();
-const router = useRouter();
-const { t, locale } = useI18n();
-const authStore = useAuthStore();
+const route = useRoute()
+const router = useRouter()
+const { t, locale } = useI18n()
+const authStore = useAuthStore()
 
-const isCollapse = ref(false);
-const unreadCount = ref(0);
+const isCollapse = ref(false)
+const unreadCount = ref(0)
 
 const activeMenu = computed(() => {
-  const { matched } = route;
-  if (matched.length === 0) return "/";
+  const { matched } = route
+  if (matched.length === 0) return "/"
 
-  let path = matched[matched.length - 1].path;
+  let path = matched[matched.length - 1].path
   if (path === "/evaluations/new" || path.startsWith("/evaluations/")) {
-    return "/evaluations";
+    return "/evaluations"
   }
-  return path;
-});
+  return path
+})
 
 const currentLanguage = computed(() => {
   const langMap = {
     zh: "中文",
     en: "English",
     ko: "한국어",
-  };
-  return langMap[locale.value] || "中文";
-});
+  }
+  return langMap[locale.value] || "中文"
+})
 
 const breadcrumbs = computed(() => {
-  const matched = route.matched.filter((item) => item.meta && item.meta.title);
-  const breadcrumbs = [];
+  const matched = route.matched.filter((item) => item.meta && item.meta.title)
+  const breadcrumbs = []
 
   matched.forEach((item) => {
     breadcrumbs.push({
       path: item.path,
       title: t(item.meta.title),
-    });
-  });
+    })
+  })
 
-  return breadcrumbs;
-});
+  return breadcrumbs
+})
 
 const toggleSidebar = () => {
-  isCollapse.value = !isCollapse.value;
-  localStorage.setItem("sidebarCollapse", isCollapse.value);
-};
+  isCollapse.value = !isCollapse.value
+  localStorage.setItem("sidebarCollapse", isCollapse.value)
+}
 
 const changeLanguage = (lang) => {
-  locale.value = lang;
-  localStorage.setItem("locale", lang);
-};
+  locale.value = lang
+  localStorage.setItem("locale", lang)
+}
 
 const handleUserCommand = (command) => {
   switch (command) {
     case "profile":
-      router.push("/profile");
-      break;
+      router.push("/profile")
+      break
     case "logout":
-      authStore.logout();
-      router.push("/login");
-      break;
+      authStore.logout()
+      router.push("/login")
+      break
   }
-};
+}
 
 // 获取未读消息数量
 const fetchUnreadCount = async () => {
   try {
     // TODO: 实现获取未读消息数量的API调用
-    unreadCount.value = 0;
+    unreadCount.value = 0
   } catch (error) {
-    console.error("Failed to fetch unread count:", error);
+    console.error("Failed to fetch unread count:", error)
   }
-};
+}
 
 onMounted(() => {
   // 恢复侧边栏状态
-  const savedCollapse = localStorage.getItem("sidebarCollapse");
+  const savedCollapse = localStorage.getItem("sidebarCollapse")
   if (savedCollapse !== null) {
-    isCollapse.value = JSON.parse(savedCollapse);
+    isCollapse.value = JSON.parse(savedCollapse)
   }
 
   // 获取未读消息数量
-  fetchUnreadCount();
-});
+  fetchUnreadCount()
+})
 
 // 监听路由变化，更新未读消息数量
 watch(
   () => route.path,
   () => {
     if (route.path === "/messages") {
-      fetchUnreadCount();
+      fetchUnreadCount()
     }
   },
-);
+)
 </script>
 
 <style scoped>

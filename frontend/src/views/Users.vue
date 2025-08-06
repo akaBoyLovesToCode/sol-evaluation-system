@@ -293,33 +293,33 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from "vue";
-import { useI18n } from "vue-i18n";
-import { ElMessage, ElMessageBox } from "element-plus";
-import { Plus, Search, Refresh } from "@element-plus/icons-vue";
-import api from "../utils/api";
-import { useAuthStore } from "../stores/auth";
+import { ref, reactive, onMounted, computed } from "vue"
+import { useI18n } from "vue-i18n"
+import { ElMessage, ElMessageBox } from "element-plus"
+import { Plus, Search, Refresh } from "@element-plus/icons-vue"
+import api from "../utils/api"
+import { useAuthStore } from "../stores/auth"
 
-const { t } = useI18n();
-const authStore = useAuthStore();
+const { t } = useI18n()
+const authStore = useAuthStore()
 
 // Data
-const loading = ref(false);
-const users = ref([]);
-const totalUsers = ref(0);
-const currentPage = ref(1);
-const pageSize = ref(10);
-const userDialogVisible = ref(false);
-const deleteDialogVisible = ref(false);
-const isEditing = ref(false);
-const userToDelete = ref(null);
+const loading = ref(false)
+const users = ref([])
+const totalUsers = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(10)
+const userDialogVisible = ref(false)
+const deleteDialogVisible = ref(false)
+const isEditing = ref(false)
+const userToDelete = ref(null)
 
 // Search form
 const searchForm = reactive({
   username: "",
   role: "",
   status: "",
-});
+})
 
 // User form
 const userForm = reactive({
@@ -333,10 +333,10 @@ const userForm = reactive({
   is_active: true,
   password: "",
   confirmPassword: "",
-});
+})
 
 // Form reference
-const userFormRef = ref(null);
+const userFormRef = ref(null)
 
 // Available roles
 const roles = [
@@ -344,7 +344,7 @@ const roles = [
   { value: "part_leader", label: t("users.roles.part_leader") },
   { value: "group_leader", label: t("users.roles.group_leader") },
   { value: "admin", label: t("users.roles.admin") },
-];
+]
 
 // Form validation rules
 const userFormRules = computed(() => ({
@@ -420,26 +420,26 @@ const userFormRules = computed(() => ({
         {
           validator: (_, value, callback) => {
             if (value !== userForm.password) {
-              callback(new Error(t("profile.passwordMismatch")));
+              callback(new Error(t("profile.passwordMismatch")))
             } else {
-              callback();
+              callback()
             }
           },
           trigger: "blur",
         },
       ]
     : [],
-}));
+}))
 
 // Fetch users on component mount
 onMounted(() => {
-  fetchUsers();
-});
+  fetchUsers()
+})
 
 // Fetch users from API
 const fetchUsers = async () => {
   try {
-    loading.value = true;
+    loading.value = true
     const params = {
       page: currentPage.value,
       per_page: pageSize.value,
@@ -451,91 +451,91 @@ const fetchUsers = async () => {
           : searchForm.status === "inactive"
             ? false
             : undefined,
-    };
+    }
 
-    const response = await api.get("/users", { params });
-    users.value = response.data.data.users;
-    totalUsers.value = response.data.data.total;
+    const response = await api.get("/users", { params })
+    users.value = response.data.data.users
+    totalUsers.value = response.data.data.total
   } catch (error) {
-    ElMessage.error(t("users.fetchError"));
-    console.error("Failed to fetch users:", error);
+    ElMessage.error(t("users.fetchError"))
+    console.error("Failed to fetch users:", error)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 // Search users
 const searchUsers = () => {
-  currentPage.value = 1;
-  fetchUsers();
-};
+  currentPage.value = 1
+  fetchUsers()
+}
 
 // Reset search form
 const resetSearch = () => {
-  searchForm.username = "";
-  searchForm.role = "";
-  searchForm.status = "";
-  currentPage.value = 1;
-  fetchUsers();
-};
+  searchForm.username = ""
+  searchForm.role = ""
+  searchForm.status = ""
+  currentPage.value = 1
+  fetchUsers()
+}
 
 // Handle page size change
 const handleSizeChange = (size) => {
-  pageSize.value = size;
-  fetchUsers();
-};
+  pageSize.value = size
+  fetchUsers()
+}
 
 // Handle current page change
 const handleCurrentChange = (page) => {
-  currentPage.value = page;
-  fetchUsers();
-};
+  currentPage.value = page
+  fetchUsers()
+}
 
 // Show create user dialog
 const showCreateUserDialog = () => {
-  isEditing.value = false;
-  resetUserForm();
-  userDialogVisible.value = true;
-};
+  isEditing.value = false
+  resetUserForm()
+  userDialogVisible.value = true
+}
 
 // Edit user
 const editUser = (user) => {
-  isEditing.value = true;
-  userForm.id = user.id;
-  userForm.username = user.username;
-  userForm.full_name = user.full_name || user.fullName;
-  userForm.email = user.email;
-  userForm.department = user.department || "";
-  userForm.position = user.position || "";
-  userForm.role = user.role;
-  userForm.is_active = user.is_active;
-  userForm.password = "";
-  userForm.confirmPassword = "";
-  userDialogVisible.value = true;
-};
+  isEditing.value = true
+  userForm.id = user.id
+  userForm.username = user.username
+  userForm.full_name = user.full_name || user.fullName
+  userForm.email = user.email
+  userForm.department = user.department || ""
+  userForm.position = user.position || ""
+  userForm.role = user.role
+  userForm.is_active = user.is_active
+  userForm.password = ""
+  userForm.confirmPassword = ""
+  userDialogVisible.value = true
+}
 
 // Reset user form
 const resetUserForm = () => {
-  userForm.id = null;
-  userForm.username = "";
-  userForm.full_name = "";
-  userForm.email = "";
-  userForm.department = "";
-  userForm.position = "";
-  userForm.role = "user";
-  userForm.is_active = true;
-  userForm.password = "";
-  userForm.confirmPassword = "";
-};
+  userForm.id = null
+  userForm.username = ""
+  userForm.full_name = ""
+  userForm.email = ""
+  userForm.department = ""
+  userForm.position = ""
+  userForm.role = "user"
+  userForm.is_active = true
+  userForm.password = ""
+  userForm.confirmPassword = ""
+}
 
 // Save user (create or update)
 const saveUser = async () => {
-  if (!userFormRef.value) return;
+  if (!userFormRef.value) return
 
   await userFormRef.value.validate(async (valid) => {
     if (valid) {
       try {
-        loading.value = true;
+        loading.value = true
 
         const userData = {
           username: userForm.username,
@@ -545,39 +545,39 @@ const saveUser = async () => {
           position: userForm.position,
           role: userForm.role,
           is_active: userForm.is_active,
-        };
+        }
 
         if (!isEditing.value) {
-          userData.password = userForm.password;
+          userData.password = userForm.password
         }
 
         if (isEditing.value) {
-          await api.put(`/users/${userForm.id}`, userData);
-          ElMessage.success(t("users.updateSuccess"));
+          await api.put(`/users/${userForm.id}`, userData)
+          ElMessage.success(t("users.updateSuccess"))
         } else {
-          await api.post("/users", userData);
-          ElMessage.success(t("users.createSuccess"));
+          await api.post("/users", userData)
+          ElMessage.success(t("users.createSuccess"))
         }
 
-        userDialogVisible.value = false;
-        fetchUsers();
+        userDialogVisible.value = false
+        fetchUsers()
       } catch (error) {
         const errorMessage =
           error.response?.data?.message ||
           error.response?.data?.error ||
-          (isEditing.value ? t("users.updateError") : t("users.createError"));
-        ElMessage.error(errorMessage);
+          (isEditing.value ? t("users.updateError") : t("users.createError"))
+        ElMessage.error(errorMessage)
       } finally {
-        loading.value = false;
+        loading.value = false
       }
     }
-  });
-};
+  })
+}
 
 // Toggle user status (activate/deactivate)
 const toggleUserStatus = async (user) => {
   try {
-    const action = user.is_active ? "deactivate" : "activate";
+    const action = user.is_active ? "deactivate" : "activate"
 
     await ElMessageBox.confirm(
       t(`users.${action}Warning`, { username: user.username }),
@@ -587,38 +587,38 @@ const toggleUserStatus = async (user) => {
         cancelButtonText: t("common.cancel"),
         type: "warning",
       },
-    );
+    )
 
     await api.put(`/users/${user.id}/status`, {
       is_active: !user.is_active,
-    });
+    })
 
-    ElMessage.success(t(`users.${action}Success`));
-    fetchUsers();
+    ElMessage.success(t(`users.${action}Success`))
+    fetchUsers()
   } catch (error) {
     if (error !== "cancel") {
-      ElMessage.error(t("users.statusUpdateError"));
+      ElMessage.error(t("users.statusUpdateError"))
     }
   }
-};
+}
 
 // Show delete user dialog
 const showDeleteUserDialog = (user) => {
-  userToDelete.value = user;
-  deleteDialogVisible.value = true;
-};
+  userToDelete.value = user
+  deleteDialogVisible.value = true
+}
 
 // Confirm delete user
 const confirmDeleteUser = async () => {
   try {
-    await api.delete(`/users/${userToDelete.value.id}`);
-    ElMessage.success(t("users.deleteSuccess"));
-    deleteDialogVisible.value = false;
-    fetchUsers();
+    await api.delete(`/users/${userToDelete.value.id}`)
+    ElMessage.success(t("users.deleteSuccess"))
+    deleteDialogVisible.value = false
+    fetchUsers()
   } catch (error) {
-    ElMessage.error(t("users.deleteError"));
+    ElMessage.error(t("users.deleteError"))
   }
-};
+}
 
 // Get role tag type
 const getRoleTagType = (role) => {
@@ -627,9 +627,9 @@ const getRoleTagType = (role) => {
     group_leader: "warning",
     part_leader: "success",
     user: "info",
-  };
-  return typeMap[role] || "info";
-};
+  }
+  return typeMap[role] || "info"
+}
 </script>
 
 <style scoped>

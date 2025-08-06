@@ -138,21 +138,21 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import { useAuthStore } from "../stores/auth";
-import { Edit } from "@element-plus/icons-vue";
-import { ElMessage } from "element-plus";
-import { useI18n } from "vue-i18n";
+import { ref, reactive, onMounted } from "vue"
+import { useRouter } from "vue-router"
+import { useAuthStore } from "../stores/auth"
+import { Edit } from "@element-plus/icons-vue"
+import { ElMessage } from "element-plus"
+import { useI18n } from "vue-i18n"
 
-const { t } = useI18n();
-const router = useRouter();
-const authStore = useAuthStore();
-const editPersonalInfo = ref(false);
+const { t } = useI18n()
+const router = useRouter()
+const authStore = useAuthStore()
+const editPersonalInfo = ref(false)
 
 // Form references
-const personalInfoForm = ref(null);
-const passwordForm = ref(null);
+const personalInfoForm = ref(null)
+const passwordForm = ref(null)
 
 // Personal info form data
 const personalInfo = reactive({
@@ -161,14 +161,14 @@ const personalInfo = reactive({
   department: "",
   position: "",
   role: "",
-});
+})
 
 // Password form data
 const passwordData = reactive({
   currentPassword: "",
   newPassword: "",
   confirmPassword: "",
-});
+})
 
 // Form validation rules
 const personalInfoRules = {
@@ -197,7 +197,7 @@ const personalInfoRules = {
       trigger: "blur",
     },
   ],
-};
+}
 
 const passwordRules = {
   currentPassword: [
@@ -233,34 +233,34 @@ const passwordRules = {
     {
       validator: (_, value, callback) => {
         if (value !== passwordData.newPassword) {
-          callback(new Error(t("profile.passwordMismatch")));
+          callback(new Error(t("profile.passwordMismatch")))
         } else {
-          callback();
+          callback()
         }
       },
       trigger: "blur",
     },
   ],
-};
+}
 
 // Load user data
 onMounted(async () => {
   if (!authStore.user) {
-    await authStore.checkAuth();
+    await authStore.checkAuth()
   }
 
   if (authStore.user) {
-    personalInfo.fullName = authStore.user.fullName || "";
-    personalInfo.email = authStore.user.email || "";
-    personalInfo.department = authStore.user.department || "";
-    personalInfo.position = authStore.user.position || "";
-    personalInfo.role = authStore.user.role || "";
+    personalInfo.fullName = authStore.user.fullName || ""
+    personalInfo.email = authStore.user.email || ""
+    personalInfo.department = authStore.user.department || ""
+    personalInfo.position = authStore.user.position || ""
+    personalInfo.role = authStore.user.role || ""
   }
-});
+})
 
 // Update personal information
 const updatePersonalInfo = async () => {
-  if (!personalInfoForm.value) return;
+  if (!personalInfoForm.value) return
 
   await personalInfoForm.value.validate(async (valid) => {
     if (valid) {
@@ -269,72 +269,72 @@ const updatePersonalInfo = async () => {
         email: personalInfo.email,
         department: personalInfo.department,
         position: personalInfo.position,
-      });
+      })
 
       if (result.success) {
-        ElMessage.success(t("profile.updateSuccess"));
-        editPersonalInfo.value = false;
+        ElMessage.success(t("profile.updateSuccess"))
+        editPersonalInfo.value = false
       } else {
-        ElMessage.error(result.message || t("profile.updateError"));
+        ElMessage.error(result.message || t("profile.updateError"))
       }
     }
-  });
-};
+  })
+}
 
 // Cancel personal info edit
 const cancelPersonalInfoEdit = () => {
   if (authStore.user) {
-    personalInfo.fullName = authStore.user.fullName || "";
-    personalInfo.email = authStore.user.email || "";
-    personalInfo.department = authStore.user.department || "";
-    personalInfo.position = authStore.user.position || "";
+    personalInfo.fullName = authStore.user.fullName || ""
+    personalInfo.email = authStore.user.email || ""
+    personalInfo.department = authStore.user.department || ""
+    personalInfo.position = authStore.user.position || ""
   }
-  editPersonalInfo.value = false;
-};
+  editPersonalInfo.value = false
+}
 
 // Change password
 const changePassword = async () => {
-  if (!passwordForm.value) return;
+  if (!passwordForm.value) return
 
   await passwordForm.value.validate(async (valid) => {
     if (valid) {
       if (passwordData.newPassword !== passwordData.confirmPassword) {
-        ElMessage.error(t("profile.passwordMismatch"));
-        return;
+        ElMessage.error(t("profile.passwordMismatch"))
+        return
       }
 
       const result = await authStore.changePassword({
         current_password: passwordData.currentPassword,
         new_password: passwordData.newPassword,
-      });
+      })
 
       if (result.success) {
-        ElMessage.success(t("profile.passwordChangeSuccess"));
-        
+        ElMessage.success(t("profile.passwordChangeSuccess"))
+
         // Show redirect notification
         ElMessage({
           message: t("profile.redirectingToLogin"),
           type: "info",
           duration: 3000,
-        });
+        })
 
         // Reset form
-        passwordData.currentPassword = "";
-        passwordData.newPassword = "";
-        passwordData.confirmPassword = "";
-        passwordForm.value.resetFields();
+        passwordData.currentPassword = ""
+        passwordData.newPassword = ""
+        passwordData.confirmPassword = ""
+        passwordForm.value.resetFields()
 
         // Logout and redirect after 3 seconds
         setTimeout(async () => {
-          await authStore.logout();
-          router.push("/login");
-        }, 3000);
+          await authStore.logout()
+          router.push("/login")
+        }, 3000)
       } else {
-        ElMessage.error(result.message || t("profile.passwordChangeError"));
+        ElMessage.error(result.message || t("profile.passwordChangeError"))
       }
     }
-  });
-};
+  })
+}
 </script>
 
 <style scoped>

@@ -1,10 +1,9 @@
-"""Helper functions for testing.
-"""
+"""Helper functions for testing."""
 
 import json
 from datetime import datetime, timedelta
-from app.models.evaluation import Evaluation, EvaluationType, EvaluationStatus
-from app.models.user import User
+
+from app.models.evaluation import Evaluation, EvaluationStatus, EvaluationType
 
 
 def create_test_evaluation(session, user_id, **kwargs):
@@ -19,8 +18,11 @@ def create_test_evaluation(session, user_id, **kwargs):
         Evaluation: The created evaluation
 
     """
+    import uuid
+
+    unique_id = str(uuid.uuid4())[:8]
     defaults = {
-        "evaluation_number": f"EV-{datetime.now().strftime('%Y%m%d')}-001",
+        "evaluation_number": f"EV-{datetime.now().strftime('%Y%m%d')}-{unique_id}",
         "evaluation_type": EvaluationType.NEW_PRODUCT.value,
         "product_name": "Test Product",
         "part_number": "TP-001",

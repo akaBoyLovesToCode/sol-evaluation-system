@@ -1,33 +1,33 @@
 // Import any global setup for tests
-import '@testing-library/jest-dom';
-import { config } from '@vue/test-utils';
-import { createApp } from 'vue';
+import '@testing-library/jest-dom'
+import { config } from '@vue/test-utils'
+import { createApp } from 'vue'
 
 // Configure Vue Test Utils
-global.Vue = createApp;
+global.Vue = createApp
 
 // Mock i18n
 config.global.mocks = {
   $t: (key) => key,
-  $tc: (key, count) => key,
+  $tc: (key) => key,
   $te: () => true,
   $d: (date) => date,
   $n: (number) => number,
-};
+}
 
 // Mock global objects that might be needed in tests
 global.ResizeObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
   disconnect: jest.fn(),
-}));
+}))
 
 // Mock Intersection Observer
 global.IntersectionObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
   disconnect: jest.fn(),
-}));
+}))
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
@@ -42,7 +42,7 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: jest.fn(),
     dispatchEvent: jest.fn(),
   })),
-});
+})
 
 // Suppress console errors during tests
-console.error = jest.fn();
+console.error = jest.fn()

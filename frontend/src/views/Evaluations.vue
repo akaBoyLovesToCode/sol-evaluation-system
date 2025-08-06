@@ -185,7 +185,11 @@
             width="140"
           >
             <template #default="{ row }">
-              {{ row.evaluation_reason ? $t(`evaluation.reasons.${row.evaluation_reason}`) : '-' }}
+              {{
+                row.evaluation_reason
+                  ? $t(`evaluation.reasons.${row.evaluation_reason}`)
+                  : "-"
+              }}
             </template>
           </el-table-column>
 
@@ -249,10 +253,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from "vue";
-import { useRouter } from "vue-router";
-import { useI18n } from "vue-i18n";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ref, reactive, onMounted, computed } from "vue"
+import { useRouter } from "vue-router"
+import { useI18n } from "vue-i18n"
+import { ElMessage, ElMessageBox } from "element-plus"
 import {
   Plus,
   Search,
@@ -265,19 +269,19 @@ import {
   VideoPause,
   VideoPlay,
   Close,
-} from "@element-plus/icons-vue";
-import api from "../utils/api";
-import { useAuthStore } from "../stores/auth";
-import AnimatedContainer from "../components/AnimatedContainer.vue";
+} from "@element-plus/icons-vue"
+import api from "../utils/api"
+import { useAuthStore } from "../stores/auth"
+import AnimatedContainer from "../components/AnimatedContainer.vue"
 
-const router = useRouter();
-const { t } = useI18n();
-const authStore = useAuthStore();
+const router = useRouter()
+const { t } = useI18n()
+const authStore = useAuthStore()
 
-const tableLoading = ref(false);
-const exportLoading = ref(false);
-const tableData = ref([]);
-const selectedRows = ref([]);
+const tableLoading = ref(false)
+const exportLoading = ref(false)
+const tableData = ref([])
+const selectedRows = ref([])
 
 const searchForm = reactive({
   evaluation_number: "",
@@ -286,18 +290,18 @@ const searchForm = reactive({
   product: "",
   evaluator: "",
   dateRange: null,
-});
+})
 
 const pagination = reactive({
   page: 1,
   size: 20,
   total: 0,
-});
+})
 
 const sortParams = reactive({
   prop: "",
   order: "",
-});
+})
 
 const statusOptions = computed(() => [
   { label: t("status.draft"), value: "draft" },
@@ -307,156 +311,158 @@ const statusOptions = computed(() => [
   { label: t("status.paused"), value: "paused" },
   { label: t("status.cancelled"), value: "cancelled" },
   { label: t("status.rejected"), value: "rejected" },
-]);
+])
 
 const fetchEvaluations = async () => {
   try {
-    tableLoading.value = true;
+    tableLoading.value = true
 
     const params = {
       page: pagination.page,
       per_page: pagination.size,
-    };
+    }
 
     // 只添加非空的搜索参数
     if (searchForm.evaluation_number) {
-      params.evaluation_number = searchForm.evaluation_number;
+      params.evaluation_number = searchForm.evaluation_number
     }
     if (searchForm.evaluation_type) {
-      params.evaluation_type = searchForm.evaluation_type;
+      params.evaluation_type = searchForm.evaluation_type
     }
     if (searchForm.status) {
-      params.status = searchForm.status;
+      params.status = searchForm.status
     }
     if (searchForm.product) {
-      params.product = searchForm.product;
+      params.product = searchForm.product
     }
     if (searchForm.evaluator) {
-      params.evaluator_id = searchForm.evaluator;
+      params.evaluator_id = searchForm.evaluator
     }
 
     // 处理日期范围
     if (searchForm.dateRange && searchForm.dateRange.length === 2) {
-      params.start_date_from = searchForm.dateRange[0];
-      params.start_date_to = searchForm.dateRange[1];
+      params.start_date_from = searchForm.dateRange[0]
+      params.start_date_to = searchForm.dateRange[1]
     }
 
     // 处理排序
     if (sortParams.prop) {
-      params.sort_by = sortParams.prop;
-      params.sort_order = sortParams.order === "ascending" ? "asc" : "desc";
+      params.sort_by = sortParams.prop
+      params.sort_order = sortParams.order === "ascending" ? "asc" : "desc"
     }
 
-    const response = await api.get("/evaluations", { params });
-    const data = response.data.data;
+    const response = await api.get("/evaluations", { params })
+    const data = response.data.data
 
     // 后端返回的数据结构是 { data: { evaluations: [...], pagination: {...} } }
-    tableData.value = data.evaluations || [];
-    pagination.total = data.total || 0;
+    tableData.value = data.evaluations || []
+    pagination.total = data.total || 0
   } catch (error) {
-    ElMessage.error("获取评价列表失败");
-    console.error("Failed to fetch evaluations:", error);
+    ElMessage.error("获取评价列表失败")
+    console.error("Failed to fetch evaluations:", error)
   } finally {
-    tableLoading.value = false;
+    tableLoading.value = false
   }
-};
+}
 
 const handleSearch = () => {
-  pagination.page = 1;
-  fetchEvaluations();
-};
+  pagination.page = 1
+  fetchEvaluations()
+}
 
 const handleReset = () => {
   Object.keys(searchForm).forEach((key) => {
-    searchForm[key] = key === "dateRange" ? null : "";
-  });
-  pagination.page = 1;
-  fetchEvaluations();
-};
+    searchForm[key] = key === "dateRange" ? null : ""
+  })
+  pagination.page = 1
+  fetchEvaluations()
+}
 
 const handleSizeChange = (size) => {
-  pagination.size = size;
-  pagination.page = 1;
-  fetchEvaluations();
-};
+  pagination.size = size
+  pagination.page = 1
+  fetchEvaluations()
+}
 
 const handleCurrentChange = (page) => {
-  pagination.page = page;
-  fetchEvaluations();
-};
+  pagination.page = page
+  fetchEvaluations()
+}
 
 const handleSortChange = ({ prop, order }) => {
-  sortParams.prop = prop;
-  sortParams.order = order;
-  fetchEvaluations();
-};
+  sortParams.prop = prop
+  sortParams.order = order
+  fetchEvaluations()
+}
 
 const handleSelectionChange = (selection) => {
-  selectedRows.value = selection;
-};
+  selectedRows.value = selection
+}
 
 const handleEdit = (row) => {
-  router.push(`/evaluations/${row.id}/edit`);
-};
+  router.push(`/evaluations/${row.id}/edit`)
+}
 
 const handleOperation = async (command, row) => {
   try {
-    let message = "";
-    let confirmText = "";
+    let message = ""
+    let confirmText = ""
 
     switch (command) {
       case "approve":
-        message = "确认审批通过此评价？";
-        confirmText = "审批";
-        break;
+        message = "确认审批通过此评价？"
+        confirmText = "审批"
+        break
       case "pause":
-        message = "确认暂停此评价？";
-        confirmText = "暂停";
-        break;
+        message = "确认暂停此评价？"
+        confirmText = "暂停"
+        break
       case "resume":
-        message = "确认恢复此评价？";
-        confirmText = "恢复";
-        break;
+        message = "确认恢复此评价？"
+        confirmText = "恢复"
+        break
       case "cancel":
-        message = "确认取消此评价？此操作不可撤销。";
-        confirmText = "取消";
-        break;
+        message = "确认取消此评价？此操作不可撤销。"
+        confirmText = "取消"
+        break
     }
 
     await ElMessageBox.confirm(message, "确认操作", {
       confirmButtonText: confirmText,
       cancelButtonText: "取消",
       type: "warning",
-    });
+    })
 
-    await api.put(`/evaluations/${row.id}/${command}`);
-    ElMessage.success("操作成功");
-    fetchEvaluations();
+    await api.put(`/evaluations/${row.id}/${command}`)
+    ElMessage.success("操作成功")
+    fetchEvaluations()
   } catch (error) {
     if (error !== "cancel") {
-      ElMessage.error("操作失败");
-      console.error("Operation failed:", error);
+      ElMessage.error("操作失败")
+      console.error("Operation failed:", error)
     }
   }
-};
+}
 
 const handleExport = async () => {
   try {
-    exportLoading.value = true;
+    exportLoading.value = true
 
     // Determine data to export: selected rows or all data
-    const dataToExport = selectedRows.value.length > 0 ? selectedRows.value : tableData.value;
-    
+    const dataToExport =
+      selectedRows.value.length > 0 ? selectedRows.value : tableData.value
+
     if (dataToExport.length === 0) {
-      ElMessage.warning("没有数据可导出");
-      return;
+      ElMessage.warning("没有数据可导出")
+      return
     }
 
     // Show message about what's being exported
-    const exportMessage = selectedRows.value.length > 0 
-      ? `导出选中的 ${selectedRows.value.length} 条评价记录` 
-      : `导出全部 ${tableData.value.length} 条评价记录`;
-    console.log(exportMessage);
+    const exportMessage =
+      selectedRows.value.length > 0
+        ? `导出选中的 ${selectedRows.value.length} 条评价记录`
+        : `导出全部 ${tableData.value.length} 条评价记录`
+    console.log(exportMessage)
 
     // Prepare CSV data
     const headers = [
@@ -469,7 +475,7 @@ const handleExport = async () => {
       t("common.status"),
       t("evaluation.startDate"),
       t("evaluation.endDate"),
-    ].join(",");
+    ].join(",")
 
     const rows = dataToExport.map((row) =>
       [
@@ -477,7 +483,9 @@ const handleExport = async () => {
         t(`evaluation.type.${row.evaluation_type}`) || "",
         row.product_name || "",
         row.part_number || "",
-        row.evaluation_reason ? t(`evaluation.reasons.${row.evaluation_reason}`) : "",
+        row.evaluation_reason
+          ? t(`evaluation.reasons.${row.evaluation_reason}`)
+          : "",
         row.evaluator_name || "",
         t(`status.${row.status}`) || "",
         formatDate(row.start_date) || "",
@@ -485,62 +493,63 @@ const handleExport = async () => {
       ]
         .map((cell) => `"${cell}"`)
         .join(","),
-    );
+    )
 
-    const csvContent = [headers, ...rows].join("\n");
+    const csvContent = [headers, ...rows].join("\n")
 
     // Create and download CSV file
     const blob = new Blob(["\uFEFF" + csvContent], {
       type: "text/csv;charset=utf-8;",
-    });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    const filename = selectedRows.value.length > 0 
-      ? `evaluations_selected_${new Date().toISOString().split("T")[0]}.csv`
-      : `evaluations_all_${new Date().toISOString().split("T")[0]}.csv`;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    const filename =
+      selectedRows.value.length > 0
+        ? `evaluations_selected_${new Date().toISOString().split("T")[0]}.csv`
+        : `evaluations_all_${new Date().toISOString().split("T")[0]}.csv`
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
 
-    ElMessage.success(t("evaluation.exportSuccess") || "导出成功");
+    ElMessage.success(t("evaluation.exportSuccess") || "导出成功")
   } catch (error) {
-    ElMessage.error(t("evaluation.exportError") || "导出失败");
-    console.error("Export failed:", error);
+    ElMessage.error(t("evaluation.exportError") || "导出失败")
+    console.error("Export failed:", error)
   } finally {
-    exportLoading.value = false;
+    exportLoading.value = false
   }
-};
+}
 
 // 权限检查函数
 const canEdit = (row) => {
   return (
     row.status === "in_progress" &&
     (authStore.user.id === row.evaluator_id || authStore.isAdmin)
-  );
-};
+  )
+}
 
 const canOperate = (row) => {
-  return authStore.canApprove || authStore.user.id === row.evaluator_id;
-};
+  return authStore.canApprove || authStore.user.id === row.evaluator_id
+}
 
 const canApprove = (row) => {
-  return row.status === "pending_approval" && authStore.canApprove;
-};
+  return row.status === "pending_approval" && authStore.canApprove
+}
 
 const canPause = (row) => {
-  return row.status === "in_progress";
-};
+  return row.status === "in_progress"
+}
 
 const canResume = (row) => {
-  return row.status === "paused";
-};
+  return row.status === "paused"
+}
 
 const canCancel = (row) => {
-  return ["in_progress", "paused", "pending_approval"].includes(row.status);
-};
+  return ["in_progress", "paused", "pending_approval"].includes(row.status)
+}
 
 const getStatusTagType = (status) => {
   const typeMap = {
@@ -551,18 +560,18 @@ const getStatusTagType = (status) => {
     paused: "info",
     cancelled: "danger",
     rejected: "danger",
-  };
-  return typeMap[status] || "info";
-};
+  }
+  return typeMap[status] || "info"
+}
 
 const formatDate = (dateString) => {
-  if (!dateString) return "-";
-  return new Date(dateString).toLocaleDateString();
-};
+  if (!dateString) return "-"
+  return new Date(dateString).toLocaleDateString()
+}
 
 onMounted(() => {
-  fetchEvaluations();
-});
+  fetchEvaluations()
+})
 </script>
 
 <style scoped>

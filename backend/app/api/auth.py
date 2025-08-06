@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple, Set
-
-from flask import Blueprint, current_app, jsonify, request, Response
+from flask import Blueprint, Response, current_app, jsonify, request
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -20,11 +18,11 @@ from app.utils.validators import validate_email, validate_password
 auth_bp = Blueprint("auth", __name__)
 
 # Store blacklisted tokens (in production, use Redis or database)
-blacklisted_tokens: Set[str] = set()
+blacklisted_tokens: set[str] = set()
 
 
 @auth_bp.route("/login", methods=["POST"])
-def login() -> Tuple[Response, int]:
+def login() -> tuple[Response, int]:
     """User login endpoint.
 
     Request Body:
@@ -34,7 +32,7 @@ def login() -> Tuple[Response, int]:
     Returns:
         Tuple[Response, int]: JSON response containing access token, refresh token,
             and user information on success, or error message on failure.
-            
+
     Raises:
         400: If request data is missing or invalid.
         401: If credentials are invalid or account is inactive.
@@ -117,14 +115,14 @@ def login() -> Tuple[Response, int]:
 
 @auth_bp.route("/logout", methods=["POST"])
 @jwt_required()
-def logout() -> Tuple[Response, int]:
+def logout() -> tuple[Response, int]:
     """User logout endpoint.
-    
+
     Blacklists the current JWT token to prevent further use.
-    
+
     Returns:
         Tuple[Response, int]: JSON response confirming logout and HTTP status code.
-        
+
     Raises:
         500: If internal server error occurs.
 
@@ -149,12 +147,12 @@ def logout() -> Tuple[Response, int]:
 
 @auth_bp.route("/refresh", methods=["POST"])
 @jwt_required(refresh=True)
-def refresh() -> Tuple[Response, int]:
+def refresh() -> tuple[Response, int]:
     """Refresh access token using refresh token.
-    
+
     Returns:
         Tuple[Response, int]: JSON response with new access token and HTTP status code.
-        
+
     Raises:
         401: If user not found or inactive.
         500: If internal server error occurs.
@@ -182,12 +180,12 @@ def refresh() -> Tuple[Response, int]:
 
 @auth_bp.route("/me", methods=["GET"])
 @jwt_required()
-def get_current_user() -> Tuple[Response, int]:
+def get_current_user() -> tuple[Response, int]:
     """Get current user information.
-    
+
     Returns:
         Tuple[Response, int]: JSON response with user information and HTTP status code.
-        
+
     Raises:
         404: If user not found.
         500: If internal server error occurs.
@@ -209,7 +207,7 @@ def get_current_user() -> Tuple[Response, int]:
 
 @auth_bp.route("/change-password", methods=["PUT"])
 @jwt_required()
-def change_password() -> Tuple[Response, int]:
+def change_password() -> tuple[Response, int]:
     """Change user password.
 
     Request Body:
@@ -218,7 +216,7 @@ def change_password() -> Tuple[Response, int]:
 
     Returns:
         Tuple[Response, int]: JSON response confirming password change and HTTP status code.
-        
+
     Raises:
         400: If request data is missing or new password is invalid.
         401: If current password is incorrect.
@@ -278,7 +276,7 @@ def change_password() -> Tuple[Response, int]:
 
 
 @auth_bp.route("/register", methods=["POST"])
-def register() -> Tuple[Response, int]:
+def register() -> tuple[Response, int]:
     """User registration endpoint (admin only in production).
 
     Request Body:
@@ -292,7 +290,7 @@ def register() -> Tuple[Response, int]:
 
     Returns:
         Tuple[Response, int]: JSON response with created user information and HTTP status code.
-        
+
     Raises:
         400: If required fields are missing or validation fails.
         409: If username or email already exists.
@@ -367,7 +365,7 @@ def register() -> Tuple[Response, int]:
 @auth_bp.before_app_request
 def check_if_token_revoked() -> None:
     """Check if JWT token is blacklisted.
-    
+
     This function is called before each request to verify the token hasn't been revoked.
     """
     try:
@@ -383,12 +381,12 @@ def check_if_token_revoked() -> None:
 
 # Custom JWT error handlers
 @auth_bp.errorhandler(401)
-def handle_unauthorized(error) -> Tuple[Response, int]:
+def handle_unauthorized(error) -> tuple[Response, int]:
     """Handle unauthorized access errors.
-    
+
     Args:
         error: The error object containing details about the unauthorized access.
-        
+
     Returns:
         Tuple[Response, int]: JSON error response and HTTP status code.
 
@@ -397,12 +395,12 @@ def handle_unauthorized(error) -> Tuple[Response, int]:
 
 
 @auth_bp.errorhandler(422)
-def handle_unprocessable_entity(error) -> Tuple[Response, int]:
+def handle_unprocessable_entity(error) -> tuple[Response, int]:
     """Handle JWT decode errors.
-    
+
     Args:
         error: The error object containing details about the JWT decode failure.
-        
+
     Returns:
         Tuple[Response, int]: JSON error response and HTTP status code.
 

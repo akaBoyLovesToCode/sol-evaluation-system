@@ -9,7 +9,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from "vue";
+import { ref, onMounted, nextTick } from "vue"
 
 const props = defineProps({
   type: {
@@ -26,20 +26,20 @@ const props = defineProps({
     type: String,
     default: "0.6s",
   },
-});
+})
 
-const containerRef = ref();
-const isVisible = ref(false);
+const containerRef = ref()
+const isVisible = ref(false)
 
-const animationType = `fade-in-${props.type.replace("fadeIn", "").toLowerCase()}`;
+const animationType = `fade-in-${props.type.replace("fadeIn", "").toLowerCase()}`
 
 onMounted(async () => {
-  await nextTick();
+  await nextTick()
   // 使用 requestAnimationFrame 确保在下一帧开始动画
   requestAnimationFrame(() => {
-    isVisible.value = true;
-  });
-});
+    isVisible.value = true
+  })
+})
 </script>
 
 <style scoped>

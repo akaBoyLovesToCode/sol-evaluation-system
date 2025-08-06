@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, Any, Optional
-from werkzeug.security import generate_password_hash, check_password_hash
+from typing import Any
+
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from app import db
 
 
@@ -88,13 +90,13 @@ class User(db.Model):
     operation_logs = db.relationship("OperationLog", backref="user", lazy="dynamic")
 
     def __init__(
-        self, 
-        username: str, 
-        email: str, 
-        password: str, 
-        full_name: str, 
-        role: str = "user", 
-        **kwargs: Any
+        self,
+        username: str,
+        email: str,
+        password: str,
+        full_name: str,
+        role: str = "user",
+        **kwargs: Any,
     ) -> None:
         """Initialize user with required fields.
 
@@ -154,7 +156,12 @@ class User(db.Model):
             True if user has permission, False otherwise.
 
         """
-        role_hierarchy: Dict[str, int] = {"user": 1, "part_leader": 2, "group_leader": 3, "admin": 4}
+        role_hierarchy: dict[str, int] = {
+            "user": 1,
+            "part_leader": 2,
+            "group_leader": 3,
+            "admin": 4,
+        }
 
         user_level = role_hierarchy.get(self.role, 0)
         required_level = role_hierarchy.get(required_role, 0)
@@ -180,7 +187,7 @@ class User(db.Model):
 
         return False
 
-    def to_dict(self, include_sensitive: bool = False) -> Dict[str, Any]:
+    def to_dict(self, include_sensitive: bool = False) -> dict[str, Any]:
         """Convert user object to dictionary.
 
         Args:

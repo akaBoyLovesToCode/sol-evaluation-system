@@ -1,8 +1,9 @@
-from flask import Blueprint, request, current_app
+from flask import Blueprint, current_app, request
 from flask_jwt_extended import jwt_required
+
 from app import db
-from app.models import OperationLog, Evaluation, User
-from app.utils.decorators import require_role, validate_json, handle_exceptions
+from app.models import Evaluation, OperationLog, User
+from app.utils.decorators import handle_exceptions, require_role, validate_json
 from app.utils.helpers import (
     calculate_pagination,
     create_response,
@@ -130,7 +131,7 @@ def update_evaluation_log(evaluation_id, log_id):
 
         # Log this update operation
         ip_address = request.remote_addr
-        user_agent = request.headers.get("User-Agent")
+        request.headers.get("User-Agent")
         OperationLog.log_system_operation(
             user_id=current_user_id,
             operation_description=f"Updated operation log {log_id} for evaluation {evaluation_id}",

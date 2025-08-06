@@ -4,15 +4,16 @@ This service handles data backup system as specified in Phase 4 requirements.
 Manages database backups, file backups, and backup scheduling.
 """
 
-import os
-import subprocess
 import gzip
 import json
-from typing import Dict, List, Optional, Tuple
-from datetime import datetime, timedelta
-from flask import current_app
-from app.models.system_config import SystemConfig
+import os
+import subprocess
 import tarfile
+from datetime import datetime, timedelta
+
+from flask import current_app
+
+from app.models.system_config import SystemConfig
 
 
 class BackupService:
@@ -28,8 +29,8 @@ class BackupService:
 
     @staticmethod
     def create_database_backup(
-        backup_name: Optional[str] = None,
-    ) -> Tuple[bool, str, Optional[str]]:
+        backup_name: str | None = None,
+    ) -> tuple[bool, str, str | None]:
         """Create a database backup
 
         Args:
@@ -127,8 +128,8 @@ class BackupService:
 
     @staticmethod
     def create_files_backup(
-        backup_name: Optional[str] = None,
-    ) -> Tuple[bool, str, Optional[str]]:
+        backup_name: str | None = None,
+    ) -> tuple[bool, str, str | None]:
         """Create a backup of uploaded files and logs
 
         Args:
@@ -198,8 +199,8 @@ class BackupService:
 
     @staticmethod
     def create_full_backup(
-        backup_name: Optional[str] = None,
-    ) -> Tuple[bool, str, List[str]]:
+        backup_name: str | None = None,
+    ) -> tuple[bool, str, list[str]]:
         """Create a full system backup (database + files)
 
         Args:
@@ -261,7 +262,7 @@ class BackupService:
             return False, f"Full backup failed: {str(e)}", []
 
     @staticmethod
-    def list_backups() -> List[Dict]:
+    def list_backups() -> list[dict]:
         """List all available backups
 
         Returns:
@@ -280,7 +281,7 @@ class BackupService:
                 if filename.endswith(".json"):
                     metadata_path = os.path.join(backup_dir, filename)
                     try:
-                        with open(metadata_path, "r") as f:
+                        with open(metadata_path) as f:
                             metadata = json.load(f)
 
                         # Check if backup file still exists
@@ -322,7 +323,7 @@ class BackupService:
             return []
 
     @staticmethod
-    def delete_backup(backup_name: str) -> Tuple[bool, str]:
+    def delete_backup(backup_name: str) -> tuple[bool, str]:
         """Delete a backup and its metadata
 
         Args:
@@ -360,7 +361,7 @@ class BackupService:
             return False, f"Failed to delete backup: {str(e)}"
 
     @staticmethod
-    def cleanup_old_backups(days_to_keep: int = 30) -> Tuple[int, str]:
+    def cleanup_old_backups(days_to_keep: int = 30) -> tuple[int, str]:
         """Clean up old backups to save disk space
 
         Args:
@@ -400,7 +401,7 @@ class BackupService:
             return 0, f"Cleanup failed: {str(e)}"
 
     @staticmethod
-    def get_backup_statistics() -> Dict:
+    def get_backup_statistics() -> dict:
         """Get backup system statistics
 
         Returns:

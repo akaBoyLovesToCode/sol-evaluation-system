@@ -1,21 +1,21 @@
-"""Unit tests for the Evaluation model.
-"""
+"""Unit tests for the Evaluation model."""
 
-import pytest
-import re
 from datetime import datetime, timedelta
-from app.models.evaluation import Evaluation, EvaluationType, EvaluationStatus
-from app.models.user import User, UserRole
+
+from app.models.evaluation import Evaluation, EvaluationStatus, EvaluationType
 from tests.helpers import create_test_evaluation
 
 
 def test_evaluation_creation(session, regular_user):
     """Test creating a new evaluation."""
+    import uuid
+
+    unique_id = str(uuid.uuid4())[:8]
     start_date = datetime.now().date()
     expected_end_date = (datetime.now() + timedelta(days=30)).date()
 
     evaluation = Evaluation(
-        evaluation_number="EV-20250101-001",
+        evaluation_number=f"EV-{datetime.now().strftime('%Y%m%d')}-{unique_id}",
         evaluation_type=EvaluationType.NEW_PRODUCT.value,
         product_name="Test Product",
         part_number="TP-001",
@@ -31,11 +31,13 @@ def test_evaluation_creation(session, regular_user):
 
     # Retrieve the evaluation from the database
     retrieved_evaluation = (
-        session.query(Evaluation).filter_by(evaluation_number="EV-20250101-001").first()
+        session.query(Evaluation)
+        .filter_by(evaluation_number=evaluation.evaluation_number)
+        .first()
     )
 
     assert retrieved_evaluation is not None
-    assert retrieved_evaluation.evaluation_number == "EV-20250101-001"
+    assert retrieved_evaluation.evaluation_number == evaluation.evaluation_number
     assert retrieved_evaluation.evaluation_type == EvaluationType.NEW_PRODUCT.value
     assert retrieved_evaluation.product_name == "Test Product"
     assert retrieved_evaluation.part_number == "TP-001"

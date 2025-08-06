@@ -1,12 +1,12 @@
-"""Database models package for Product Evaluation System
-"""
+"""Database models package for Product Evaluation System"""
 
 from app import db
-from .user import User
+
 from .evaluation import Evaluation, EvaluationDetail, EvaluationResult
 from .message import Message
 from .operation_log import OperationLog
 from .system_config import SystemConfig
+from .user import User
 
 # Export all models for easy importing
 __all__ = [

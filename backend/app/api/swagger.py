@@ -1,11 +1,10 @@
-"""Swagger API documentation configuration.
-"""
+"""Swagger API documentation configuration."""
 
-from flask import Blueprint, jsonify
-from flask_swagger_ui import get_swaggerui_blueprint
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.flask import FlaskPlugin
+from flask import Blueprint, jsonify
+from flask_swagger_ui import get_swaggerui_blueprint
 
 # Create a Blueprint for the Swagger API
 swagger_bp = Blueprint("swagger", __name__)
@@ -16,10 +15,10 @@ spec = APISpec(
     version="1.0.0",
     openapi_version="3.0.2",
     plugins=[FlaskPlugin(), MarshmallowPlugin()],
-    info=dict(
-        description="API for Product Evaluation Management System",
-        contact=dict(email="admin@example.com"),
-    ),
+    info={
+        "description": "API for Product Evaluation Management System",
+        "contact": {"email": "admin@example.com"},
+    },
 )
 
 # Define the Swagger UI Blueprint
@@ -47,7 +46,6 @@ def register_api_routes(app):
 
     """
     # Import API modules to ensure they are registered with Swagger
-    from app.api import evaluation, auth, user, operation_log
 
     # Register the Swagger blueprints
     app.register_blueprint(swagger_bp, url_prefix="/api")

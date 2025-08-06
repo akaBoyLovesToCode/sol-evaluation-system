@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import re
-from typing import Dict, Optional
 
 from app.models import SystemConfig
 
 
-def validate_email(email: Optional[str]) -> Dict[str, any]:
+def validate_email(email: str | None) -> dict[str, any]:
     """Validate email address format.
 
     Args:
@@ -35,7 +34,7 @@ def validate_email(email: Optional[str]) -> Dict[str, any]:
     return {"valid": True, "message": "Valid email"}
 
 
-def validate_password(password: Optional[str]) -> Dict[str, any]:
+def validate_password(password: str | None) -> dict[str, any]:
     """Validate password strength.
 
     Args:

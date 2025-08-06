@@ -1,13 +1,13 @@
-"""API endpoints for user management.
-"""
+"""API endpoints for user management."""
 
-from flask import Blueprint, request, jsonify, current_app
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import db
-from app.models.user import User, UserRole
-from app.models.operation_log import OperationLog, OperationType
-from werkzeug.security import generate_password_hash
 import json
+
+from flask import Blueprint, current_app, jsonify, request
+from flask_jwt_extended import get_jwt_identity, jwt_required
+
+from app.models import db
+from app.models.operation_log import OperationLog, OperationType
+from app.models.user import User, UserRole
 
 user_bp = Blueprint("user", __name__)
 
@@ -261,7 +261,7 @@ def get_user(user_id):
             target_type="user",
             target_id=user_id,
             target_description=f"Viewed user {user.username}",
-            operation_description=f"User viewed user details",
+            operation_description="User viewed user details",
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
             success=True,

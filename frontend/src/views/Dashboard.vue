@@ -173,10 +173,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, markRaw } from "vue";
-import { useRouter } from "vue-router";
-import { useI18n } from "vue-i18n";
-import { ElMessage } from "element-plus";
+import { ref, onMounted, onUnmounted, nextTick, markRaw } from "vue"
+import { useRouter } from "vue-router"
+import { useI18n } from "vue-i18n"
+import { ElMessage } from "element-plus"
 import {
   Document,
   DataAnalysis,
@@ -188,24 +188,24 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowRight,
-} from "@element-plus/icons-vue";
+} from "@element-plus/icons-vue"
 import {
   createPieChart,
   createLineChart,
   makeResponsive,
   disposeChart,
-} from "../utils/charts";
-import api from "../utils/api";
-import { useAuthStore } from "../stores/auth";
-import AnimatedContainer from "../components/AnimatedContainer.vue";
+} from "../utils/charts"
+import api from "../utils/api"
+import { useAuthStore } from "../stores/auth"
+import AnimatedContainer from "../components/AnimatedContainer.vue"
 
-const router = useRouter();
-const { t } = useI18n();
-const authStore = useAuthStore();
+const router = useRouter()
+const { t } = useI18n()
+const authStore = useAuthStore()
 
-const statusChartRef = ref();
-const trendChartRef = ref();
-const pendingLoading = ref(false);
+const statusChartRef = ref()
+const trendChartRef = ref()
+const pendingLoading = ref(false)
 
 const stats = ref([
   {
@@ -240,79 +240,79 @@ const stats = ref([
     iconClass: "purple",
     trend: 0,
   },
-]);
+])
 
-const pendingItems = ref([]);
-const recentActivities = ref([]);
+const pendingItems = ref([])
+const recentActivities = ref([])
 
-let statusChart = null;
-let trendChart = null;
-let statusChartCleanup = null;
-let trendChartCleanup = null;
+let statusChart = null
+let trendChart = null
+let statusChartCleanup = null
+let trendChartCleanup = null
 
 const fetchDashboardData = async () => {
   try {
-    const response = await api.get("/dashboard/overview");
-    const data = response.data.data;
+    const response = await api.get("/dashboard/overview")
+    const data = response.data.data
 
     // 更新统计数据
-    stats.value[0].value = data.total_evaluations || 0;
-    stats.value[1].value = data.pending_approvals?.length || 0;
-    stats.value[2].value = data.status_distribution?.completed || 0;
-    stats.value[3].value = data.user_statistics?.active_users || 0;
+    stats.value[0].value = data.total_evaluations || 0
+    stats.value[1].value = data.pending_approvals?.length || 0
+    stats.value[2].value = data.status_distribution?.completed || 0
+    stats.value[3].value = data.user_statistics?.active_users || 0
 
     // 更新趋势数据 (暂时设为0，因为后端数据结构不同)
-    stats.value[0].trend = 0;
-    stats.value[1].trend = 0;
-    stats.value[2].trend = 0;
-    stats.value[3].trend = 0;
+    stats.value[0].trend = 0
+    stats.value[1].trend = 0
+    stats.value[2].trend = 0
+    stats.value[3].trend = 0
 
-    return data;
+    return data
   } catch (error) {
-    ElMessage.error(t("dashboard.loadError"));
-    console.error("Failed to fetch dashboard data:", error);
+    ElMessage.error(t("dashboard.loadError"))
+    console.error("Failed to fetch dashboard data:", error)
   }
-};
+}
 
 const fetchPendingItems = async () => {
-  if (!authStore.canApprove) return;
+  if (!authStore.canApprove) return
 
   try {
-    pendingLoading.value = true;
+    pendingLoading.value = true
     // 使用dashboard overview中的pending_approvals数据
-    const response = await api.get("/dashboard/overview");
-    pendingItems.value = response.data.data.pending_approvals || [];
+    const response = await api.get("/dashboard/overview")
+    pendingItems.value = response.data.data.pending_approvals || []
   } catch (error) {
-    console.error("Failed to fetch pending items:", error);
+    console.error("Failed to fetch pending items:", error)
   } finally {
-    pendingLoading.value = false;
+    pendingLoading.value = false
   }
-};
+}
 
 const fetchMonthlyTrend = async () => {
   try {
     // 获取更大的日期范围，包括未来数据（测试环境可能有未来日期）
     const endDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
       .toISOString()
-      .split("T")[0]; // 未来一年
+      .split("T")[0] // 未来一年
     const startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
       .toISOString()
-      .split("T")[0]; // 过去一年
+      .split("T")[0] // 过去一年
 
     const response = await api.get(
       `/dashboard/statistics?start_date=${startDate}&end_date=${endDate}&group_by=month`,
-    );
-    return response.data.data;
+    )
+    return response.data.data
   } catch (error) {
-    console.error("Failed to fetch monthly trend:", error);
-    return null;
+    console.error("Failed to fetch monthly trend:", error)
+    return null
   }
-};
+}
 
 const fetchRecentActivities = async () => {
   try {
     // 使用dashboard overview中的recent_evaluations数据作为活动
-    const response = await api.get("/dashboard/overview");
+    const response = await api.get("/dashboard/overview")
     recentActivities.value = (response.data.data.recent_evaluations || []).map(
       (evaluation) => ({
         id: evaluation.id,
@@ -321,18 +321,18 @@ const fetchRecentActivities = async () => {
         description: `评价 ${evaluation.evaluation_number} - ${evaluation.product_name || "Unknown Product"}`,
         created_at: evaluation.created_at,
       }),
-    );
+    )
   } catch (error) {
-    console.error("Failed to fetch recent activities:", error);
+    console.error("Failed to fetch recent activities:", error)
   }
-};
+}
 
 const initStatusChart = (data) => {
-  if (!statusChartRef.value) return;
+  if (!statusChartRef.value) return
 
   // Dispose existing chart and cleanup
   if (statusChart) {
-    disposeChart(statusChart, statusChartCleanup);
+    disposeChart(statusChart, statusChartCleanup)
   }
 
   const chartData = [
@@ -353,7 +353,7 @@ const initStatusChart = (data) => {
       value: data.status_distribution?.cancelled || 0,
       name: t("status.cancelled"),
     },
-  ];
+  ]
 
   statusChart = createPieChart(statusChartRef.value, chartData, {
     seriesName: t("dashboard.evaluationStatus"),
@@ -363,38 +363,38 @@ const initStatusChart = (data) => {
         left: "left",
       },
     },
-  });
+  })
 
   // Make chart responsive
-  statusChartCleanup = makeResponsive(statusChart, statusChartRef.value);
-};
+  statusChartCleanup = makeResponsive(statusChart, statusChartRef.value)
+}
 
 const initTrendChart = async () => {
-  if (!trendChartRef.value) return;
+  if (!trendChartRef.value) return
 
   // Dispose existing chart and cleanup
   if (trendChart) {
-    disposeChart(trendChart, trendChartCleanup);
+    disposeChart(trendChart, trendChartCleanup)
   }
 
   // Get monthly trend data
-  const trendData = await fetchMonthlyTrend();
+  const trendData = await fetchMonthlyTrend()
 
-  let periods = [];
-  let newEvaluations = [];
-  let completedEvaluations = [];
+  let periods = []
+  let newEvaluations = []
+  let completedEvaluations = []
 
   if (trendData && trendData.evaluations_over_time) {
-    periods = trendData.evaluations_over_time.map((item) => item.period);
-    newEvaluations = trendData.evaluations_over_time.map((item) => item.count);
+    periods = trendData.evaluations_over_time.map((item) => item.period)
+    newEvaluations = trendData.evaluations_over_time.map((item) => item.count)
 
     // Calculate completed evaluations
     if (trendData.completion_rates) {
       completedEvaluations = trendData.completion_rates.map(
         (item) => item.completed || 0,
-      );
+      )
     } else {
-      completedEvaluations = new Array(periods.length).fill(0);
+      completedEvaluations = new Array(periods.length).fill(0)
     }
   }
 
@@ -410,28 +410,28 @@ const initTrendChart = async () => {
         data: completedEvaluations,
       },
     ],
-  };
+  }
 
   trendChart = createLineChart(trendChartRef.value, chartData, {
     colors: ["#409EFF", "#67C23A"],
     showArea: false,
-  });
+  })
 
   // Make chart responsive
-  trendChartCleanup = makeResponsive(trendChart, trendChartRef.value);
-};
+  trendChartCleanup = makeResponsive(trendChart, trendChartRef.value)
+}
 
 const refreshCharts = async () => {
-  const data = await fetchDashboardData();
+  const data = await fetchDashboardData()
   if (data) {
-    initStatusChart(data);
-    await initTrendChart();
+    initStatusChart(data)
+    await initTrendChart()
   }
-};
+}
 
 const handlePendingItemClick = (item) => {
-  router.push(`/evaluations/${item.id}`);
-};
+  router.push(`/evaluations/${item.id}`)
+}
 
 const getStatusTagType = (status) => {
   const typeMap = {
@@ -441,9 +441,9 @@ const getStatusTagType = (status) => {
     paused: "info",
     cancelled: "danger",
     rejected: "danger",
-  };
-  return typeMap[status] || "info";
-};
+  }
+  return typeMap[status] || "info"
+}
 
 const getActivityType = (action) => {
   const typeMap = {
@@ -452,48 +452,48 @@ const getActivityType = (action) => {
     approve: "success",
     reject: "danger",
     complete: "success",
-  };
-  return typeMap[action] || "primary";
-};
+  }
+  return typeMap[action] || "primary"
+}
 
 const formatDate = (dateString) => {
-  if (!dateString) return "--";
+  if (!dateString) return "--"
 
   try {
-    const date = new Date(dateString);
+    const date = new Date(dateString)
     if (isNaN(date.getTime())) {
-      return "--";
+      return "--"
     }
     return (
       date.toLocaleDateString() +
       " " +
       date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    );
+    )
   } catch (error) {
-    console.error("Date formatting error:", error);
-    return "--";
+    console.error("Date formatting error:", error)
+    return "--"
   }
-};
+}
 
 onMounted(async () => {
-  const data = await fetchDashboardData();
+  const data = await fetchDashboardData()
 
-  await nextTick();
+  await nextTick()
 
   if (data) {
-    initStatusChart(data);
-    await initTrendChart();
+    initStatusChart(data)
+    await initTrendChart()
   }
 
-  fetchPendingItems();
-  fetchRecentActivities();
-});
+  fetchPendingItems()
+  fetchRecentActivities()
+})
 
 onUnmounted(() => {
   // Clean up charts and event listeners
-  disposeChart(statusChart, statusChartCleanup);
-  disposeChart(trendChart, trendChartCleanup);
-});
+  disposeChart(statusChart, statusChartCleanup)
+  disposeChart(trendChart, trendChartCleanup)
+})
 </script>
 
 <style scoped>
