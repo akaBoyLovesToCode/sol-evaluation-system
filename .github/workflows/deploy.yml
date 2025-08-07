@@ -6,9 +6,31 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Detect changes
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+
+  # Backend deployment
   deploy-backend:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.modified, 'backend/') || github.event_name == 'workflow_dispatch'
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout code
@@ -21,9 +43,11 @@ jobs:
         with:
           service: backend
 
+  # Frontend deployment
   deploy-frontend:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.modified, 'frontend/') || github.event_name == 'workflow_dispatch'
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout code
@@ -36,23 +60,187 @@ jobs:
         with:
           service: frontend
 
-  health-check:
+  # Backend health check
+  health-check-backend:
     runs-on: ubuntu-latest
-    needs: [deploy-backend, deploy-frontend]
-    if: always() && (needs.deploy-backend.result == 'success' || needs.deploy-frontend.result == 'success')
+    needs: [deploy-backend]
+    if: always() && needs.deploy-backend.result == 'success'
 
     steps:
-      - name: Wait for deployment
+      - name: Wait for backend deployment
         run: sleep 60
 
       - name: Health check backend
         run: |
-          curl -f https://sol-evaluation-system.up.railway.app/api/health || exit 1
+          echo "Checking backend health..."
+          max_attempts=5
+          attempt=1
+
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt/$max_attempts"
+            if curl -f -s --max-time 30 https://sol-evaluation-system.up.railway.app/api/health; then
+              echo "✅ Backend health check passed"
+              exit 0
+            else
+              echo "❌ Backend health check failed"
+              if [ $attempt -eq $max_attempts ]; then
+                echo "💥 Backend health check failed after $max_attempts attempts"
+                exit 1
+              fi
+              echo "Waiting 30 seconds before retry..."
+              sleep 30
+            fi
+            attempt=$((attempt + 1))
+          done
+
+      - name: Notify backend deployment status
+        if: failure()
+        run: |
+          echo "🚨 Backend deployment health check failed!"
+          echo "Please check the backend service logs in Railway dashboard."
+
+  # Frontend health check
+  health-check-frontend:
+    runs-on: ubuntu-latest
+    needs: [deploy-frontend]
+    if: always() && needs.deploy-frontend.result == 'success'
+
+    steps:
+      - name: Wait for frontend deployment
+        run: sleep 60
 
       - name: Health check frontend
         run: |
-          curl -f https://frontend-production-d9f6.up.railway.app/ || exit 1
+          echo "Checking frontend health..."
+          max_attempts=5
+          attempt=1
 
-      - name: Notify deployment status
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt/$max_attempts"
+            if curl -f -s --max-time 30 https://frontend-production-d9f6.up.railway.app/; then
+              echo "✅ Frontend health check passed"
+              exit 0
+            else
+              echo "❌ Frontend health check failed"
+              if [ $attempt -eq $max_attempts ]; then
+                echo "💥 Frontend health check failed after $max_attempts attempts"
+                exit 1
+              fi
+              echo "Waiting 30 seconds before retry..."
+              sleep 30
+            fi
+            attempt=$((attempt + 1))
+          done
+
+      - name: Notify frontend deployment status
         if: failure()
-        run: echo "Deployment health check failed"
+        run: |
+          echo "🚨 Frontend deployment health check failed!"
+          echo "Please check the frontend service logs in Railway dashboard."
+
+  # Integration health check (when both services are deployed)
+  integration-health-check:
+    runs-on: ubuntu-latest
+    needs:
+      [
+        deploy-backend,
+        deploy-frontend,
+        health-check-backend,
+        health-check-frontend,
+      ]
+    if: always() && needs.deploy-backend.result == 'success' && needs.deploy-frontend.result == 'success'
+
+    steps:
+      - name: Wait for services stabilization
+        run: sleep 30
+
+      - name: Integration health check
+        run: |
+          echo "Running integration health check..."
+
+          # Check if frontend can communicate with backend
+          echo "Testing frontend-backend integration..."
+          if curl -f -s --max-time 30 "https://frontend-production-d9f6.up.railway.app/" | grep -q "evaluation"; then
+            echo "✅ Frontend loads successfully"
+          else
+            echo "❌ Frontend integration check failed"
+            exit 1
+          fi
+
+          # Test API endpoint availability
+          echo "Testing API endpoints..."
+          if curl -f -s --max-time 30 https://sol-evaluation-system.up.railway.app/api/health; then
+            echo "✅ Backend API is responsive"
+          else
+            echo "❌ Backend API check failed"
+            exit 1
+          fi
+
+      - name: Notify integration status
+        if: failure()
+        run: |
+          echo "🚨 Integration health check failed!"
+          echo "Both services deployed but integration tests failed."
+
+  # Summary job
+  deployment-summary:
+    runs-on: ubuntu-latest
+    needs:
+      [
+        changes,
+        deploy-backend,
+        deploy-frontend,
+        health-check-backend,
+        health-check-frontend,
+        integration-health-check,
+      ]
+    if: always()
+
+    steps:
+      - name: Deployment summary
+        run: |
+          echo "# 📋 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.changes.outputs.backend }}" == "true" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ needs.deploy-backend.result }}" == "success" ]]; then
+              echo "✅ **Backend**: Deployed successfully" >> $GITHUB_STEP_SUMMARY
+              if [[ "${{ needs.health-check-backend.result }}" == "success" ]]; then
+                echo "   - Health check: ✅ Passed" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "   - Health check: ❌ Failed" >> $GITHUB_STEP_SUMMARY
+              fi
+            else
+              echo "❌ **Backend**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⏭️ **Backend**: No changes, skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ needs.changes.outputs.frontend }}" == "true" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ needs.deploy-frontend.result }}" == "success" ]]; then
+              echo "✅ **Frontend**: Deployed successfully" >> $GITHUB_STEP_SUMMARY
+              if [[ "${{ needs.health-check-frontend.result }}" == "success" ]]; then
+                echo "   - Health check: ✅ Passed" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "   - Health check: ❌ Failed" >> $GITHUB_STEP_SUMMARY
+              fi
+            else
+              echo "❌ **Frontend**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⏭️ **Frontend**: No changes, skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [[ "${{ needs.integration-health-check.result }}" == "success" ]]; then
+            echo "✅ **Integration**: All systems working together" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.integration-health-check.result }}" == "failure" ]]; then
+            echo "❌ **Integration**: Systems deployed but integration failed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ **Integration**: Not applicable (single service deployment)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Service URLs:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend: https://sol-evaluation-system.up.railway.app/" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: https://frontend-production-d9f6.up.railway.app/" >> $GITHUB_STEP_SUMMARY
