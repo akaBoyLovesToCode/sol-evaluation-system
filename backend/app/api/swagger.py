@@ -11,12 +11,12 @@ swagger_bp = Blueprint("swagger", __name__)
 
 # Create an APISpec
 spec = APISpec(
-    title="Product Evaluation API",
+    title="Solution Evaluation API",
     version="1.0.0",
     openapi_version="3.0.2",
     plugins=[FlaskPlugin(), MarshmallowPlugin()],
     info={
-        "description": "API for Product Evaluation Management System",
+        "description": "API for Solution Evaluation Management System",
         "contact": {"email": "admin@example.com"},
     },
 )
@@ -26,7 +26,7 @@ SWAGGER_URL = "/api/docs"  # URL for exposing Swagger UI
 API_URL = "/api/swagger.json"  # URL for the Swagger JSON documentation
 
 swaggerui_blueprint = get_swaggerui_blueprint(
-    SWAGGER_URL, API_URL, config={"app_name": "Product Evaluation API"}
+    SWAGGER_URL, API_URL, config={"app_name": "Solution Evaluation API"}
 )
 
 

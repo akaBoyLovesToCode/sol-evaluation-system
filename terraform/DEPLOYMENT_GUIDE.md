@@ -1,6 +1,6 @@
 # AWS Deployment Guide
 
-This guide walks through deploying the Product Evaluation Management System to AWS using the portfolio-optimized infrastructure.
+This guide walks through deploying the Solution Evaluation Management System to AWS using the portfolio-optimized infrastructure.
 
 ## 🎯 Portfolio Architecture Benefits
 

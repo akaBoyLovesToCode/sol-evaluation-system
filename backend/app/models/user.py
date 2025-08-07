@@ -179,7 +179,7 @@ class User(db.Model):
 
         """
         if evaluation_type == "new_product":
-            # New product evaluations require part_leader or higher
+            # New solution evaluations require part_leader or higher
             return self.has_permission("part_leader")
         elif evaluation_type == "mass_production":
             # Mass production evaluations don't require approval

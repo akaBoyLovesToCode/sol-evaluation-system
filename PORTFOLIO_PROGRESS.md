@@ -1,7 +1,7 @@
 # Portfolio Deployment Progress
 
 ## 🎯 Project Goal
-Transform the existing Railway-deployed Product Evaluation Management System into a portfolio-optimized AWS deployment for job interviews in Infrastructure/SRE roles.
+Transform the existing Railway-deployed Solution Evaluation Management System into a portfolio-optimized AWS deployment for job interviews in Infrastructure/SRE roles.
 
 ## 🏗️ Target Architecture (Portfolio-Optimized)
 ```

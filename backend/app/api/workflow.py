@@ -1,4 +1,4 @@
-"""Workflow API endpoints for Product Evaluation System
+"""Workflow API endpoints for Solution Evaluation System
 
 This module handles workflow-related API endpoints including status transitions,
 approvals, and workflow statistics.

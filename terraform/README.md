@@ -1,6 +1,6 @@
 # Portfolio-Optimized Terraform Infrastructure
 
-This directory contains Infrastructure as Code for deploying the Product Evaluation Management System on AWS.
+This directory contains Infrastructure as Code for deploying the Solution Evaluation Management System on AWS.
 
 ## 🎯 Portfolio Design Goals
 - **Cost-Effective:** $10-30/month total

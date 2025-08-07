@@ -1,4 +1,4 @@
-"""Product Evaluation System Flask Application Factory."""
+"""Solution Evaluation System Flask Application Factory."""
 
 from __future__ import annotations
 
@@ -131,7 +131,7 @@ def create_app(config_name: str | None = None) -> Flask:
         app.logger.addHandler(file_handler)
 
         app.logger.setLevel(logging.INFO)
-        app.logger.info("Product Evaluation System startup")
+        app.logger.info("Solution Evaluation System startup")
 
     # Create upload and backup directories
     for directory in [app.config["UPLOAD_FOLDER"], app.config["BACKUP_FOLDER"]]:
@@ -154,7 +154,7 @@ def create_app(config_name: str | None = None) -> Flask:
     @app.route("/api/health")
     def health_check() -> dict[str, str]:
         """Health check endpoint for monitoring."""
-        return {"status": "healthy", "message": "Product Evaluation System is running"}
+        return {"status": "healthy", "message": "Solution Evaluation System is running"}
 
     # Debug CORS endpoint
     @app.route("/api/debug/cors")

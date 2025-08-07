@@ -349,14 +349,12 @@ def cache_response(timeout=300):
 
             # Create cache key from function name, args, and request data
             user_id = None
-            try:
+            with contextlib.suppress(Exception):
                 user_id = (
                     get_current_user_id()
                     if request.headers.get("Authorization")
                     else None
                 )
-            except Exception:
-                pass  # Ignore JWT errors for caching
 
             cache_key_data = {
                 "function": f.__name__,

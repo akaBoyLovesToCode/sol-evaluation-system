@@ -2,7 +2,7 @@
 """Database initialization script for PostgreSQL setup.
 
 This script helps initialize a new PostgreSQL database with the required
-schema and optional seed data for the Product Evaluation System.
+schema and optional seed data for the Solution Evaluation System.
 """
 
 import sys

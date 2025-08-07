@@ -1,4 +1,4 @@
-"""Notifications API endpoints for Product Evaluation System
+"""Notifications API endpoints for Solution Evaluation System
 
 This module handles notification-related API endpoints including message management,
 notification preferences, and in-app messaging.

@@ -1,4 +1,4 @@
-"""API package for Product Evaluation System.
+"""API package for Solution Evaluation System.
 
 Contains all REST API endpoints organized by functionality.
 """

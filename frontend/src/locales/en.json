@@ -23,10 +23,10 @@
     "deleteError": "Delete failed"
   },
   "system": {
-    "name": "Product Evaluation"
+    "name": "Solution Evaluation"
   },
   "login": {
-    "title": "Product Evaluation Management System",
+    "title": "Solution Evaluation Management System",
     "subtitle": "Please login to your account",
     "username": "Username",
     "password": "Password",

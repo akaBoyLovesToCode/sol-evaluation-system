@@ -1,4 +1,4 @@
-"""Analytics Service for Product Evaluation System
+"""Analytics Service for Solution Evaluation System
 
 This service handles statistical analysis and data visualization as specified
 in Phase 3 requirements. Provides data for charts, reports, and analytics.
@@ -569,7 +569,7 @@ class AnalyticsService:
             csv_lines = []
 
             # Header
-            csv_lines.append("Product Evaluation System - Analytics Report")
+            csv_lines.append("Solution Evaluation System - Analytics Report")
             csv_lines.append(f"Generated: {data['export_info']['generated_at']}")
             csv_lines.append(
                 f"Period: {data['export_info']['start_date']} to {data['export_info']['end_date']}"

@@ -1,7 +1,7 @@
 {
   "name": "evaluation-frontend",
   "version": "1.0.0",
-  "description": "Product Evaluation Management System - Frontend",
+  "description": "Solution Evaluation Management System - Frontend",
   "type": "module",
   "private": true,
   "scripts": {

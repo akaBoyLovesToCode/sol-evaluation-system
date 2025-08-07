@@ -31,10 +31,10 @@ class EvaluationType(Enum):
 
 
 class Evaluation(db.Model):
-    """Main evaluation model for product evaluations.
+    """Main evaluation model for solution evaluations.
 
     Supports two types of evaluations:
-    1. New Product: DOE, PPQ, PRQ (parallel) -> Part Leader -> Group Leader approval
+    1. New Solution: DOE, PPQ, PRQ (parallel) -> Part Leader -> Group Leader approval
     2. Mass Production: Production Test -> AQL -> Pass (no approval needed)
     """
 

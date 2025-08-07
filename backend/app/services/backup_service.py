@@ -1,4 +1,4 @@
-"""Backup Service for Product Evaluation System
+"""Backup Service for Solution Evaluation System
 
 This service handles data backup system as specified in Phase 4 requirements.
 Manages database backups, file backups, and backup scheduling.

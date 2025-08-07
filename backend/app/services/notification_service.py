@@ -1,4 +1,4 @@
-"""Notification Service for Product Evaluation System
+"""Notification Service for Solution Evaluation System
 
 This service handles in-app notification system as specified in Phase 2 requirements.
 Manages message creation, delivery, and notification preferences.

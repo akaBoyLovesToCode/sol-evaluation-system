@@ -187,7 +187,7 @@ class SystemConfig(db.Model):
             # General settings
             (
                 "system_name",
-                "Product Evaluation System",
+                "Solution Evaluation System",
                 "string",
                 "System name",
                 "general",

@@ -1,4 +1,4 @@
-"""Input validation utilities for the Product Evaluation System."""
+"""Input validation utilities for the Solution Evaluation System."""
 
 from __future__ import annotations
 
@@ -143,7 +143,7 @@ def validate_evaluation_data(data, evaluation_type):
 
     # Type-specific validations
     if evaluation_type == "new_product":
-        # New product evaluations may have additional requirements
+        # New solution evaluations may have additional requirements
         pass
     elif evaluation_type == "mass_production":
         # Mass production evaluations may have different requirements

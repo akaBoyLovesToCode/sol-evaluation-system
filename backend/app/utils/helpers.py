@@ -1,4 +1,4 @@
-"""Helper utility functions for the Product Evaluation System."""
+"""Helper utility functions for the Solution Evaluation System."""
 
 from __future__ import annotations
 

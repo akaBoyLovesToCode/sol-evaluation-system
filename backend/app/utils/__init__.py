@@ -1,4 +1,4 @@
-"""Utility functions package for Product Evaluation System"""
+"""Utility functions package for Solution Evaluation System"""
 
 # Import commonly used utilities for easy access
 from .decorators import log_operation, require_role

@@ -23,10 +23,10 @@
     "deleteError": "삭제 실패"
   },
   "system": {
-    "name": "제품 평가"
+    "name": "솔루션 평가"
   },
   "login": {
-    "title": "제품 평가 관리 시스템",
+    "title": "솔루션 평가 관리 시스템",
     "subtitle": "계정에 로그인하세요",
     "username": "사용자명",
     "password": "비밀번호",

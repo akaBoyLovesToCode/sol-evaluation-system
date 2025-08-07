@@ -1,4 +1,4 @@
-"""Workflow Service for Product Evaluation System
+"""Workflow Service for Solution Evaluation System
 
 This service handles the evaluation workflow engine, approval processes,
 and status management as specified in Phase 2 requirements.
@@ -274,10 +274,9 @@ class WorkflowService:
                     if stakeholder and stakeholder != actor.id:
                         recipients.append(stakeholder)
 
-            elif new_status == "rejected":
+            elif new_status == "rejected" and evaluation.evaluator_id != actor.id:
                 # Notify evaluator of rejection
-                if evaluation.evaluator_id != actor.id:
-                    recipients.append(evaluation.evaluator_id)
+                recipients.append(evaluation.evaluator_id)
 
             # Remove duplicates
             recipients = list(set(recipients))

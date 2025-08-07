@@ -331,7 +331,7 @@ def get_detailed_statistics() -> Response:
                         evaluator_data[evaluator_id]["durations"].append(duration)
 
             # Convert to expected format
-            for evaluator_id, data in evaluator_data.items():
+            for _evaluator_id, data in evaluator_data.items():
                 total = data["total"]
                 completed = data["completed"]
                 completion_rate = (completed / total * 100) if total > 0 else 0

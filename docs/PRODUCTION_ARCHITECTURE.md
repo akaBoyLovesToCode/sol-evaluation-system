@@ -245,4 +245,4 @@ resource "aws_appautoscaling_policy" "backend_scale_up" {
 }
 ```
 
-This architecture provides enterprise-grade scalability, security, and reliability for the Product Evaluation Management System.
+This architecture provides enterprise-grade scalability, security, and reliability for the Solution Evaluation Management System.
