@@ -138,12 +138,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue"
-import { useRouter } from "vue-router"
-import { useAuthStore } from "../stores/auth"
-import { Edit } from "@element-plus/icons-vue"
-import { ElMessage } from "element-plus"
-import { useI18n } from "vue-i18n"
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import { Edit } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -156,18 +156,18 @@ const passwordForm = ref(null)
 
 // Personal info form data
 const personalInfo = reactive({
-  fullName: "",
-  email: "",
-  department: "",
-  position: "",
-  role: "",
+  fullName: '',
+  email: '',
+  department: '',
+  position: '',
+  role: '',
 })
 
 // Password form data
 const passwordData = reactive({
-  currentPassword: "",
-  newPassword: "",
-  confirmPassword: "",
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: '',
 })
 
 // Form validation rules
@@ -175,26 +175,26 @@ const personalInfoRules = {
   fullName: [
     {
       required: true,
-      message: t("validation.required", { field: t("profile.fullName") }),
-      trigger: "blur",
+      message: t('validation.required', { field: t('profile.fullName') }),
+      trigger: 'blur',
     },
     {
       min: 2,
       max: 50,
-      message: t("validation.length", { min: 2, max: 50 }),
-      trigger: "blur",
+      message: t('validation.length', { min: 2, max: 50 }),
+      trigger: 'blur',
     },
   ],
   email: [
     {
       required: true,
-      message: t("validation.required", { field: t("profile.email") }),
-      trigger: "blur",
+      message: t('validation.required', { field: t('profile.email') }),
+      trigger: 'blur',
     },
     {
-      type: "email",
-      message: "Please enter a valid email address",
-      trigger: "blur",
+      type: 'email',
+      message: 'Please enter a valid email address',
+      trigger: 'blur',
     },
   ],
 }
@@ -203,42 +203,42 @@ const passwordRules = {
   currentPassword: [
     {
       required: true,
-      message: t("validation.required", {
-        field: t("profile.currentPassword"),
+      message: t('validation.required', {
+        field: t('profile.currentPassword'),
       }),
-      trigger: "blur",
+      trigger: 'blur',
     },
   ],
   newPassword: [
     {
       required: true,
-      message: t("validation.required", { field: t("profile.newPassword") }),
-      trigger: "blur",
+      message: t('validation.required', { field: t('profile.newPassword') }),
+      trigger: 'blur',
     },
-    { min: 8, message: t("validation.minLength", { min: 8 }), trigger: "blur" },
+    { min: 8, message: t('validation.minLength', { min: 8 }), trigger: 'blur' },
     {
       pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/,
-      message: t("profile.passwordRequirements"),
-      trigger: "blur",
+      message: t('profile.passwordRequirements'),
+      trigger: 'blur',
     },
   ],
   confirmPassword: [
     {
       required: true,
-      message: t("validation.required", {
-        field: t("profile.confirmPassword"),
+      message: t('validation.required', {
+        field: t('profile.confirmPassword'),
       }),
-      trigger: "blur",
+      trigger: 'blur',
     },
     {
       validator: (_, value, callback) => {
         if (value !== passwordData.newPassword) {
-          callback(new Error(t("profile.passwordMismatch")))
+          callback(new Error(t('profile.passwordMismatch')))
         } else {
           callback()
         }
       },
-      trigger: "blur",
+      trigger: 'blur',
     },
   ],
 }
@@ -250,11 +250,11 @@ onMounted(async () => {
   }
 
   if (authStore.user) {
-    personalInfo.fullName = authStore.user.fullName || ""
-    personalInfo.email = authStore.user.email || ""
-    personalInfo.department = authStore.user.department || ""
-    personalInfo.position = authStore.user.position || ""
-    personalInfo.role = authStore.user.role || ""
+    personalInfo.fullName = authStore.user.fullName || ''
+    personalInfo.email = authStore.user.email || ''
+    personalInfo.department = authStore.user.department || ''
+    personalInfo.position = authStore.user.position || ''
+    personalInfo.role = authStore.user.role || ''
   }
 })
 
@@ -272,10 +272,10 @@ const updatePersonalInfo = async () => {
       })
 
       if (result.success) {
-        ElMessage.success(t("profile.updateSuccess"))
+        ElMessage.success(t('profile.updateSuccess'))
         editPersonalInfo.value = false
       } else {
-        ElMessage.error(result.message || t("profile.updateError"))
+        ElMessage.error(result.message || t('profile.updateError'))
       }
     }
   })
@@ -284,10 +284,10 @@ const updatePersonalInfo = async () => {
 // Cancel personal info edit
 const cancelPersonalInfoEdit = () => {
   if (authStore.user) {
-    personalInfo.fullName = authStore.user.fullName || ""
-    personalInfo.email = authStore.user.email || ""
-    personalInfo.department = authStore.user.department || ""
-    personalInfo.position = authStore.user.position || ""
+    personalInfo.fullName = authStore.user.fullName || ''
+    personalInfo.email = authStore.user.email || ''
+    personalInfo.department = authStore.user.department || ''
+    personalInfo.position = authStore.user.position || ''
   }
   editPersonalInfo.value = false
 }
@@ -299,7 +299,7 @@ const changePassword = async () => {
   await passwordForm.value.validate(async (valid) => {
     if (valid) {
       if (passwordData.newPassword !== passwordData.confirmPassword) {
-        ElMessage.error(t("profile.passwordMismatch"))
+        ElMessage.error(t('profile.passwordMismatch'))
         return
       }
 
@@ -309,28 +309,28 @@ const changePassword = async () => {
       })
 
       if (result.success) {
-        ElMessage.success(t("profile.passwordChangeSuccess"))
+        ElMessage.success(t('profile.passwordChangeSuccess'))
 
         // Show redirect notification
         ElMessage({
-          message: t("profile.redirectingToLogin"),
-          type: "info",
+          message: t('profile.redirectingToLogin'),
+          type: 'info',
           duration: 3000,
         })
 
         // Reset form
-        passwordData.currentPassword = ""
-        passwordData.newPassword = ""
-        passwordData.confirmPassword = ""
+        passwordData.currentPassword = ''
+        passwordData.newPassword = ''
+        passwordData.confirmPassword = ''
         passwordForm.value.resetFields()
 
         // Logout and redirect after 3 seconds
         setTimeout(async () => {
           await authStore.logout()
-          router.push("/login")
+          router.push('/login')
         }, 3000)
       } else {
-        ElMessage.error(result.message || t("profile.passwordChangeError"))
+        ElMessage.error(result.message || t('profile.passwordChangeError'))
       }
     }
   })

@@ -78,12 +78,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, nextTick } from "vue"
-import { useRouter } from "vue-router"
-import { useI18n } from "vue-i18n"
-import { ElMessage } from "element-plus"
-import { User, Lock, Setting } from "@element-plus/icons-vue"
-import { useAuthStore } from "../stores/auth"
+import { ref, reactive, computed, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { ElMessage } from 'element-plus'
+import { User, Lock, Setting } from '@element-plus/icons-vue'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
 const { t, locale } = useI18n()
@@ -93,8 +93,8 @@ const loginFormRef = ref()
 const loading = ref(false)
 
 const loginForm = reactive({
-  username: "",
-  password: "",
+  username: '',
+  password: '',
   remember: false,
 })
 
@@ -102,37 +102,37 @@ const loginRules = {
   username: [
     {
       required: true,
-      message: () => t("validation.required", { field: t("login.username") }),
-      trigger: "blur",
+      message: () => t('validation.required', { field: t('login.username') }),
+      trigger: 'blur',
     },
     {
       min: 3,
       max: 20,
-      message: () => t("validation.length", { min: 3, max: 20 }),
-      trigger: "blur",
+      message: () => t('validation.length', { min: 3, max: 20 }),
+      trigger: 'blur',
     },
   ],
   password: [
     {
       required: true,
-      message: () => t("validation.required", { field: t("login.password") }),
-      trigger: "blur",
+      message: () => t('validation.required', { field: t('login.password') }),
+      trigger: 'blur',
     },
     {
       min: 6,
-      message: () => t("validation.minLength", { min: 6 }),
-      trigger: "blur",
+      message: () => t('validation.minLength', { min: 6 }),
+      trigger: 'blur',
     },
   ],
 }
 
 const currentLanguage = computed(() => {
   const langMap = {
-    zh: "中文",
-    en: "English",
-    ko: "한국어",
+    zh: '中文',
+    en: 'English',
+    ko: '한국어',
   }
-  return langMap[locale.value] || "中文"
+  return langMap[locale.value] || '中文'
 })
 
 const handleLogin = async () => {
@@ -151,23 +151,23 @@ const handleLogin = async () => {
     )
 
     if (result.success) {
-      ElMessage.success(t("login.success"))
+      ElMessage.success(t('login.success'))
 
       // 记住登录状态
       if (loginForm.remember) {
-        localStorage.setItem("rememberLogin", "true")
+        localStorage.setItem('rememberLogin', 'true')
       }
 
       // 等待一个tick确保状态更新完成
       await nextTick()
 
       // 使用replace而不是push，避免用户按返回键回到登录页
-      router.replace("/")
+      router.replace('/')
     } else {
-      ElMessage.error(result.message || t("login.failed"))
+      ElMessage.error(result.message || t('login.failed'))
     }
   } catch (error) {
-    console.error("Login validation failed:", error)
+    console.error('Login validation failed:', error)
   } finally {
     loading.value = false
   }
@@ -175,7 +175,7 @@ const handleLogin = async () => {
 
 const changeLanguage = (lang) => {
   locale.value = lang
-  localStorage.setItem("locale", lang)
+  localStorage.setItem('locale', lang)
 }
 </script>
 

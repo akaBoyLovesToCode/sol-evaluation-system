@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-import { Message } from "@element-plus/icons-vue"
+import { Message } from '@element-plus/icons-vue'
 </script>
 
 <style scoped>

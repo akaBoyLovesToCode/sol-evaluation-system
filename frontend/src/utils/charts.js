@@ -1,4 +1,4 @@
-import * as echarts from "echarts"
+import * as echarts from 'echarts'
 
 /**
  * Chart utilities for ECharts integration
@@ -9,14 +9,14 @@ import * as echarts from "echarts"
  * Default chart colors
  */
 export const DEFAULT_COLORS = [
-  "#409EFF", // Primary blue
-  "#67C23A", // Success green
-  "#E6A23C", // Warning orange
-  "#F56C6C", // Danger red
-  "#909399", // Info gray
-  "#9b59b6", // Purple
-  "#1abc9c", // Teal
-  "#34495e", // Dark gray
+  '#409EFF', // Primary blue
+  '#67C23A', // Success green
+  '#E6A23C', // Warning orange
+  '#F56C6C', // Danger red
+  '#909399', // Info gray
+  '#9b59b6', // Purple
+  '#1abc9c', // Teal
+  '#34495e', // Dark gray
 ]
 
 /**
@@ -24,22 +24,22 @@ export const DEFAULT_COLORS = [
  */
 export const CHART_CONFIGS = {
   tooltip: {
-    trigger: "item",
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
-    borderColor: "transparent",
+    trigger: 'item',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderColor: 'transparent',
     textStyle: {
-      color: "#fff",
+      color: '#fff',
     },
   },
   legend: {
     textStyle: {
-      color: "#606266",
+      color: '#606266',
     },
   },
   grid: {
-    left: "3%",
-    right: "4%",
-    bottom: "3%",
+    left: '3%',
+    right: '4%',
+    bottom: '3%',
     containLabel: true,
   },
 }
@@ -53,7 +53,7 @@ export const CHART_CONFIGS = {
  */
 export const createPieChart = (element, data, options = {}) => {
   if (!element) {
-    console.error("Chart element is required")
+    console.error('Chart element is required')
     return null
   }
 
@@ -61,27 +61,27 @@ export const createPieChart = (element, data, options = {}) => {
 
   const defaultOptions = {
     tooltip: {
-      trigger: "item",
-      formatter: "{a} <br/>{b}: {c} ({d}%)",
+      trigger: 'item',
+      formatter: '{a} <br/>{b}: {c} ({d}%)',
     },
     legend: {
-      orient: "vertical",
-      left: "left",
+      orient: 'vertical',
+      left: 'left',
       textStyle: {
-        color: "#606266",
+        color: '#606266',
       },
     },
     series: [
       {
-        name: options.seriesName || "Data",
-        type: "pie",
-        radius: options.radius || "50%",
+        name: options.seriesName || 'Data',
+        type: 'pie',
+        radius: options.radius || '50%',
         data: data,
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
             shadowOffsetX: 0,
-            shadowColor: "rgba(0, 0, 0, 0.5)",
+            shadowColor: 'rgba(0, 0, 0, 0.5)',
           },
         },
         itemStyle: {
@@ -107,7 +107,7 @@ export const createPieChart = (element, data, options = {}) => {
  */
 export const createLineChart = (element, data, options = {}) => {
   if (!element) {
-    console.error("Chart element is required")
+    console.error('Chart element is required')
     return null
   }
 
@@ -115,57 +115,57 @@ export const createLineChart = (element, data, options = {}) => {
 
   const defaultOptions = {
     tooltip: {
-      trigger: "axis",
-      backgroundColor: "rgba(0, 0, 0, 0.8)",
-      borderColor: "transparent",
+      trigger: 'axis',
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      borderColor: 'transparent',
       textStyle: {
-        color: "#fff",
+        color: '#fff',
       },
     },
     legend: {
       data: data.seriesNames || [],
       textStyle: {
-        color: "#606266",
+        color: '#606266',
       },
     },
     grid: {
-      left: "3%",
-      right: "4%",
-      bottom: "3%",
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
       containLabel: true,
     },
     xAxis: {
-      type: "category",
+      type: 'category',
       boundaryGap: false,
       data: data.xAxis || [],
       axisLabel: {
-        color: "#606266",
+        color: '#606266',
       },
       axisLine: {
         lineStyle: {
-          color: "#DCDFE6",
+          color: '#DCDFE6',
         },
       },
     },
     yAxis: {
-      type: "value",
+      type: 'value',
       axisLabel: {
-        color: "#606266",
+        color: '#606266',
       },
       axisLine: {
         lineStyle: {
-          color: "#DCDFE6",
+          color: '#DCDFE6',
         },
       },
       splitLine: {
         lineStyle: {
-          color: "#EBEEF5",
+          color: '#EBEEF5',
         },
       },
     },
     series: data.series.map((serie, index) => ({
       name: serie.name,
-      type: "line",
+      type: 'line',
       smooth: true,
       data: serie.data,
       itemStyle: {
@@ -195,7 +195,7 @@ export const createLineChart = (element, data, options = {}) => {
  */
 export const createBarChart = (element, data, options = {}) => {
   if (!element) {
-    console.error("Chart element is required")
+    console.error('Chart element is required')
     return null
   }
 
@@ -203,56 +203,56 @@ export const createBarChart = (element, data, options = {}) => {
 
   const defaultOptions = {
     tooltip: {
-      trigger: "axis",
-      backgroundColor: "rgba(0, 0, 0, 0.8)",
-      borderColor: "transparent",
+      trigger: 'axis',
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      borderColor: 'transparent',
       textStyle: {
-        color: "#fff",
+        color: '#fff',
       },
     },
     legend: {
       data: data.seriesNames || [],
       textStyle: {
-        color: "#606266",
+        color: '#606266',
       },
     },
     grid: {
-      left: "3%",
-      right: "4%",
-      bottom: "3%",
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
       containLabel: true,
     },
     xAxis: {
-      type: "category",
+      type: 'category',
       data: data.xAxis || [],
       axisLabel: {
-        color: "#606266",
+        color: '#606266',
       },
       axisLine: {
         lineStyle: {
-          color: "#DCDFE6",
+          color: '#DCDFE6',
         },
       },
     },
     yAxis: {
-      type: "value",
+      type: 'value',
       axisLabel: {
-        color: "#606266",
+        color: '#606266',
       },
       axisLine: {
         lineStyle: {
-          color: "#DCDFE6",
+          color: '#DCDFE6',
         },
       },
       splitLine: {
         lineStyle: {
-          color: "#EBEEF5",
+          color: '#EBEEF5',
         },
       },
     },
     series: data.series.map((serie, index) => ({
       name: serie.name,
-      type: "bar",
+      type: 'bar',
       data: serie.data,
       itemStyle: {
         color: options.colors ? options.colors[index] : DEFAULT_COLORS[index],
@@ -287,11 +287,11 @@ export const makeResponsive = (chart, element) => {
     chart.resize()
   }
 
-  window.addEventListener("resize", handleWindowResize)
+  window.addEventListener('resize', handleWindowResize)
 
   return () => {
     resizeObserver.disconnect()
-    window.removeEventListener("resize", handleWindowResize)
+    window.removeEventListener('resize', handleWindowResize)
   }
 }
 
@@ -321,7 +321,7 @@ function mergeOptions(target, source) {
   for (const key in source) {
     if (Object.prototype.hasOwnProperty.call(source, key)) {
       if (
-        typeof source[key] === "object" &&
+        typeof source[key] === 'object' &&
         source[key] !== null &&
         !Array.isArray(source[key])
       ) {
@@ -341,17 +341,17 @@ function mergeOptions(target, source) {
 export const CHART_THEMES = {
   default: {
     colors: DEFAULT_COLORS,
-    backgroundColor: "transparent",
+    backgroundColor: 'transparent',
   },
   dark: {
-    colors: ["#409EFF", "#67C23A", "#E6A23C", "#F56C6C", "#909399"],
-    backgroundColor: "#2d3748",
-    textColor: "#fff",
+    colors: ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399'],
+    backgroundColor: '#2d3748',
+    textColor: '#fff',
   },
   light: {
-    colors: ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de"],
-    backgroundColor: "#fff",
-    textColor: "#333",
+    colors: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de'],
+    backgroundColor: '#fff',
+    textColor: '#333',
   },
 }
 
@@ -369,9 +369,9 @@ export const chartUtils = {
     if (!chart) return null
 
     return chart.getDataURL({
-      type: options.type || "png",
+      type: options.type || 'png',
       pixelRatio: options.pixelRatio || 2,
-      backgroundColor: options.backgroundColor || "#fff",
+      backgroundColor: options.backgroundColor || '#fff',
     })
   },
 
@@ -381,12 +381,12 @@ export const chartUtils = {
    * @param {String} filename - Download filename
    * @param {Object} options - Export options
    */
-  downloadChart: (chart, filename = "chart", options = {}) => {
+  downloadChart: (chart, filename = 'chart', options = {}) => {
     const dataURL = chartUtils.exportToImage(chart, options)
     if (!dataURL) return
 
-    const link = document.createElement("a")
-    link.download = `${filename}.${options.type || "png"}`
+    const link = document.createElement('a')
+    link.download = `${filename}.${options.type || 'png'}`
     link.href = dataURL
     document.body.appendChild(link)
     link.click()

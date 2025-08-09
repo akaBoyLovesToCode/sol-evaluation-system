@@ -370,11 +370,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue"
-import { useRouter, useRoute } from "vue-router"
-import { useI18n } from "vue-i18n"
-import { ElMessage, ElMessageBox } from "element-plus"
-import api from "../utils/api"
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import api from '../utils/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -388,26 +388,26 @@ const finishing = ref(false)
 
 // 检测是否为编辑模式
 const isEditMode = computed(
-  () => route.name === "EditEvaluation" && route.params.id,
+  () => route.name === 'EditEvaluation' && route.params.id,
 )
 const evaluationId = computed(() => route.params.id)
 
 const form = reactive({
-  evaluation_type: "",
-  product_name: "",
-  part_number: "",
-  start_date: "",
-  expected_end_date: "",
-  end_date: "", // Actual end date
-  reason: "",
-  process_step: "", // Process step identifier (e.g., M031)
-  description: "",
-  pgm_version: "",
-  material_info: "",
-  capacity: "",
-  interface_type: "",
-  form_factor: "",
-  temperature_grade: "",
+  evaluation_type: '',
+  product_name: '',
+  part_number: '',
+  start_date: '',
+  expected_end_date: '',
+  end_date: '', // Actual end date
+  reason: '',
+  process_step: '', // Process step identifier (e.g., M031)
+  description: '',
+  pgm_version: '',
+  material_info: '',
+  capacity: '',
+  interface_type: '',
+  form_factor: '',
+  temperature_grade: '',
   processes: [],
 })
 
@@ -415,57 +415,57 @@ const rules = computed(() => ({
   evaluation_type: [
     {
       required: true,
-      message: t("validation.requiredField.type"),
-      trigger: "change",
+      message: t('validation.requiredField.type'),
+      trigger: 'change',
     },
   ],
   product_name: [
     {
       required: true,
-      message: t("validation.requiredField.productName"),
-      trigger: "blur",
+      message: t('validation.requiredField.productName'),
+      trigger: 'blur',
     },
   ],
   part_number: [
     {
       required: true,
-      message: t("validation.requiredField.partNumber"),
-      trigger: "blur",
+      message: t('validation.requiredField.partNumber'),
+      trigger: 'blur',
     },
   ],
   start_date: [
     {
       required: true,
-      message: t("validation.requiredField.startDate"),
-      trigger: "change",
+      message: t('validation.requiredField.startDate'),
+      trigger: 'change',
     },
   ],
   expected_end_date: [
     {
       required: true,
-      message: t("validation.requiredField.expectedEndDate"),
-      trigger: "change",
+      message: t('validation.requiredField.expectedEndDate'),
+      trigger: 'change',
     },
   ],
   process_step: [
     {
       required: true,
-      message: t("validation.requiredField.processStep"),
-      trigger: "blur",
+      message: t('validation.requiredField.processStep'),
+      trigger: 'blur',
     },
   ],
   reason: [
     {
       required: true,
-      message: t("validation.requiredField.reason"),
-      trigger: "change",
+      message: t('validation.requiredField.reason'),
+      trigger: 'change',
     },
   ],
   description: [
     {
       required: true,
-      message: t("validation.requiredField.description"),
-      trigger: "blur",
+      message: t('validation.requiredField.description'),
+      trigger: 'blur',
     },
   ],
   end_date: [
@@ -473,37 +473,37 @@ const rules = computed(() => ({
     {
       validator: (rule, value, callback) => {
         if (finishing.value && !value) {
-          callback(new Error(t("validation.requiredField.actualEndDate")))
+          callback(new Error(t('validation.requiredField.actualEndDate')))
         } else {
           callback()
         }
       },
-      trigger: "change",
+      trigger: 'change',
     },
   ],
 }))
 
 const handleTypeChange = (type) => {
   form.processes = []
-  if (type === "new_product") {
-    form.processes = ["doe", "ppq", "prq"]
-  } else if (type === "mass_production") {
-    form.processes = ["production_test", "aql"]
+  if (type === 'new_product') {
+    form.processes = ['doe', 'ppq', 'prq']
+  } else if (type === 'mass_production') {
+    form.processes = ['production_test', 'aql']
   }
 }
 
 const handleCancel = async () => {
   try {
     await ElMessageBox.confirm(
-      t("evaluation.cancelConfirm"),
-      t("common.confirmCancel"),
+      t('evaluation.cancelConfirm'),
+      t('common.confirmCancel'),
       {
-        confirmButtonText: t("common.confirm"),
-        cancelButtonText: t("common.cancel"),
-        type: "warning",
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning',
       },
     )
-    router.push("/evaluations")
+    router.push('/evaluations')
   } catch {
     // User cancelled
   }
@@ -546,38 +546,38 @@ const handleSave = async (submit = false) => {
       // In edit mode, "Save" keeps the current status, it doesn't revert to draft
       // The backend should handle preserving the status if not provided.
     } else {
-      payload.status = submit ? "in_progress" : "draft"
+      payload.status = submit ? 'in_progress' : 'draft'
     }
 
     let response
     if (isEditMode.value) {
       response = await api.put(`/evaluations/${evaluationId.value}`, payload)
-      ElMessage.success(t("common.saveSuccess"))
+      ElMessage.success(t('common.saveSuccess'))
       // Redirect to detail view after successful save
       router.push(`/evaluations/${evaluationId.value}`)
     } else {
-      response = await api.post("/evaluations", payload)
+      response = await api.post('/evaluations', payload)
       ElMessage.success(
-        submit ? t("evaluation.submitSuccess") : t("evaluation.saveSuccess"),
+        submit ? t('evaluation.submitSuccess') : t('evaluation.saveSuccess'),
       )
       const targetId = response.data?.data?.evaluation?.id
       if (targetId) {
         router.push(`/evaluations/${targetId}`)
       } else {
-        console.error("Invalid response structure:", response.data)
-        ElMessage.error(t("common.responseError"))
+        console.error('Invalid response structure:', response.data)
+        ElMessage.error(t('common.responseError'))
       }
     }
   } catch (error) {
-    if (error.name !== "ValidationError") {
+    if (error.name !== 'ValidationError') {
       ElMessage.error(
         isEditMode.value
-          ? t("common.saveError")
+          ? t('common.saveError')
           : submit
-            ? t("evaluation.submitError")
-            : t("evaluation.saveError"),
+            ? t('evaluation.submitError')
+            : t('evaluation.saveError'),
       )
-      console.error("Save failed:", error)
+      console.error('Save failed:', error)
     }
   } finally {
     saving.value = false
@@ -593,21 +593,21 @@ const handleFinish = async () => {
     await formRef.value.validate()
 
     await ElMessageBox.confirm(
-      t("evaluation.finishConfirm"),
-      t("common.confirmAction"),
-      { type: "info" },
+      t('evaluation.finishConfirm'),
+      t('common.confirmAction'),
+      { type: 'info' },
     )
 
     await api.put(`/evaluations/${evaluationId.value}/status`, {
-      status: "completed",
+      status: 'completed',
     })
 
-    ElMessage.success(t("evaluation.finishSuccess"))
+    ElMessage.success(t('evaluation.finishSuccess'))
     router.push(`/evaluations/${evaluationId.value}`)
   } catch (error) {
-    if (error && error.name !== "ValidationError" && error !== "cancel") {
-      ElMessage.error(t("evaluation.finishError"))
-      console.error("Finish failed:", error)
+    if (error && error.name !== 'ValidationError' && error !== 'cancel') {
+      ElMessage.error(t('evaluation.finishError'))
+      console.error('Finish failed:', error)
     }
   } finally {
     finishing.value = false
@@ -619,24 +619,24 @@ const handleDelete = async () => {
 
   try {
     await ElMessageBox.confirm(
-      t("evaluation.deleteConfirm"),
-      t("common.confirmDelete"),
+      t('evaluation.deleteConfirm'),
+      t('common.confirmDelete'),
       {
-        confirmButtonText: t("common.confirm"),
-        cancelButtonText: t("common.cancel"),
-        type: "warning",
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning',
       },
     )
 
     deleting.value = true
     await api.delete(`/evaluations/${evaluationId.value}`)
 
-    ElMessage.success(t("evaluation.deleteSuccess"))
-    router.push("/evaluations")
+    ElMessage.success(t('evaluation.deleteSuccess'))
+    router.push('/evaluations')
   } catch (error) {
-    if (error && error !== "cancel") {
-      ElMessage.error(t("common.deleteError"))
-      console.error("Delete failed:", error)
+    if (error && error !== 'cancel') {
+      ElMessage.error(t('common.deleteError'))
+      console.error('Delete failed:', error)
     }
   } finally {
     deleting.value = false
@@ -652,27 +652,27 @@ const fetchEvaluation = async () => {
     const evaluation = response.data.data.evaluation
 
     Object.assign(form, {
-      evaluation_type: evaluation.evaluation_type || "",
-      product_name: evaluation.product_name || "",
-      part_number: evaluation.part_number || "",
-      start_date: evaluation.start_date || "",
-      expected_end_date: evaluation.expected_end_date || "",
-      end_date: evaluation.end_date || "",
-      reason: evaluation.evaluation_reason || evaluation.reason || "",
-      process_step: evaluation.process_step || "",
-      description: evaluation.remarks || evaluation.description || "",
-      pgm_version: evaluation.pgm_version || "",
-      material_info: evaluation.material_info || "",
-      capacity: evaluation.capacity || "",
-      interface_type: evaluation.interface_type || "",
-      form_factor: evaluation.form_factor || "",
-      temperature_grade: evaluation.temperature_grade || "",
+      evaluation_type: evaluation.evaluation_type || '',
+      product_name: evaluation.product_name || '',
+      part_number: evaluation.part_number || '',
+      start_date: evaluation.start_date || '',
+      expected_end_date: evaluation.expected_end_date || '',
+      end_date: evaluation.end_date || '',
+      reason: evaluation.evaluation_reason || evaluation.reason || '',
+      process_step: evaluation.process_step || '',
+      description: evaluation.remarks || evaluation.description || '',
+      pgm_version: evaluation.pgm_version || '',
+      material_info: evaluation.material_info || '',
+      capacity: evaluation.capacity || '',
+      interface_type: evaluation.interface_type || '',
+      form_factor: evaluation.form_factor || '',
+      temperature_grade: evaluation.temperature_grade || '',
       processes: evaluation.processes || [],
     })
   } catch (error) {
-    ElMessage.error("获取评价数据失败")
-    console.error("Failed to fetch evaluation:", error)
-    router.push("/evaluations")
+    ElMessage.error(t('ui.fetchDataFailed'))
+    console.error('Failed to fetch evaluation:', error)
+    router.push('/evaluations')
   } finally {
     loading.value = false
   }

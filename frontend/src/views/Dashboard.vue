@@ -173,10 +173,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, markRaw } from "vue"
-import { useRouter } from "vue-router"
-import { useI18n } from "vue-i18n"
-import { ElMessage } from "element-plus"
+import { ref, onMounted, onUnmounted, nextTick, markRaw } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { ElMessage } from 'element-plus'
 import {
   Document,
   DataAnalysis,
@@ -188,16 +188,16 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowRight,
-} from "@element-plus/icons-vue"
+} from '@element-plus/icons-vue'
 import {
   createPieChart,
   createLineChart,
   makeResponsive,
   disposeChart,
-} from "../utils/charts"
-import api from "../utils/api"
-import { useAuthStore } from "../stores/auth"
-import AnimatedContainer from "../components/AnimatedContainer.vue"
+} from '../utils/charts'
+import api from '../utils/api'
+import { useAuthStore } from '../stores/auth'
+import AnimatedContainer from '../components/AnimatedContainer.vue'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -209,35 +209,35 @@ const pendingLoading = ref(false)
 
 const stats = ref([
   {
-    key: "total",
-    label: "dashboard.totalEvaluations",
+    key: 'total',
+    label: 'dashboard.totalEvaluations',
     value: 0,
     icon: markRaw(Document),
-    iconClass: "blue",
+    iconClass: 'blue',
     trend: 0,
   },
   {
-    key: "pending",
-    label: "dashboard.pendingApprovals",
+    key: 'pending',
+    label: 'dashboard.pendingApprovals',
     value: 0,
     icon: markRaw(CircleCheck),
-    iconClass: "orange",
+    iconClass: 'orange',
     trend: 0,
   },
   {
-    key: "completed",
-    label: "dashboard.completedEvaluations",
+    key: 'completed',
+    label: 'dashboard.completedEvaluations',
     value: 0,
     icon: markRaw(CircleCheck),
-    iconClass: "green",
+    iconClass: 'green',
     trend: 0,
   },
   {
-    key: "users",
-    label: "dashboard.activeUsers",
+    key: 'users',
+    label: 'dashboard.activeUsers',
     value: 0,
     icon: markRaw(User),
-    iconClass: "purple",
+    iconClass: 'purple',
     trend: 0,
   },
 ])
@@ -252,7 +252,7 @@ let trendChartCleanup = null
 
 const fetchDashboardData = async () => {
   try {
-    const response = await api.get("/dashboard/overview")
+    const response = await api.get('/dashboard/overview')
     const data = response.data.data
 
     // 更新统计数据
@@ -269,8 +269,8 @@ const fetchDashboardData = async () => {
 
     return data
   } catch (error) {
-    ElMessage.error(t("dashboard.loadError"))
-    console.error("Failed to fetch dashboard data:", error)
+    ElMessage.error(t('dashboard.loadError'))
+    console.error('Failed to fetch dashboard data:', error)
   }
 }
 
@@ -280,10 +280,10 @@ const fetchPendingItems = async () => {
   try {
     pendingLoading.value = true
     // 使用dashboard overview中的pending_approvals数据
-    const response = await api.get("/dashboard/overview")
+    const response = await api.get('/dashboard/overview')
     pendingItems.value = response.data.data.pending_approvals || []
   } catch (error) {
-    console.error("Failed to fetch pending items:", error)
+    console.error('Failed to fetch pending items:', error)
   } finally {
     pendingLoading.value = false
   }
@@ -294,17 +294,17 @@ const fetchMonthlyTrend = async () => {
     // 获取更大的日期范围，包括未来数据（测试环境可能有未来日期）
     const endDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
       .toISOString()
-      .split("T")[0] // 未来一年
+      .split('T')[0] // 未来一年
     const startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
       .toISOString()
-      .split("T")[0] // 过去一年
+      .split('T')[0] // 过去一年
 
     const response = await api.get(
       `/dashboard/statistics?start_date=${startDate}&end_date=${endDate}&group_by=month`,
     )
     return response.data.data
   } catch (error) {
-    console.error("Failed to fetch monthly trend:", error)
+    console.error('Failed to fetch monthly trend:', error)
     return null
   }
 }
@@ -312,18 +312,18 @@ const fetchMonthlyTrend = async () => {
 const fetchRecentActivities = async () => {
   try {
     // 使用dashboard overview中的recent_evaluations数据作为活动
-    const response = await api.get("/dashboard/overview")
+    const response = await api.get('/dashboard/overview')
     recentActivities.value = (response.data.data.recent_evaluations || []).map(
       (evaluation) => ({
         id: evaluation.id,
-        action: "create",
-        user_name: evaluation.evaluator_name || "Unknown User",
-        description: `评价 ${evaluation.evaluation_number} - ${evaluation.product_name || "Unknown Product"}`,
+        action: 'create',
+        user_name: evaluation.evaluator_name || 'Unknown User',
+        description: `评价 ${evaluation.evaluation_number} - ${evaluation.product_name || 'Unknown Product'}`,
         created_at: evaluation.created_at,
       }),
     )
   } catch (error) {
-    console.error("Failed to fetch recent activities:", error)
+    console.error('Failed to fetch recent activities:', error)
   }
 }
 
@@ -338,29 +338,29 @@ const initStatusChart = (data) => {
   const chartData = [
     {
       value: data.status_distribution?.in_progress || 0,
-      name: t("status.in_progress"),
+      name: t('status.in_progress'),
     },
     {
       value: data.status_distribution?.pending_approval || 0,
-      name: t("status.pending_approval"),
+      name: t('status.pending_approval'),
     },
     {
       value: data.status_distribution?.completed || 0,
-      name: t("status.completed"),
+      name: t('status.completed'),
     },
-    { value: data.status_distribution?.paused || 0, name: t("status.paused") },
+    { value: data.status_distribution?.paused || 0, name: t('status.paused') },
     {
       value: data.status_distribution?.cancelled || 0,
-      name: t("status.cancelled"),
+      name: t('status.cancelled'),
     },
   ]
 
   statusChart = createPieChart(statusChartRef.value, chartData, {
-    seriesName: t("dashboard.evaluationStatus"),
+    seriesName: t('dashboard.evaluationStatus'),
     customOptions: {
       legend: {
-        orient: "vertical",
-        left: "left",
+        orient: 'vertical',
+        left: 'left',
       },
     },
   })
@@ -402,18 +402,18 @@ const initTrendChart = async () => {
     xAxis: periods,
     series: [
       {
-        name: t("dashboard.newEvaluations"),
+        name: t('dashboard.newEvaluations'),
         data: newEvaluations,
       },
       {
-        name: t("dashboard.completedEvaluations"),
+        name: t('dashboard.completedEvaluations'),
         data: completedEvaluations,
       },
     ],
   }
 
   trendChart = createLineChart(trendChartRef.value, chartData, {
-    colors: ["#409EFF", "#67C23A"],
+    colors: ['#409EFF', '#67C23A'],
     showArea: false,
   })
 
@@ -435,43 +435,43 @@ const handlePendingItemClick = (item) => {
 
 const getStatusTagType = (status) => {
   const typeMap = {
-    in_progress: "primary",
-    pending_approval: "warning",
-    completed: "success",
-    paused: "info",
-    cancelled: "danger",
-    rejected: "danger",
+    in_progress: 'primary',
+    pending_approval: 'warning',
+    completed: 'success',
+    paused: 'info',
+    cancelled: 'danger',
+    rejected: 'danger',
   }
-  return typeMap[status] || "info"
+  return typeMap[status] || 'info'
 }
 
 const getActivityType = (action) => {
   const typeMap = {
-    create: "primary",
-    update: "warning",
-    approve: "success",
-    reject: "danger",
-    complete: "success",
+    create: 'primary',
+    update: 'warning',
+    approve: 'success',
+    reject: 'danger',
+    complete: 'success',
   }
-  return typeMap[action] || "primary"
+  return typeMap[action] || 'primary'
 }
 
 const formatDate = (dateString) => {
-  if (!dateString) return "--"
+  if (!dateString) return '--'
 
   try {
     const date = new Date(dateString)
     if (isNaN(date.getTime())) {
-      return "--"
+      return '--'
     }
     return (
       date.toLocaleDateString() +
-      " " +
-      date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      ' ' +
+      date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     )
   } catch (error) {
-    console.error("Date formatting error:", error)
-    return "--"
+    console.error('Date formatting error:', error)
+    return '--'
   }
 }
 

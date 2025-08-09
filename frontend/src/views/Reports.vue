@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-import { DataAnalysis } from "@element-plus/icons-vue"
+import { DataAnalysis } from '@element-plus/icons-vue'
 </script>
 
 <style scoped>
