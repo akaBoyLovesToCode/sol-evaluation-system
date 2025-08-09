@@ -253,30 +253,19 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from "vue"
-import { useRouter } from "vue-router"
-import { useI18n } from "vue-i18n"
-import { ElMessage, ElMessageBox } from "element-plus"
+import { ref, reactive, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { ElMessage } from 'element-plus'
 import {
   Plus,
   Search,
   Refresh,
   Download,
-  View,
-  Edit,
-  MoreFilled,
-  Check,
-  VideoPause,
-  VideoPlay,
-  Close,
-} from "@element-plus/icons-vue"
-import api from "../utils/api"
-import { useAuthStore } from "../stores/auth"
-import AnimatedContainer from "../components/AnimatedContainer.vue"
+} from '@element-plus/icons-vue'
+import api from '../utils/api'
+import AnimatedContainer from '../components/AnimatedContainer.vue'
 
-const router = useRouter()
 const { t } = useI18n()
-const authStore = useAuthStore()
 
 const tableLoading = ref(false)
 const exportLoading = ref(false)
@@ -284,11 +273,11 @@ const tableData = ref([])
 const selectedRows = ref([])
 
 const searchForm = reactive({
-  evaluation_number: "",
-  evaluation_type: "",
-  status: "",
-  product: "",
-  evaluator: "",
+  evaluation_number: '',
+  evaluation_type: '',
+  status: '',
+  product: '',
+  evaluator: '',
   dateRange: null,
 })
 
@@ -299,18 +288,18 @@ const pagination = reactive({
 })
 
 const sortParams = reactive({
-  prop: "",
-  order: "",
+  prop: '',
+  order: '',
 })
 
 const statusOptions = computed(() => [
-  { label: t("status.draft"), value: "draft" },
-  { label: t("status.in_progress"), value: "in_progress" },
-  { label: t("status.pending_approval"), value: "pending_approval" },
-  { label: t("status.completed"), value: "completed" },
-  { label: t("status.paused"), value: "paused" },
-  { label: t("status.cancelled"), value: "cancelled" },
-  { label: t("status.rejected"), value: "rejected" },
+  { label: t('status.draft'), value: 'draft' },
+  { label: t('status.in_progress'), value: 'in_progress' },
+  { label: t('status.pending_approval'), value: 'pending_approval' },
+  { label: t('status.completed'), value: 'completed' },
+  { label: t('status.paused'), value: 'paused' },
+  { label: t('status.cancelled'), value: 'cancelled' },
+  { label: t('status.rejected'), value: 'rejected' },
 ])
 
 const fetchEvaluations = async () => {
@@ -348,18 +337,18 @@ const fetchEvaluations = async () => {
     // 处理排序
     if (sortParams.prop) {
       params.sort_by = sortParams.prop
-      params.sort_order = sortParams.order === "ascending" ? "asc" : "desc"
+      params.sort_order = sortParams.order === 'ascending' ? 'asc' : 'desc'
     }
 
-    const response = await api.get("/evaluations", { params })
+    const response = await api.get('/evaluations', { params })
     const data = response.data.data
 
     // 后端返回的数据结构是 { data: { evaluations: [...], pagination: {...} } }
     tableData.value = data.evaluations || []
     pagination.total = data.total || 0
   } catch (error) {
-    ElMessage.error("获取评价列表失败")
-    console.error("Failed to fetch evaluations:", error)
+    ElMessage.error(t('ui.fetchListFailed'))
+    console.error('Failed to fetch evaluations:', error)
   } finally {
     tableLoading.value = false
   }
@@ -372,7 +361,7 @@ const handleSearch = () => {
 
 const handleReset = () => {
   Object.keys(searchForm).forEach((key) => {
-    searchForm[key] = key === "dateRange" ? null : ""
+    searchForm[key] = key === 'dateRange' ? null : ''
   })
   pagination.page = 1
   fetchEvaluations()
@@ -399,50 +388,7 @@ const handleSelectionChange = (selection) => {
   selectedRows.value = selection
 }
 
-const handleEdit = (row) => {
-  router.push(`/evaluations/${row.id}/edit`)
-}
 
-const handleOperation = async (command, row) => {
-  try {
-    let message = ""
-    let confirmText = ""
-
-    switch (command) {
-      case "approve":
-        message = "确认审批通过此评价？"
-        confirmText = "审批"
-        break
-      case "pause":
-        message = "确认暂停此评价？"
-        confirmText = "暂停"
-        break
-      case "resume":
-        message = "确认恢复此评价？"
-        confirmText = "恢复"
-        break
-      case "cancel":
-        message = "确认取消此评价？此操作不可撤销。"
-        confirmText = "取消"
-        break
-    }
-
-    await ElMessageBox.confirm(message, "确认操作", {
-      confirmButtonText: confirmText,
-      cancelButtonText: "取消",
-      type: "warning",
-    })
-
-    await api.put(`/evaluations/${row.id}/${command}`)
-    ElMessage.success("操作成功")
-    fetchEvaluations()
-  } catch (error) {
-    if (error !== "cancel") {
-      ElMessage.error("操作失败")
-      console.error("Operation failed:", error)
-    }
-  }
-}
 
 const handleExport = async () => {
   try {
@@ -453,7 +399,7 @@ const handleExport = async () => {
       selectedRows.value.length > 0 ? selectedRows.value : tableData.value
 
     if (dataToExport.length === 0) {
-      ElMessage.warning("没有数据可导出")
+      ElMessage.warning(t('ui.noDataToExport'))
       return
     }
 
@@ -466,106 +412,80 @@ const handleExport = async () => {
 
     // Prepare CSV data
     const headers = [
-      t("evaluation.evaluationNumber"),
-      t("evaluation.evaluationType"),
-      t("evaluation.product"),
-      t("evaluation.partNumber"),
-      t("evaluation.reason"),
-      t("evaluation.evaluator"),
-      t("common.status"),
-      t("evaluation.startDate"),
-      t("evaluation.endDate"),
-    ].join(",")
+      t('evaluation.evaluationNumber'),
+      t('evaluation.evaluationType'),
+      t('evaluation.product'),
+      t('evaluation.partNumber'),
+      t('evaluation.reason'),
+      t('evaluation.evaluator'),
+      t('common.status'),
+      t('evaluation.startDate'),
+      t('evaluation.endDate'),
+    ].join(',')
 
     const rows = dataToExport.map((row) =>
       [
-        row.evaluation_number || "",
-        t(`evaluation.type.${row.evaluation_type}`) || "",
-        row.product_name || "",
-        row.part_number || "",
+        row.evaluation_number || '',
+        t(`evaluation.type.${row.evaluation_type}`) || '',
+        row.product_name || '',
+        row.part_number || '',
         row.evaluation_reason
           ? t(`evaluation.reasons.${row.evaluation_reason}`)
-          : "",
-        row.evaluator_name || "",
-        t(`status.${row.status}`) || "",
-        formatDate(row.start_date) || "",
-        formatDate(row.actual_end_date) || "",
+          : '',
+        row.evaluator_name || '',
+        t(`status.${row.status}`) || '',
+        formatDate(row.start_date) || '',
+        formatDate(row.actual_end_date) || '',
       ]
         .map((cell) => `"${cell}"`)
-        .join(","),
+        .join(','),
     )
 
-    const csvContent = [headers, ...rows].join("\n")
+    const csvContent = [headers, ...rows].join('\n')
 
     // Create and download CSV file
-    const blob = new Blob(["\uFEFF" + csvContent], {
-      type: "text/csv;charset=utf-8;",
+    const blob = new Blob(['\uFEFF' + csvContent], {
+      type: 'text/csv;charset=utf-8;',
     })
     const url = window.URL.createObjectURL(blob)
-    const link = document.createElement("a")
+    const link = document.createElement('a')
     link.href = url
     const filename =
       selectedRows.value.length > 0
-        ? `evaluations_selected_${new Date().toISOString().split("T")[0]}.csv`
-        : `evaluations_all_${new Date().toISOString().split("T")[0]}.csv`
+        ? `evaluations_selected_${new Date().toISOString().split('T')[0]}.csv`
+        : `evaluations_all_${new Date().toISOString().split('T')[0]}.csv`
     link.download = filename
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
 
-    ElMessage.success(t("evaluation.exportSuccess") || "导出成功")
+    ElMessage.success(t('evaluation.exportSuccess') || '导出成功')
   } catch (error) {
-    ElMessage.error(t("evaluation.exportError") || "导出失败")
-    console.error("Export failed:", error)
+    ElMessage.error(t('evaluation.exportError') || '导出失败')
+    console.error('Export failed:', error)
   } finally {
     exportLoading.value = false
   }
 }
 
 // 权限检查函数
-const canEdit = (row) => {
-  return (
-    row.status === "in_progress" &&
-    (authStore.user.id === row.evaluator_id || authStore.isAdmin)
-  )
-}
-
-const canOperate = (row) => {
-  return authStore.canApprove || authStore.user.id === row.evaluator_id
-}
-
-const canApprove = (row) => {
-  return row.status === "pending_approval" && authStore.canApprove
-}
-
-const canPause = (row) => {
-  return row.status === "in_progress"
-}
-
-const canResume = (row) => {
-  return row.status === "paused"
-}
-
-const canCancel = (row) => {
-  return ["in_progress", "paused", "pending_approval"].includes(row.status)
-}
 
 const getStatusTagType = (status) => {
   const typeMap = {
-    draft: "info",
-    in_progress: "primary",
-    pending_approval: "warning",
-    completed: "success",
-    paused: "info",
-    cancelled: "danger",
-    rejected: "danger",
+    draft: 'info',
+    in_progress: 'primary',
+    pending_approval: 'warning',
+    completed: 'success',
+    paused: 'info',
+    cancelled: 'danger',
+    rejected: 'danger',
   }
-  return typeMap[status] || "info"
+  return typeMap[status] || 'info'
 }
 
 const formatDate = (dateString) => {
-  if (!dateString) return "-"
+  if (!dateString) return '-'
   return new Date(dateString).toLocaleDateString()
 }
 

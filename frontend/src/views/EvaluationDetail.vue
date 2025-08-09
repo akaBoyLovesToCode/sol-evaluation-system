@@ -357,10 +357,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue"
-import { useRoute, useRouter } from "vue-router"
-import { useI18n } from "vue-i18n"
-import { ElMessage, ElMessageBox } from "element-plus"
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Edit,
   MoreFilled,
@@ -379,12 +379,12 @@ import {
   CircleClose,
   User,
   Download as DownloadIcon,
-} from "@element-plus/icons-vue"
-import api from "../utils/api"
-import { useAuthStore } from "../stores/auth"
+} from '@element-plus/icons-vue'
+import api from '../utils/api'
+import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
-const router = useRouter()
+
 const { t } = useI18n()
 const authStore = useAuthStore()
 
@@ -395,7 +395,7 @@ const showAllLogs = ref(false)
 const canEdit = computed(() => {
   if (!evaluation.value) return false
   return (
-    evaluation.value.status === "in_progress" &&
+    evaluation.value.status === 'in_progress' &&
     (authStore.user.id === evaluation.value.evaluator_id || authStore.isAdmin)
   )
 })
@@ -407,17 +407,17 @@ const canOperate = computed(() => {
 })
 
 const canApprove = computed(() => {
-  return evaluation.value?.status === "pending_approval" && authStore.canApprove
+  return evaluation.value?.status === 'pending_approval' && authStore.canApprove
 })
 
 const canReject = computed(() => {
-  return evaluation.value?.status === "pending_approval" && authStore.canApprove
+  return evaluation.value?.status === 'pending_approval' && authStore.canApprove
 })
 
 const canPause = computed(() => {
   if (!evaluation.value) return false
   return (
-    evaluation.value.status === "in_progress" &&
+    evaluation.value.status === 'in_progress' &&
     (authStore.user.id === evaluation.value.evaluator_id || authStore.isAdmin)
   )
 })
@@ -425,7 +425,7 @@ const canPause = computed(() => {
 const canResume = computed(() => {
   if (!evaluation.value) return false
   return (
-    evaluation.value.status === "paused" &&
+    evaluation.value.status === 'paused' &&
     (authStore.user.id === evaluation.value.evaluator_id || authStore.isAdmin)
   )
 })
@@ -433,7 +433,7 @@ const canResume = computed(() => {
 const canCancel = computed(() => {
   if (!evaluation.value) return false
   return (
-    ["in_progress", "paused", "pending_approval"].includes(
+    ['in_progress', 'paused', 'pending_approval'].includes(
       evaluation.value.status,
     ) &&
     (authStore.user.id === evaluation.value.evaluator_id || authStore.isAdmin)
@@ -451,7 +451,7 @@ const processSteps = computed(() => {
       key: process,
       title: getProcessTitle(process),
       timestamp: formatDate(evaluation.value.start_date),
-      type: "primary",
+      type: 'primary',
       description: getProcessDescription(process),
     })
   })
@@ -469,11 +469,11 @@ const filteredLogs = computed(() => {
 
   // Filter for critical operations only
   const criticalOperationTypes = [
-    "create",
-    "update",
-    "delete",
-    "approve",
-    "reject",
+    'create',
+    'update',
+    'delete',
+    'approve',
+    'reject',
   ]
   return evaluation.value.logs.filter((log) => {
     // Include critical operation types
@@ -482,15 +482,15 @@ const filteredLogs = computed(() => {
     }
 
     // Include status changes (usually update operations with specific descriptions)
-    if (log.operation_type === "update" && log.operation_description) {
+    if (log.operation_type === 'update' && log.operation_description) {
       const description = log.operation_description.toLowerCase()
       const statusKeywords = [
-        "status",
-        "pause",
-        "resume",
-        "complete",
-        "cancel",
-        "finish",
+        'status',
+        'pause',
+        'resume',
+        'complete',
+        'cancel',
+        'finish',
       ]
       return statusKeywords.some((keyword) => description.includes(keyword))
     }
@@ -505,8 +505,8 @@ const fetchEvaluation = async () => {
     const response = await api.get(`/evaluations/${route.params.id}`)
     evaluation.value = response.data.data.evaluation
   } catch (error) {
-    ElMessage.error(t("evaluation.getEvaluationDetailsFailed"))
-    console.error("Failed to fetch evaluation:", error)
+    ElMessage.error(t('evaluation.getEvaluationDetailsFailed'))
+    console.error('Failed to fetch evaluation:', error)
   } finally {
     loading.value = false
   }
@@ -514,102 +514,102 @@ const fetchEvaluation = async () => {
 
 const handleOperation = async (command) => {
   try {
-    let message = ""
-    let confirmText = ""
+    let message = ''
+    let confirmText = ''
 
     switch (command) {
-      case "approve":
-        message = t("evaluation.confirmApprove")
-        confirmText = t("evaluation.approve")
+      case 'approve':
+        message = t('evaluation.confirmApprove')
+        confirmText = t('evaluation.approve')
         break
-      case "reject":
-        message = t("evaluation.confirmReject")
-        confirmText = t("evaluation.reject")
+      case 'reject':
+        message = t('evaluation.confirmReject')
+        confirmText = t('evaluation.reject')
         break
-      case "pause":
-        message = t("evaluation.confirmPause")
-        confirmText = t("evaluation.pause")
+      case 'pause':
+        message = t('evaluation.confirmPause')
+        confirmText = t('evaluation.pause')
         break
-      case "resume":
-        message = t("evaluation.confirmResume")
-        confirmText = t("evaluation.resume")
+      case 'resume':
+        message = t('evaluation.confirmResume')
+        confirmText = t('evaluation.resume')
         break
-      case "cancel":
-        message = t("evaluation.confirmCancel")
-        confirmText = t("evaluation.cancel")
+      case 'cancel':
+        message = t('evaluation.confirmCancel')
+        confirmText = t('evaluation.cancel')
         break
     }
 
-    await ElMessageBox.confirm(message, t("common.confirmAction"), {
+    await ElMessageBox.confirm(message, t('common.confirmAction'), {
       confirmButtonText: confirmText,
-      cancelButtonText: t("common.cancel"),
-      type: "warning",
+      cancelButtonText: t('common.cancel'),
+      type: 'warning',
     })
 
     // Call appropriate API endpoint based on command
-    if (command === "approve") {
+    if (command === 'approve') {
       await api.post(`/evaluations/${evaluation.value.id}/approve`)
-    } else if (command === "reject") {
+    } else if (command === 'reject') {
       await api.post(`/evaluations/${evaluation.value.id}/reject`)
-    } else if (command === "pause") {
+    } else if (command === 'pause') {
       await api.put(`/evaluations/${evaluation.value.id}/status`, {
-        status: "paused",
+        status: 'paused',
       })
-    } else if (command === "resume") {
+    } else if (command === 'resume') {
       await api.put(`/evaluations/${evaluation.value.id}/status`, {
-        status: "in_progress",
+        status: 'in_progress',
       })
-    } else if (command === "cancel") {
+    } else if (command === 'cancel') {
       await api.put(`/evaluations/${evaluation.value.id}/status`, {
-        status: "cancelled",
+        status: 'cancelled',
       })
     }
 
-    ElMessage.success(t("evaluation.operationSuccess"))
+    ElMessage.success(t('evaluation.operationSuccess'))
     fetchEvaluation()
   } catch (error) {
-    if (error !== "cancel") {
-      ElMessage.error(t("evaluation.operationFailed"))
-      console.error("Operation failed:", error)
+    if (error !== 'cancel') {
+      ElMessage.error(t('evaluation.operationFailed'))
+      console.error('Operation failed:', error)
     }
   }
 }
 
 const handleUploadFile = () => {
   // TODO: 实现文件上传功能
-  ElMessage.info(t("evaluation.fileUploadInDevelopment"))
+  ElMessage.info(t('evaluation.fileUploadInDevelopment'))
 }
 
-const handleDownloadFile = (file) => {
+const handleDownloadFile = () => {
   // TODO: 实现文件下载功能
-  ElMessage.info(t("evaluation.fileDownloadInDevelopment"))
+  ElMessage.info(t('evaluation.fileDownloadInDevelopment'))
 }
 
 const getStatusTagType = (status) => {
   const typeMap = {
-    draft: "info",
-    in_progress: "primary",
-    pending_approval: "warning",
-    completed: "success",
-    paused: "info",
-    cancelled: "danger",
-    rejected: "danger",
+    draft: 'info',
+    in_progress: 'primary',
+    pending_approval: 'warning',
+    completed: 'success',
+    paused: 'info',
+    cancelled: 'danger',
+    rejected: 'danger',
   }
-  return typeMap[status] || "info"
+  return typeMap[status] || 'info'
 }
 
 const getReasonText = (reason) => {
   if (reason && t(`evaluation.reasons.${reason}`)) {
     return t(`evaluation.reasons.${reason}`)
   }
-  return reason || "-"
+  return reason || '-'
 }
 
 const getTemperatureGradeText = (grade) => {
   if (grade && t(`evaluation.temperatureGrades.${grade}`)) {
     return t(`evaluation.temperatureGrades.${grade}`)
   }
-  return grade || "-"
+  return grade || '-'
 }
 
 const getProcessTitle = (process) => {
@@ -622,31 +622,31 @@ const getProcessTitle = (process) => {
 const getProcessDescription = (process) => {
   // Process descriptions are technical and don't need i18n for now
   const descMap = {
-    doe: "Design of Experiments - Optimize product parameters",
-    ppq: "Production Part Qualification - Verify production process",
-    prq: "Production Readiness Qualification - Ensure production readiness",
-    production_test: "Production testing - Verify product quality",
-    aql: "Acceptable Quality Level testing",
+    doe: 'Design of Experiments - Optimize product parameters',
+    ppq: 'Production Part Qualification - Verify production process',
+    prq: 'Production Readiness Qualification - Ensure production readiness',
+    production_test: 'Production testing - Verify product quality',
+    aql: 'Acceptable Quality Level testing',
   }
-  return descMap[process] || ""
+  return descMap[process] || ''
 }
 
 const formatDate = (dateString) => {
-  if (!dateString) return "-"
+  if (!dateString) return '-'
   return new Date(dateString).toLocaleDateString()
 }
 
 const formatDateTime = (dateString) => {
-  if (!dateString) return "-"
+  if (!dateString) return '-'
   return new Date(dateString).toLocaleString()
 }
 
 const formatFileSize = (bytes) => {
-  if (!bytes) return "0 B"
+  if (!bytes) return '0 B'
   const k = 1024
-  const sizes = ["B", "KB", "MB", "GB"]
+  const sizes = ['B', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
 const getOperationIcon = (operationType) => {
@@ -666,50 +666,50 @@ const getOperationIcon = (operationType) => {
 
 const getOperationColor = (operationType) => {
   const colorMap = {
-    create: "#67C23A",
-    update: "#E6A23C",
-    delete: "#F56C6C",
-    approve: "#67C23A",
-    reject: "#F56C6C",
-    view: "#909399",
-    login: "#409EFF",
-    logout: "#909399",
-    export: "#409EFF",
+    create: '#67C23A',
+    update: '#E6A23C',
+    delete: '#F56C6C',
+    approve: '#67C23A',
+    reject: '#F56C6C',
+    view: '#909399',
+    login: '#409EFF',
+    logout: '#909399',
+    export: '#409EFF',
   }
-  return colorMap[operationType] || "#409EFF"
+  return colorMap[operationType] || '#409EFF'
 }
 
 const getOperationDescription = (log) => {
   // First, try to use a more descriptive translation based on operation type and context
-  if (log.operation_type === "create") {
-    return t("evaluation.operations.created")
-  } else if (log.operation_type === "update") {
+  if (log.operation_type === 'create') {
+    return t('evaluation.operations.created')
+  } else if (log.operation_type === 'update') {
     // Check if it's a status change
     if (
       log.operation_description &&
-      log.operation_description.toLowerCase().includes("status")
+      log.operation_description.toLowerCase().includes('status')
     ) {
-      return t("evaluation.operations.statusChanged")
+      return t('evaluation.operations.statusChanged')
     }
-    return t("evaluation.operations.updated")
-  } else if (log.operation_type === "delete") {
-    return t("evaluation.operations.deleted")
-  } else if (log.operation_type === "approve") {
-    return t("evaluation.operations.approved")
-  } else if (log.operation_type === "reject") {
-    return t("evaluation.operations.rejected")
-  } else if (log.operation_type === "view") {
-    return t("evaluation.operations.viewed")
-  } else if (log.operation_type === "login") {
-    return t("evaluation.operations.loggedIn")
-  } else if (log.operation_type === "logout") {
-    return t("evaluation.operations.loggedOut")
-  } else if (log.operation_type === "export") {
-    return t("evaluation.operations.exported")
+    return t('evaluation.operations.updated')
+  } else if (log.operation_type === 'delete') {
+    return t('evaluation.operations.deleted')
+  } else if (log.operation_type === 'approve') {
+    return t('evaluation.operations.approved')
+  } else if (log.operation_type === 'reject') {
+    return t('evaluation.operations.rejected')
+  } else if (log.operation_type === 'view') {
+    return t('evaluation.operations.viewed')
+  } else if (log.operation_type === 'login') {
+    return t('evaluation.operations.loggedIn')
+  } else if (log.operation_type === 'logout') {
+    return t('evaluation.operations.loggedOut')
+  } else if (log.operation_type === 'export') {
+    return t('evaluation.operations.exported')
   }
 
   // Fallback to original description if available, or unknown
-  return log.operation_description || t("evaluation.operations.unknown")
+  return log.operation_description || t('evaluation.operations.unknown')
 }
 
 onMounted(async () => {
