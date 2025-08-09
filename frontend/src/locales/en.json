@@ -22,6 +22,23 @@
     "saveError": "Save failed",
     "deleteError": "Delete failed"
   },
+  "api": {
+    "errors": {
+      "forbidden": "Insufficient permissions",
+      "notFound": "Requested resource not found",
+      "serverError": "Internal server error",
+      "networkError": "Network connection failed",
+      "requestFailed": "Request failed"
+    }
+  },
+  "ui": {
+    "operationSuccess": "Operation successful",
+    "operationFailed": "Operation failed",
+    "confirmOperation": "Confirm operation",
+    "noDataToExport": "No data to export",
+    "fetchListFailed": "Failed to fetch list",
+    "fetchDataFailed": "Failed to fetch data"
+  },
   "system": {
     "name": "Solution Evaluation"
   },

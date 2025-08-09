@@ -22,6 +22,23 @@
     "saveError": "保存失败",
     "deleteError": "删除失败"
   },
+  "api": {
+    "errors": {
+      "forbidden": "权限不足",
+      "notFound": "请求的资源不存在",
+      "serverError": "服务器内部错误",
+      "networkError": "网络连接失败",
+      "requestFailed": "请求失败"
+    }
+  },
+  "ui": {
+    "operationSuccess": "操作成功",
+    "operationFailed": "操作失败",
+    "confirmOperation": "确认操作",
+    "noDataToExport": "没有数据可导出",
+    "fetchListFailed": "获取列表失败",
+    "fetchDataFailed": "获取数据失败"
+  },
   "system": {
     "name": "产品评价"
   },
