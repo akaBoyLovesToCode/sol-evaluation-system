@@ -224,7 +224,12 @@
       "quality_improvement": "품질 개선",
       "cost_optimization": "비용 최적화",
       "customer_requirement": "고객 요구사항",
-      "other": "기타"
+      "other": "기타",
+      "horizontal_expansion": "횡전개",
+      "direct_development": "직개발",
+      "pgm_improvement": "PGM개선",
+      "firmware_change": "F/W변경",
+      "bom_change": "BOM변경"
     },
     "formFactors": {
       "2_5_inch": "2.5인치",

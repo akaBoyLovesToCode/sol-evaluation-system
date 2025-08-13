@@ -224,7 +224,12 @@
       "quality_improvement": "质量改进",
       "cost_optimization": "成本优化",
       "customer_requirement": "客户要求",
-      "other": "其他"
+      "other": "其他",
+      "horizontal_expansion": "横展开",
+      "direct_development": "直开发",
+      "pgm_improvement": "PGM改善",
+      "firmware_change": "F/W变更",
+      "bom_change": "BOM变更"
     },
     "formFactors": {
       "2_5_inch": "2.5寸",

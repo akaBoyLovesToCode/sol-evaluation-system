@@ -238,7 +238,12 @@
       "quality_improvement": "Quality Improvement",
       "cost_optimization": "Cost Optimization",
       "customer_requirement": "Customer Requirement",
-      "other": "Other"
+      "other": "Other",
+      "horizontal_expansion": "Horizontal Expansion",
+      "direct_development": "Direct Development",
+      "pgm_improvement": "PGM Improvement",
+      "firmware_change": "F/W Change",
+      "bom_change": "BOM Change"
     },
     "formFactors": {
       "2_5_inch": "2.5 inch",

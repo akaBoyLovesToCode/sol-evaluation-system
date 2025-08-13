@@ -1,5 +1,5 @@
 <template>
-  <div class="new-evaluation-page" v-loading="loading">
+  <div v-loading="loading" class="new-evaluation-page">
     <div class="page-header">
       <h1 class="page-title">
         {{ isEditMode ? "编辑评价" : $t("evaluation.new.title") }}
@@ -92,7 +92,7 @@
               />
             </el-form-item>
           </el-col>
-          <el-col :span="12" v-if="isEditMode">
+          <el-col v-if="isEditMode" :span="12">
             <el-form-item
               :label="$t('evaluation.actualEndDate')"
               prop="end_date"
@@ -118,24 +118,10 @@
                 style="width: 100%"
               >
                 <el-option
-                  :label="$t('evaluation.reasons.new_product_development')"
-                  value="new_product_development"
-                />
-                <el-option
-                  :label="$t('evaluation.reasons.quality_improvement')"
-                  value="quality_improvement"
-                />
-                <el-option
-                  :label="$t('evaluation.reasons.cost_optimization')"
-                  value="cost_optimization"
-                />
-                <el-option
-                  :label="$t('evaluation.reasons.customer_requirement')"
-                  value="customer_requirement"
-                />
-                <el-option
-                  :label="$t('evaluation.reasons.other')"
-                  value="other"
+                  v-for="option in reasonOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
                 />
               </el-select>
             </el-form-item>
@@ -277,8 +263,8 @@
       </el-card>
 
       <el-card
-        class="form-section fade-in-up"
         v-if="form.evaluation_type"
+        class="form-section fade-in-up"
         style="animation-delay: 0.5s"
       >
         <template #header>
@@ -334,15 +320,15 @@
         <template v-if="!isEditMode">
           <el-button
             type="primary"
-            @click="handleSave(false)"
             :loading="saving"
+            @click="handleSave(false)"
           >
             {{ $t("evaluation.saveDraft") }}
           </el-button>
           <el-button
             type="success"
-            @click="handleSave(true)"
             :loading="submitting"
+            @click="handleSave(true)"
           >
             {{ $t("evaluation.submit") }}
           </el-button>
@@ -350,17 +336,17 @@
 
         <!-- Edit Mode Buttons -->
         <template v-if="isEditMode">
-          <el-button type="danger" @click="handleDelete" :loading="deleting">
+          <el-button type="danger" :loading="deleting" @click="handleDelete">
             {{ $t("common.delete") }}
           </el-button>
           <el-button
             type="primary"
-            @click="handleSave(false)"
             :loading="saving"
+            @click="handleSave(false)"
           >
             {{ $t("common.save") }}
           </el-button>
-          <el-button type="success" @click="handleFinish" :loading="finishing">
+          <el-button type="success" :loading="finishing" @click="handleFinish">
             {{ $t("evaluation.finish") }}
           </el-button>
         </template>
@@ -391,6 +377,40 @@ const isEditMode = computed(
   () => route.name === 'EditEvaluation' && route.params.id,
 )
 const evaluationId = computed(() => route.params.id)
+
+// Computed property for dynamic reason options based on evaluation type
+const reasonOptions = computed(() => {
+  if (form.evaluation_type === 'new_product') {
+    return [
+      {
+        label: t('evaluation.reasons.horizontal_expansion'),
+        value: 'horizontal_expansion',
+      },
+      {
+        label: t('evaluation.reasons.direct_development'),
+        value: 'direct_development',
+      },
+    ]
+  } else if (form.evaluation_type === 'mass_production') {
+    return [
+      {
+        label: t('evaluation.reasons.pgm_improvement'),
+        value: 'pgm_improvement',
+      },
+      {
+        label: t('evaluation.reasons.firmware_change'),
+        value: 'firmware_change',
+      },
+      { label: t('evaluation.reasons.bom_change'), value: 'bom_change' },
+      {
+        label: t('evaluation.reasons.customer_requirement'),
+        value: 'customer_requirement',
+      },
+      { label: t('evaluation.reasons.other'), value: 'other' },
+    ]
+  }
+  return []
+})
 
 const form = reactive({
   evaluation_type: '',
@@ -485,6 +505,7 @@ const rules = computed(() => ({
 
 const handleTypeChange = (type) => {
   form.processes = []
+  form.reason = '' // Reset reason when type changes
   if (type === 'new_product') {
     form.processes = ['doe', 'ppq', 'prq']
   } else if (type === 'mass_production') {
