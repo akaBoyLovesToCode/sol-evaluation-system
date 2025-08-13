@@ -178,9 +178,7 @@ api.interceptors.response.use(
           ElMessage.error(t('api.errors.serverError'))
           break
         default:
-          ElMessage.error(
-            response.data?.message || t('api.errors.requestFailed'),
-          )
+          ElMessage.error(response.data?.message || t('api.errors.requestFailed'))
       }
     } else {
       ElMessage.error(t('api.errors.networkError'))

@@ -8,9 +8,15 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 // 读取翻译文件
-const zhTranslations = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/locales/zh.json'), 'utf8'))
-const enTranslations = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/locales/en.json'), 'utf8'))
-const koTranslations = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/locales/ko.json'), 'utf8'))
+const zhTranslations = JSON.parse(
+  fs.readFileSync(path.join(__dirname, '../src/locales/zh.json'), 'utf8'),
+)
+const enTranslations = JSON.parse(
+  fs.readFileSync(path.join(__dirname, '../src/locales/en.json'), 'utf8'),
+)
+const koTranslations = JSON.parse(
+  fs.readFileSync(path.join(__dirname, '../src/locales/ko.json'), 'utf8'),
+)
 
 // 递归获取所有键
 function getAllKeys(obj, prefix = '') {
@@ -48,22 +54,22 @@ console.log(`📊 总共有 ${allKeys.length} 个翻译键\n`)
 
 // 检查英文翻译
 console.log('🇺🇸 检查英文翻译:')
-const missingEnKeys = allKeys.filter(key => !hasKey(enTranslations, key))
+const missingEnKeys = allKeys.filter((key) => !hasKey(enTranslations, key))
 if (missingEnKeys.length === 0) {
   console.log('✅ 英文翻译完整')
 } else {
   console.log(`❌ 缺少 ${missingEnKeys.length} 个键:`)
-  missingEnKeys.forEach(key => console.log(`   - ${key}`))
+  missingEnKeys.forEach((key) => console.log(`   - ${key}`))
 }
 
 // 检查韩文翻译
 console.log('\n🇰🇷 检查韩文翻译:')
-const missingKoKeys = allKeys.filter(key => !hasKey(koTranslations, key))
+const missingKoKeys = allKeys.filter((key) => !hasKey(koTranslations, key))
 if (missingKoKeys.length === 0) {
   console.log('✅ 韩文翻译完整')
 } else {
   console.log(`❌ 缺少 ${missingKoKeys.length} 个键:`)
-  missingKoKeys.forEach(key => console.log(`   - ${key}`))
+  missingKoKeys.forEach((key) => console.log(`   - ${key}`))
 }
 
 console.log('\n🎉 翻译检查完成!')
@@ -74,4 +80,4 @@ if (missingEnKeys.length === 0 && missingKoKeys.length === 0) {
 } else {
   console.log('❌ 发现缺失的翻译键，请补充完整')
   process.exit(1)
-} 
+}

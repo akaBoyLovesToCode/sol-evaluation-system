@@ -2,13 +2,13 @@
   <div class="users-page">
     <div class="page-header">
       <div class="header-left">
-        <h1>{{ $t("users.title") }}</h1>
-        <p>{{ $t("users.description") }}</p>
+        <h1>{{ $t('users.title') }}</h1>
+        <p>{{ $t('users.description') }}</p>
       </div>
       <div class="header-right">
         <el-button type="primary" @click="showCreateUserDialog">
           <el-icon><Plus /></el-icon>
-          {{ $t("users.addUser") }}
+          {{ $t('users.addUser') }}
         </el-button>
       </div>
     </div>
@@ -52,18 +52,18 @@
         <el-form-item>
           <el-button type="primary" @click="searchUsers">
             <el-icon><Search /></el-icon>
-            {{ $t("common.search") }}
+            {{ $t('common.search') }}
           </el-button>
           <el-button @click="resetSearch">
             <el-icon><Refresh /></el-icon>
-            {{ $t("common.reset") }}
+            {{ $t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
     <!-- User Table -->
-    <el-card class="table-card" v-loading="loading">
+    <el-card v-loading="loading" class="table-card">
       <el-table
         :data="users"
         style="width: 100%"
@@ -71,31 +71,11 @@
         :header-cell-style="{ textAlign: 'center' }"
         :cell-style="{ textAlign: 'center' }"
       >
-        <el-table-column
-          prop="username"
-          :label="$t('users.username')"
-          min-width="120"
-        />
-        <el-table-column
-          prop="full_name"
-          :label="$t('users.fullName')"
-          min-width="150"
-        />
-        <el-table-column
-          prop="email"
-          :label="$t('users.email')"
-          min-width="200"
-        />
-        <el-table-column
-          prop="department"
-          :label="$t('users.department')"
-          min-width="150"
-        />
-        <el-table-column
-          prop="position"
-          :label="$t('users.position')"
-          min-width="150"
-        />
+        <el-table-column prop="username" :label="$t('users.username')" min-width="120" />
+        <el-table-column prop="full_name" :label="$t('users.fullName')" min-width="150" />
+        <el-table-column prop="email" :label="$t('users.email')" min-width="200" />
+        <el-table-column prop="department" :label="$t('users.department')" min-width="150" />
+        <el-table-column prop="position" :label="$t('users.position')" min-width="150" />
         <el-table-column :label="$t('users.role')" min-width="120">
           <template #default="scope">
             <el-tag :type="getRoleTagType(scope.row.role)">
@@ -106,20 +86,14 @@
         <el-table-column :label="$t('users.status')" width="100">
           <template #default="scope">
             <el-tag :type="scope.row.is_active ? 'success' : 'danger'">
-              {{
-                scope.row.is_active ? $t("users.active") : $t("users.inactive")
-              }}
+              {{ scope.row.is_active ? $t('users.active') : $t('users.inactive') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column
-          :label="$t('common.operations')"
-          width="250"
-          fixed="right"
-        >
+        <el-table-column :label="$t('common.operations')" width="250" fixed="right">
           <template #default="scope">
             <el-button size="small" type="primary" @click="editUser(scope.row)">
-              {{ $t("common.edit") }}
+              {{ $t('common.edit') }}
             </el-button>
             <el-button
               size="small"
@@ -127,11 +101,7 @@
               :disabled="scope.row.role === 'admin'"
               @click="toggleUserStatus(scope.row)"
             >
-              {{
-                scope.row.is_active
-                  ? $t("users.deactivate")
-                  : $t("users.activate")
-              }}
+              {{ scope.row.is_active ? $t('users.deactivate') : $t('users.activate') }}
             </el-button>
             <el-button
               size="small"
@@ -139,7 +109,7 @@
               :disabled="scope.row.role === 'admin'"
               @click="showDeleteUserDialog(scope.row)"
             >
-              {{ $t("common.delete") }}
+              {{ $t('common.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -165,12 +135,7 @@
       :title="isEditing ? $t('users.editUser') : $t('users.createUser')"
       width="500px"
     >
-      <el-form
-        ref="userFormRef"
-        :model="userForm"
-        :rules="userFormRules"
-        label-position="top"
-      >
+      <el-form ref="userFormRef" :model="userForm" :rules="userFormRules" label-position="top">
         <el-form-item :label="$t('users.username')" prop="username">
           <el-input
             v-model="userForm.username"
@@ -180,17 +145,11 @@
         </el-form-item>
 
         <el-form-item :label="$t('users.fullName')" prop="full_name">
-          <el-input
-            v-model="userForm.full_name"
-            :placeholder="$t('users.placeholders.fullName')"
-          />
+          <el-input v-model="userForm.full_name" :placeholder="$t('users.placeholders.fullName')" />
         </el-form-item>
 
         <el-form-item :label="$t('users.email')" prop="email">
-          <el-input
-            v-model="userForm.email"
-            :placeholder="$t('users.placeholders.email')"
-          />
+          <el-input v-model="userForm.email" :placeholder="$t('users.placeholders.email')" />
         </el-form-item>
 
         <el-form-item :label="$t('users.department')" prop="department">
@@ -201,10 +160,7 @@
         </el-form-item>
 
         <el-form-item :label="$t('users.position')" prop="position">
-          <el-input
-            v-model="userForm.position"
-            :placeholder="$t('users.placeholders.position')"
-          />
+          <el-input v-model="userForm.position" :placeholder="$t('users.placeholders.position')" />
         </el-form-item>
 
         <el-form-item :label="$t('users.role')" prop="role">
@@ -230,11 +186,7 @@
           />
         </el-form-item>
 
-        <el-form-item
-          v-if="!isEditing"
-          :label="$t('users.password')"
-          prop="password"
-        >
+        <el-form-item v-if="!isEditing" :label="$t('users.password')" prop="password">
           <el-input
             v-model="userForm.password"
             type="password"
@@ -243,11 +195,7 @@
           />
         </el-form-item>
 
-        <el-form-item
-          v-if="!isEditing"
-          :label="$t('users.confirmPassword')"
-          prop="confirmPassword"
-        >
+        <el-form-item v-if="!isEditing" :label="$t('users.confirmPassword')" prop="confirmPassword">
           <el-input
             v-model="userForm.confirmPassword"
             type="password"
@@ -260,31 +208,27 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="userDialogVisible = false">
-            {{ $t("common.cancel") }}
+            {{ $t('common.cancel') }}
           </el-button>
           <el-button type="primary" @click="saveUser">
-            {{ $t("common.save") }}
+            {{ $t('common.save') }}
           </el-button>
         </span>
       </template>
     </el-dialog>
 
     <!-- Delete User Confirmation Dialog -->
-    <el-dialog
-      v-model="deleteDialogVisible"
-      :title="$t('users.confirmDelete')"
-      width="400px"
-    >
+    <el-dialog v-model="deleteDialogVisible" :title="$t('users.confirmDelete')" width="400px">
       <p>
-        {{ $t("users.deleteWarning", { username: userToDelete?.username }) }}
+        {{ $t('users.deleteWarning', { username: userToDelete?.username }) }}
       </p>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="deleteDialogVisible = false">
-            {{ $t("common.cancel") }}
+            {{ $t('common.cancel') }}
           </el-button>
           <el-button type="danger" @click="confirmDeleteUser">
-            {{ $t("common.delete") }}
+            {{ $t('common.delete') }}
           </el-button>
         </span>
       </template>

@@ -1,13 +1,10 @@
 <template>
-  <div class="evaluation-detail-page" v-loading="loading">
-    <div class="page-header" v-if="evaluation">
+  <div v-loading="loading" class="evaluation-detail-page">
+    <div v-if="evaluation" class="page-header">
       <div class="header-left">
         <h1 class="page-title">
           {{ evaluation.evaluation_number }}
-          <el-tag
-            :type="getStatusTagType(evaluation.status)"
-            class="status-tag"
-          >
+          <el-tag :type="getStatusTagType(evaluation.status)" class="status-tag">
             {{ $t(`status.${evaluation.status}`) }}
           </el-tag>
         </h1>
@@ -20,46 +17,29 @@
           :icon="Edit"
           @click="$router.push(`/evaluations/${evaluation.id}/edit`)"
         >
-          {{ $t("common.edit") }}
+          {{ $t('common.edit') }}
         </el-button>
 
         <el-dropdown v-if="canOperate" @command="handleOperation">
           <el-button type="primary" :icon="MoreFilled">
-            {{ $t("common.operations") }}
+            {{ $t('common.operations') }}
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item
-                v-if="canApprove"
-                command="approve"
-                :icon="Check"
-              >
-                {{ $t("evaluation.approve") }}
+              <el-dropdown-item v-if="canApprove" command="approve" :icon="Check">
+                {{ $t('evaluation.approve') }}
               </el-dropdown-item>
               <el-dropdown-item v-if="canReject" command="reject" :icon="Close">
-                {{ $t("evaluation.reject") }}
+                {{ $t('evaluation.reject') }}
               </el-dropdown-item>
-              <el-dropdown-item
-                v-if="canPause"
-                command="pause"
-                :icon="VideoPause"
-              >
-                {{ $t("evaluation.pause") }}
+              <el-dropdown-item v-if="canPause" command="pause" :icon="VideoPause">
+                {{ $t('evaluation.pause') }}
               </el-dropdown-item>
-              <el-dropdown-item
-                v-if="canResume"
-                command="resume"
-                :icon="VideoPlay"
-              >
-                {{ $t("evaluation.resume") }}
+              <el-dropdown-item v-if="canResume" command="resume" :icon="VideoPlay">
+                {{ $t('evaluation.resume') }}
               </el-dropdown-item>
-              <el-dropdown-item
-                v-if="canCancel"
-                command="cancel"
-                :icon="Close"
-                divided
-              >
-                {{ $t("evaluation.cancel") }}
+              <el-dropdown-item v-if="canCancel" command="cancel" :icon="Close" divided>
+                {{ $t('evaluation.cancel') }}
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -67,14 +47,14 @@
       </div>
     </div>
 
-    <div class="detail-content" v-if="evaluation">
+    <div v-if="evaluation" class="detail-content">
       <el-row :gutter="20">
         <!-- 左侧主要内容 -->
         <el-col :span="16">
           <!-- {{ $t('evaluation.basicInformation') }} -->
           <el-card class="info-card">
             <template #header>
-              <span>{{ $t("evaluation.basicInformation") }}</span>
+              <span>{{ $t('evaluation.basicInformation') }}</span>
             </template>
             <el-descriptions :column="2" border>
               <el-descriptions-item :label="$t('evaluation.evaluationNumber')">
@@ -82,11 +62,7 @@
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.evaluationType')">
                 <el-tag
-                  :type="
-                    evaluation.evaluation_type === 'new_product'
-                      ? 'primary'
-                      : 'success'
-                  "
+                  :type="evaluation.evaluation_type === 'new_product' ? 'primary' : 'success'"
                 >
                   {{ $t(`evaluation.type.${evaluation.evaluation_type}`) }}
                 </el-tag>
@@ -107,25 +83,18 @@
                 {{ formatDate(evaluation.expected_end_date) }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.actualEndDate')">
-                {{
-                  evaluation.actual_end_date
-                    ? formatDate(evaluation.actual_end_date)
-                    : "-"
-                }}
+                {{ evaluation.actual_end_date ? formatDate(evaluation.actual_end_date) : '-' }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.reason')">
                 {{ getReasonText(evaluation.evaluation_reason) }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.progress')">
-                <el-progress
-                  :percentage="evaluation.progress || 0"
-                  :stroke-width="8"
-                />
+                <el-progress :percentage="evaluation.progress || 0" :stroke-width="8" />
               </el-descriptions-item>
             </el-descriptions>
 
-            <div class="description-section" v-if="evaluation.description">
-              <h4>{{ $t("evaluation.evaluationDescription") }}</h4>
+            <div v-if="evaluation.description" class="description-section">
+              <h4>{{ $t('evaluation.evaluationDescription') }}</h4>
               <p>{{ evaluation.description }}</p>
             </div>
           </el-card>
@@ -133,23 +102,23 @@
           <!-- {{ $t('evaluation.technicalSpecifications') }} -->
           <el-card class="info-card">
             <template #header>
-              <span>{{ $t("evaluation.technicalSpecifications") }}</span>
+              <span>{{ $t('evaluation.technicalSpecifications') }}</span>
             </template>
             <el-descriptions :column="2" border>
               <el-descriptions-item :label="$t('evaluation.pgmVersion')">
-                {{ evaluation.pgm_version || "-" }}
+                {{ evaluation.pgm_version || '-' }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.materialInfo')">
-                {{ evaluation.material_info || "-" }}
+                {{ evaluation.material_info || '-' }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.capacity')">
-                {{ evaluation.capacity || "-" }}
+                {{ evaluation.capacity || '-' }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.interfaceType')">
-                {{ evaluation.interface_type || "-" }}
+                {{ evaluation.interface_type || '-' }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.formFactor')">
-                {{ evaluation.form_factor || "-" }}
+                {{ evaluation.form_factor || '-' }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.temperatureGrade')">
                 {{ getTemperatureGradeText(evaluation.temperature_grade) }}
@@ -160,7 +129,7 @@
           <!-- {{ $t('evaluation.evaluationProcess') }} -->
           <el-card class="info-card">
             <template #header>
-              <span>{{ $t("evaluation.evaluationProcess") }}</span>
+              <span>{{ $t('evaluation.evaluationProcess') }}</span>
             </template>
             <div class="process-timeline">
               <el-timeline>
@@ -186,43 +155,28 @@
           </el-card>
 
           <!-- {{ $t('evaluation.evaluationResults') }} -->
-          <el-card
-            class="info-card"
-            v-if="evaluation.results && evaluation.results.length > 0"
-          >
+          <el-card v-if="evaluation.results && evaluation.results.length > 0" class="info-card">
             <template #header>
-              <span>{{ $t("evaluation.evaluationResults") }}</span>
+              <span>{{ $t('evaluation.evaluationResults') }}</span>
             </template>
             <div class="results-section">
-              <div
-                v-for="result in evaluation.results"
-                :key="result.id"
-                class="result-item"
-              >
+              <div v-for="result in evaluation.results" :key="result.id" class="result-item">
                 <div class="result-header">
                   <h4>{{ result.test_item }}</h4>
-                  <el-tag
-                    :type="result.result === 'pass' ? 'success' : 'danger'"
-                  >
-                    {{
-                      result.result === "pass"
-                        ? $t("evaluation.pass")
-                        : $t("evaluation.fail")
-                    }}
+                  <el-tag :type="result.result === 'pass' ? 'success' : 'danger'">
+                    {{ result.result === 'pass' ? $t('evaluation.pass') : $t('evaluation.fail') }}
                   </el-tag>
                 </div>
                 <div class="result-content">
                   <p>
-                    <strong>{{ $t("evaluation.testConditions") }}：</strong
+                    <strong>{{ $t('evaluation.testConditions') }}：</strong
                     >{{ result.test_conditions }}
                   </p>
                   <p>
-                    <strong>{{ $t("evaluation.testResult") }}：</strong
-                    >{{ result.test_result }}
+                    <strong>{{ $t('evaluation.testResult') }}：</strong>{{ result.test_result }}
                   </p>
                   <p v-if="result.remarks">
-                    <strong>{{ $t("evaluation.remarks") }}：</strong
-                    >{{ result.remarks }}
+                    <strong>{{ $t('evaluation.remarks') }}：</strong>{{ result.remarks }}
                   </p>
                 </div>
               </div>
@@ -235,31 +189,29 @@
           <!-- {{ $t('evaluation.statusInformation') }} -->
           <el-card class="sidebar-card">
             <template #header>
-              <span>{{ $t("evaluation.statusInformation") }}</span>
+              <span>{{ $t('evaluation.statusInformation') }}</span>
             </template>
             <div class="status-info">
               <div class="status-item">
-                <span class="label"
-                  >{{ $t("evaluation.currentStatus") }}：</span
-                >
+                <span class="label">{{ $t('evaluation.currentStatus') }}：</span>
                 <el-tag :type="getStatusTagType(evaluation.status)">
                   {{ $t(`status.${evaluation.status}`) }}
                 </el-tag>
               </div>
               <div class="status-item">
-                <span class="label">{{ $t("evaluation.createdAt") }}：</span>
+                <span class="label">{{ $t('evaluation.createdAt') }}：</span>
                 <span>{{ formatDateTime(evaluation.created_at) }}</span>
               </div>
               <div class="status-item">
-                <span class="label">{{ $t("evaluation.updatedAt") }}：</span>
+                <span class="label">{{ $t('evaluation.updatedAt') }}：</span>
                 <span>{{ formatDateTime(evaluation.updated_at) }}</span>
               </div>
-              <div class="status-item" v-if="evaluation.approved_by">
-                <span class="label">{{ $t("evaluation.approvedBy") }}：</span>
+              <div v-if="evaluation.approved_by" class="status-item">
+                <span class="label">{{ $t('evaluation.approvedBy') }}：</span>
                 <span>{{ evaluation.approved_by }}</span>
               </div>
-              <div class="status-item" v-if="evaluation.approved_at">
-                <span class="label">{{ $t("evaluation.approvedAt") }}：</span>
+              <div v-if="evaluation.approved_at" class="status-item">
+                <span class="label">{{ $t('evaluation.approvedAt') }}：</span>
                 <span>{{ formatDateTime(evaluation.approved_at) }}</span>
               </div>
             </div>
@@ -269,23 +221,14 @@
           <el-card class="sidebar-card">
             <template #header>
               <div class="card-header">
-                <span>{{ $t("evaluation.relatedFiles") }}</span>
-                <el-button
-                  v-if="canEdit"
-                  size="small"
-                  :icon="Plus"
-                  @click="handleUploadFile"
-                >
-                  {{ $t("evaluation.upload") }}
+                <span>{{ $t('evaluation.relatedFiles') }}</span>
+                <el-button v-if="canEdit" size="small" :icon="Plus" @click="handleUploadFile">
+                  {{ $t('evaluation.upload') }}
                 </el-button>
               </div>
             </template>
             <div class="files-list">
-              <div
-                v-for="file in evaluation.files"
-                :key="file.id"
-                class="file-item"
-              >
+              <div v-for="file in evaluation.files" :key="file.id" class="file-item">
                 <el-icon class="file-icon"><Document /></el-icon>
                 <div class="file-info">
                   <div class="file-name">{{ file.filename }}</div>
@@ -294,17 +237,10 @@
                     {{ formatDate(file.created_at) }}
                   </div>
                 </div>
-                <el-button
-                  size="small"
-                  :icon="Download"
-                  @click="handleDownloadFile(file)"
-                />
+                <el-button size="small" :icon="Download" @click="handleDownloadFile(file)" />
               </div>
-              <div
-                v-if="!evaluation.files || evaluation.files.length === 0"
-                class="empty-files"
-              >
-                {{ $t("evaluation.noRelatedFiles") }}
+              <div v-if="!evaluation.files || evaluation.files.length === 0" class="empty-files">
+                {{ $t('evaluation.noRelatedFiles') }}
               </div>
             </div>
           </el-card>
@@ -313,7 +249,7 @@
           <el-card class="sidebar-card">
             <template #header>
               <div class="card-header">
-                <span>{{ $t("evaluation.operationLogs") }}</span>
+                <span>{{ $t('evaluation.operationLogs') }}</span>
                 <el-switch
                   v-if="authStore.isAdmin"
                   v-model="showAllLogs"
@@ -343,10 +279,7 @@
                 </el-timeline-item>
               </el-timeline>
               <div v-if="filteredLogs.length === 0" class="empty-logs">
-                <el-empty
-                  :image-size="60"
-                  :description="$t('evaluation.noOperationLogs')"
-                />
+                <el-empty :image-size="60" :description="$t('evaluation.noOperationLogs')" />
               </div>
             </div>
           </el-card>
@@ -401,9 +334,7 @@ const canEdit = computed(() => {
 })
 
 const canOperate = computed(() => {
-  return (
-    authStore.canApprove || authStore.user.id === evaluation.value?.evaluator_id
-  )
+  return authStore.canApprove || authStore.user.id === evaluation.value?.evaluator_id
 })
 
 const canApprove = computed(() => {
@@ -433,9 +364,7 @@ const canResume = computed(() => {
 const canCancel = computed(() => {
   if (!evaluation.value) return false
   return (
-    ['in_progress', 'paused', 'pending_approval'].includes(
-      evaluation.value.status,
-    ) &&
+    ['in_progress', 'paused', 'pending_approval'].includes(evaluation.value.status) &&
     (authStore.user.id === evaluation.value.evaluator_id || authStore.isAdmin)
   )
 })
@@ -468,13 +397,7 @@ const filteredLogs = computed(() => {
   }
 
   // Filter for critical operations only
-  const criticalOperationTypes = [
-    'create',
-    'update',
-    'delete',
-    'approve',
-    'reject',
-  ]
+  const criticalOperationTypes = ['create', 'update', 'delete', 'approve', 'reject']
   return evaluation.value.logs.filter((log) => {
     // Include critical operation types
     if (criticalOperationTypes.includes(log.operation_type)) {
@@ -484,14 +407,7 @@ const filteredLogs = computed(() => {
     // Include status changes (usually update operations with specific descriptions)
     if (log.operation_type === 'update' && log.operation_description) {
       const description = log.operation_description.toLowerCase()
-      const statusKeywords = [
-        'status',
-        'pause',
-        'resume',
-        'complete',
-        'cancel',
-        'finish',
-      ]
+      const statusKeywords = ['status', 'pause', 'resume', 'complete', 'cancel', 'finish']
       return statusKeywords.some((keyword) => description.includes(keyword))
     }
 
@@ -685,10 +601,7 @@ const getOperationDescription = (log) => {
     return t('evaluation.operations.created')
   } else if (log.operation_type === 'update') {
     // Check if it's a status change
-    if (
-      log.operation_description &&
-      log.operation_description.toLowerCase().includes('status')
-    ) {
+    if (log.operation_description && log.operation_description.toLowerCase().includes('status')) {
       return t('evaluation.operations.statusChanged')
     }
     return t('evaluation.operations.updated')

@@ -9,9 +9,7 @@ export default {
   },
   moduleFileExtensions: ['vue', 'js', 'json', 'jsx'],
   testMatch: ['**/tests/unit/**/*.spec.js'],
-  transformIgnorePatterns: [
-    'node_modules/(?!(.*\\.mjs$|@testing-library))',
-  ],
+  transformIgnorePatterns: ['node_modules/(?!(.*\\.mjs$|@testing-library))'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
   collectCoverageFrom: [
     'src/**/*.{js,vue}',
@@ -23,11 +21,11 @@ export default {
   globals: {
     '@vue/vue3-jest': {
       pug: {
-        doctype: 'html'
-      }
-    }
+        doctype: 'html',
+      },
+    },
   },
   testEnvironmentOptions: {
-    customExportConditions: ['node', 'node-addons']
-  }
+    customExportConditions: ['node', 'node-addons'],
+  },
 }

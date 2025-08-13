@@ -1,8 +1,8 @@
 <template>
   <div class="profile-page">
     <div class="page-header">
-      <h1>{{ $t("profile.title") }}</h1>
-      <p>{{ $t("profile.description") }}</p>
+      <h1>{{ $t('profile.title') }}</h1>
+      <p>{{ $t('profile.description') }}</p>
     </div>
 
     <el-row :gutter="20">
@@ -11,7 +11,7 @@
         <el-card class="profile-card">
           <template #header>
             <div class="card-header">
-              <h2>{{ $t("profile.personalInfo") }}</h2>
+              <h2>{{ $t('profile.personalInfo') }}</h2>
               <el-button
                 type="primary"
                 :icon="Edit"
@@ -62,10 +62,10 @@
 
             <el-form-item v-if="editPersonalInfo">
               <el-button type="primary" @click="updatePersonalInfo">
-                {{ $t("profile.updateProfile") }}
+                {{ $t('profile.updateProfile') }}
               </el-button>
               <el-button @click="cancelPersonalInfoEdit">
-                {{ $t("common.cancel") }}
+                {{ $t('common.cancel') }}
               </el-button>
             </el-form-item>
           </el-form>
@@ -77,21 +77,18 @@
         <el-card class="profile-card">
           <template #header>
             <div class="card-header">
-              <h2>{{ $t("profile.accountSettings") }}</h2>
+              <h2>{{ $t('profile.accountSettings') }}</h2>
             </div>
           </template>
 
-          <h3>{{ $t("profile.changePassword") }}</h3>
+          <h3>{{ $t('profile.changePassword') }}</h3>
           <el-form
             ref="passwordForm"
             :model="passwordData"
             :rules="passwordRules"
             label-position="top"
           >
-            <el-form-item
-              :label="$t('profile.currentPassword')"
-              prop="currentPassword"
-            >
+            <el-form-item :label="$t('profile.currentPassword')" prop="currentPassword">
               <el-input
                 v-model="passwordData.currentPassword"
                 type="password"
@@ -109,10 +106,7 @@
               />
             </el-form-item>
 
-            <el-form-item
-              :label="$t('profile.confirmPassword')"
-              prop="confirmPassword"
-            >
+            <el-form-item :label="$t('profile.confirmPassword')" prop="confirmPassword">
               <el-input
                 v-model="passwordData.confirmPassword"
                 type="password"
@@ -123,12 +117,12 @@
 
             <el-form-item>
               <el-button type="primary" @click="changePassword">
-                {{ $t("profile.changePassword") }}
+                {{ $t('profile.changePassword') }}
               </el-button>
             </el-form-item>
 
             <div class="password-requirements">
-              <p>{{ $t("profile.passwordRequirements") }}</p>
+              <p>{{ $t('profile.passwordRequirements') }}</p>
             </div>
           </el-form>
         </el-card>

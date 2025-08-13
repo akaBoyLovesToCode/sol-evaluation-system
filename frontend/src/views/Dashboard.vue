@@ -20,13 +20,7 @@
               <div class="stat-label">{{ $t(stat.label) }}</div>
               <div
                 class="stat-trend"
-                :class="
-                  stat.trend > 0
-                    ? 'positive'
-                    : stat.trend < 0
-                      ? 'negative'
-                      : 'neutral'
-                "
+                :class="stat.trend > 0 ? 'positive' : stat.trend < 0 ? 'negative' : 'neutral'"
               >
                 <el-icon v-if="stat.trend !== 0" :size="14">
                   <ArrowUp v-if="stat.trend > 0" />
@@ -50,7 +44,7 @@
           <el-card class="chart-card">
             <template #header>
               <div class="card-header">
-                <span>{{ $t("dashboard.statusDistribution") }}</span>
+                <span>{{ $t('dashboard.statusDistribution') }}</span>
                 <el-button text @click="refreshCharts">
                   <el-icon><Refresh /></el-icon>
                 </el-button>
@@ -64,7 +58,7 @@
         <AnimatedContainer type="fadeInLeft" delay="0.6s">
           <el-card class="chart-card">
             <template #header>
-              <span>{{ $t("dashboard.monthlyTrend") }}</span>
+              <span>{{ $t('dashboard.monthlyTrend') }}</span>
             </template>
             <div ref="trendChartRef" class="chart-container"></div>
           </el-card>
@@ -77,37 +71,33 @@
         <AnimatedContainer type="fadeInRight" delay="0.4s">
           <el-card class="quick-actions">
             <template #header>
-              <span>{{ $t("dashboard.quickActions") }}</span>
+              <span>{{ $t('dashboard.quickActions') }}</span>
             </template>
             <div class="actions-grid">
               <el-button
                 type="primary"
                 :icon="Plus"
-                @click="$router.push('/evaluations/new')"
                 class="action-button"
+                @click="$router.push('/evaluations/new')"
               >
-                {{ $t("dashboard.newEvaluation") }}
+                {{ $t('dashboard.newEvaluation') }}
               </el-button>
               <el-button
                 :icon="Document"
-                @click="$router.push('/evaluations')"
                 class="action-button"
+                @click="$router.push('/evaluations')"
               >
-                {{ $t("dashboard.viewEvaluations") }}
+                {{ $t('dashboard.viewEvaluations') }}
               </el-button>
               <el-button
                 :icon="DataAnalysis"
+                class="action-button"
                 @click="$router.push('/reports')"
-                class="action-button"
               >
-                {{ $t("dashboard.viewReports") }}
+                {{ $t('dashboard.viewReports') }}
               </el-button>
-              <el-button
-                :icon="Message"
-                @click="$router.push('/messages')"
-                class="action-button"
-              >
-                {{ $t("dashboard.viewMessages") }}
+              <el-button :icon="Message" class="action-button" @click="$router.push('/messages')">
+                {{ $t('dashboard.viewMessages') }}
               </el-button>
             </div>
           </el-card>
@@ -117,9 +107,9 @@
         <AnimatedContainer type="fadeInRight" delay="0.6s">
           <el-card class="pending-items">
             <template #header>
-              <span>{{ $t("dashboard.pendingItems") }}</span>
+              <span>{{ $t('dashboard.pendingItems') }}</span>
             </template>
-            <div class="pending-list" v-loading="pendingLoading">
+            <div v-loading="pendingLoading" class="pending-list">
               <div
                 v-for="item in pendingItems"
                 :key="item.id"
@@ -132,9 +122,7 @@
                     <el-tag :type="getStatusTagType(item.status)" size="small">
                       {{ $t(`status.${item.status}`) }}
                     </el-tag>
-                    <span class="item-date">{{
-                      formatDate(item.created_at)
-                    }}</span>
+                    <span class="item-date">{{ formatDate(item.created_at) }}</span>
                   </div>
                 </div>
                 <el-icon class="item-arrow"><ArrowRight /></el-icon>
@@ -150,7 +138,7 @@
         <AnimatedContainer type="fadeInRight" delay="0.8s">
           <el-card class="recent-activities">
             <template #header>
-              <span>{{ $t("dashboard.recentActivities") }}</span>
+              <span>{{ $t('dashboard.recentActivities') }}</span>
             </template>
             <el-timeline class="activity-timeline">
               <el-timeline-item
@@ -189,12 +177,7 @@ import {
   ArrowDown,
   ArrowRight,
 } from '@element-plus/icons-vue'
-import {
-  createPieChart,
-  createLineChart,
-  makeResponsive,
-  disposeChart,
-} from '../utils/charts'
+import { createPieChart, createLineChart, makeResponsive, disposeChart } from '../utils/charts'
 import api from '../utils/api'
 import { useAuthStore } from '../stores/auth'
 import AnimatedContainer from '../components/AnimatedContainer.vue'
@@ -292,12 +275,8 @@ const fetchPendingItems = async () => {
 const fetchMonthlyTrend = async () => {
   try {
     // 获取更大的日期范围，包括未来数据（测试环境可能有未来日期）
-    const endDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split('T')[0] // 未来一年
-    const startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split('T')[0] // 过去一年
+    const endDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 未来一年
+    const startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 过去一年
 
     const response = await api.get(
       `/dashboard/statistics?start_date=${startDate}&end_date=${endDate}&group_by=month`,
@@ -313,15 +292,13 @@ const fetchRecentActivities = async () => {
   try {
     // 使用dashboard overview中的recent_evaluations数据作为活动
     const response = await api.get('/dashboard/overview')
-    recentActivities.value = (response.data.data.recent_evaluations || []).map(
-      (evaluation) => ({
-        id: evaluation.id,
-        action: 'create',
-        user_name: evaluation.evaluator_name || 'Unknown User',
-        description: `评价 ${evaluation.evaluation_number} - ${evaluation.product_name || 'Unknown Product'}`,
-        created_at: evaluation.created_at,
-      }),
-    )
+    recentActivities.value = (response.data.data.recent_evaluations || []).map((evaluation) => ({
+      id: evaluation.id,
+      action: 'create',
+      user_name: evaluation.evaluator_name || 'Unknown User',
+      description: `评价 ${evaluation.evaluation_number} - ${evaluation.product_name || 'Unknown Product'}`,
+      created_at: evaluation.created_at,
+    }))
   } catch (error) {
     console.error('Failed to fetch recent activities:', error)
   }
@@ -390,9 +367,7 @@ const initTrendChart = async () => {
 
     // Calculate completed evaluations
     if (trendData.completion_rates) {
-      completedEvaluations = trendData.completion_rates.map(
-        (item) => item.completed || 0,
-      )
+      completedEvaluations = trendData.completion_rates.map((item) => item.completed || 0)
     } else {
       completedEvaluations = new Array(periods.length).fill(0)
     }
@@ -747,11 +722,7 @@ onUnmounted(() => {
 }
 
 .pending-item:hover {
-  background: linear-gradient(
-    135deg,
-    rgba(102, 126, 234, 0.1) 0%,
-    rgba(118, 75, 162, 0.1) 100%
-  );
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
   transform: translateX(4px);
 }
 
@@ -811,11 +782,7 @@ onUnmounted(() => {
 }
 
 .activity-content:hover {
-  background: linear-gradient(
-    135deg,
-    rgba(102, 126, 234, 0.05) 0%,
-    rgba(118, 75, 162, 0.05) 100%
-  );
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
 }
 
 .activity-title {

@@ -3,16 +3,12 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
-        <h1 class="page-title">{{ $t("evaluation.title") }}</h1>
-        <p class="page-description">{{ $t("evaluation.description") }}</p>
+        <h1 class="page-title">{{ $t('evaluation.title') }}</h1>
+        <p class="page-description">{{ $t('evaluation.description') }}</p>
       </div>
       <div class="header-right">
-        <el-button
-          type="primary"
-          :icon="Plus"
-          @click="$router.push('/evaluations/new')"
-        >
-          {{ $t("dashboard.newEvaluation") }}
+        <el-button type="primary" :icon="Plus" @click="$router.push('/evaluations/new')">
+          {{ $t('dashboard.newEvaluation') }}
         </el-button>
       </div>
     </div>
@@ -37,14 +33,8 @@
               clearable
               style="width: 150px"
             >
-              <el-option
-                :label="$t('evaluation.type.new_product')"
-                value="new_product"
-              />
-              <el-option
-                :label="$t('evaluation.type.mass_production')"
-                value="mass_production"
-              />
+              <el-option :label="$t('evaluation.type.new_product')" value="new_product" />
+              <el-option :label="$t('evaluation.type.mass_production')" value="mass_production" />
             </el-select>
           </el-form-item>
 
@@ -97,10 +87,10 @@
 
           <el-form-item>
             <el-button type="primary" :icon="Search" @click="handleSearch">
-              {{ $t("evaluation.search") }}
+              {{ $t('evaluation.search') }}
             </el-button>
             <el-button :icon="Refresh" @click="handleReset">
-              {{ $t("evaluation.reset") }}
+              {{ $t('evaluation.reset') }}
             </el-button>
           </el-form-item>
         </el-form>
@@ -112,14 +102,10 @@
       <el-card class="table-card">
         <template #header>
           <div class="table-header">
-            <span>{{ $t("evaluation.list") }}</span>
+            <span>{{ $t('evaluation.list') }}</span>
             <div class="table-actions">
-              <el-button
-                :icon="Download"
-                @click="handleExport"
-                :loading="exportLoading"
-              >
-                {{ $t("evaluation.export") }}
+              <el-button :icon="Download" :loading="exportLoading" @click="handleExport">
+                {{ $t('evaluation.export') }}
               </el-button>
             </div>
           </div>
@@ -141,10 +127,7 @@
             sortable="custom"
           >
             <template #default="{ row }">
-              <el-link
-                type="primary"
-                @click="$router.push(`/evaluations/${row.id}`)"
-              >
+              <el-link type="primary" @click="$router.push(`/evaluations/${row.id}`)">
                 {{ row.evaluation_number }}
               </el-link>
             </template>
@@ -156,11 +139,7 @@
             width="120"
           >
             <template #default="{ row }">
-              <el-tag
-                :type="
-                  row.evaluation_type === 'new_product' ? 'primary' : 'success'
-                "
-              >
+              <el-tag :type="row.evaluation_type === 'new_product' ? 'primary' : 'success'">
                 {{ $t(`evaluation.type.${row.evaluation_type}`) }}
               </el-tag>
             </template>
@@ -173,23 +152,11 @@
             sortable="custom"
           />
 
-          <el-table-column
-            prop="part_number"
-            :label="$t('evaluation.partNumber')"
-            width="220"
-          />
+          <el-table-column prop="part_number" :label="$t('evaluation.partNumber')" width="220" />
 
-          <el-table-column
-            prop="evaluation_reason"
-            :label="$t('evaluation.reason')"
-            width="140"
-          >
+          <el-table-column prop="evaluation_reason" :label="$t('evaluation.reason')" width="140">
             <template #default="{ row }">
-              {{
-                row.evaluation_reason
-                  ? $t(`evaluation.reasons.${row.evaluation_reason}`)
-                  : "-"
-              }}
+              {{ row.evaluation_reason ? $t(`evaluation.reasons.${row.evaluation_reason}`) : '-' }}
             </template>
           </el-table-column>
 
@@ -200,12 +167,7 @@
             sortable="custom"
           />
 
-          <el-table-column
-            prop="status"
-            :label="$t('common.status')"
-            width="140"
-            sortable="custom"
-          >
+          <el-table-column prop="status" :label="$t('common.status')" width="140" sortable="custom">
             <template #default="{ row }">
               <el-tag :type="getStatusTagType(row.status)">
                 {{ $t(`status.${row.status}`) }}
@@ -224,13 +186,9 @@
             </template>
           </el-table-column>
 
-          <el-table-column
-            prop="actual_end_date"
-            :label="$t('evaluation.endDate')"
-            width="130"
-          >
+          <el-table-column prop="actual_end_date" :label="$t('evaluation.endDate')" width="130">
             <template #default="{ row }">
-              {{ row.actual_end_date ? formatDate(row.actual_end_date) : "-" }}
+              {{ row.actual_end_date ? formatDate(row.actual_end_date) : '-' }}
             </template>
           </el-table-column>
         </el-table>
@@ -256,12 +214,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import {
-  Plus,
-  Search,
-  Refresh,
-  Download,
-} from '@element-plus/icons-vue'
+import { Plus, Search, Refresh, Download } from '@element-plus/icons-vue'
 import api from '../utils/api'
 import AnimatedContainer from '../components/AnimatedContainer.vue'
 
@@ -388,15 +341,12 @@ const handleSelectionChange = (selection) => {
   selectedRows.value = selection
 }
 
-
-
 const handleExport = async () => {
   try {
     exportLoading.value = true
 
     // Determine data to export: selected rows or all data
-    const dataToExport =
-      selectedRows.value.length > 0 ? selectedRows.value : tableData.value
+    const dataToExport = selectedRows.value.length > 0 ? selectedRows.value : tableData.value
 
     if (dataToExport.length === 0) {
       ElMessage.warning(t('ui.noDataToExport'))
@@ -429,9 +379,7 @@ const handleExport = async () => {
         t(`evaluation.type.${row.evaluation_type}`) || '',
         row.product_name || '',
         row.part_number || '',
-        row.evaluation_reason
-          ? t(`evaluation.reasons.${row.evaluation_reason}`)
-          : '',
+        row.evaluation_reason ? t(`evaluation.reasons.${row.evaluation_reason}`) : '',
         row.evaluator_name || '',
         t(`status.${row.status}`) || '',
         formatDate(row.start_date) || '',
@@ -648,11 +596,7 @@ onMounted(() => {
 }
 
 .table-card :deep(.el-table th) {
-  background: linear-gradient(
-    135deg,
-    rgba(102, 126, 234, 0.1) 0%,
-    rgba(118, 75, 162, 0.1) 100%
-  );
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
   font-weight: 600;
   color: #2c3e50;
   text-align: center; /* Center align all table headers */
@@ -673,11 +617,7 @@ onMounted(() => {
 }
 
 .table-card :deep(.el-table tr:hover > td) {
-  background: linear-gradient(
-    135deg,
-    rgba(102, 126, 234, 0.05) 0%,
-    rgba(118, 75, 162, 0.05) 100%
-  );
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
 }
 
 .table-card :deep(.el-link) {

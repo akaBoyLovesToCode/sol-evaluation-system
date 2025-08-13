@@ -15,8 +15,7 @@ const props = defineProps({
   type: {
     type: String,
     default: 'fadeInUp',
-    validator: (value) =>
-      ['fadeInUp', 'fadeInLeft', 'fadeInRight'].includes(value),
+    validator: (value) => ['fadeInUp', 'fadeInLeft', 'fadeInRight'].includes(value),
   },
   delay: {
     type: String,

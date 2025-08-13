@@ -4,7 +4,7 @@
       <!-- 侧边栏 -->
       <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar">
         <div class="logo-container">
-          <div v-if="!isCollapse" class="logo">{{ $t("system.name") }}</div>
+          <div v-if="!isCollapse" class="logo">{{ $t('system.name') }}</div>
           <div v-else class="logo-mini">EVAL</div>
         </div>
 
@@ -17,32 +17,28 @@
         >
           <el-menu-item index="/">
             <el-icon><House /></el-icon>
-            <template #title>{{ $t("menu.dashboard") }}</template>
+            <template #title>{{ $t('menu.dashboard') }}</template>
           </el-menu-item>
 
           <el-menu-item index="/evaluations">
             <el-icon><Document /></el-icon>
-            <template #title>{{ $t("menu.evaluations") }}</template>
+            <template #title>{{ $t('menu.evaluations') }}</template>
           </el-menu-item>
 
           <el-menu-item index="/reports">
             <el-icon><DataAnalysis /></el-icon>
-            <template #title>{{ $t("menu.reports") }}</template>
+            <template #title>{{ $t('menu.reports') }}</template>
           </el-menu-item>
 
           <el-menu-item index="/messages">
             <el-icon><Message /></el-icon>
-            <template #title>{{ $t("menu.messages") }}</template>
-            <el-badge
-              :value="unreadCount"
-              :hidden="unreadCount === 0"
-              class="message-badge"
-            />
+            <template #title>{{ $t('menu.messages') }}</template>
+            <el-badge :value="unreadCount" :hidden="unreadCount === 0" class="message-badge" />
           </el-menu-item>
 
-          <el-menu-item index="/users" v-if="authStore.isGroupLeader">
+          <el-menu-item v-if="authStore.isGroupLeader" index="/users">
             <el-icon><User /></el-icon>
-            <template #title>{{ $t("menu.users") }}</template>
+            <template #title>{{ $t('menu.users') }}</template>
           </el-menu-item>
         </el-menu>
       </el-aside>
@@ -52,17 +48,9 @@
         <!-- 顶部栏 -->
         <el-header class="header">
           <div class="header-left">
-            <el-button
-              :icon="isCollapse ? Expand : Fold"
-              @click="toggleSidebar"
-              text
-            />
+            <el-button :icon="isCollapse ? Expand : Fold" text @click="toggleSidebar" />
             <el-breadcrumb separator="/">
-              <el-breadcrumb-item
-                v-for="item in breadcrumbs"
-                :key="item.path"
-                :to="item.path"
-              >
+              <el-breadcrumb-item v-for="item in breadcrumbs" :key="item.path" :to="item.path">
                 {{ item.title }}
               </el-breadcrumb-item>
             </el-breadcrumb>
@@ -97,11 +85,11 @@
                 <el-dropdown-menu>
                   <el-dropdown-item command="profile">
                     <el-icon><User /></el-icon>
-                    {{ $t("menu.profile") }}
+                    {{ $t('menu.profile') }}
                   </el-dropdown-item>
                   <el-dropdown-item divided command="logout">
                     <el-icon><SwitchButton /></el-icon>
-                    {{ $t("menu.logout") }}
+                    {{ $t('menu.logout') }}
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>

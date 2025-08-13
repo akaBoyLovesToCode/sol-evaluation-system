@@ -21,9 +21,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAdmin = computed(() => hasRole('admin'))
   const isGroupLeader = computed(() => hasRole(['admin', 'group_leader']))
-  const isPartLeader = computed(() =>
-    hasRole(['admin', 'group_leader', 'part_leader']),
-  )
+  const isPartLeader = computed(() => hasRole(['admin', 'group_leader', 'part_leader']))
 
   const login = async (credentials, t) => {
     try {
@@ -57,17 +55,13 @@ export const useAuthStore = defineStore('auth', () => {
         // Fallback to message field if error field doesn't exist
         errorMessage = error.response.data.message
       } else if (error.response?.status === 401) {
-        errorMessage = t
-          ? t('login.errors.invalidCredentials')
-          : 'Invalid username or password'
+        errorMessage = t ? t('login.errors.invalidCredentials') : 'Invalid username or password'
       } else if (error.response?.status === 400) {
         errorMessage = t
           ? t('login.errors.missingCredentials')
           : 'Please provide username and password'
       } else if (error.response?.status >= 500) {
-        errorMessage = t
-          ? t('login.errors.serverError')
-          : 'Server error, please try again later'
+        errorMessage = t ? t('login.errors.serverError') : 'Server error, please try again later'
       } else if (!error.response) {
         errorMessage = t
           ? t('login.errors.networkError')

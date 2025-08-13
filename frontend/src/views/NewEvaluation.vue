@@ -2,49 +2,32 @@
   <div v-loading="loading" class="new-evaluation-page">
     <div class="page-header">
       <h1 class="page-title">
-        {{ isEditMode ? "编辑评价" : $t("evaluation.new.title") }}
+        {{ isEditMode ? '编辑评价' : $t('evaluation.new.title') }}
       </h1>
       <p class="page-description">
-        {{ isEditMode ? "修改评价信息" : $t("evaluation.new.description") }}
+        {{ isEditMode ? '修改评价信息' : $t('evaluation.new.description') }}
       </p>
     </div>
 
-    <el-form
-      ref="formRef"
-      :model="form"
-      :rules="rules"
-      label-width="120px"
-      class="evaluation-form"
-    >
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="120px" class="evaluation-form">
       <el-card class="form-section fade-in-up" style="animation-delay: 0.1s">
         <template #header>
-          <span>{{ $t("evaluation.basicInfo") }}</span>
+          <span>{{ $t('evaluation.basicInfo') }}</span>
         </template>
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item
-              :label="$t('evaluation.typeLabel')"
-              prop="evaluation_type"
-            >
-              <el-radio-group
-                v-model="form.evaluation_type"
-                @change="handleTypeChange"
-              >
-                <el-radio value="new_product">{{
-                  $t("evaluation.type.new_product")
-                }}</el-radio>
+            <el-form-item :label="$t('evaluation.typeLabel')" prop="evaluation_type">
+              <el-radio-group v-model="form.evaluation_type" @change="handleTypeChange">
+                <el-radio value="new_product">{{ $t('evaluation.type.new_product') }}</el-radio>
                 <el-radio value="mass_production">{{
-                  $t("evaluation.type.mass_production")
+                  $t('evaluation.type.mass_production')
                 }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item
-              :label="$t('evaluation.productName')"
-              prop="product_name"
-            >
+            <el-form-item :label="$t('evaluation.productName')" prop="product_name">
               <el-input
                 v-model="form.product_name"
                 :placeholder="$t('evaluation.placeholders.productName')"
@@ -78,10 +61,7 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item
-              :label="$t('evaluation.expectedEndDate')"
-              prop="expected_end_date"
-            >
+            <el-form-item :label="$t('evaluation.expectedEndDate')" prop="expected_end_date">
               <el-date-picker
                 v-model="form.expected_end_date"
                 type="date"
@@ -93,10 +73,7 @@
             </el-form-item>
           </el-col>
           <el-col v-if="isEditMode" :span="12">
-            <el-form-item
-              :label="$t('evaluation.actualEndDate')"
-              prop="end_date"
-            >
+            <el-form-item :label="$t('evaluation.actualEndDate')" prop="end_date">
               <el-date-picker
                 v-model="form.end_date"
                 type="date"
@@ -127,10 +104,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item
-              :label="$t('evaluation.processStep')"
-              prop="process_step"
-            >
+            <el-form-item :label="$t('evaluation.processStep')" prop="process_step">
               <el-input
                 v-model="form.process_step"
                 :placeholder="$t('evaluation.placeholders.processStep')"
@@ -139,10 +113,7 @@
           </el-col>
         </el-row>
 
-        <el-form-item
-          :label="$t('evaluation.descriptionLabel')"
-          prop="description"
-        >
+        <el-form-item :label="$t('evaluation.descriptionLabel')" prop="description">
           <el-input
             v-model="form.description"
             type="textarea"
@@ -154,15 +125,12 @@
 
       <el-card class="form-section fade-in-up" style="animation-delay: 0.3s">
         <template #header>
-          <span>{{ $t("evaluation.technicalSpec") }}</span>
+          <span>{{ $t('evaluation.technicalSpec') }}</span>
         </template>
 
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item
-              :label="$t('evaluation.pgmVersion')"
-              prop="pgm_version"
-            >
+            <el-form-item :label="$t('evaluation.pgmVersion')" prop="pgm_version">
               <el-input
                 v-model="form.pgm_version"
                 :placeholder="$t('evaluation.placeholders.pgmVersion')"
@@ -170,10 +138,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item
-              :label="$t('evaluation.materialInfo')"
-              prop="material_info"
-            >
+            <el-form-item :label="$t('evaluation.materialInfo')" prop="material_info">
               <el-input
                 v-model="form.material_info"
                 :placeholder="$t('evaluation.placeholders.materialInfo')"
@@ -192,10 +157,7 @@
 
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item
-              :label="$t('evaluation.interfaceType')"
-              prop="interface_type"
-            >
+            <el-form-item :label="$t('evaluation.interfaceType')" prop="interface_type">
               <el-select
                 v-model="form.interface_type"
                 :placeholder="$t('evaluation.placeholders.interfaceType')"
@@ -209,36 +171,21 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item
-              :label="$t('evaluation.formFactor')"
-              prop="form_factor"
-            >
+            <el-form-item :label="$t('evaluation.formFactor')" prop="form_factor">
               <el-select
                 v-model="form.form_factor"
                 :placeholder="$t('evaluation.placeholders.formFactor')"
                 style="width: 100%"
               >
-                <el-option
-                  :label="$t('evaluation.formFactors.2_5_inch')"
-                  value="2.5"
-                />
-                <el-option
-                  :label="$t('evaluation.formFactors.m2_2280')"
-                  value="M.2_2280"
-                />
-                <el-option
-                  :label="$t('evaluation.formFactors.m2_2242')"
-                  value="M.2_2242"
-                />
+                <el-option :label="$t('evaluation.formFactors.2_5_inch')" value="2.5" />
+                <el-option :label="$t('evaluation.formFactors.m2_2280')" value="M.2_2280" />
+                <el-option :label="$t('evaluation.formFactors.m2_2242')" value="M.2_2242" />
                 <el-option :label="$t('common.other')" value="other" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item
-              :label="$t('evaluation.temperatureGrade')"
-              prop="temperature_grade"
-            >
+            <el-form-item :label="$t('evaluation.temperatureGrade')" prop="temperature_grade">
               <el-select
                 v-model="form.temperature_grade"
                 :placeholder="$t('evaluation.placeholders.temperatureGrade')"
@@ -252,10 +199,7 @@
                   :label="$t('evaluation.temperatureGrades.industrial')"
                   value="industrial"
                 />
-                <el-option
-                  :label="$t('evaluation.temperatureGrades.extended')"
-                  value="extended"
-                />
+                <el-option :label="$t('evaluation.temperatureGrades.extended')" value="extended" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -268,86 +212,60 @@
         style="animation-delay: 0.5s"
       >
         <template #header>
-          <span>{{ $t("evaluation.process") }}</span>
+          <span>{{ $t('evaluation.process') }}</span>
         </template>
 
         <div class="process-selection">
-          <div
-            v-if="form.evaluation_type === 'new_product'"
-            class="process-group"
-          >
-            <h4>{{ $t("evaluation.newProductProcess") }}</h4>
+          <div v-if="form.evaluation_type === 'new_product'" class="process-group">
+            <h4>{{ $t('evaluation.newProductProcess') }}</h4>
             <el-checkbox-group v-model="form.processes">
-              <el-checkbox value="doe">{{
-                $t("evaluation.processes.doe")
-              }}</el-checkbox>
-              <el-checkbox value="ppq">{{
-                $t("evaluation.processes.ppq")
-              }}</el-checkbox>
-              <el-checkbox value="prq">{{
-                $t("evaluation.processes.prq")
-              }}</el-checkbox>
+              <el-checkbox value="doe">{{ $t('evaluation.processes.doe') }}</el-checkbox>
+              <el-checkbox value="ppq">{{ $t('evaluation.processes.ppq') }}</el-checkbox>
+              <el-checkbox value="prq">{{ $t('evaluation.processes.prq') }}</el-checkbox>
             </el-checkbox-group>
             <p class="process-note">
-              {{ $t("evaluation.newProductNote") }}
+              {{ $t('evaluation.newProductNote') }}
             </p>
           </div>
 
-          <div
-            v-else-if="form.evaluation_type === 'mass_production'"
-            class="process-group"
-          >
-            <h4>{{ $t("evaluation.massProductionProcess") }}</h4>
+          <div v-else-if="form.evaluation_type === 'mass_production'" class="process-group">
+            <h4>{{ $t('evaluation.massProductionProcess') }}</h4>
             <el-checkbox-group v-model="form.processes">
               <el-checkbox value="production_test">{{
-                $t("evaluation.processes.production_test")
+                $t('evaluation.processes.production_test')
               }}</el-checkbox>
-              <el-checkbox value="aql">{{
-                $t("evaluation.processes.aql")
-              }}</el-checkbox>
+              <el-checkbox value="aql">{{ $t('evaluation.processes.aql') }}</el-checkbox>
             </el-checkbox-group>
             <p class="process-note">
-              {{ $t("evaluation.massProductionNote") }}
+              {{ $t('evaluation.massProductionNote') }}
             </p>
           </div>
         </div>
       </el-card>
 
       <div class="form-actions fade-in-up" style="animation-delay: 0.7s">
-        <el-button @click="handleCancel">{{ $t("common.cancel") }}</el-button>
+        <el-button @click="handleCancel">{{ $t('common.cancel') }}</el-button>
 
         <!-- Create Mode Buttons -->
         <template v-if="!isEditMode">
-          <el-button
-            type="primary"
-            :loading="saving"
-            @click="handleSave(false)"
-          >
-            {{ $t("evaluation.saveDraft") }}
+          <el-button type="primary" :loading="saving" @click="handleSave(false)">
+            {{ $t('evaluation.saveDraft') }}
           </el-button>
-          <el-button
-            type="success"
-            :loading="submitting"
-            @click="handleSave(true)"
-          >
-            {{ $t("evaluation.submit") }}
+          <el-button type="success" :loading="submitting" @click="handleSave(true)">
+            {{ $t('evaluation.submit') }}
           </el-button>
         </template>
 
         <!-- Edit Mode Buttons -->
         <template v-if="isEditMode">
           <el-button type="danger" :loading="deleting" @click="handleDelete">
-            {{ $t("common.delete") }}
+            {{ $t('common.delete') }}
           </el-button>
-          <el-button
-            type="primary"
-            :loading="saving"
-            @click="handleSave(false)"
-          >
-            {{ $t("common.save") }}
+          <el-button type="primary" :loading="saving" @click="handleSave(false)">
+            {{ $t('common.save') }}
           </el-button>
           <el-button type="success" :loading="finishing" @click="handleFinish">
-            {{ $t("evaluation.finish") }}
+            {{ $t('evaluation.finish') }}
           </el-button>
         </template>
       </div>
@@ -373,9 +291,7 @@ const deleting = ref(false)
 const finishing = ref(false)
 
 // 检测是否为编辑模式
-const isEditMode = computed(
-  () => route.name === 'EditEvaluation' && route.params.id,
-)
+const isEditMode = computed(() => route.name === 'EditEvaluation' && route.params.id)
 const evaluationId = computed(() => route.params.id)
 
 // Computed property for dynamic reason options based on evaluation type
@@ -515,15 +431,11 @@ const handleTypeChange = (type) => {
 
 const handleCancel = async () => {
   try {
-    await ElMessageBox.confirm(
-      t('evaluation.cancelConfirm'),
-      t('common.confirmCancel'),
-      {
-        confirmButtonText: t('common.confirm'),
-        cancelButtonText: t('common.cancel'),
-        type: 'warning',
-      },
-    )
+    await ElMessageBox.confirm(t('evaluation.cancelConfirm'), t('common.confirmCancel'), {
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
+      type: 'warning',
+    })
     router.push('/evaluations')
   } catch {
     // User cancelled
@@ -578,9 +490,7 @@ const handleSave = async (submit = false) => {
       router.push(`/evaluations/${evaluationId.value}`)
     } else {
       response = await api.post('/evaluations', payload)
-      ElMessage.success(
-        submit ? t('evaluation.submitSuccess') : t('evaluation.saveSuccess'),
-      )
+      ElMessage.success(submit ? t('evaluation.submitSuccess') : t('evaluation.saveSuccess'))
       const targetId = response.data?.data?.evaluation?.id
       if (targetId) {
         router.push(`/evaluations/${targetId}`)
@@ -613,11 +523,9 @@ const handleFinish = async () => {
   try {
     await formRef.value.validate()
 
-    await ElMessageBox.confirm(
-      t('evaluation.finishConfirm'),
-      t('common.confirmAction'),
-      { type: 'info' },
-    )
+    await ElMessageBox.confirm(t('evaluation.finishConfirm'), t('common.confirmAction'), {
+      type: 'info',
+    })
 
     await api.put(`/evaluations/${evaluationId.value}/status`, {
       status: 'completed',
@@ -639,15 +547,11 @@ const handleDelete = async () => {
   if (!isEditMode.value) return
 
   try {
-    await ElMessageBox.confirm(
-      t('evaluation.deleteConfirm'),
-      t('common.confirmDelete'),
-      {
-        confirmButtonText: t('common.confirm'),
-        cancelButtonText: t('common.cancel'),
-        type: 'warning',
-      },
-    )
+    await ElMessageBox.confirm(t('evaluation.deleteConfirm'), t('common.confirmDelete'), {
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
+      type: 'warning',
+    })
 
     deleting.value = true
     await api.delete(`/evaluations/${evaluationId.value}`)
@@ -758,11 +662,7 @@ onMounted(() => {
 }
 
 .form-section :deep(.el-card__header) {
-  background: linear-gradient(
-    135deg,
-    rgba(102, 126, 234, 0.1) 0%,
-    rgba(118, 75, 162, 0.1) 100%
-  );
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
   font-weight: 600;
   color: #2c3e50;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
@@ -829,11 +729,7 @@ onMounted(() => {
 
 .process-selection {
   padding: 24px;
-  background: linear-gradient(
-    135deg,
-    rgba(102, 126, 234, 0.05) 0%,
-    rgba(118, 75, 162, 0.05) 100%
-  );
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
   border-radius: 16px;
   border: 1px solid rgba(102, 126, 234, 0.1);
 }
@@ -854,11 +750,7 @@ onMounted(() => {
 .process-note {
   margin: 20px 0 0 0;
   padding: 16px 20px;
-  background: linear-gradient(
-    135deg,
-    rgba(33, 150, 243, 0.1) 0%,
-    rgba(25, 118, 210, 0.1) 100%
-  );
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(25, 118, 210, 0.1) 100%);
   border-left: 4px solid #2196f3;
   color: #1976d2;
   font-size: 14px;

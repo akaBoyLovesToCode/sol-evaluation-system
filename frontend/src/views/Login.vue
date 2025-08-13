@@ -5,8 +5,8 @@
         <div class="logo-placeholder">
           <div class="logo-text">EVAL</div>
         </div>
-        <h1 class="title">{{ $t("login.title") }}</h1>
-        <p class="subtitle">{{ $t("login.subtitle") }}</p>
+        <h1 class="title">{{ $t('login.title') }}</h1>
+        <p class="subtitle">{{ $t('login.subtitle') }}</p>
       </div>
 
       <el-form
@@ -41,7 +41,7 @@
 
         <el-form-item>
           <el-checkbox v-model="loginForm.remember">
-            {{ $t("login.remember") }}
+            {{ $t('login.remember') }}
           </el-checkbox>
         </el-form-item>
 
@@ -50,10 +50,10 @@
             type="primary"
             size="large"
             :loading="loading"
-            @click="handleLogin"
             class="login-button"
+            @click="handleLogin"
           >
-            {{ $t("login.submit") }}
+            {{ $t('login.submit') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -192,17 +192,13 @@ const changeLanguage = (lang) => {
 }
 
 .login-container::before {
-  content: "";
+  content: '';
   position: absolute;
   top: -50%;
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.1) 0%,
-    transparent 70%
-  );
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
   animation: float 20s ease-in-out infinite;
 }
 
@@ -371,11 +367,7 @@ const changeLanguage = (lang) => {
 }
 
 .login-footer :deep(.el-dropdown-menu__item:hover) {
-  background: linear-gradient(
-    135deg,
-    rgba(102, 126, 234, 0.1) 0%,
-    rgba(118, 75, 162, 0.1) 100%
-  );
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
   transform: translateX(4px);
 }
 

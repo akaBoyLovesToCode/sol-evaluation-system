@@ -1,15 +1,15 @@
 <template>
   <div class="reports-page">
     <div class="page-header">
-      <h1>{{ $t("reports.title") }}</h1>
-      <p>{{ $t("reports.description") }}</p>
+      <h1>{{ $t('reports.title') }}</h1>
+      <p>{{ $t('reports.description') }}</p>
     </div>
 
     <el-card>
       <div class="coming-soon">
         <el-icon size="64"><DataAnalysis /></el-icon>
-        <h2>{{ $t("reports.comingSoon") }}</h2>
-        <p>{{ $t("reports.comingSoonDesc") }}</p>
+        <h2>{{ $t('reports.comingSoon') }}</h2>
+        <p>{{ $t('reports.comingSoonDesc') }}</p>
       </div>
     </el-card>
   </div>

@@ -5,7 +5,7 @@ export const createI18n = () => ({
       // Simple implementation that returns the key with values if provided
       if (values) {
         let result = key
-        Object.keys(values).forEach(valueKey => {
+        Object.keys(values).forEach((valueKey) => {
           result = result.replace(`{${valueKey}}`, values[valueKey])
         })
         return result
@@ -23,7 +23,7 @@ export const useI18n = () => ({
     // Simple implementation that returns the key with values if provided
     if (values) {
       let result = key
-      Object.keys(values).forEach(valueKey => {
+      Object.keys(values).forEach((valueKey) => {
         result = result.replace(`{${valueKey}}`, values[valueKey])
       })
       return result

@@ -17,7 +17,7 @@ describe('Example Test', () => {
     const wrapper = mount(SimpleComponent, {
       props: { message },
     })
-    
+
     expect(wrapper.text()).toContain(message)
   })
 })
