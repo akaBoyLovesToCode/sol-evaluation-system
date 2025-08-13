@@ -17,7 +17,7 @@ defaults:
     working-directory: frontend
 
 jobs:
-  test:
+  build-and-test:
     runs-on: ubuntu-latest
 
     strategy:
@@ -40,6 +40,9 @@ jobs:
 
       - name: Run linter
         run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
 
       - name: Run tests
         run: npm test
