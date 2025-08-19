@@ -15,6 +15,7 @@ class MessageType(Enum):
     SYSTEM = "system"
     REMINDER = "reminder"
     DIGEST = "digest"
+    MENTION = "mention"
 
 
 class MessageStatus(Enum):
@@ -59,6 +60,7 @@ class Message(db.Model):
             "system_announcement",
             "evaluation_assigned",
             "evaluation_completed",
+            "mention",
             name="message_types",
         ),
         nullable=False,
@@ -77,6 +79,9 @@ class Message(db.Model):
     # Related evaluation (optional)
     evaluation_id = db.Column(db.Integer, db.ForeignKey("evaluations.id"))
 
+    # Related comment (optional, for comment-related notifications)
+    comment_id = db.Column(db.Integer, db.ForeignKey("comments.id"))
+
     # Sender information (optional, for system messages sender_id can be null)
     sender_id = db.Column(db.Integer, db.ForeignKey("users.id"))
 
@@ -85,6 +90,9 @@ class Message(db.Model):
 
     # Relationships
     evaluation = db.relationship("Evaluation", backref="messages")
+    comment = db.relationship(
+        "Comment", backref=db.backref("comment_messages", lazy="dynamic")
+    )
 
     def __init__(self, title, content, message_type, recipient_id, **kwargs):
         """Initialize message with required fields
@@ -216,6 +224,90 @@ class Message(db.Model):
             messages.append(message)
 
         return messages
+
+    @staticmethod
+    def create_mention_notification(mention):
+        """Create notification for a user mention
+
+        Args:
+            mention (Mention): Mention object
+
+        Returns:
+            Message: Created message object
+
+        """
+        from app.models.evaluation import Evaluation
+        from app.models.user import User
+
+        # Get mentioner information
+        mentioner = User.query.get(mention.mentioner_id)
+        mentioned_user = User.query.get(mention.mentioned_user_id)
+
+        if not mentioner or not mentioned_user:
+            return None
+
+        # Build notification content based on mention type
+        if mention.mention_type == "evaluation_comment" and mention.evaluation_id:
+            evaluation = Evaluation.query.get(mention.evaluation_id)
+            if evaluation:
+                title = f"@{mentioner.username} mentioned you in evaluation {evaluation.evaluation_number}"
+                content = (
+                    f"{mentioner.full_name} mentioned you in a comment on evaluation "
+                    f"{evaluation.evaluation_number} ({evaluation.product_name}):\n\n"
+                    f'"{mention.context_text[:200]}{"..." if len(mention.context_text) > 200 else ""}"'
+                )
+            else:
+                title = f"@{mentioner.username} mentioned you"
+                content = f"{mentioner.full_name} mentioned you in a comment"
+        elif mention.mention_type == "evaluation_description" and mention.evaluation_id:
+            evaluation = Evaluation.query.get(mention.evaluation_id)
+            if evaluation:
+                title = f"@{mentioner.username} mentioned you in evaluation {evaluation.evaluation_number}"
+                content = (
+                    f"{mentioner.full_name} mentioned you in evaluation "
+                    f"{evaluation.evaluation_number} ({evaluation.product_name}):\n\n"
+                    f'"{mention.context_text[:200]}{"..." if len(mention.context_text) > 200 else ""}"'
+                )
+            else:
+                title = f"@{mentioner.username} mentioned you"
+                content = f"{mentioner.full_name} mentioned you in an evaluation"
+        elif mention.mention_type == "task_assignment" and mention.evaluation_id:
+            evaluation = Evaluation.query.get(mention.evaluation_id)
+            if evaluation:
+                title = (
+                    f"You've been assigned to evaluation {evaluation.evaluation_number}"
+                )
+                content = (
+                    f"{mentioner.full_name} assigned you to assist with evaluation "
+                    f"{evaluation.evaluation_number} ({evaluation.product_name}).\n\n"
+                    f"Evaluation Type: {evaluation.evaluation_type.replace('_', ' ').title()}\n"
+                    f"Part Number: {evaluation.part_number}\n"
+                    f"Start Date: {evaluation.start_date}"
+                )
+            else:
+                title = "You've been assigned to a task"
+                content = f"{mentioner.full_name} assigned you to a task"
+        else:
+            title = f"@{mentioner.username} mentioned you"
+            content = (
+                f"{mentioner.full_name} mentioned you:\n\n"
+                f'"{mention.context_text[:200]}{"..." if len(mention.context_text) > 200 else ""}"'
+            )
+
+        message = Message(
+            title=title,
+            content=content,
+            message_type="mention",
+            recipient_id=mention.mentioned_user_id,
+            sender_id=mention.mentioner_id,
+            evaluation_id=mention.evaluation_id,
+            priority="normal",
+        )
+
+        db.session.add(message)
+        db.session.commit()
+
+        return message
 
     def to_dict(self):
         """Convert message to dictionary

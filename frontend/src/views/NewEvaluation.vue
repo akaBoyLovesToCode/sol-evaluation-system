@@ -61,18 +61,54 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item :label="$t('evaluation.expectedEndDate')" prop="expected_end_date">
-              <el-date-picker
-                v-model="form.expected_end_date"
-                type="date"
-                :placeholder="$t('evaluation.placeholders.expectedEndDate')"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
+            <el-form-item label="Head Officer" prop="head_officer_id">
+              <el-select
+                v-model="form.head_officer_id"
+                placeholder="Select head officer in charge"
+                filterable
                 style="width: 100%"
-              />
+              >
+                <el-option
+                  v-for="user in headOfficers"
+                  :key="user.id"
+                  :label="user.full_name"
+                  :value="user.id"
+                >
+                  <span>{{ user.full_name }}</span>
+                  <span style="margin-left: 10px; color: #8492a6; font-size: 13px">{{
+                    user.username
+                  }}</span>
+                </el-option>
+              </el-select>
             </el-form-item>
           </el-col>
-          <el-col v-if="isEditMode" :span="12">
+          <el-col :span="12">
+            <el-form-item label="SCS Colleague" prop="scs_colleague_id">
+              <el-select
+                v-model="form.scs_colleague_id"
+                placeholder="Select SCS colleague to assist (@mention)"
+                filterable
+                clearable
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="user in scsUsers"
+                  :key="user.id"
+                  :label="user.full_name"
+                  :value="user.id"
+                >
+                  <span>{{ user.full_name }}</span>
+                  <span style="margin-left: 10px; color: #8492a6; font-size: 13px"
+                    >@{{ user.username }}</span
+                  >
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row v-if="isEditMode" :gutter="20">
+          <el-col :span="12">
             <el-form-item :label="$t('evaluation.actualEndDate')" prop="end_date">
               <el-date-picker
                 v-model="form.end_date"
@@ -274,11 +310,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import api from '../utils/api'
+import api from '@/utils/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -289,6 +325,8 @@ const submitting = ref(false)
 const loading = ref(false)
 const deleting = ref(false)
 const finishing = ref(false)
+const headOfficers = ref([])
+const scsUsers = ref([])
 
 // 检测是否为编辑模式
 const isEditMode = computed(() => route.name === 'EditEvaluation' && route.params.id)
@@ -333,7 +371,6 @@ const form = reactive({
   product_name: '',
   part_number: '',
   start_date: '',
-  expected_end_date: '',
   end_date: '', // Actual end date
   reason: '',
   process_step: '', // Process step identifier (e.g., M031)
@@ -345,6 +382,8 @@ const form = reactive({
   form_factor: '',
   temperature_grade: '',
   processes: [],
+  head_officer_id: null,
+  scs_colleague_id: null,
 })
 
 const rules = computed(() => ({
@@ -376,10 +415,10 @@ const rules = computed(() => ({
       trigger: 'change',
     },
   ],
-  expected_end_date: [
+  head_officer_id: [
     {
       required: true,
-      message: t('validation.requiredField.expectedEndDate'),
+      message: 'Please select a head officer in charge',
       trigger: 'change',
     },
   ],
@@ -447,12 +486,13 @@ const buildPayload = () => ({
   product_name: form.product_name,
   part_number: form.part_number,
   start_date: form.start_date,
-  expected_end_date: form.expected_end_date,
   end_date: form.end_date || null,
   reason: form.reason,
   process_step: form.process_step,
   evaluation_reason: form.reason, // Map reason to evaluation_reason for backend compatibility
   description: form.description,
+  head_officer_id: form.head_officer_id,
+  scs_colleague_id: form.scs_colleague_id,
   remarks: form.description, // Map description to remarks for backend compatibility
   pgm_version: form.pgm_version,
   material_info: form.material_info,
@@ -581,12 +621,13 @@ const fetchEvaluation = async () => {
       product_name: evaluation.product_name || '',
       part_number: evaluation.part_number || '',
       start_date: evaluation.start_date || '',
-      expected_end_date: evaluation.expected_end_date || '',
       end_date: evaluation.end_date || '',
       reason: evaluation.evaluation_reason || evaluation.reason || '',
       process_step: evaluation.process_step || '',
       description: evaluation.remarks || evaluation.description || '',
       pgm_version: evaluation.pgm_version || '',
+      head_officer_id: evaluation.head_officer_id || null,
+      scs_colleague_id: evaluation.scs_colleague_id || null,
       material_info: evaluation.material_info || '',
       capacity: evaluation.capacity || '',
       interface_type: evaluation.interface_type || '',
@@ -603,8 +644,28 @@ const fetchEvaluation = async () => {
   }
 }
 
+const fetchUsers = async () => {
+  try {
+    const response = await api.get('/users')
+    const users = response.data.data.users || []
+
+    // Filter users for head officers (users with leader roles)
+    headOfficers.value = users.filter(
+      (user) =>
+        user.role === 'part_leader' || user.role === 'group_leader' || user.role === 'admin',
+    )
+
+    // Filter users for SCS colleagues (all active users can be assigned)
+    scsUsers.value = users.filter((user) => user.is_active)
+  } catch (error) {
+    console.error('Failed to fetch users:', error)
+    ElMessage.error('Failed to load user list')
+  }
+}
+
 onMounted(() => {
   fetchEvaluation()
+  fetchUsers()
 })
 </script>
 

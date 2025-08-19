@@ -106,6 +106,11 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(notifications_bp, url_prefix="/api/notifications")
     app.register_blueprint(operation_log_bp, url_prefix="/api/logs")
 
+    # Register comments blueprint
+    from app.api.comments import comments_bp
+
+    app.register_blueprint(comments_bp, url_prefix="/api")
+
     # Register Swagger API documentation
     register_api_routes(app)
 

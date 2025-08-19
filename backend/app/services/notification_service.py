@@ -7,7 +7,7 @@ Manages message creation, delivery, and notification preferences.
 from datetime import datetime, timedelta
 
 from flask import current_app
-from sqlalchemy import and_, desc, or_
+from sqlalchemy import and_, desc
 
 from app import db
 from app.models.evaluation import Evaluation

@@ -99,6 +99,94 @@
             </div>
           </el-card>
 
+          <!-- Comments Section with @Mentions -->
+          <el-card class="comments-card">
+            <template #header>
+              <div class="card-header">
+                <span>Comments & Discussion</span>
+                <el-badge :value="comments.length" :max="99" class="comment-badge" />
+              </div>
+            </template>
+
+            <!-- Comment Input -->
+            <div class="comment-input-section">
+              <el-input
+                v-model="newComment"
+                type="textarea"
+                :rows="3"
+                placeholder="Add a comment... Use @username to mention someone"
+                @input="handleCommentInput"
+              />
+              <div v-if="mentionSuggestions.length > 0" class="mention-suggestions">
+                <div
+                  v-for="user in mentionSuggestions"
+                  :key="user.id"
+                  class="mention-item"
+                  @click="selectMention(user)"
+                >
+                  <el-avatar :size="24" :src="user.avatar">
+                    {{ user.full_name.charAt(0) }}
+                  </el-avatar>
+                  <div class="mention-info">
+                    <div class="mention-name">{{ user.full_name }}</div>
+                    <div class="mention-username">@{{ user.username }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="comment-actions">
+                <div class="mentioned-users" v-if="mentionedUsers.length > 0">
+                  <span class="mention-label">Mentioning:</span>
+                  <el-tag
+                    v-for="user in mentionedUsers"
+                    :key="user.id"
+                    closable
+                    size="small"
+                    @close="removeMention(user)"
+                  >
+                    @{{ user.username }}
+                  </el-tag>
+                </div>
+                <el-button
+                  type="primary"
+                  size="small"
+                  :disabled="!newComment.trim()"
+                  @click="submitComment"
+                >
+                  Post Comment
+                </el-button>
+              </div>
+            </div>
+
+            <!-- Comments List -->
+            <div class="comments-list">
+              <div v-for="comment in comments" :key="comment.id" class="comment-item">
+                <el-avatar :size="32" :src="comment.user_avatar">
+                  {{ comment.user_name.charAt(0) }}
+                </el-avatar>
+                <div class="comment-content">
+                  <div class="comment-header">
+                    <span class="comment-author">{{ comment.user_name }}</span>
+                    <span class="comment-time">{{ formatRelativeTime(comment.created_at) }}</span>
+                  </div>
+                  <div
+                    class="comment-body"
+                    v-html="renderCommentWithMentions(comment.content)"
+                  ></div>
+                  <div class="comment-footer">
+                    <el-button link size="small" @click="replyToComment(comment)">
+                      <el-icon><ChatDotRound /></el-icon>
+                      Reply
+                    </el-button>
+                  </div>
+                </div>
+              </div>
+              <el-empty
+                v-if="comments.length === 0"
+                description="No comments yet. Be the first to comment!"
+              />
+            </div>
+          </el-card>
+
           <!-- {{ $t('evaluation.technicalSpecifications') }} -->
           <el-card class="info-card">
             <template #header>
@@ -298,6 +386,7 @@ import {
   Edit,
   MoreFilled,
   Check,
+  ChatDotRound,
   Close,
   VideoPause,
   VideoPlay,
@@ -324,6 +413,15 @@ const authStore = useAuthStore()
 const loading = ref(false)
 const evaluation = ref(null)
 const showAllLogs = ref(false)
+
+// Comments and mentions state
+const comments = ref([])
+const newComment = ref('')
+const mentionSuggestions = ref([])
+const mentionedUsers = ref([])
+const allUsers = ref([])
+const currentMentionSearch = ref('')
+const mentionStartIndex = ref(-1)
 
 const canEdit = computed(() => {
   if (!evaluation.value) return false
@@ -557,6 +655,155 @@ const formatDateTime = (dateString) => {
   return new Date(dateString).toLocaleString()
 }
 
+const formatRelativeTime = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const now = new Date()
+  const diff = now - date
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  const minutes = Math.floor(diff / (1000 * 60))
+
+  if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`
+  if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`
+  if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`
+  return 'just now'
+}
+
+// Comment and mention functions
+const handleCommentInput = (value) => {
+  const cursorPos = event.target.selectionStart
+  const textBeforeCursor = value.substring(0, cursorPos)
+  const lastAtIndex = textBeforeCursor.lastIndexOf('@')
+
+  if (lastAtIndex !== -1) {
+    const searchText = textBeforeCursor.substring(lastAtIndex + 1)
+
+    // Check if we're still in a mention context (no space after @)
+    if (!searchText.includes(' ')) {
+      mentionStartIndex.value = lastAtIndex
+      currentMentionSearch.value = searchText
+      searchMentions(searchText)
+    } else {
+      mentionSuggestions.value = []
+      mentionStartIndex.value = -1
+    }
+  } else {
+    mentionSuggestions.value = []
+    mentionStartIndex.value = -1
+  }
+}
+
+const searchMentions = (searchText) => {
+  if (!searchText) {
+    mentionSuggestions.value = allUsers.value.slice(0, 5)
+  } else {
+    mentionSuggestions.value = allUsers.value
+      .filter(
+        (user) =>
+          user.username.toLowerCase().includes(searchText.toLowerCase()) ||
+          user.full_name.toLowerCase().includes(searchText.toLowerCase()),
+      )
+      .slice(0, 5)
+  }
+}
+
+const selectMention = (user) => {
+  if (mentionStartIndex.value !== -1) {
+    const beforeMention = newComment.value.substring(0, mentionStartIndex.value)
+    const afterMention = newComment.value.substring(
+      mentionStartIndex.value + currentMentionSearch.value.length + 1,
+    )
+    newComment.value = `${beforeMention}@${user.username} ${afterMention}`
+
+    // Add to mentioned users if not already there
+    if (!mentionedUsers.value.find((u) => u.id === user.id)) {
+      mentionedUsers.value.push(user)
+    }
+  }
+
+  mentionSuggestions.value = []
+  mentionStartIndex.value = -1
+  currentMentionSearch.value = ''
+}
+
+const removeMention = (user) => {
+  const index = mentionedUsers.value.findIndex((u) => u.id === user.id)
+  if (index > -1) {
+    mentionedUsers.value.splice(index, 1)
+  }
+}
+
+const replyToComment = (comment) => {
+  newComment.value = `@${comment.user_username} `
+  // Find and add the user to mentioned users
+  const user = allUsers.value.find((u) => u.username === comment.user_username)
+  if (user && !mentionedUsers.value.find((u) => u.id === user.id)) {
+    mentionedUsers.value.push(user)
+  }
+}
+
+const renderCommentWithMentions = (content) => {
+  if (!content) return ''
+
+  // Replace @mentions with styled spans
+  return content.replace(/@(\w+)/g, '<span class="mention-tag">@$1</span>')
+}
+
+const submitComment = async () => {
+  if (!newComment.value.trim()) return
+
+  try {
+    // Extract mentioned usernames from the comment
+    const mentionPattern = /@(\w+)/g
+    const matches = [...newComment.value.matchAll(mentionPattern)]
+    const mentionedUsernames = matches.map((match) => match[1])
+
+    // Submit comment with mentions
+    const response = await api.post(`/evaluations/${evaluation.value.id}/comments`, {
+      content: newComment.value,
+      mentioned_usernames: mentionedUsernames,
+    })
+
+    // Add the new comment to the list
+    comments.value.unshift({
+      id: response.data.comment.id,
+      content: newComment.value,
+      user_name: authStore.user.full_name,
+      user_username: authStore.user.username,
+      user_avatar: authStore.user.avatar,
+      created_at: new Date().toISOString(),
+    })
+
+    // Clear the input and mentioned users
+    newComment.value = ''
+    mentionedUsers.value = []
+
+    ElMessage.success('Comment posted successfully')
+  } catch (error) {
+    console.error('Failed to post comment:', error)
+    ElMessage.error('Failed to post comment')
+  }
+}
+
+const fetchComments = async () => {
+  try {
+    const response = await api.get(`/evaluations/${evaluation.value.id}/comments`)
+    comments.value = response.data.comments || []
+  } catch (error) {
+    console.error('Failed to fetch comments:', error)
+  }
+}
+
+const fetchUsers = async () => {
+  try {
+    const response = await api.get('/users')
+    allUsers.value = response.data.data.users || []
+  } catch (error) {
+    console.error('Failed to fetch users:', error)
+  }
+}
+
 const formatFileSize = (bytes) => {
   if (!bytes) return '0 B'
   const k = 1024
@@ -633,6 +880,10 @@ onMounted(async () => {
 
   // 然后获取评估信息
   await fetchEvaluation()
+
+  // Fetch comments and users for mentions
+  await fetchComments()
+  await fetchUsers()
 })
 </script>
 
@@ -862,8 +1113,141 @@ onMounted(async () => {
 }
 
 .empty-logs {
-  padding: 20px 0;
+  padding: 20px;
   text-align: center;
+  color: #909399;
+}
+
+/* Comments Section Styles */
+.comments-card {
+  margin-top: 20px;
+}
+
+.comment-badge {
+  margin-left: 10px;
+}
+
+.comment-input-section {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.mention-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+  margin-top: 4px;
+}
+
+.mention-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.mention-item:hover {
+  background: #f5f7fa;
+}
+
+.mention-info {
+  margin-left: 10px;
+}
+
+.mention-name {
+  font-size: 14px;
+  color: #303133;
+}
+
+.mention-username {
+  font-size: 12px;
+  color: #909399;
+}
+
+.comment-actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mentioned-users {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mention-label {
+  font-size: 12px;
+  color: #909399;
+}
+
+.comments-list {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.comment-item {
+  display: flex;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.comment-item:last-child {
+  border-bottom: none;
+}
+
+.comment-content {
+  flex: 1;
+  margin-left: 12px;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.comment-author {
+  font-weight: 600;
+  color: #303133;
+  font-size: 14px;
+}
+
+.comment-time {
+  color: #909399;
+  font-size: 12px;
+}
+
+.comment-body {
+  color: #606266;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.comment-body :deep(.mention-tag) {
+  color: #409eff;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.comment-body :deep(.mention-tag:hover) {
+  text-decoration: underline;
+}
+
+.comment-footer {
+  display: flex;
+  gap: 12px;
 }
 
 .logs-list :deep(.el-timeline-item__node) {

@@ -101,7 +101,274 @@ GET /api/dashboard/stats?period=month
 }
 ```
 
-### Error Response
+## 9. Mentions and Notifications
+
+### 9.1 Get User Notifications
+
+**Endpoint:** `GET /api/notifications`
+
+**Description:** Get notifications for the current user, including mentions
+
+**Headers:**
+- `Authorization: Bearer {access_token}` (required)
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `limit` | `integer` | No | Maximum number of notifications (default: 50) |
+| `status` | `string` | No | Filter by status: unread, read |
+
+**Success Response (200):**
+```json
+{
+  "notifications": [
+    {
+      "id": 1,
+      "title": "@john.doe mentioned you in evaluation EV2024001",
+      "content": "John Doe mentioned you in a comment on evaluation EV2024001...",
+      "message_type": "mention",
+      "priority": "normal",
+      "is_read": false,
+      "created_at": "2024-01-15T10:30:00Z",
+      "sender_name": "John Doe",
+      "evaluation_number": "EV2024001"
+    }
+  ],
+  "unread_count": 5,
+  "total_returned": 10
+}
+```
+
+### 9.2 Mark Notification as Read
+
+**Endpoint:** `PUT /api/notifications/{message_id}/read`
+
+**Description:** Mark a specific notification as read
+
+**Headers:**
+- `Authorization: Bearer {access_token}` (required)
+
+**Success Response (200):**
+```json
+{
+  "message": "Notification marked as read",
+  "message_id": 123
+}
+```
+
+### 9.3 Mark All Notifications as Read
+
+**Endpoint:** `PUT /api/notifications/mark-all-read`
+
+**Description:** Mark all notifications as read for the current user
+
+**Headers:**
+- `Authorization: Bearer {access_token}` (required)
+
+**Success Response (200):**
+```json
+{
+  "message": "Marked 10 notifications as read",
+  "marked_count": 10
+}
+```
+
+## 10. Comments API
+
+### 10.1 Get Evaluation Comments
+
+**Endpoint:** `GET /api/evaluations/{evaluation_id}/comments`
+
+**Description:** Get comments for a specific evaluation
+
+**Headers:**
+- `Authorization: Bearer {access_token}` (required)
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `page` | `integer` | No | Page number for pagination (default: 1) |
+| `per_page` | `integer` | No | Items per page (default: 20) |
+| `include_replies` | `boolean` | No | Include nested replies (default: true) |
+
+**Success Response (200):**
+```json
+{
+  "comments": [
+    {
+      "id": 1,
+      "evaluation_id": 123,
+      "user_id": 456,
+      "content": "Great progress on this evaluation! @jane.smith can you review the test results?",
+      "user_name": "John Doe",
+      "user_username": "john.doe",
+      "created_at": "2024-01-15T10:30:00Z",
+      "is_edited": false,
+      "reply_count": 2,
+      "mention_count": 1,
+      "replies": [
+        {
+          "id": 2,
+          "content": "Sure, I'll review them today.",
+          "user_name": "Jane Smith",
+          "user_username": "jane.smith",
+          "created_at": "2024-01-15T11:00:00Z"
+        }
+      ]
+    }
+  ],
+  "total": 25,
+  "page": 1,
+  "per_page": 20,
+  "total_pages": 2
+}
+```
+
+### 10.2 Create Comment
+
+**Endpoint:** `POST /api/evaluations/{evaluation_id}/comments`
+
+**Description:** Create a new comment on an evaluation with optional @mentions
+
+**Headers:**
+- `Authorization: Bearer {access_token}` (required)
+- `Content-Type: application/json` (required)
+
+**Request Body:**
+```json
+{
+  "content": "The test results look good. @jane.smith please proceed with the next phase.",
+  "mentioned_usernames": ["jane.smith"],
+  "parent_comment_id": null
+}
+```
+
+**Success Response (201):**
+```json
+{
+  "message": "Comment created successfully",
+  "comment": {
+    "id": 3,
+    "content": "The test results look good. @jane.smith please proceed with the next phase.",
+    "user_name": "John Doe",
+    "user_username": "john.doe",
+    "created_at": "2024-01-15T14:00:00Z",
+    "mention_count": 1
+  }
+}
+```
+
+### 10.3 Edit Comment
+
+**Endpoint:** `PUT /api/comments/{comment_id}`
+
+**Description:** Edit an existing comment
+
+**Headers:**
+- `Authorization: Bearer {access_token}` (required)
+- `Content-Type: application/json` (required)
+
+**Request Body:**
+```json
+{
+  "content": "Updated comment content with @new.mention",
+  "mentioned_usernames": ["new.mention"]
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "message": "Comment updated successfully",
+  "comment": {
+    "id": 3,
+    "content": "Updated comment content with @new.mention",
+    "is_edited": true,
+    "edited_at": "2024-01-15T15:00:00Z"
+  }
+}
+```
+
+### 10.4 Delete Comment
+
+**Endpoint:** `DELETE /api/comments/{comment_id}`
+
+**Description:** Soft delete a comment (content replaced with "[Comment deleted]")
+
+**Headers:**
+- `Authorization: Bearer {access_token}` (required)
+
+**Success Response (200):**
+```json
+{
+  "message": "Comment deleted successfully"
+}
+```
+
+### 10.5 Get Comment Replies
+
+**Endpoint:** `GET /api/comments/{comment_id}/replies`
+
+**Description:** Get direct replies to a specific comment
+
+**Headers:**
+- `Authorization: Bearer {access_token}` (required)
+
+**Success Response (200):**
+```json
+{
+  "replies": [
+    {
+      "id": 4,
+      "content": "I agree with this assessment.",
+      "user_name": "Jane Smith",
+      "created_at": "2024-01-15T16:00:00Z"
+    }
+  ],
+  "total": 2
+}
+```
+
+### 10.6 Get Comment Tree
+
+**Endpoint:** `GET /api/comments/{comment_id}/tree`
+
+**Description:** Get complete nested reply tree for a comment
+
+**Headers:**
+- `Authorization: Bearer {access_token}` (required)
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `max_depth` | `integer` | No | Maximum nesting depth (default: 5) |
+
+**Success Response (200):**
+```json
+{
+  "comment": {
+    "id": 1,
+    "content": "Initial comment",
+    "user_name": "John Doe"
+  },
+  "reply_tree": [
+    {
+      "id": 2,
+      "content": "First reply",
+      "replies": [
+        {
+          "id": 3,
+          "content": "Nested reply",
+          "replies": []
+        }
+      ]
+    }
+  ],
+  "total_replies": 2
+}
+```
+
+## 11. Error Responses
 ```json
 {
   "success": false,

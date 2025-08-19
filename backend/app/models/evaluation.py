@@ -79,7 +79,6 @@ class Evaluation(db.Model):
 
     # Dates
     start_date = db.Column(db.Date, nullable=False)
-    expected_end_date = db.Column(db.Date)  # New field for expected end date
     actual_end_date = db.Column(db.Date)  # Renamed from completion_date
 
     # Process information
@@ -99,6 +98,12 @@ class Evaluation(db.Model):
     evaluator_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     part_approver_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     group_approver_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    head_officer_id = db.Column(
+        db.Integer, db.ForeignKey("users.id")
+    )  # Head officer who created the evaluation
+    scs_colleague_id = db.Column(
+        db.Integer, db.ForeignKey("users.id")
+    )  # SCS colleague assigned to assist
 
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -127,6 +132,14 @@ class Evaluation(db.Model):
         backref=db.backref("evaluation", uselist=False),
         lazy="dynamic",
         viewonly=True,
+    )
+
+    # Additional user relationships not defined in User model
+    head_officer = db.relationship(
+        "User", foreign_keys=[head_officer_id], backref="evaluations_as_head"
+    )
+    scs_colleague = db.relationship(
+        "User", foreign_keys=[scs_colleague_id], backref="evaluations_as_scs"
     )
 
     def __init__(
@@ -259,9 +272,6 @@ class Evaluation(db.Model):
             "remarks": self.remarks,
             "status": self.status,
             "start_date": self.start_date.isoformat() if self.start_date else None,
-            "expected_end_date": self.expected_end_date.isoformat()
-            if self.expected_end_date
-            else None,
             "actual_end_date": self.actual_end_date.isoformat()
             if self.actual_end_date
             else None,
@@ -275,6 +285,8 @@ class Evaluation(db.Model):
             "evaluator_id": self.evaluator_id,
             "part_approver_id": self.part_approver_id,
             "group_approver_id": self.group_approver_id,
+            "head_officer_id": self.head_officer_id,
+            "scs_colleague_id": self.scs_colleague_id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
@@ -282,6 +294,12 @@ class Evaluation(db.Model):
         if include_details:
             data["details"] = [detail.to_dict() for detail in self.details]
             data["results"] = [result.to_dict() for result in self.results]
+
+            # Include user information if relationships are loaded
+            if self.head_officer:
+                data["head_officer_name"] = self.head_officer.full_name
+            if self.scs_colleague:
+                data["scs_colleague_name"] = self.scs_colleague.full_name
 
         return data
 

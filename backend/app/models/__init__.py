@@ -2,7 +2,9 @@
 
 from app import db
 
+from .comment import Comment
 from .evaluation import Evaluation, EvaluationDetail, EvaluationResult
+from .mention import Mention
 from .message import Message
 from .operation_log import OperationLog
 from .system_config import SystemConfig
@@ -16,6 +18,8 @@ __all__ = [
     "EvaluationDetail",
     "EvaluationResult",
     "Message",
+    "Comment",
+    "Mention",
     "OperationLog",
     "SystemConfig",
 ]

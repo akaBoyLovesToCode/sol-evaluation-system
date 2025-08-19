@@ -40,15 +40,18 @@ def init_database():
                 admin_user = User(
                     username="admin",
                     email="admin@evaluation.system",
+                    password="admin123",
                     full_name="System Administrator",
                     role="admin",
-                    password_hash=generate_password_hash("admin123"),
                 )
                 db.session.add(admin_user)
                 db.session.commit()
                 print("✅ Admin user created (username: admin, password: admin123)")
             else:
-                print("👤 Admin user already exists")
+                print("👤 Admin user already exists. Resetting password...")
+                admin_user.set_password("admin123")
+                db.session.commit()
+                print("✅ Admin password has been reset to 'admin123'")
 
             print("🎉 Database initialization completed successfully!")
 
