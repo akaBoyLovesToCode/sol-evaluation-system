@@ -68,11 +68,12 @@
       "productName": "Please enter product name",
       "partNumber": "Please enter part number",
       "startDate": "Please select start date",
-      "expectedEndDate": "Please select expected end date",
       "reason": "Please select evaluation reason",
       "description": "Please enter evaluation description",
       "actualEndDate": "Actual end date cannot be empty",
-      "processStep": "Please enter process step"
+      "processStep": "Please enter process step",
+      "scsCharger": "Please select SCS Charger",
+      "headOfficeCharger": "Please select Head Office Charger"
     }
   },
   "menu": {
@@ -111,6 +112,10 @@
       "title": "New Evaluation",
       "description": "Create a new product evaluation project"
     },
+    "edit": {
+      "title": "Edit Evaluation",
+      "description": "Modify evaluation information"
+    },
     "statusDescriptions": {
       "draft": "Evaluation is in draft state and can be edited.",
       "in_progress": "Evaluation is currently in progress.",
@@ -122,6 +127,8 @@
       "rejected": "Evaluation has been rejected."
     },
     "processStep": "Step",
+    "scsCharger": "SCS Charger",
+    "headOfficeCharger": "Head Office Charger",
     "complete": "Complete",
     "basicInfo": "Basic Information",
     "basicInformation": "Basic Information",
@@ -148,7 +155,6 @@
     "productName": "Product Name",
     "partNumber": "P/N",
     "startDate": "Start Date",
-    "expectedEndDate": "Expected End Date",
     "actualEndDate": "Actual End Date",
     "reason": "Evaluation Reason",
     "descriptionLabel": "Evaluation Description",
@@ -163,7 +169,6 @@
     "evaluator": "Evaluator",
     "endDate": "End Date",
     "dateRange": "Date Range",
-    "progress": "Progress",
     "list": "Evaluation List",
     "export": "Export",
     "exportSuccess": "Export successful",
@@ -217,7 +222,6 @@
       "endDate": "End date",
       "productName": "Enter product name",
       "partNumber": "Enter part number",
-      "expectedEndDate": "Select expected end date",
       "reason": "Select evaluation reason",
       "description": "Enter evaluation description",
       "actualEndDate": "Select actual end date",
@@ -227,7 +231,14 @@
       "interfaceType": "Select interface type",
       "formFactor": "Select form factor",
       "temperatureGrade": "Select temperature grade",
-      "processStep": "Input process step"
+      "processStep": "Input process step",
+      "scsCharger": "Select SCS Charger",
+      "headOfficeCharger": "Select Head Office Charger"
+    },
+    "interfaceTypes": {
+      "sata": "SATA",
+      "nvme": "NVMe",
+      "pcie": "PCIe"
     },
     "type": {
       "new_product": "New Product",

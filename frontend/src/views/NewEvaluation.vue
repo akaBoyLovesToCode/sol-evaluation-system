@@ -2,10 +2,10 @@
   <div v-loading="loading" class="new-evaluation-page">
     <div class="page-header">
       <h1 class="page-title">
-        {{ isEditMode ? '编辑评价' : $t('evaluation.new.title') }}
+        {{ isEditMode ? $t('evaluation.edit.title') : $t('evaluation.new.title') }}
       </h1>
       <p class="page-description">
-        {{ isEditMode ? '修改评价信息' : $t('evaluation.new.description') }}
+        {{ isEditMode ? $t('evaluation.edit.description') : $t('evaluation.new.description') }}
       </p>
     </div>
 
@@ -38,7 +38,7 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="P/N" prop="part_number">
+            <el-form-item :label="$t('evaluation.partNumber')" prop="part_number">
               <el-input
                 v-model="form.part_number"
                 :placeholder="$t('evaluation.placeholders.partNumber')"
@@ -60,18 +60,6 @@
         </el-row>
 
         <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item :label="$t('evaluation.expectedEndDate')" prop="expected_end_date">
-              <el-date-picker
-                v-model="form.expected_end_date"
-                type="date"
-                :placeholder="$t('evaluation.placeholders.expectedEndDate')"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-              />
-            </el-form-item>
-          </el-col>
           <el-col v-if="isEditMode" :span="12">
             <el-form-item :label="$t('evaluation.actualEndDate')" prop="end_date">
               <el-date-picker
@@ -109,6 +97,43 @@
                 v-model="form.process_step"
                 :placeholder="$t('evaluation.placeholders.processStep')"
               />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item :label="$t('evaluation.scsCharger')" prop="scs_charger_id">
+              <el-select
+                v-model="form.scs_charger_id"
+                :placeholder="$t('evaluation.placeholders.scsCharger')"
+                filterable
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="user in users"
+                  :key="user.id"
+                  :label="user.fullName || user.username"
+                  :value="user.id"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item :label="$t('evaluation.headOfficeCharger')" prop="head_office_charger_id">
+              <el-select
+                v-model="form.head_office_charger_id"
+                :placeholder="$t('evaluation.placeholders.headOfficeCharger')"
+                filterable
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="user in users"
+                  :key="user.id"
+                  :label="user.fullName || user.username"
+                  :value="user.id"
+                />
+              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
@@ -163,9 +188,9 @@
                 :placeholder="$t('evaluation.placeholders.interfaceType')"
                 style="width: 100%"
               >
-                <el-option label="SATA" value="SATA" />
-                <el-option label="NVMe" value="NVMe" />
-                <el-option label="PCIe" value="PCIe" />
+                <el-option :label="$t('evaluation.interfaceTypes.sata')" value="SATA" />
+                <el-option :label="$t('evaluation.interfaceTypes.nvme')" value="NVMe" />
+                <el-option :label="$t('evaluation.interfaceTypes.pcie')" value="PCIe" />
                 <el-option :label="$t('common.other')" value="other" />
               </el-select>
             </el-form-item>
@@ -289,8 +314,9 @@ const submitting = ref(false)
 const loading = ref(false)
 const deleting = ref(false)
 const finishing = ref(false)
+const users = ref([])
 
-// 检测是否为编辑模式
+// Check if in edit mode
 const isEditMode = computed(() => route.name === 'EditEvaluation' && route.params.id)
 const evaluationId = computed(() => route.params.id)
 
@@ -333,7 +359,6 @@ const form = reactive({
   product_name: '',
   part_number: '',
   start_date: '',
-  expected_end_date: '',
   end_date: '', // Actual end date
   reason: '',
   process_step: '', // Process step identifier (e.g., M031)
@@ -345,6 +370,8 @@ const form = reactive({
   form_factor: '',
   temperature_grade: '',
   processes: [],
+  scs_charger_id: '',
+  head_office_charger_id: '',
 })
 
 const rules = computed(() => ({
@@ -376,13 +403,6 @@ const rules = computed(() => ({
       trigger: 'change',
     },
   ],
-  expected_end_date: [
-    {
-      required: true,
-      message: t('validation.requiredField.expectedEndDate'),
-      trigger: 'change',
-    },
-  ],
   process_step: [
     {
       required: true,
@@ -402,6 +422,20 @@ const rules = computed(() => ({
       required: true,
       message: t('validation.requiredField.description'),
       trigger: 'blur',
+    },
+  ],
+  scs_charger_id: [
+    {
+      required: true,
+      message: t('validation.requiredField.scsCharger'),
+      trigger: 'change',
+    },
+  ],
+  head_office_charger_id: [
+    {
+      required: true,
+      message: t('validation.requiredField.headOfficeCharger'),
+      trigger: 'change',
     },
   ],
   end_date: [
@@ -447,7 +481,6 @@ const buildPayload = () => ({
   product_name: form.product_name,
   part_number: form.part_number,
   start_date: form.start_date,
-  expected_end_date: form.expected_end_date,
   end_date: form.end_date || null,
   reason: form.reason,
   process_step: form.process_step,
@@ -461,6 +494,8 @@ const buildPayload = () => ({
   form_factor: form.form_factor,
   temperature_grade: form.temperature_grade,
   processes: form.processes,
+  scs_charger_id: form.scs_charger_id,
+  head_office_charger_id: form.head_office_charger_id,
 })
 
 const handleSave = async (submit = false) => {
@@ -568,6 +603,16 @@ const handleDelete = async () => {
   }
 }
 
+const fetchUsers = async () => {
+  try {
+    const response = await api.get('/users')
+    users.value = response.data.data.users || []
+  } catch (error) {
+    console.error('Failed to fetch users:', error)
+    ElMessage.error(t('ui.fetchDataFailed'))
+  }
+}
+
 const fetchEvaluation = async () => {
   if (!isEditMode.value) return
 
@@ -581,7 +626,6 @@ const fetchEvaluation = async () => {
       product_name: evaluation.product_name || '',
       part_number: evaluation.part_number || '',
       start_date: evaluation.start_date || '',
-      expected_end_date: evaluation.expected_end_date || '',
       end_date: evaluation.end_date || '',
       reason: evaluation.evaluation_reason || evaluation.reason || '',
       process_step: evaluation.process_step || '',
@@ -593,6 +637,8 @@ const fetchEvaluation = async () => {
       form_factor: evaluation.form_factor || '',
       temperature_grade: evaluation.temperature_grade || '',
       processes: evaluation.processes || [],
+      scs_charger_id: evaluation.scs_charger_id || '',
+      head_office_charger_id: evaluation.head_office_charger_id || '',
     })
   } catch (error) {
     ElMessage.error(t('ui.fetchDataFailed'))
@@ -604,6 +650,7 @@ const fetchEvaluation = async () => {
 }
 
 onMounted(() => {
+  fetchUsers()
   fetchEvaluation()
 })
 </script>
@@ -813,7 +860,7 @@ onMounted(() => {
   box-shadow: 0 8px 24px rgba(255, 117, 140, 0.4);
 }
 
-/* 响应式设计 */
+/* Responsive design */
 @media (max-width: 768px) {
   .evaluation-form {
     max-width: 100%;
