@@ -1,650 +1,319 @@
-# 🚀 Solution Evaluation Management System
+# Solution Evaluation System
 
-<div align="center">
+A comprehensive web-based system for managing product solution evaluations with workflow automation, real-time notifications, and collaborative features.
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-Available-brightgreen?style=for-the-badge)](https://frontend-production-d9f6.up.railway.app/)
-[![Vue 3](https://img.shields.io/badge/Vue-3.5.17-4FC08D?style=flat&logo=vue.js&logoColor=white)](https://vuejs.org/)
-[![Flask](https://img.shields.io/badge/Flask-3.1.1-000000?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
-[![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=flat&logo=mysql&logoColor=white)](https://mysql.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-13+-316192?style=flat&logo=postgresql&logoColor=white)](https://postgresql.org/)
+## 🌟 Features
 
-**A modern, full-stack web application for comprehensive solution evaluation management with advanced analytics and workflow automation.**
+### Core Functionality
+- **Evaluation Management**: Create, track, and manage product evaluations through their lifecycle
+- **Two Evaluation Types**:
+  - New Product: DOE → PPQ → PRQ (parallel) → Part Leader Approval → Group Leader Approval
+  - Mass Production: Production Test → AQL → Pass (no approval needed)
+- **Workflow Automation**: Automated approval workflows with role-based permissions
+- **Real-time Dashboard**: Analytics and statistics with visual charts
+- **Multi-language Support**: English and Chinese interfaces
 
-[🎯 Live Demo](https://frontend-production-d9f6.up.railway.app/) • [📚 API Docs](docs/API.md) • [🚀 Quick Start](#quick-start) • [📖 Documentation](#documentation)
+### Collaboration Features
+- **Message Center**: Centralized notification hub for all system activities
+- **@Mentions**: Tag users in comments and evaluations for instant notifications
+- **Comments System**: Threaded discussions on evaluations with reply support
+- **Task Assignment**: Assign head officers and SCS colleagues to evaluations
 
-</div>
+### Notification System
+- **Real-time Notifications**: Instant alerts for mentions, approvals, and status changes
+- **Mention Notifications**: Get notified when someone @mentions you
+- **Approval Requests**: Automatic notifications to approvers
+- **Status Updates**: Track evaluation progress through notifications
 
----
+## 🛠️ Tech Stack
 
-## ✨ Key Features
+### Frontend
+- **Vue 3** with Composition API
+- **Element Plus** UI framework
+- **Vue Router** for navigation
+- **Pinia** for state management
+- **Axios** for API communication
+- **Vue I18n** for internationalization
+- **ECharts** for data visualization
+- **Date-fns** for date formatting
 
-<table>
-<tr>
-<td width="50%">
+### Backend
+- **Flask** (Python web framework)
+- **SQLAlchemy** ORM
+- **Flask-JWT-Extended** for authentication
+- **MySQL** database
+- **Alembic** for database migrations
+- **Flask-CORS** for cross-origin support
 
-### 🔐 **Enterprise Authentication**
-- JWT-based authentication with refresh tokens
-- Four-tier RBAC system (Admin → Group Leader → Part Leader → User)
-- Session management and token blacklisting
-- Secure password policies
+## 📦 Installation
 
-### 📊 **Advanced Analytics**
-- Interactive dashboards with ECharts 5.6
-- Real-time statistics and trend analysis
-- Monthly performance reports
-- Custom chart utilities with export functionality
+### Prerequisites
+- Python 3.11+
+- Node.js 18+
+- MySQL 8.0+
 
-</td>
-<td width="50%">
+### Backend Setup
 
-### 🔄 **Intelligent Workflows**
-- Two-tier approval process for new solutions
-- Direct completion for mass production evaluations
-- Automated status transitions
-- Comprehensive audit trails
-
-### 🌍 **Global Ready**
-- Complete i18n support (Chinese/English/Korean)
-- Localized date/number formatting
-- RTL language support ready
-- Dynamic language switching
-
-</td>
-</tr>
-</table>
-
-### 🎨 **Modern UI/UX**
-- Responsive design with mobile-first approach • Glassmorphism effects and smooth animations • Dark mode architecture • Element Plus + Tailwind CSS integration
-
-### ⚡ **Performance Optimized**
-- Code splitting and lazy loading • Bundle size optimization • Database query optimization • Comprehensive caching strategies
-
----
-
-## 🏗️ Architecture Overview
-
-```mermaid
-graph TB
-    subgraph "Frontend Layer"
-        A[Vue 3 SPA] --> B[Element Plus UI]
-        A --> C[ECharts Visualization]
-        A --> D[i18n Support]
-    end
-
-    subgraph "Backend Layer"
-        E[Flask REST API] --> F[SQLAlchemy ORM]
-        E --> G[JWT Authentication]
-        E --> H[Workflow Engine]
-    end
-
-    subgraph "Data Layer"
-        I[(MySQL 8.0+)]
-        J[(PostgreSQL 13+)]
-        K[Redis Cache]
-    end
-
-    A -.->|HTTP/JSON| E
-    F --> I
-    F --> J
-    E --> K
+1. Navigate to backend directory:
+```bash
+cd evaluation/backend
 ```
 
-## 🛠️ Technology Stack
-
-### Frontend Powerhouse
-- **Vue 3.5.17** + Composition API for reactive interfaces
-- **Element Plus 2.10.4** for enterprise-grade UI components
-- **Tailwind CSS 4.1.11** for utility-first styling
-- **ECharts 5.6.0** for interactive data visualization
-- **Vite 7.0.4** for lightning-fast development and builds
-
-### Backend Excellence
-- **Python Flask** with modern async support
-- **SQLAlchemy** ORM with **MySQL 8.0+** and **PostgreSQL 13+** support
-- **JWT Authentication** with refresh token strategy
-- **uv** for ultra-fast Python package management
-- **Swagger/OpenAPI** for comprehensive API documentation
-
-### DevOps & Deployment
-- **Docker & Docker Compose** for containerization
-- **Terraform** for Infrastructure as Code
-- **Railway** for production deployment
-- **GitHub Actions** ready for CI/CD
-
----
-
-## 🚀 Quick Start
-
-### 📋 Prerequisites
+2. Create virtual environment:
 ```bash
-# Required tools
-Node.js 20+     # Frontend development
-Python 3.11+    # Backend development
-uv             # Modern Python package manager
-MySQL 8.0+     # Primary database (or PostgreSQL 13+)
-Docker         # Optional, for containerized development
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-### ⚡ One-Command Setup
+3. Install dependencies:
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd evaluation
-
-# Run automated setup
-./setup.sh
-
-# Start development environment
-./start-dev.sh
+pip install -r requirements.txt
 ```
 
-**🎉 That's it!** Your application will be running at:
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5001
-- **API Documentation**: http://localhost:5001/api/docs
-
-### 🔧 Manual Setup (Alternative)
-
-<details>
-<summary>Click to expand manual setup instructions</summary>
-
-#### Backend Setup
+4. Configure database:
 ```bash
-cd backend
+# Create MySQL database
+mysql -u root -p
+CREATE DATABASE evaluation_system;
+```
 
-# Create virtual environment and install dependencies
-uv init
-uv sync
-
-# Configure database (choose MySQL or PostgreSQL)
+5. Set environment variables:
+```bash
 cp .env.example .env
 # Edit .env with your database credentials
-
-# Initialize database
-uv run flask db upgrade
-
-# Start backend server
-uv run run.py
 ```
 
-#### Frontend Setup
+6. Run migrations:
 ```bash
-cd frontend
+alembic upgrade head
+```
 
-# Install dependencies
+7. Initialize database with sample data:
+```bash
+python init_db.py
+```
+
+8. Start the server:
+```bash
+python run.py
+```
+
+The backend will be available at `http://localhost:5001`
+
+### Frontend Setup
+
+1. Navigate to frontend directory:
+```bash
+cd evaluation/frontend
+```
+
+2. Install dependencies:
+```bash
 npm install
+```
 
-# Start development server
+3. Configure API endpoint:
+```bash
+# Edit src/utils/api.js to set the backend URL
+```
+
+4. Start development server:
+```bash
 npm run dev
 ```
 
-#### Database Setup Options
+The frontend will be available at `http://localhost:5173`
 
-**Option A: MySQL**
-```bash
-# Create database
-mysql -u root -p -e "CREATE DATABASE evaluation CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+## 👥 User Roles
 
-# Update .env file
-DATABASE_URL=mysql://username:password@localhost/evaluation
-```
+| Role | Permissions |
+|------|------------|
+| **Admin** | Full system access, user management, system configuration |
+| **Group Leader** | Final approval authority, view all evaluations |
+| **Part Leader** | First-level approval, department oversight |
+| **User** | Create and manage own evaluations |
 
-**Option B: PostgreSQL**
-```bash
-# Create database
-createdb evaluation
+## 📱 Key Features
 
-# Update .env file
-DATABASE_URL=postgresql://username:password@localhost/evaluation
-```
+### 1. Message Center
+- **Unified Inbox**: All notifications in one place
+- **Filter Options**: Filter by type (mentions, approvals, status changes)
+- **Mark as Read/Unread**: Manage notification status
+- **Real-time Updates**: Auto-refresh every 30 seconds
+- **Quick Actions**: Navigate directly to related evaluations
 
-**Option C: Docker Database**
-```bash
-# Start database with Docker Compose
-docker-compose up -d mysql
-# OR
-docker-compose up -d postgresql
-```
+### 2. @Mention System
+- **User Tagging**: Use @username to mention users in comments
+- **Auto-complete**: Smart suggestions while typing
+- **Instant Notifications**: Mentioned users receive immediate alerts
+- **Context Preservation**: See the full context of mentions
+- **Reply Threading**: Maintain conversation context
 
-</details>
+### 3. Evaluation Comments
+- **Threaded Discussions**: Nested comment replies
+- **Rich Mentions**: @mention users in comments
+- **Edit History**: Track edited comments
+- **Soft Delete**: Remove comments without losing thread context
+- **Real-time Updates**: See new comments instantly
 
----
+### 4. Task Assignment
+- **Head Officer**: Assign evaluation responsibility
+- **SCS Colleague**: Assign technical assistance
+- **Automatic Notifications**: Assigned users are notified immediately
+- **Progress Tracking**: Monitor assigned evaluations
 
-## 🌐 Live Deployment
+## 🗄️ Database Schema
 
-### Production Instance
-🔗 **Live Application**: [https://frontend-production-d9f6.up.railway.app/](https://frontend-production-d9f6.up.railway.app/)
+### Core Tables
+- **users**: User accounts and profiles
+- **evaluations**: Main evaluation records
+- **messages**: Notification and messaging system
+- **comments**: Evaluation discussion threads
+- **mentions**: User mention tracking
+- **operation_logs**: Audit trail
 
-**Demo Credentials:**
-```
-Username: admin
-Password: admin123
-```
+### Key Relationships
+- Evaluations have multiple comments
+- Comments support nested replies
+- Mentions link users to content
+- Messages track all notifications
 
-*Note: This is a live production instance deployed on Railway with full functionality.*
+## 📊 API Endpoints
 
-### Deployment Options
+### Authentication
+- `POST /api/auth/login` - User login
+- `POST /api/auth/logout` - User logout
+- `POST /api/auth/refresh` - Refresh token
 
-<table>
-<tr>
-<td><b>🚂 Railway</b><br/><em>Current Production</em></td>
-<td><b>🐳 Docker</b><br/><em>Local/Self-hosted</em></td>
-<td><b>☁️ Cloud Providers</b><br/><em>AWS/GCP/Azure</em></td>
-</tr>
-<tr>
-<td>Zero-config deployment<br/>Automatic HTTPS<br/>Global CDN</td>
-<td>Full control<br/>Local development<br/>Easy scaling</td>
-<td>Enterprise features<br/>Custom infrastructure<br/>Advanced monitoring</td>
-</tr>
-</table>
+### Evaluations
+- `GET /api/evaluations` - List evaluations
+- `POST /api/evaluations` - Create evaluation
+- `PUT /api/evaluations/{id}` - Update evaluation
+- `DELETE /api/evaluations/{id}` - Delete evaluation
 
----
+### Comments
+- `GET /api/evaluations/{id}/comments` - Get evaluation comments
+- `POST /api/evaluations/{id}/comments` - Create comment with @mentions
+- `PUT /api/comments/{id}` - Edit comment
+- `DELETE /api/comments/{id}` - Delete comment
 
-## 📡 API Documentation
+### Notifications
+- `GET /api/notifications` - Get user notifications
+- `PUT /api/notifications/{id}/read` - Mark as read
+- `PUT /api/notifications/mark-all-read` - Mark all as read
+- `DELETE /api/notifications/{id}` - Delete notification
 
-<div align="center">
+### Dashboard
+- `GET /api/dashboard/overview` - Dashboard statistics
+- `GET /api/dashboard/statistics` - Detailed analytics
 
-### 🎯 **RESTful API Endpoints**
-
-</div>
-
-| Category | Method | Endpoint | Description | Auth Required |
-|----------|--------|----------|-------------|---------------|
-| **🔐 Authentication** | POST | `/api/auth/login` | User login | ❌ |
-| | POST | `/api/auth/logout` | User logout | ✅ |
-| | POST | `/api/auth/refresh` | Refresh JWT token | ✅ |
-| **📋 Evaluations** | GET | `/api/evaluations` | List evaluations with filtering | ✅ |
-| | POST | `/api/evaluations` | Create new evaluation | ✅ |
-| | GET | `/api/evaluations/{id}` | Get evaluation details | ✅ |
-| | PUT | `/api/evaluations/{id}` | Update evaluation | ✅ |
-| | DELETE | `/api/evaluations/{id}` | Delete evaluation | ✅ |
-| **🔄 Workflow** | POST | `/api/workflow/submit` | Submit for approval | ✅ |
-| | POST | `/api/workflow/approve` | Approve evaluation | ✅ |
-| | POST | `/api/workflow/reject` | Reject evaluation | ✅ |
-| | GET | `/api/workflow/pending` | Get pending approvals | ✅ |
-| **📊 Analytics** | GET | `/api/dashboard/stats` | Dashboard statistics | ✅ |
-| | GET | `/api/dashboard/charts` | Chart data | ✅ |
-| | POST | `/api/analytics/export` | Export analytics | ✅ |
-
-**📖 Full API Documentation**:
-- **Static Documentation**: [docs/API.md](docs/API.md) - Complete API reference
-- **Interactive Swagger UI**: Available at `/api/docs` when running the backend locally
-
----
-
-## 🏗️ Project Architecture
+## 🎨 Frontend Structure
 
 ```
-solution-evaluation-system/
-├── 🎨 frontend/                 # Vue 3 Single Page Application
-│   ├── src/
-│   │   ├── components/          # Reusable UI components
-│   │   ├── views/               # Page components (Dashboard, Evaluations, etc.)
-│   │   ├── stores/              # Pinia state management
-│   │   ├── utils/               # API services and chart utilities
-│   │   ├── locales/             # i18n translations (CN/EN/KR)
-│   │   └── styles/              # Global styles and themes
-│   ├── vite.config.js           # Vite build configuration
-│   └── tailwind.config.js       # Tailwind CSS configuration
-├── ⚙️ backend/                  # Flask REST API Server
-│   ├── app/
-│   │   ├── models/              # SQLAlchemy database models
-│   │   ├── api/                 # REST API endpoints
-│   │   ├── services/            # Business logic services
-│   │   └── utils/               # Utility functions and decorators
-│   ├── migrations/              # Database migration files
-│   ├── pyproject.toml           # Python dependencies (uv)
-│   └── run.py                   # Application entry point
-├── 📚 docs/                     # Comprehensive documentation
-├── 🏗️ terraform/               # Infrastructure as Code (AWS)
-├── 🐳 docker-compose.yml        # Container orchestration
-└── 📜 Various setup scripts     # Automated development tools
+frontend/src/
+├── views/
+│   ├── Dashboard.vue       # Main dashboard
+│   ├── Evaluations.vue     # Evaluation list
+│   ├── NewEvaluation.vue   # Create/edit evaluation
+│   ├── EvaluationDetail.vue # Evaluation details with comments
+│   ├── Messages.vue        # Message center
+│   └── Users.vue          # User management
+├── components/
+│   ├── MainLayout.vue     # App layout
+│   └── AnimatedContainer.vue # Animations
+├── stores/
+│   └── auth.js            # Authentication state
+├── utils/
+│   ├── api.js             # API client
+│   └── i18n.js            # Internationalization
+└── locales/
+    ├── en.json            # English translations
+    └── zh.json            # Chinese translations
 ```
 
----
+## 🚀 Deployment
 
-## 💾 Database Support
+### Production Build
 
-<div align="center">
-
-### **Multi-Database Compatibility**
-
-</div>
-
-| Database | Version | Status | Use Case |
-|----------|---------|--------|----------|
-| 🐬 **MySQL** | 8.0+ | ✅ Fully Supported | Production deployment, high performance |
-| 🐘 **PostgreSQL** | 13+ | ✅ Fully Supported | Advanced features, JSON support |
-| 🐳 **Docker DBs** | Latest | ✅ Development | Local development, testing |
-
-**Configuration Examples:**
-
-```bash
-# MySQL Configuration
-DATABASE_URL=mysql://user:password@localhost/evaluation
-
-# PostgreSQL Configuration
-DATABASE_URL=postgresql://user:password@localhost/evaluation
-
-# Docker Development
-docker-compose up -d mysql     # or postgresql
-```
-
----
-
-## 🎯 Development Workflow
-
-### 🛠️ Development Commands
-
-<table>
-<tr>
-<td width="50%">
-
-**🎨 Frontend Development**
+Frontend:
 ```bash
 cd frontend
-npm run dev        # Development server
-npm run build      # Production build
-npm run preview    # Preview build
-npm run lint       # ESLint + auto-fix
-npm run format     # Prettier formatting
-npm test           # Jest testing
+npm run build
+# Deploy dist/ folder to web server
 ```
 
-</td>
-<td width="50%">
-
-**⚙️ Backend Development**
+Backend:
 ```bash
 cd backend
-uv run run.py    # Development server
-flask db upgrade        # Run migrations
-flask db migrate        # Create migration
-pytest                  # Run tests
-ruff check . --fix      # Linting + auto-fix
+# Use Gunicorn for production
+gunicorn -w 4 -b 0.0.0.0:5001 run:app
 ```
 
-</td>
-</tr>
-</table>
-
-### 🧪 Testing & Quality
+### Docker Deployment
 
 ```bash
-# Comprehensive testing
-./test-dashboard.sh           # Full application testing
-
-# Individual component testing
-cd frontend && npm test       # Frontend tests
-cd backend && pytest         # Backend tests
-
-# Code quality checks
-cd frontend && npm run lint   # ESLint
-cd backend && ruff check .    # Python linting
+# Build and run with Docker Compose
+docker-compose up -d
 ```
-
----
-
-## 🌍 Deployment Options
-
-### 🚂 **Railway (Current Production)**
-
-<div align="center">
-
-🌟 **Live Application**: [frontend-production-d9f6.up.railway.app](https://frontend-production-d9f6.up.railway.app/)
-
-</div>
-
-```bash
-# Railway deployment (zero-config)
-railway login
-railway link
-railway up
-```
-
-**Features:**
-- ✅ Automatic HTTPS with custom domains
-- ✅ Global CDN for optimal performance
-- ✅ Auto-scaling and monitoring
-- ✅ Zero-downtime deployments
-
-### 🐳 **Docker Deployment**
-
-```bash
-# Full stack with Docker Compose
-docker-compose up --build -d
-
-# Production deployment
-docker-compose -f docker-compose.prod.yml up -d
-
-# Scale services
-docker-compose up -d --scale backend=3
-```
-
-### ☁️ **Cloud Platforms**
-
-<details>
-<summary>AWS Deployment (Terraform Included)</summary>
-
-```bash
-cd terraform
-terraform init
-terraform plan
-terraform apply
-```
-
-Infrastructure includes:
-- ECS for containerized services
-- RDS for managed database
-- CloudFront for CDN
-- ALB for load balancing
-- Auto Scaling Groups
-
-</details>
-
-<details>
-<summary>Other Cloud Options</summary>
-
-**Google Cloud Platform**
-- Cloud Run for serverless containers
-- Cloud SQL for managed database
-- Cloud CDN for global distribution
-
-**Microsoft Azure**
-- Container Instances
-- Azure Database for MySQL/PostgreSQL
-- Azure CDN
-
-**DigitalOcean**
-- App Platform for easy deployment
-- Managed Databases
-- Spaces CDN
-
-</details>
-
----
-
-## 📊 System Capabilities
-
-### **Evaluation Workflow Engine**
-
-```mermaid
-flowchart LR
-    A[📝 Draft] --> B{Evaluation Type}
-    B -->|New Solution| C[👤 Part Leader Review]
-    B -->|Mass Production| F[✅ Completed]
-    C -->|Approved| D[👥 Group Leader Review]
-    C -->|Rejected| A
-    D -->|Approved| F
-    D -->|Rejected| A
-    F --> G[📈 Analytics]
-```
-
-### **Role-Based Permissions**
-
-| Role | Permissions | Capabilities |
-|------|-------------|--------------|
-| 🔴 **Admin** | Full system access | User management, system configuration |
-| 🟡 **Group Leader** | Department oversight | Final approvals, team management |
-| 🟢 **Part Leader** | Team management | First-level approvals, evaluation oversight |
-| 🔵 **User** | Basic operations | Create evaluations, view assigned tasks |
-
----
-
-## 📈 Performance & Monitoring
-
-### **Application Metrics**
-- **Response Time**: < 200ms average API response
-- **Database Queries**: Optimized with connection pooling
-- **Bundle Size**: < 500KB compressed frontend assets
-- **Uptime**: 99.9% availability on Railway
-
-### **Monitoring Features**
-- Health check endpoints (`/api/health`)
-- Performance metrics collection
-- Error logging and tracking
-- Real-time system status dashboard
-
----
 
 ## 🔧 Configuration
 
-### **Environment Variables**
+### Environment Variables
 
-<table>
-<tr>
-<td width="50%">
-
-**Backend (.env)**
-```bash
-# Database Configuration
-DATABASE_URL=mysql://user:pass@host/db
-# or
-DATABASE_URL=postgresql://user:pass@host/db
-
-# Security
-SECRET_KEY=your-secret-key
-JWT_SECRET_KEY=your-jwt-secret
-
-# Flask Settings
-FLASK_ENV=development
-FLASK_DEBUG=True
+Backend (.env):
+```
+DATABASE_URL=mysql://user:password@localhost/evaluation_system
+JWT_SECRET_KEY=your-secret-key
+FLASK_ENV=production
 ```
 
-</td>
-<td width="50%">
-
-**Frontend (.env.local)**
-```bash
-# API Configuration
+Frontend (.env):
+```
 VITE_API_BASE_URL=http://localhost:5001
-
-# Application Settings
 VITE_APP_TITLE=Solution Evaluation System
-VITE_APP_ENV=development
-
-# Features
-VITE_ENABLE_DEBUG=true
-VITE_ANALYTICS_ENABLED=false
 ```
 
-</td>
-</tr>
-</table>
+## 📝 Default Credentials
 
----
-
-## 📚 Documentation
-
-| Document | Description | Link |
-|----------|-------------|------|
-| 🚀 **Quick Start** | Get up and running in minutes | You're reading it! |
-| 📡 **API Reference** | Complete REST API documentation | [docs/API.md](docs/API.md) |
-| 🏭 **Production Guide** | Enterprise deployment strategies | [docs/PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md) |
-| 🏗️ **Architecture** | System design and scalability | [docs/PRODUCTION_ARCHITECTURE.md](docs/PRODUCTION_ARCHITECTURE.md) |
-| 🎨 **Frontend Guide** | Vue 3 development documentation | [frontend/README.md](frontend/README.md) |
-| ⚙️ **Backend Guide** | Flask API development guide | [backend/README.md](backend/README.md) |
-
----
-
-## 🚀 Development Status
-
-<div align="center">
-
-### **🎯 Current Version: 1.0.0**
-
-</div>
-
-| Phase | Status | Features |
-|-------|--------|----------|
-| **Phase 1**: Core Functionality | ✅ **Complete** | Authentication, CRUD operations, RBAC |
-| **Phase 2**: Workflow Management | ✅ **Complete** | Approval workflows, notifications |
-| **Phase 3**: Analytics & Reporting | ✅ **Complete** | Interactive charts, data export |
-| **Phase 4**: System Enhancement | ✅ **Complete** | i18n, logging, Docker, optimization |
-| **Phase 5**: Infrastructure | 🔄 **In Progress** | Terraform, K8s, CI/CD automation |
-
----
+| Username | Password | Role |
+|----------|----------|------|
+| admin | admin123 | Admin |
+| john.doe | password123 | Group Leader |
+| jane.smith | password123 | Part Leader |
+| bob.wilson | password123 | User |
 
 ## 🤝 Contributing
 
-### **Development Guidelines**
-
-1. **🔀 Branching**: Feature branches from `main`
-2. **✅ Testing**: Write tests for new features
-3. **📝 Documentation**: Update docs for API changes
-4. **🎨 Code Style**: ESLint (frontend), Ruff (backend)
-5. **📋 Commits**: Follow [conventional commits](https://conventionalcommits.org/)
-
-### **Code Quality Standards**
-
-```bash
-# Frontend quality checks
-npm run lint && npm run format && npm test
-
-# Backend quality checks
-ruff check . --fix && ruff format . && pytest
-
-# Full quality check
-./test-dashboard.sh
-```
-
----
-
-## 🔒 Security & Compliance
-
-- **🛡️ Authentication**: JWT with refresh token rotation
-- **🔐 Authorization**: Multi-tier role-based access control
-- **🚨 Input Validation**: Comprehensive data sanitization
-- **🔍 Audit Logging**: Complete operation trail
-- **🌐 CORS**: Configured for production security
-- **🔒 HTTPS**: Enforced in production environments
-
----
-
-## 📞 Support & Community
-
-<div align="center">
-
-| Need Help? | Resource |
-|------------|----------|
-| 🐛 **Bug Reports** | [GitHub Issues](https://github.com/akaBoyLovesToCode/sol-evaluation-system/issues) |
-| 💡 **Feature Requests** | [GitHub Discussions](https://github.com/akaBoyLovesToCode/sol-evaluation-system/discussions) |
-
-</div>
-
----
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
 ## 📄 License
 
-**Internal Use Only** - Proprietary software for organizational solution evaluation management.
+This project is proprietary software. All rights reserved.
 
----
+## 📞 Support
 
-<div align="center">
+For support and questions, please contact the development team.
 
-**Made with ❤️ by the Development Team**
+## 🔄 Recent Updates
 
-[![GitHub stars](https://img.shields.io/github/stars/akaBoyLovesToCode/sol-evaluation-system?style=social)](https://https://github.com/akaBoyLovesToCode/sol-evaluation-system)
-[![GitHub forks](https://img.shields.io/github/forks/akaBoyLovesToCode/sol-evaluation-system?style=social)](https://https://github.com/akaBoyLovesToCode/sol-evaluation-system/fork)
+### Version 2.0.0 (2024-01-15)
+- ✨ Added Message Center with real-time notifications
+- ✨ Implemented @mention system for user tagging
+- ✨ Added comment system with threaded discussions
+- ✨ Task assignment with head officer and SCS colleague roles
+- 🔧 Removed expected_end_date field
+- 🔧 Enhanced notification system with mention support
+- 🎨 Improved UI/UX for collaboration features
+- 📝 Updated API documentation
 
-</div>
+### Version 1.0.0 (2024-01-01)
+- 🚀 Initial release
+- ✅ Core evaluation management
+- ✅ Workflow automation
+- ✅ Dashboard and analytics
+- ✅ User management
+- ✅ Multi-language support
