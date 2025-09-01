@@ -68,11 +68,12 @@
       "productName": "请输入产品名称",
       "partNumber": "请输入料号",
       "startDate": "请选择开始日期",
-      "expectedEndDate": "请选择预计结束日期",
       "reason": "请选择评价原因",
       "description": "请输入评价描述",
       "actualEndDate": "实际结束日期不能为空",
-      "processStep": "请输入评价工程"
+      "processStep": "请输入评价工程",
+      "scsCharger": "请选择SCS担当",
+      "headOfficeCharger": "请选择本社担当"
     }
   },
   "menu": {
@@ -124,19 +125,22 @@
     "newProductProcess": "新产品评价流程",
     "massProductionProcess": "量产评价流程",
     "newProductNote": "注：新产品评价需要经过Part Leader和Group Leader两级审批",
-    "massProductionNote": "注：量产评价通过后无需审批，直接完成",
+    "massProductionNote": "注：量产评价无需审批直接完成",
     "saveDraft": "保存草稿",
-    "submit": "提交评价",
+    "submit": "提交",
     "submitSuccess": "评价提交成功",
     "submitError": "提交失败",
-    "cancelConfirm": "确定要取消吗？未保存的数据将丢失。",
+    "cancelConfirm": "确定要取消吗？未保存的数据将会丢失。",
     "evaluationNumber": "评价编号",
     "typeLabel": "评价类型",
     "evaluationType": "评价类型",
+    "edit": {
+      "title": "编辑评价",
+      "description": "修改评价信息"
+    },
     "productName": "产品名称",
     "partNumber": "P/N",
     "startDate": "开始日期",
-    "expectedEndDate": "预计结束日期",
     "actualEndDate": "实际结束日期",
     "reason": "评价原因",
     "descriptionLabel": "评价描述",
@@ -151,7 +155,6 @@
     "evaluator": "评价人",
     "endDate": "结束日期",
     "dateRange": "日期范围",
-    "progress": "进度",
     "list": "评价列表",
     "export": "导出",
     "exportSuccess": "导出成功",
@@ -203,7 +206,6 @@
       "endDate": "结束日期",
       "productName": "请输入产品名称",
       "partNumber": "请输入料号",
-      "expectedEndDate": "选择预计结束日期",
       "reason": "请选择评价原因",
       "description": "请输入评价描述",
       "actualEndDate": "请选择实际结束日期",
@@ -213,7 +215,14 @@
       "interfaceType": "请选择接口类型",
       "formFactor": "请选择外形规格",
       "temperatureGrade": "请选择温度等级",
-      "processStep": "输入工程"
+      "processStep": "输入工程",
+      "scsCharger": "请选择SCS担当",
+      "headOfficeCharger": "请选择本社担当"
+    },
+    "interfaceTypes": {
+      "sata": "SATA",
+      "nvme": "NVMe",
+      "pcie": "PCIe"
     },
     "type": {
       "new_product": "新产品",
@@ -265,6 +274,8 @@
       "unknown": "未知操作"
     },
     "processStep": "评价工程",
+    "scsCharger": "SCS担当",
+    "headOfficeCharger": "本社担当",
     "complete": "完成",
     "statusDescriptions": {
       "draft": "评价处于草稿状态，可以编辑。",

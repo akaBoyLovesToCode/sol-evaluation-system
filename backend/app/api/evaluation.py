@@ -140,9 +140,7 @@ def get_evaluations() -> tuple[Response, int]:
                           start_date:
                             type: string
                             format: date
-                          expected_end_date:
-                            type: string
-                            format: date
+
                           actual_end_date:
                             type: string
                             format: date
@@ -172,6 +170,10 @@ def get_evaluations() -> tuple[Response, int]:
         evaluation_type = request.args.get("evaluation_type")
         product_name = request.args.get("product_name")
         evaluator_id = request.args.get("evaluator_id", type=int)
+        scs_charger_id = request.args.get("scs_charger_id", type=int)
+        head_office_charger_id = request.args.get("head_office_charger_id", type=int)
+        scs_charger_name = request.args.get("scs_charger_name")
+        head_office_charger_name = request.args.get("head_office_charger_name")
 
         # Build query
         query = Evaluation.query
@@ -185,6 +187,21 @@ def get_evaluations() -> tuple[Response, int]:
             query = query.filter(Evaluation.product_name.ilike(f"%{product_name}%"))
         if evaluator_id:
             query = query.filter(Evaluation.evaluator_id == evaluator_id)
+        if scs_charger_id:
+            query = query.filter(Evaluation.scs_charger_id == scs_charger_id)
+        if head_office_charger_id:
+            query = query.filter(
+                Evaluation.head_office_charger_id == head_office_charger_id
+            )
+        # Apply charger name filters using joins
+        if scs_charger_name:
+            query = query.join(User, Evaluation.scs_charger_id == User.id).filter(
+                User.full_name.ilike(f"%{scs_charger_name}%")
+            )
+        if head_office_charger_name:
+            query = query.join(
+                User, Evaluation.head_office_charger_id == User.id
+            ).filter(User.full_name.ilike(f"%{head_office_charger_name}%"))
 
         # Paginate results
         paginated_evaluations = query.order_by(Evaluation.created_at.desc()).paginate(
@@ -197,8 +214,18 @@ def get_evaluations() -> tuple[Response, int]:
             evaluator = User.query.get(evaluation.evaluator_id)
             evaluator_name = evaluator.full_name if evaluator else "Unknown"
 
+            scs_charger = User.query.get(evaluation.scs_charger_id)
+            scs_charger_name = scs_charger.full_name if scs_charger else "Unknown"
+
+            head_office_charger = User.query.get(evaluation.head_office_charger_id)
+            head_office_charger_name = (
+                head_office_charger.full_name if head_office_charger else "Unknown"
+            )
+
             evaluation_data = evaluation.to_dict()
             evaluation_data["evaluator_name"] = evaluator_name
+            evaluation_data["scs_charger_name"] = scs_charger_name
+            evaluation_data["head_office_charger_name"] = head_office_charger_name
             evaluations.append(evaluation_data)
 
         # Log operation
@@ -294,9 +321,7 @@ def get_evaluation(evaluation_id: int) -> tuple[Response, int]:
                         start_date:
                           type: string
                           format: date
-                        expected_end_date:
-                          type: string
-                          format: date
+
                         actual_end_date:
                           type: string
                           format: date
@@ -326,9 +351,20 @@ def get_evaluation(evaluation_id: int) -> tuple[Response, int]:
         evaluator = User.query.get(evaluation.evaluator_id)
         evaluator_name = evaluator.full_name if evaluator else "Unknown"
 
+        # Get charger names
+        scs_charger = User.query.get(evaluation.scs_charger_id)
+        scs_charger_name = scs_charger.full_name if scs_charger else "Unknown"
+
+        head_office_charger = User.query.get(evaluation.head_office_charger_id)
+        head_office_charger_name = (
+            head_office_charger.full_name if head_office_charger else "Unknown"
+        )
+
         # Get evaluation data
         evaluation_data = evaluation.to_dict()
         evaluation_data["evaluator_name"] = evaluator_name
+        evaluation_data["scs_charger_name"] = scs_charger_name
+        evaluation_data["head_office_charger_name"] = head_office_charger_name
 
         # Get operation logs
         logs = []
@@ -374,7 +410,6 @@ def create_evaluation() -> tuple[Response, int]:
         product_name (str): Name of the product.
         part_number (str): Part number.
         start_date (str): Start date in YYYY-MM-DD format.
-        expected_end_date (str): Expected end date in YYYY-MM-DD format.
         process_step (str): Process step identifier.
         evaluation_number (str, optional): Unique evaluation number (auto-generated if not provided).
         evaluation_reason (str, optional): Reason for the evaluation.
@@ -403,7 +438,6 @@ def create_evaluation() -> tuple[Response, int]:
               - product_name
               - part_number
               - start_date
-              - expected_end_date
               - process_step
             properties:
               evaluation_number:
@@ -429,13 +463,16 @@ def create_evaluation() -> tuple[Response, int]:
                 type: string
                 format: date
                 description: Start date of the evaluation
-              expected_end_date:
-                type: string
-                format: date
-                description: Expected end date of the evaluation
               process_step:
                 type: string
+                description: Process step identifier
                 description: Process step identifier (e.g., M031)
+              scs_charger_id:
+                type: integer
+                description: ID of the SCS charger user
+              head_office_charger_id:
+                type: integer
+                description: ID of the Head Office charger user
               status:
                 type: string
                 enum: [draft, in_progress]
@@ -461,7 +498,6 @@ def create_evaluation() -> tuple[Response, int]:
             "product_name",
             "part_number",
             "start_date",
-            "expected_end_date",
             "process_step",
         ]
         for field in required_fields:
@@ -485,11 +521,10 @@ def create_evaluation() -> tuple[Response, int]:
             remarks=data.get("remarks", data.get("description", "")),
             status=data.get("status", EvaluationStatus.DRAFT.value),
             start_date=datetime.strptime(data["start_date"], "%Y-%m-%d").date(),
-            expected_end_date=datetime.strptime(
-                data["expected_end_date"], "%Y-%m-%d"
-            ).date(),
             process_step=data["process_step"],
             evaluator_id=user_id,
+            scs_charger_id=data.get("scs_charger_id"),
+            head_office_charger_id=data.get("head_office_charger_id"),
             pgm_version=data.get("pgm_version"),
             material_info=data.get("material_info"),
             capacity=data.get("capacity"),
@@ -549,7 +584,7 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
         part_number (str, optional): Part number.
         evaluation_reason (str, optional): Reason for the evaluation.
         description (str, optional): Detailed description.
-        expected_end_date (str, optional): Expected end date in YYYY-MM-DD format.
+
         process_step (str, optional): Process step identifier.
 
     Returns:
@@ -591,10 +626,13 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
               description:
                 type: string
                 description: Detailed description
-              expected_end_date:
-                type: string
-                format: date
-                description: Expected end date of the evaluation
+
+              scs_charger_id:
+                type: integer
+                description: ID of the SCS charger user
+              head_office_charger_id:
+                type: integer
+                description: ID of the Head Office charger user
               process_step:
                 type: string
                 description: Process step identifier (e.g., M031)
@@ -652,12 +690,15 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
             evaluation.evaluation_reason = data["evaluation_reason"]
         if "description" in data or "remarks" in data:
             evaluation.remarks = data.get("remarks", data.get("description", ""))
-        if "expected_end_date" in data:
-            evaluation.expected_end_date = datetime.strptime(
-                data["expected_end_date"], "%Y-%m-%d"
-            ).date()
+
         if "process_step" in data:
             evaluation.process_step = data["process_step"]
+
+        # Update charger assignments
+        if "scs_charger_id" in data:
+            evaluation.scs_charger_id = data["scs_charger_id"]
+        if "head_office_charger_id" in data:
+            evaluation.head_office_charger_id = data["head_office_charger_id"]
 
         # Update technical specifications
         if "pgm_version" in data:

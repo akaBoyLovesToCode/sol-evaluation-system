@@ -68,11 +68,12 @@
       "productName": "제품명을 입력하세요",
       "partNumber": "부품 번호를 입력하세요",
       "startDate": "시작 날짜를 선택하세요",
-      "expectedEndDate": "예상 종료 날짜를 선택하세요",
       "reason": "평가 이유를 선택하세요",
       "description": "평가 설명을 입력하세요",
       "actualEndDate": "실제 종료일은 비워둘 수 없습니다",
-      "processStep": "프로세스 단계를 입력하세요"
+      "processStep": "프로세스 단계를 입력하세요",
+      "scsCharger": "SCS 담당자를 선택하세요",
+      "headOfficeCharger": "본사 담당자를 선택하세요"
     }
   },
   "menu": {
@@ -124,19 +125,22 @@
     "newProductProcess": "신제품 평가 프로세스",
     "massProductionProcess": "양산 평가 프로세스",
     "newProductNote": "참고: 신제품 평가는 Part Leader와 Group Leader의 2단계 승인이 필요합니다",
-    "massProductionNote": "참고: 양산 평가는 승인 없이 바로 완료됩니다",
-    "saveDraft": "초안 저장",
-    "submit": "평가 제출",
+    "massProductionNote": "참고: 양산 평가는 승인 없이 직접 완료됩니다",
+    "saveDraft": "임시 저장",
+    "submit": "제출",
     "submitSuccess": "평가 제출 성공",
     "submitError": "제출 실패",
-    "cancelConfirm": "정말 취소하시겠습니까? 저장되지 않은 데이터가 손실됩니다.",
+    "cancelConfirm": "취소하시겠습니까? 저장되지 않은 데이터는 손실됩니다.",
     "evaluationNumber": "평가 번호",
     "typeLabel": "평가 유형",
     "evaluationType": "평가 유형",
+    "edit": {
+      "title": "평가 수정",
+      "description": "평가 정보 수정"
+    },
     "productName": "제품명",
     "partNumber": "P/N",
     "startDate": "시작 날짜",
-    "expectedEndDate": "예상 종료 날짜",
     "actualEndDate": "실제 종료일",
     "reason": "평가 이유",
     "descriptionLabel": "평가 설명",
@@ -151,7 +155,6 @@
     "evaluator": "평가자",
     "endDate": "종료 날짜",
     "dateRange": "날짜 범위",
-    "progress": "진행률",
     "list": "평가 목록",
     "export": "내보내기",
     "exportSuccess": "내보내기 성공",
@@ -203,7 +206,6 @@
       "endDate": "종료 날짜",
       "productName": "제품명을 입력하세요",
       "partNumber": "부품 번호를 입력하세요",
-      "expectedEndDate": "예상 종료 날짜를 선택하세요",
       "reason": "평가 이유를 선택하세요",
       "description": "평가 설명을 입력하세요",
       "actualEndDate": "실제 종료일을 선택하세요",
@@ -213,7 +215,14 @@
       "interfaceType": "인터페이스 유형을 선택하세요",
       "formFactor": "폼 팩터를 선택하세요",
       "temperatureGrade": "온도 등급을 선택하세요",
-      "processStep": "프로세스 단계를 선택하세요"
+      "processStep": "프로세스 단계를 선택하세요",
+      "scsCharger": "SCS 담당자를 선택하세요",
+      "headOfficeCharger": "본사 담당자를 선택하세요"
+    },
+    "interfaceTypes": {
+      "sata": "SATA",
+      "nvme": "NVMe",
+      "pcie": "PCIe"
     },
     "type": {
       "new_product": "신제품",
@@ -265,6 +274,8 @@
       "unknown": "알 수 없는 작업"
     },
     "processStep": "평가 Step",
+    "scsCharger": "SCS 담당자",
+    "headOfficeCharger": "본사 담당자",
     "complete": "완료",
     "statusDescriptions": {
       "draft": "평가가 초안 상태이며 편집할 수 있습니다.",

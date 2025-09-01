@@ -295,7 +295,7 @@ const fetchRecentActivities = async () => {
     recentActivities.value = (response.data.data.recent_evaluations || []).map((evaluation) => ({
       id: evaluation.id,
       action: 'create',
-      user_name: evaluation.evaluator_name || 'Unknown User',
+      user_name: evaluation.scs_charger_name || evaluation.evaluator_name || 'Unknown User',
       description: `评价 ${evaluation.evaluation_number} - ${evaluation.product_name || 'Unknown Product'}`,
       created_at: evaluation.created_at,
     }))

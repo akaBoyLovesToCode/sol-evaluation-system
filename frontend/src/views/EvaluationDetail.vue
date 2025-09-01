@@ -73,23 +73,21 @@
               <el-descriptions-item :label="$t('evaluation.partNumber')">
                 {{ evaluation.part_number }}
               </el-descriptions-item>
-              <el-descriptions-item :label="$t('evaluation.evaluator')">
-                {{ evaluation.evaluator_name }}
+              <el-descriptions-item :label="$t('evaluation.scsCharger')">
+                {{ evaluation.scs_charger_name || '-' }}
+              </el-descriptions-item>
+              <el-descriptions-item :label="$t('evaluation.headOfficeCharger')">
+                {{ evaluation.head_office_charger_name || '-' }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.startDate')">
                 {{ formatDate(evaluation.start_date) }}
               </el-descriptions-item>
-              <el-descriptions-item :label="$t('evaluation.expectedEndDate')">
-                {{ formatDate(evaluation.expected_end_date) }}
-              </el-descriptions-item>
+
               <el-descriptions-item :label="$t('evaluation.actualEndDate')">
                 {{ evaluation.actual_end_date ? formatDate(evaluation.actual_end_date) : '-' }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.reason')">
                 {{ getReasonText(evaluation.evaluation_reason) }}
-              </el-descriptions-item>
-              <el-descriptions-item :label="$t('evaluation.progress')">
-                <el-progress :percentage="evaluation.progress || 0" :stroke-width="8" />
               </el-descriptions-item>
             </el-descriptions>
 

@@ -63,10 +63,19 @@
             />
           </el-form-item>
 
-          <el-form-item :label="$t('evaluation.evaluator')">
+          <el-form-item :label="$t('evaluation.scsCharger')">
             <el-input
-              v-model="searchForm.evaluator"
-              :placeholder="$t('evaluation.placeholders.evaluator')"
+              v-model="searchForm.scs_charger"
+              :placeholder="$t('evaluation.placeholders.scsCharger')"
+              clearable
+              style="width: 150px"
+            />
+          </el-form-item>
+
+          <el-form-item :label="$t('evaluation.headOfficeCharger')">
+            <el-input
+              v-model="searchForm.head_office_charger"
+              :placeholder="$t('evaluation.placeholders.headOfficeCharger')"
               clearable
               style="width: 150px"
             />
@@ -161,8 +170,15 @@
           </el-table-column>
 
           <el-table-column
-            prop="evaluator_name"
-            :label="$t('evaluation.evaluator')"
+            prop="scs_charger_name"
+            :label="$t('evaluation.scsCharger')"
+            width="120"
+            sortable="custom"
+          />
+
+          <el-table-column
+            prop="head_office_charger_name"
+            :label="$t('evaluation.headOfficeCharger')"
             width="120"
             sortable="custom"
           />
@@ -230,7 +246,8 @@ const searchForm = reactive({
   evaluation_type: '',
   status: '',
   product: '',
-  evaluator: '',
+  scs_charger: '',
+  head_office_charger: '',
   dateRange: null,
 })
 
@@ -277,8 +294,11 @@ const fetchEvaluations = async () => {
     if (searchForm.product) {
       params.product = searchForm.product
     }
-    if (searchForm.evaluator) {
-      params.evaluator_id = searchForm.evaluator
+    if (searchForm.scs_charger) {
+      params.scs_charger_name = searchForm.scs_charger
+    }
+    if (searchForm.head_office_charger) {
+      params.head_office_charger_name = searchForm.head_office_charger
     }
 
     // 处理日期范围
@@ -367,7 +387,8 @@ const handleExport = async () => {
       t('evaluation.product'),
       t('evaluation.partNumber'),
       t('evaluation.reason'),
-      t('evaluation.evaluator'),
+      t('evaluation.scsCharger'),
+      t('evaluation.headOfficeCharger'),
       t('common.status'),
       t('evaluation.startDate'),
       t('evaluation.endDate'),
@@ -380,7 +401,8 @@ const handleExport = async () => {
         row.product_name || '',
         row.part_number || '',
         row.evaluation_reason ? t(`evaluation.reasons.${row.evaluation_reason}`) : '',
-        row.evaluator_name || '',
+        row.scs_charger_name || '',
+        row.head_office_charger_name || '',
         t(`status.${row.status}`) || '',
         formatDate(row.start_date) || '',
         formatDate(row.actual_end_date) || '',
