@@ -102,12 +102,9 @@
             <template #header>
               <span>{{ $t('evaluation.technicalSpecifications') }}</span>
             </template>
-            <el-descriptions :column="2" border>
+            <el-descriptions :column="2" border class="technical-specs">
               <el-descriptions-item :label="$t('evaluation.pgmVersion')">
                 {{ evaluation.pgm_version || '-' }}
-              </el-descriptions-item>
-              <el-descriptions-item :label="$t('evaluation.materialInfo')">
-                {{ evaluation.material_info || '-' }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.capacity')">
                 {{ evaluation.capacity || '-' }}
@@ -117,9 +114,6 @@
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.formFactor')">
                 {{ evaluation.form_factor || '-' }}
-              </el-descriptions-item>
-              <el-descriptions-item :label="$t('evaluation.temperatureGrade')">
-                {{ getTemperatureGradeText(evaluation.temperature_grade) }}
               </el-descriptions-item>
             </el-descriptions>
           </el-card>
@@ -519,13 +513,6 @@ const getReasonText = (reason) => {
   return reason || '-'
 }
 
-const getTemperatureGradeText = (grade) => {
-  if (grade && t(`evaluation.temperatureGrades.${grade}`)) {
-    return t(`evaluation.temperatureGrades.${grade}`)
-  }
-  return grade || '-'
-}
-
 const getProcessTitle = (process) => {
   if (process && t(`evaluation.processes.${process}`)) {
     return t(`evaluation.processes.${process}`)
@@ -671,6 +658,16 @@ onMounted(async () => {
 
 .info-card {
   margin-bottom: 20px;
+}
+
+.technical-specs :deep(.el-descriptions__label) {
+  width: 120px;
+  min-width: 120px;
+}
+
+.technical-specs :deep(.el-descriptions__content) {
+  width: auto;
+  min-width: 180px;
 }
 
 .info-card :deep(.el-card__header) {

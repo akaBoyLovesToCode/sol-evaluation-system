@@ -160,11 +160,9 @@
     "descriptionLabel": "Evaluation Description",
     "evaluationDescription": "Evaluation Description",
     "pgmVersion": "PGM Version",
-    "materialInfo": "Material Information",
     "capacity": "Capacity",
     "interfaceType": "Interface Type",
     "formFactor": "Form Factor",
-    "temperatureGrade": "Temperature Grade",
     "product": "Product",
     "evaluator": "Evaluator",
     "endDate": "End Date",
@@ -226,11 +224,9 @@
       "description": "Enter evaluation description",
       "actualEndDate": "Select actual end date",
       "pgmVersion": "Enter PGM version",
-      "materialInfo": "Enter material information",
       "capacity": "Enter capacity",
       "interfaceType": "Select interface type",
       "formFactor": "Select form factor",
-      "temperatureGrade": "Select temperature grade",
       "processStep": "Input process step",
       "scsCharger": "Select SCS Charger",
       "headOfficeCharger": "Select Head Office Charger"
@@ -260,11 +256,6 @@
       "2_5_inch": "2.5 inch",
       "m2_2280": "M.2 2280",
       "m2_2242": "M.2 2242"
-    },
-    "temperatureGrades": {
-      "commercial": "Commercial (0°C ~ 70°C)",
-      "industrial": "Industrial (-40°C ~ 85°C)",
-      "extended": "Extended (-40°C ~ 105°C)"
     },
     "processes": {
       "doe": "DOE (Design of Experiments)",

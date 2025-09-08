@@ -80,7 +80,7 @@ class Evaluation(db.Model):
     # Dates
     start_date = db.Column(db.Date, nullable=False)
     actual_end_date = db.Column(db.Date)  # Renamed from completion_date
-    
+
     # Charger assignments
     scs_charger_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     head_office_charger_id = db.Column(db.Integer, db.ForeignKey("users.id"))
@@ -92,11 +92,9 @@ class Evaluation(db.Model):
 
     # Technical specifications
     pgm_version = db.Column(db.String(100))  # PGM version
-    material_info = db.Column(db.String(200))  # Material information
     capacity = db.Column(db.String(100))  # Capacity
     interface_type = db.Column(db.String(100))  # Interface type
     form_factor = db.Column(db.String(100))  # Form factor
-    temperature_grade = db.Column(db.String(50))  # Temperature grade
 
     # User relationships
     evaluator_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -279,11 +277,9 @@ class Evaluation(db.Model):
             else None,
             "process_step": self.process_step,
             "pgm_version": self.pgm_version,
-            "material_info": self.material_info,
             "capacity": self.capacity,
             "interface_type": self.interface_type,
             "form_factor": self.form_factor,
-            "temperature_grade": self.temperature_grade,
             "evaluator_id": self.evaluator_id,
             "part_approver_id": self.part_approver_id,
             "group_approver_id": self.group_approver_id,

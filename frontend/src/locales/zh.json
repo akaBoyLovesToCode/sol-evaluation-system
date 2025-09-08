@@ -146,11 +146,9 @@
     "descriptionLabel": "评价描述",
     "evaluationDescription": "评价描述",
     "pgmVersion": "PGM版本",
-    "materialInfo": "材料信息",
     "capacity": "容量",
     "interfaceType": "接口类型",
     "formFactor": "外形规格",
-    "temperatureGrade": "温度等级",
     "product": "产品",
     "evaluator": "评价人",
     "endDate": "结束日期",
@@ -210,11 +208,9 @@
       "description": "请输入评价描述",
       "actualEndDate": "请选择实际结束日期",
       "pgmVersion": "请输入PGM版本",
-      "materialInfo": "请输入材料信息",
       "capacity": "请输入容量",
       "interfaceType": "请选择接口类型",
       "formFactor": "请选择外形规格",
-      "temperatureGrade": "请选择温度等级",
       "processStep": "输入工程",
       "scsCharger": "请选择SCS担当",
       "headOfficeCharger": "请选择本社担当"
@@ -244,11 +240,6 @@
       "2_5_inch": "2.5寸",
       "m2_2280": "M.2 2280",
       "m2_2242": "M.2 2242"
-    },
-    "temperatureGrades": {
-      "commercial": "商业级 (0°C ~ 70°C)",
-      "industrial": "工业级 (-40°C ~ 85°C)",
-      "extended": "扩展级 (-40°C ~ 105°C)"
     },
     "processes": {
       "doe": "DOE (Design of Experiments)",

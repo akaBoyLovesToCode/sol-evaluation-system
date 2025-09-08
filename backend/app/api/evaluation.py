@@ -526,11 +526,9 @@ def create_evaluation() -> tuple[Response, int]:
             scs_charger_id=data.get("scs_charger_id"),
             head_office_charger_id=data.get("head_office_charger_id"),
             pgm_version=data.get("pgm_version"),
-            material_info=data.get("material_info"),
             capacity=data.get("capacity"),
             interface_type=data.get("interface_type"),
             form_factor=data.get("form_factor"),
-            temperature_grade=data.get("temperature_grade"),
         )
 
         db.session.add(evaluation)
@@ -703,16 +701,13 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
         # Update technical specifications
         if "pgm_version" in data:
             evaluation.pgm_version = data["pgm_version"]
-        if "material_info" in data:
-            evaluation.material_info = data["material_info"]
+
         if "capacity" in data:
             evaluation.capacity = data["capacity"]
         if "interface_type" in data:
             evaluation.interface_type = data["interface_type"]
         if "form_factor" in data:
             evaluation.form_factor = data["form_factor"]
-        if "temperature_grade" in data:
-            evaluation.temperature_grade = data["temperature_grade"]
 
         db.session.commit()
 

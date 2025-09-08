@@ -162,14 +162,7 @@
               />
             </el-form-item>
           </el-col>
-          <el-col :span="8">
-            <el-form-item :label="$t('evaluation.materialInfo')" prop="material_info">
-              <el-input
-                v-model="form.material_info"
-                :placeholder="$t('evaluation.placeholders.materialInfo')"
-              />
-            </el-form-item>
-          </el-col>
+
           <el-col :span="8">
             <el-form-item :label="$t('evaluation.capacity')" prop="capacity">
               <el-input
@@ -206,25 +199,6 @@
                 <el-option :label="$t('evaluation.formFactors.m2_2280')" value="M.2_2280" />
                 <el-option :label="$t('evaluation.formFactors.m2_2242')" value="M.2_2242" />
                 <el-option :label="$t('common.other')" value="other" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item :label="$t('evaluation.temperatureGrade')" prop="temperature_grade">
-              <el-select
-                v-model="form.temperature_grade"
-                :placeholder="$t('evaluation.placeholders.temperatureGrade')"
-                style="width: 100%"
-              >
-                <el-option
-                  :label="$t('evaluation.temperatureGrades.commercial')"
-                  value="commercial"
-                />
-                <el-option
-                  :label="$t('evaluation.temperatureGrades.industrial')"
-                  value="industrial"
-                />
-                <el-option :label="$t('evaluation.temperatureGrades.extended')" value="extended" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -364,11 +338,9 @@ const form = reactive({
   process_step: '', // Process step identifier (e.g., M031)
   description: '',
   pgm_version: '',
-  material_info: '',
   capacity: '',
   interface_type: '',
   form_factor: '',
-  temperature_grade: '',
   processes: [],
   scs_charger_id: '',
   head_office_charger_id: '',
@@ -488,11 +460,9 @@ const buildPayload = () => ({
   description: form.description,
   remarks: form.description, // Map description to remarks for backend compatibility
   pgm_version: form.pgm_version,
-  material_info: form.material_info,
   capacity: form.capacity,
   interface_type: form.interface_type,
   form_factor: form.form_factor,
-  temperature_grade: form.temperature_grade,
   processes: form.processes,
   scs_charger_id: form.scs_charger_id,
   head_office_charger_id: form.head_office_charger_id,
@@ -631,11 +601,9 @@ const fetchEvaluation = async () => {
       process_step: evaluation.process_step || '',
       description: evaluation.remarks || evaluation.description || '',
       pgm_version: evaluation.pgm_version || '',
-      material_info: evaluation.material_info || '',
       capacity: evaluation.capacity || '',
       interface_type: evaluation.interface_type || '',
       form_factor: evaluation.form_factor || '',
-      temperature_grade: evaluation.temperature_grade || '',
       processes: evaluation.processes || [],
       scs_charger_id: evaluation.scs_charger_id || '',
       head_office_charger_id: evaluation.head_office_charger_id || '',
