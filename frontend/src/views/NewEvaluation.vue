@@ -205,40 +205,160 @@
         </el-row>
       </el-card>
 
-      <el-card
-        v-if="form.evaluation_type"
-        class="form-section fade-in-up"
-        style="animation-delay: 0.5s"
-      >
+      <el-card class="form-section fade-in-up" style="animation-delay: 0.5s">
         <template #header>
-          <span>{{ $t('evaluation.process') }}</span>
+          <span>{{ $t('evaluation.evaluationProcesses') }}</span>
         </template>
 
-        <div class="process-selection">
-          <div v-if="form.evaluation_type === 'new_product'" class="process-group">
-            <h4>{{ $t('evaluation.newProductProcess') }}</h4>
-            <el-checkbox-group v-model="form.processes">
-              <el-checkbox value="doe">{{ $t('evaluation.processes.doe') }}</el-checkbox>
-              <el-checkbox value="ppq">{{ $t('evaluation.processes.ppq') }}</el-checkbox>
-              <el-checkbox value="prq">{{ $t('evaluation.processes.prq') }}</el-checkbox>
-            </el-checkbox-group>
-            <p class="process-note">
-              {{ $t('evaluation.newProductNote') }}
-            </p>
+        <div class="processes-section">
+          <div v-for="(process, index) in form.processes" :key="index" class="process-item">
+            <div class="process-header">
+              <div class="title-with-edit">
+                <h4 v-if="!process.editingTitle">
+                  {{ process.title || $t('evaluation.process') + ' ' + (index + 1) }}
+                </h4>
+                <el-input
+                  v-else
+                  v-model="process.editTitle"
+                  size="small"
+                  @blur="saveProcessTitle(index)"
+                  @keyup.enter="saveProcessTitle(index)"
+                  @keyup.escape="cancelProcessTitleEdit(index)"
+                />
+                <el-button
+                  link
+                  size="small"
+                  :icon="Edit"
+                  style="color: #909399; margin-left: 8px"
+                  @click="startProcessTitleEdit(index)"
+                />
+              </div>
+              <el-button
+                v-if="form.processes.length > 1"
+                type="danger"
+                size="small"
+                :icon="Delete"
+                @click="removeProcess(index)"
+              >
+                {{ $t('evaluation.remove') }}
+              </el-button>
+            </div>
+
+            <el-row :gutter="20">
+              <el-col :span="8">
+                <el-form-item
+                  :label="$t('evaluation.evalCode')"
+                  :prop="`processes.${index}.eval_code`"
+                  :rules="[
+                    {
+                      required: true,
+                      message: $t('validation.requiredField.evalCode'),
+                      trigger: 'blur',
+                    },
+                  ]"
+                >
+                  <el-input
+                    v-model="process.eval_code"
+                    :placeholder="$t('evaluation.placeholders.evalCode')"
+                  />
+                </el-form-item>
+              </el-col>
+
+              <el-col :span="8">
+                <el-form-item
+                  :label="$t('evaluation.lotNumber')"
+                  :prop="`processes.${index}.lot_number`"
+                  :rules="[
+                    {
+                      required: true,
+                      message: $t('validation.requiredField.lotNumber'),
+                      trigger: 'blur',
+                    },
+                  ]"
+                >
+                  <el-input
+                    v-model="process.lot_number"
+                    :placeholder="$t('evaluation.placeholders.lotNumber')"
+                  />
+                </el-form-item>
+              </el-col>
+
+              <el-col :span="8">
+                <el-form-item
+                  :label="$t('evaluation.quantity')"
+                  :prop="`processes.${index}.quantity`"
+                  :rules="[
+                    {
+                      required: true,
+                      message: $t('validation.requiredField.quantity'),
+                      trigger: 'blur',
+                    },
+                  ]"
+                >
+                  <el-input-number
+                    v-model="process.quantity"
+                    :min="1"
+                    :placeholder="$t('evaluation.placeholders.quantity')"
+                    style="width: 100%"
+                  />
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <el-form-item
+              :label="$t('evaluation.processFlow')"
+              :prop="`processes.${index}.process_description`"
+              :rules="[
+                {
+                  required: true,
+                  message: $t('validation.requiredField.processFlow'),
+                  trigger: 'blur',
+                },
+              ]"
+            >
+              <el-input
+                v-model="process.process_description"
+                type="textarea"
+                :rows="2"
+                :placeholder="$t('evaluation.placeholders.processFlow')"
+              />
+            </el-form-item>
+
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item :label="$t('evaluation.manufacturingTestResults')">
+                  <el-input
+                    v-model="process.manufacturing_test_results"
+                    type="textarea"
+                    :rows="2"
+                    :placeholder="$t('evaluation.placeholders.manufacturingTestResults')"
+                  />
+                </el-form-item>
+              </el-col>
+
+              <el-col :span="12">
+                <el-form-item :label="$t('evaluation.defectAnalysisResults')">
+                  <el-input
+                    v-model="process.defect_analysis_results"
+                    type="textarea"
+                    :rows="2"
+                    :placeholder="$t('evaluation.placeholders.defectAnalysisResults')"
+                  />
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <el-form-item :label="$t('evaluation.aqlResult')">
+              <el-input
+                v-model="process.aql_result"
+                :placeholder="$t('evaluation.placeholders.aqlResult')"
+              />
+            </el-form-item>
           </div>
 
-          <div v-else-if="form.evaluation_type === 'mass_production'" class="process-group">
-            <h4>{{ $t('evaluation.massProductionProcess') }}</h4>
-            <el-checkbox-group v-model="form.processes">
-              <el-checkbox value="production_test">{{
-                $t('evaluation.processes.production_test')
-              }}</el-checkbox>
-              <el-checkbox value="aql">{{ $t('evaluation.processes.aql') }}</el-checkbox>
-            </el-checkbox-group>
-            <p class="process-note">
-              {{ $t('evaluation.massProductionNote') }}
-            </p>
-          </div>
+          <el-button type="primary" :icon="Plus" @click="addProcess">
+            {{ $t('evaluation.addProcess') }}
+          </el-button>
         </div>
       </el-card>
 
@@ -277,6 +397,8 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { nextTick } from 'vue'
+import { Plus, Delete, Edit } from '@element-plus/icons-vue'
 import api from '../utils/api'
 
 const router = useRouter()
@@ -293,6 +415,21 @@ const users = ref([])
 // Check if in edit mode
 const isEditMode = computed(() => route.name === 'EditEvaluation' && route.params.id)
 const evaluationId = computed(() => route.params.id)
+
+// Default process template
+const defaultProcess = () => ({
+  title: '',
+  editingTitle: false,
+  editTitle: '',
+  eval_code: '',
+  lot_number: '',
+  quantity: 1,
+  process_description: '',
+  manufacturing_test_results: '',
+  defect_analysis_results: '',
+  aql_result: '',
+  status: 'pending',
+})
 
 // Computed property for dynamic reason options based on evaluation type
 const reasonOptions = computed(() => {
@@ -333,15 +470,15 @@ const form = reactive({
   product_name: '',
   part_number: '',
   start_date: '',
-  end_date: '', // Actual end date
+  end_date: '',
   reason: '',
-  process_step: '', // Process step identifier (e.g., M031)
+  process_step: '',
   description: '',
   pgm_version: '',
   capacity: '',
   interface_type: '',
   form_factor: '',
-  processes: [],
+  processes: [defaultProcess()],
   scs_charger_id: '',
   head_office_charger_id: '',
 })
@@ -425,13 +562,41 @@ const rules = computed(() => ({
   ],
 }))
 
-const handleTypeChange = (type) => {
-  form.processes = []
+const handleTypeChange = () => {
   form.reason = '' // Reset reason when type changes
-  if (type === 'new_product') {
-    form.processes = ['doe', 'ppq', 'prq']
-  } else if (type === 'mass_production') {
-    form.processes = ['production_test', 'aql']
+}
+
+const addProcess = () => {
+  form.processes.push(defaultProcess())
+}
+
+const startProcessTitleEdit = (index) => {
+  const process = form.processes[index]
+  process.editingTitle = true
+  process.editTitle = process.title || ''
+  // Focus the input field after it's rendered
+  nextTick(() => {
+    const input = document.querySelector(`.process-item:nth-child(${index + 1}) .el-input__inner`)
+    if (input) input.focus()
+  })
+}
+
+const saveProcessTitle = (index) => {
+  const process = form.processes[index]
+  process.title = process.editTitle.trim()
+  process.editingTitle = false
+  process.editTitle = ''
+}
+
+const cancelProcessTitleEdit = (index) => {
+  const process = form.processes[index]
+  process.editingTitle = false
+  process.editTitle = ''
+}
+
+const removeProcess = (index) => {
+  if (form.processes.length > 1) {
+    form.processes.splice(index, 1)
   }
 }
 
@@ -463,7 +628,6 @@ const buildPayload = () => ({
   capacity: form.capacity,
   interface_type: form.interface_type,
   form_factor: form.form_factor,
-  processes: form.processes,
   scs_charger_id: form.scs_charger_id,
   head_office_charger_id: form.head_office_charger_id,
 })
@@ -497,6 +661,35 @@ const handleSave = async (submit = false) => {
       response = await api.post('/evaluations', payload)
       ElMessage.success(submit ? t('evaluation.submitSuccess') : t('evaluation.saveSuccess'))
       const targetId = response.data?.data?.evaluation?.id
+
+      // Create evaluation processes if evaluation was created successfully
+      if (targetId) {
+        const validProcesses = form.processes.filter(
+          (process) => process.eval_code && process.lot_number && process.process_description,
+        )
+
+        for (const process of validProcesses) {
+          try {
+            // Create a clean process object without frontend-only fields
+            const cleanProcess = {
+              title: process.title,
+              eval_code: process.eval_code,
+              lot_number: process.lot_number,
+              quantity: process.quantity,
+              process_description: process.process_description,
+              manufacturing_test_results: process.manufacturing_test_results,
+              defect_analysis_results: process.defect_analysis_results,
+              aql_result: process.aql_result,
+              status: process.status,
+            }
+            await api.post(`/evaluations/${targetId}/processes`, cleanProcess)
+          } catch (error) {
+            console.error('Failed to create process:', error)
+            // Continue with other processes even if one fails
+          }
+        }
+      }
+
       if (targetId) {
         router.push(`/evaluations/${targetId}`)
       } else {
@@ -604,7 +797,11 @@ const fetchEvaluation = async () => {
       capacity: evaluation.capacity || '',
       interface_type: evaluation.interface_type || '',
       form_factor: evaluation.form_factor || '',
-      processes: evaluation.processes || [],
+      processes: (evaluation.processes || []).map((process) => ({
+        ...process,
+        editingTitle: false,
+        editTitle: '',
+      })),
       scs_charger_id: evaluation.scs_charger_id || '',
       head_office_charger_id: evaluation.head_office_charger_id || '',
     })
@@ -773,6 +970,56 @@ onMounted(() => {
   font-weight: 500;
 }
 
+.processes-section {
+  margin-top: 10px;
+}
+
+.process-item {
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  background-color: #fafafa;
+}
+
+.process-item:last-child {
+  margin-bottom: 0;
+}
+
+.process-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.process-header h4 {
+  margin: 0;
+  color: #303133;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.process-content p {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.process-content strong {
+  color: #606266;
+  font-weight: 600;
+}
+
+.process-meta {
+  margin-top: 12px !important;
+  padding-top: 8px;
+  border-top: 1px dashed #e8e8e8;
+  color: #909399;
+  font-size: 12px;
+}
+
 .form-actions {
   display: flex;
   justify-content: center;
@@ -828,6 +1075,22 @@ onMounted(() => {
   box-shadow: 0 8px 24px rgba(255, 117, 140, 0.4);
 }
 
+.title-with-edit {
+  display: flex;
+  align-items: center;
+}
+
+.title-with-edit h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.title-with-edit .el-input {
+  width: 200px;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .evaluation-form {
@@ -840,6 +1103,22 @@ onMounted(() => {
   }
 
   .form-actions .el-button {
+    width: 200px;
+  }
+
+  .title-with-edit {
+    display: flex;
+    align-items: center;
+  }
+
+  .title-with-edit h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #303133;
+  }
+
+  .title-with-edit .el-input {
     width: 200px;
   }
 }
