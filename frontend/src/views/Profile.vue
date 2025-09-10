@@ -187,7 +187,7 @@ const personalInfoRules = {
     },
     {
       type: 'email',
-      message: 'Please enter a valid email address',
+      message: t('users.invalidEmail'),
       trigger: 'blur',
     },
   ],

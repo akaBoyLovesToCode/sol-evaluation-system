@@ -1,6 +1,6 @@
 """Unit tests for the Evaluation model."""
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from app.models.evaluation import Evaluation, EvaluationStatus, EvaluationType
 from tests.helpers import create_test_evaluation
@@ -12,7 +12,6 @@ def test_evaluation_creation(session, regular_user):
 
     unique_id = str(uuid.uuid4())[:8]
     start_date = datetime.now().date()
-    expected_end_date = (datetime.now() + timedelta(days=30)).date()
 
     evaluation = Evaluation(
         evaluation_number=f"EV-{datetime.now().strftime('%Y%m%d')}-{unique_id}",
@@ -23,7 +22,6 @@ def test_evaluation_creation(session, regular_user):
         evaluation_reason="Testing",
         status=EvaluationStatus.DRAFT.value,
         start_date=start_date,
-        expected_end_date=expected_end_date,
         process_step="M001",
     )
     session.add(evaluation)
@@ -44,7 +42,6 @@ def test_evaluation_creation(session, regular_user):
     assert retrieved_evaluation.evaluation_reason == "Testing"
     assert retrieved_evaluation.status == EvaluationStatus.DRAFT.value
     assert retrieved_evaluation.start_date == start_date
-    assert retrieved_evaluation.expected_end_date == expected_end_date
     assert retrieved_evaluation.process_step == "M001"
     assert retrieved_evaluation.evaluator_id == regular_user.id
 
@@ -101,7 +98,7 @@ def test_evaluation_to_dict(session, regular_user):
     assert evaluation_dict["status"] == evaluation.status
     assert evaluation_dict["process_step"] == evaluation.process_step
     assert "start_date" in evaluation_dict
-    assert "expected_end_date" in evaluation_dict
+    assert "actual_end_date" in evaluation_dict
 
 
 def test_evaluation_relationships(session, regular_user):
