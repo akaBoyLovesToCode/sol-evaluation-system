@@ -174,6 +174,50 @@
               </div>
             </div>
           </el-card>
+
+          <!-- {{ $t('evaluation.evaluationProcesses') }} -->
+          <el-card v-if="evaluation.processes && evaluation.processes.length > 0" class="info-card">
+            <template #header>
+              <span>{{ $t('evaluation.evaluationProcesses') }}</span>
+            </template>
+            <div class="processes-section">
+              <div v-for="process in evaluation.processes" :key="process.id" class="process-item">
+                <div class="process-header">
+                  <h4>{{ process.title || process.eval_code }} - {{ process.lot_number }}</h4>
+                  <el-tag :type="getProcessStatusType(process.status)">
+                    {{ $t(`evaluation.processStatus.${process.status}`) }}
+                  </el-tag>
+                </div>
+                <div class="process-content">
+                  <p>
+                    <strong>{{ $t('evaluation.quantity') }}：</strong>{{ process.quantity }}
+                  </p>
+                  <p>
+                    <strong>{{ $t('evaluation.processFlow') }}：</strong
+                    >{{ process.process_description }}
+                  </p>
+                  <p v-if="process.manufacturing_test_results">
+                    <strong>{{ $t('evaluation.manufacturingTestResults') }}：</strong
+                    >{{ process.manufacturing_test_results }}
+                  </p>
+                  <p v-if="process.defect_analysis_results">
+                    <strong>{{ $t('evaluation.defectAnalysisResults') }}：</strong
+                    >{{ process.defect_analysis_results }}
+                  </p>
+                  <p v-if="process.aql_result">
+                    <strong>{{ $t('evaluation.aqlResult') }}：</strong>{{ process.aql_result }}
+                  </p>
+                  <p class="process-meta">
+                    <small
+                      >{{ $t('evaluation.createdAt') }}：{{
+                        formatDateTime(process.created_at)
+                      }}</small
+                    >
+                  </p>
+                </div>
+              </div>
+            </div>
+          </el-card>
         </el-col>
 
         <!-- 右侧边栏 -->
@@ -610,6 +654,16 @@ const getOperationDescription = (log) => {
   return log.operation_description || t('evaluation.operations.unknown')
 }
 
+const getProcessStatusType = (status) => {
+  const typeMap = {
+    pending: 'info',
+    in_progress: 'primary',
+    completed: 'success',
+    failed: 'danger',
+  }
+  return typeMap[status] || 'info'
+}
+
 onMounted(async () => {
   // 首先确保用户信息已加载
   if (!authStore.user && authStore.token) {
@@ -877,6 +931,59 @@ onMounted(async () => {
 }
 
 /* 响应式设计 */
+.processes-section {
+  margin-top: 10px;
+}
+
+.process-item {
+  border: 1px solid #e6e6e6;
+  border-radius: 4px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background-color: #fafafa;
+}
+
+.process-item:last-child {
+  margin-bottom: 0;
+}
+
+.process-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.process-header h4 {
+  margin: 0;
+  color: #303133;
+  font-size: 16px;
+}
+
+.process-content p {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.process-content p:last-child {
+  margin-bottom: 0;
+}
+
+.process-content strong {
+  color: #606266;
+  font-weight: 600;
+}
+
+.process-meta {
+  margin-top: 12px !important;
+  padding-top: 8px;
+  border-top: 1px dashed #e8e8e8;
+  color: #909399;
+  font-size: 12px;
+}
+
 @media (max-width: 1200px) {
   .detail-content .el-row {
     flex-direction: column;

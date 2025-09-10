@@ -122,6 +122,12 @@ class Evaluation(db.Model):
         lazy="dynamic",
         cascade="all, delete-orphan",
     )
+    processes = db.relationship(
+        "EvaluationProcess",
+        backref="evaluation",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
     operation_logs = db.relationship(
         "OperationLog",
         primaryjoin="and_(OperationLog.target_type=='evaluation', "
@@ -292,6 +298,7 @@ class Evaluation(db.Model):
         if include_details:
             data["details"] = [detail.to_dict() for detail in self.details]
             data["results"] = [result.to_dict() for result in self.results]
+            data["processes"] = [process.to_dict() for process in self.processes]
 
         return data
 
@@ -419,4 +426,76 @@ class EvaluationResult(db.Model):
     def __repr__(self) -> str:
         return (
             f"<EvaluationResult {self.result_type} for Evaluation {self.evaluation_id}>"
+        )
+
+
+class EvaluationProcess(db.Model):
+    """Multiple evaluation processes for a single evaluation.
+
+    Supports multiple evaluation attempts for:
+    1. New product development (PRQ, PPQ, etc.)
+    2. Re-evaluation when first attempt fails
+    """
+
+    __tablename__ = "evaluation_processes"
+
+    # Primary key
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Foreign key
+    evaluation_id = db.Column(
+        db.Integer, db.ForeignKey("evaluations.id"), nullable=False
+    )
+
+    # Process identification
+    title = db.Column(db.String(100), nullable=False, default="")  # Process title
+    eval_code = db.Column(db.String(50), nullable=False)  # Evaluation code
+    lot_number = db.Column(db.String(50), nullable=False)  # Lot number
+    quantity = db.Column(db.Integer, nullable=False)  # Quantity
+
+    # Process information
+    process_description = db.Column(db.Text, nullable=False)  # Process flow description
+    manufacturing_test_results = db.Column(db.Text)  # Manufacturing test results
+    defect_analysis_results = db.Column(db.Text)  # Defect analysis results
+    aql_result = db.Column(db.String(100))  # AQL result (optional)
+
+    # Status
+    status = db.Column(
+        db.Enum("pending", "in_progress", "completed", "failed", name="process_status"),
+        nullable=False,
+        default="pending",
+    )
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert process to dictionary.
+
+        Returns:
+            Process data dictionary.
+
+        """
+        return {
+            "id": self.id,
+            "evaluation_id": self.evaluation_id,
+            "title": self.title,
+            "eval_code": self.eval_code,
+            "lot_number": self.lot_number,
+            "quantity": self.quantity,
+            "process_description": self.process_description,
+            "manufacturing_test_results": self.manufacturing_test_results,
+            "defect_analysis_results": self.defect_analysis_results,
+            "aql_result": self.aql_result,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def __repr__(self) -> str:
+        return (
+            f"<EvaluationProcess {self.eval_code} for Evaluation {self.evaluation_id}>"
         )

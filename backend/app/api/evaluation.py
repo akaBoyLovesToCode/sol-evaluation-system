@@ -9,7 +9,7 @@ from flask import Blueprint, Response, current_app, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.models import db
-from app.models.evaluation import Evaluation, EvaluationStatus
+from app.models.evaluation import Evaluation, EvaluationProcess, EvaluationStatus
 from app.models.operation_log import OperationLog, OperationType
 from app.models.user import User
 
@@ -742,6 +742,651 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
             {
                 "success": False,
                 "message": "Failed to update evaluation",
+                "error": str(e),
+            }
+        ), 500
+
+
+@evaluation_bp.route("/<int:evaluation_id>/processes", methods=["POST"])
+@jwt_required()
+def create_evaluation_process(evaluation_id: int) -> tuple[Response, int]:
+    """Create a new evaluation process for an evaluation.
+
+    Args:
+        evaluation_id (int): ID of the evaluation.
+
+    Request Body:
+        title (str, optional): Process title.
+        eval_code (str): Evaluation code.
+        lot_number (str): Lot number.
+        quantity (int): Quantity.
+        process_description (str): Process flow description.
+        manufacturing_test_results (str, optional): Manufacturing test results.
+        defect_analysis_results (str, optional): Defect analysis results.
+        aql_result (str, optional): AQL result.
+
+    Returns:
+        Tuple[Response, int]: JSON response with created process and HTTP status code.
+
+    Raises:
+        400: If required fields are missing or invalid.
+        404: If evaluation not found.
+        500: If database operation fails.
+    ---
+    tags:
+      - Evaluation Processes
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - eval_code
+              - lot_number
+              - quantity
+              - process_description
+            properties:
+              eval_code:
+                type: string
+                description: Evaluation code
+              lot_number:
+                type: string
+                description: Lot number
+              quantity:
+                type: integer
+                description: Quantity
+              process_description:
+                type: string
+                description: Process flow description
+              manufacturing_test_results:
+                type: string
+                description: Manufacturing test results
+              defect_analysis_results:
+                type: string
+                description: Defect analysis results
+              aql_result:
+                type: string
+                description: AQL result
+    responses:
+      201:
+        description: Evaluation process created successfully
+      400:
+        description: Invalid request data
+      404:
+        description: Evaluation not found
+      500:
+        description: Internal server error
+
+    """
+    try:
+        data = request.json
+        user_id = get_jwt_identity()
+
+        # Check if evaluation exists
+        evaluation = Evaluation.query.get(evaluation_id)
+        if not evaluation:
+            return jsonify({"success": False, "message": "Evaluation not found"}), 404
+
+        # Validate required fields
+        required_fields = ["eval_code", "lot_number", "quantity", "process_description"]
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify(
+                    {"success": False, "message": f"Missing required field: {field}"}
+                ), 400
+
+        # Create evaluation process
+        process = EvaluationProcess(
+            evaluation_id=evaluation_id,
+            title=data.get("title", ""),
+            eval_code=data["eval_code"],
+            lot_number=data["lot_number"],
+            quantity=data["quantity"],
+            process_description=data["process_description"],
+            manufacturing_test_results=data.get("manufacturing_test_results"),
+            defect_analysis_results=data.get("defect_analysis_results"),
+            aql_result=data.get("aql_result"),
+        )
+
+        db.session.add(process)
+        db.session.commit()
+
+        # Log operation
+        log = OperationLog(
+            user_id=user_id,
+            operation_type=OperationType.CREATE.value,
+            target_type="evaluation_process",
+            target_id=process.id,
+            target_description=f"Created process {process.eval_code} for evaluation {evaluation.evaluation_number}",
+            operation_description="User created a new evaluation process",
+            new_data=json.dumps(process.to_dict()),
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string,
+            success=True,
+        )
+        db.session.add(log)
+        db.session.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Evaluation process created successfully",
+                "data": {"process": process.to_dict()},
+            }
+        ), 201
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error creating evaluation process: {str(e)}")
+        return jsonify(
+            {
+                "success": False,
+                "message": "Failed to create evaluation process",
+                "error": str(e),
+            }
+        ), 500
+
+
+@evaluation_bp.route("/<int:evaluation_id>/processes", methods=["GET"])
+@jwt_required()
+def get_evaluation_processes(evaluation_id: int) -> tuple[Response, int]:
+    """Get all processes for an evaluation.
+
+    Args:
+        evaluation_id (int): ID of the evaluation.
+
+    Returns:
+        Tuple[Response, int]: JSON response with processes list and HTTP status code.
+
+    Raises:
+        404: If evaluation not found.
+        500: If database operation fails.
+    ---
+    tags:
+      - Evaluation Processes
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: evaluation_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the evaluation
+    responses:
+      200:
+        description: List of evaluation processes
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    processes:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          eval_code:
+                            type: string
+                          lot_number:
+                            type: string
+                          quantity:
+                            type: integer
+                          process_description:
+                            type: string
+                          manufacturing_test_results:
+                            type: string
+                          defect_analysis_results:
+                            type: string
+                          aql_result:
+                            type: string
+                          status:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+      404:
+        description: Evaluation not found
+      500:
+        description: Internal server error
+
+    """
+    try:
+        # Check if evaluation exists
+        evaluation = Evaluation.query.get(evaluation_id)
+        if not evaluation:
+            return jsonify({"success": False, "message": "Evaluation not found"}), 404
+
+        # Get all processes for this evaluation
+        processes = EvaluationProcess.query.filter_by(evaluation_id=evaluation_id).all()
+
+        # Log operation
+        user_id = get_jwt_identity()
+        log = OperationLog(
+            user_id=user_id,
+            operation_type=OperationType.VIEW.value,
+            target_type="evaluation_processes",
+            target_id=evaluation_id,
+            target_description=f"Viewed processes for evaluation {evaluation.evaluation_number}",
+            operation_description="User viewed evaluation processes",
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string,
+            success=True,
+        )
+        db.session.add(log)
+        db.session.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "processes": [process.to_dict() for process in processes],
+                },
+            }
+        )
+    except Exception as e:
+        current_app.logger.error(f"Error getting evaluation processes: {str(e)}")
+        return jsonify(
+            {
+                "success": False,
+                "message": "Failed to get evaluation processes",
+                "error": str(e),
+            }
+        ), 500
+
+
+@evaluation_bp.route("/<int:evaluation_id>/processes/<int:process_id>", methods=["GET"])
+@jwt_required()
+def get_evaluation_process(evaluation_id: int, process_id: int) -> tuple[Response, int]:
+    """Get details of a specific evaluation process.
+
+    Args:
+        evaluation_id (int): ID of the evaluation.
+        process_id (int): ID of the process.
+
+    Returns:
+        Tuple[Response, int]: JSON response with process details and HTTP status code.
+
+    Raises:
+        404: If evaluation or process not found.
+        500: If database operation fails.
+    ---
+    tags:
+      - Evaluation Processes
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: evaluation_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the evaluation
+      - name: process_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the process
+    responses:
+      200:
+        description: Evaluation process details
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    process:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        eval_code:
+                          type: string
+                        lot_number:
+                          type: string
+                        quantity:
+                          type: integer
+                        process_description:
+                          type: string
+                        manufacturing_test_results:
+                          type: string
+                        defect_analysis_results:
+                          type: string
+                        aql_result:
+                          type: string
+                        status:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+                        updated_at:
+                          type: string
+                          format: date-time
+      404:
+        description: Evaluation or process not found
+      500:
+        description: Internal server error
+
+    """
+    try:
+        # Check if evaluation exists
+        evaluation = Evaluation.query.get(evaluation_id)
+        if not evaluation:
+            return jsonify({"success": False, "message": "Evaluation not found"}), 404
+
+        # Get the process
+        process = EvaluationProcess.query.filter_by(
+            id=process_id, evaluation_id=evaluation_id
+        ).first()
+        if not process:
+            return jsonify({"success": False, "message": "Process not found"}), 404
+
+        # Log operation
+        user_id = get_jwt_identity()
+        log = OperationLog(
+            user_id=user_id,
+            operation_type=OperationType.VIEW.value,
+            target_type="evaluation_process",
+            target_id=process_id,
+            target_description=f"Viewed process {process.eval_code} for evaluation {evaluation.evaluation_number}",
+            operation_description="User viewed evaluation process details",
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string,
+            success=True,
+        )
+        db.session.add(log)
+        db.session.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {"process": process.to_dict()},
+            }
+        )
+    except Exception as e:
+        current_app.logger.error(f"Error getting evaluation process: {str(e)}")
+        return jsonify(
+            {
+                "success": False,
+                "message": "Failed to get evaluation process",
+                "error": str(e),
+            }
+        ), 500
+
+
+@evaluation_bp.route("/<int:evaluation_id>/processes/<int:process_id>", methods=["PUT"])
+@jwt_required()
+def update_evaluation_process(
+    evaluation_id: int, process_id: int
+) -> tuple[Response, int]:
+    """Update an evaluation process.
+
+    Args:
+        evaluation_id (int): ID of the evaluation.
+        process_id (int): ID of the process.
+
+    Request Body:
+        eval_code (str, optional): Evaluation code.
+        lot_number (str, optional): Lot number.
+        quantity (int, optional): Quantity.
+        process_description (str, optional): Process flow description.
+        manufacturing_test_results (str, optional): Manufacturing test results.
+        defect_analysis_results (str, optional): Defect analysis results.
+        aql_result (str, optional): AQL result.
+        status (str, optional): Process status.
+
+    Returns:
+        Tuple[Response, int]: JSON response with updated process and HTTP status code.
+
+    Raises:
+        404: If evaluation or process not found.
+        500: If database operation fails.
+    ---
+    tags:
+      - Evaluation Processes
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: evaluation_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the evaluation
+      - name: process_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the process
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              eval_code:
+                type: string
+                description: Evaluation code
+              lot_number:
+                type: string
+                description: Lot number
+              quantity:
+                type: integer
+                description: Quantity
+              process_description:
+                type: string
+                description: Process flow description
+              manufacturing_test_results:
+                type: string
+                description: Manufacturing test results
+              defect_analysis_results:
+                type: string
+                description: Defect analysis results
+              aql_result:
+                type: string
+                description: AQL result
+              status:
+                type: string
+                enum: [pending, in_progress, completed, failed]
+                description: Process status
+    responses:
+      200:
+        description: Evaluation process updated successfully
+      404:
+        description: Evaluation or process not found
+      500:
+        description: Internal server error
+
+    """
+    try:
+        data = request.json
+        user_id = get_jwt_identity()
+
+        # Check if evaluation exists
+        evaluation = Evaluation.query.get(evaluation_id)
+        if not evaluation:
+            return jsonify({"success": False, "message": "Evaluation not found"}), 404
+
+        # Get the process
+        process = EvaluationProcess.query.filter_by(
+            id=process_id, evaluation_id=evaluation_id
+        ).first()
+        if not process:
+            return jsonify({"success": False, "message": "Process not found"}), 404
+
+        # Update process fields
+        update_fields = [
+            "title",
+            "eval_code",
+            "lot_number",
+            "quantity",
+            "process_description",
+            "manufacturing_test_results",
+            "defect_analysis_results",
+            "aql_result",
+            "status",
+        ]
+
+        for field in update_fields:
+            if field in data:
+                setattr(process, field, data[field])
+
+        db.session.commit()
+
+        # Log operation
+        log = OperationLog(
+            user_id=user_id,
+            operation_type=OperationType.UPDATE.value,
+            target_type="evaluation_process",
+            target_id=process_id,
+            target_description=f"Updated process {process.eval_code} for evaluation {evaluation.evaluation_number}",
+            operation_description="User updated an evaluation process",
+            new_data=json.dumps(process.to_dict()),
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string,
+            success=True,
+        )
+        db.session.add(log)
+        db.session.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Evaluation process updated successfully",
+                "data": {"process": process.to_dict()},
+            }
+        )
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error updating evaluation process: {str(e)}")
+        return jsonify(
+            {
+                "success": False,
+                "message": "Failed to update evaluation process",
+                "error": str(e),
+            }
+        ), 500
+
+
+@evaluation_bp.route(
+    "/<int:evaluation_id>/processes/<int:process_id>", methods=["DELETE"]
+)
+@jwt_required()
+def delete_evaluation_process(
+    evaluation_id: int, process_id: int
+) -> tuple[Response, int]:
+    """Delete an evaluation process.
+
+    Args:
+        evaluation_id (int): ID of the evaluation.
+        process_id (int): ID of the process.
+
+    Returns:
+        Tuple[Response, int]: JSON response with success message and HTTP status code.
+
+    Raises:
+        404: If evaluation or process not found.
+        500: If database operation fails.
+    ---
+    tags:
+      - Evaluation Processes
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: evaluation_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the evaluation
+      - name: process_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the process
+    responses:
+      200:
+        description: Evaluation process deleted successfully
+      404:
+        description: Evaluation or process not found
+      500:
+        description: Internal server error
+
+    """
+    try:
+        user_id = get_jwt_identity()
+
+        # Check if evaluation exists
+        evaluation = Evaluation.query.get(evaluation_id)
+        if not evaluation:
+            return jsonify({"success": False, "message": "Evaluation not found"}), 404
+
+        # Get the process
+        process = EvaluationProcess.query.filter_by(
+            id=process_id, evaluation_id=evaluation_id
+        ).first()
+        if not process:
+            return jsonify({"success": False, "message": "Process not found"}), 404
+
+        # Store process data for logging before deletion
+        process_data = process.to_dict()
+
+        # Delete the process
+        db.session.delete(process)
+        db.session.commit()
+
+        # Log operation
+        log = OperationLog(
+            user_id=user_id,
+            operation_type=OperationType.DELETE.value,
+            target_type="evaluation_process",
+            target_id=process_id,
+            target_description=f"Deleted process {process_data['eval_code']} for evaluation {evaluation.evaluation_number}",
+            operation_description="User deleted an evaluation process",
+            old_data=json.dumps(process_data),
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string,
+            success=True,
+        )
+        db.session.add(log)
+        db.session.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Evaluation process deleted successfully",
+            }
+        )
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting evaluation process: {str(e)}")
+        return jsonify(
+            {
+                "success": False,
+                "message": "Failed to delete evaluation process",
                 "error": str(e),
             }
         ), 500
