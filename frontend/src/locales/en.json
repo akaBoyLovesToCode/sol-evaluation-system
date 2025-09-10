@@ -73,7 +73,11 @@
       "actualEndDate": "Actual end date cannot be empty",
       "processStep": "Please enter process step",
       "scsCharger": "Please select SCS Charger",
-      "headOfficeCharger": "Please select Head Office Charger"
+      "headOfficeCharger": "Please select Head Office Charger",
+      "evalCode": "Please enter evaluation code",
+      "lotNumber": "Please enter lot number",
+      "quantity": "Please enter quantity",
+      "processFlow": "Please enter process flow description"
     }
   },
   "menu": {
@@ -127,6 +131,17 @@
       "rejected": "Evaluation has been rejected."
     },
     "processStep": "Step",
+    "evaluationProcesses": "Evaluation Processes",
+    "processTitle": "Process Title",
+    "evalCode": "Eval Code",
+    "lotNumber": "Lot Number",
+    "quantity": "Quantity",
+    "processFlow": "Process Flow",
+    "manufacturingTestResults": "Manufacturing Test Results",
+    "defectAnalysisResults": "Defect Analysis Results",
+    "aqlResult": "AQL Result",
+    "addProcess": "Add Process",
+    "remove": "Remove",
     "scsCharger": "SCS Charger",
     "headOfficeCharger": "Head Office Charger",
     "complete": "Complete",
@@ -228,6 +243,14 @@
       "interfaceType": "Select interface type",
       "formFactor": "Select form factor",
       "processStep": "Input process step",
+      "processTitle": "Enter process title",
+      "evalCode": "Enter evaluation code",
+      "lotNumber": "Enter lot number",
+      "quantity": "Enter quantity",
+      "processFlow": "Enter process flow description",
+      "manufacturingTestResults": "Enter manufacturing test results",
+      "defectAnalysisResults": "Enter defect analysis results",
+      "aqlResult": "Enter AQL result",
       "scsCharger": "Select SCS Charger",
       "headOfficeCharger": "Select Head Office Charger"
     },
@@ -245,41 +268,48 @@
       "quality_improvement": "Quality Improvement",
       "cost_optimization": "Cost Optimization",
       "customer_requirement": "Customer Requirement",
-      "other": "Other",
-      "horizontal_expansion": "Horizontal Expansion",
-      "direct_development": "Direct Development",
-      "pgm_improvement": "PGM Improvement",
-      "firmware_change": "F/W Change",
-      "bom_change": "BOM Change"
+      "other": "Other"
     },
-    "formFactors": {
-      "2_5_inch": "2.5 inch",
-      "m2_2280": "M.2 2280",
-      "m2_2242": "M.2 2242"
+    "processStatus": {
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "failed": "Failed"
     },
-    "processes": {
-      "doe": "DOE (Design of Experiments)",
-      "ppq": "PPQ (Production Part Qualification)",
-      "prq": "PRQ (Production Readiness Qualification)",
-      "production_test": "Production Test",
-      "aql": "AQL (Acceptable Quality Level)"
-    },
-    "showAllLogs": "All Logs",
-    "showCriticalLogs": "Critical Only",
-    "noOperationLogs": "No operation logs available",
-    "operations": {
-      "created": "Created evaluation",
-      "updated": "Updated evaluation",
-      "statusChanged": "Changed evaluation status",
-      "deleted": "Deleted evaluation",
-      "approved": "Approved evaluation",
-      "rejected": "Rejected evaluation",
-      "viewed": "Viewed evaluation",
-      "loggedIn": "User logged in",
-      "loggedOut": "User logged out",
-      "exported": "Exported data",
-      "unknown": "Unknown operation"
-    }
+    "horizontal_expansion": "Horizontal Expansion",
+    "direct_development": "Direct Development",
+    "pgm_improvement": "PGM Improvement",
+    "firmware_change": "F/W Change",
+    "bom_change": "BOM Change"
+  },
+
+  "formFactors": {
+    "2_5_inch": "2.5 inch",
+    "m2_2280": "M.2 2280",
+    "m2_2242": "M.2 2242"
+  },
+  "processes": {
+    "doe": "DOE (Design of Experiments)",
+    "ppq": "PPQ (Production Part Qualification)",
+    "prq": "PRQ (Production Readiness Qualification)",
+    "production_test": "Production Test",
+    "aql": "AQL (Acceptable Quality Level)"
+  },
+  "showAllLogs": "All Logs",
+  "showCriticalLogs": "Critical Only",
+  "noOperationLogs": "No operation logs available",
+  "operations": {
+    "created": "Created evaluation",
+    "updated": "Updated evaluation",
+    "statusChanged": "Changed evaluation status",
+    "deleted": "Deleted evaluation",
+    "approved": "Approved evaluation",
+    "rejected": "Rejected evaluation",
+    "viewed": "Viewed evaluation",
+    "loggedIn": "User logged in",
+    "loggedOut": "User logged out",
+    "exported": "Exported data",
+    "unknown": "Unknown operation"
   },
   "status": {
     "draft": "Draft",
