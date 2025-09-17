@@ -20,7 +20,9 @@
     "confirmAction": "Confirm Action",
     "saveSuccess": "Save successful",
     "saveError": "Save failed",
-    "deleteError": "Delete failed"
+    "deleteError": "Delete failed",
+    "details": "Details",
+    "hide": "Hide"
   },
   "api": {
     "errors": {
@@ -39,7 +41,6 @@
     "fetchListFailed": "Failed to fetch list",
     "fetchDataFailed": "Failed to fetch data"
   },
-  
   "login": {
     "title": "Solution Evaluation Management System",
     "subtitle": "Please login to your account",
@@ -78,7 +79,6 @@
       "processFlow": "Please enter process flow description"
     }
   },
-  
   "evaluation": {
     "title": "Evaluation Management",
     "description": "Manage and view all product evaluations",
@@ -91,14 +91,17 @@
       "description": "Modify evaluation information"
     },
     "statusDescriptions": {
-      "draft": "Evaluation is in draft state and can be edited.",
+      "draft": "Evaluation is in draft and can be edited.",
       "in_progress": "Evaluation is currently in progress.",
-      "paused": "Evaluation has been temporarily paused.",
+      "paused": "Evaluation is paused.",
       "pending_part_approval": "Waiting for part leader approval.",
       "pending_group_approval": "Waiting for group leader approval.",
       "completed": "Evaluation has been completed successfully.",
       "cancelled": "Evaluation has been cancelled.",
-      "rejected": "Evaluation has been rejected."
+      "rejected": "Evaluation has been rejected.",
+      "inProgress": "Evaluation is in progress.",
+      "pendingPartApproval": "Waiting for Part Leader approval.",
+      "pendingGroupApproval": "Waiting for Group Leader approval."
     },
     "processStep": "Step",
     "evaluationProcesses": "Evaluation Processes",
@@ -238,7 +241,12 @@
       "quality_improvement": "Quality Improvement",
       "cost_optimization": "Cost Optimization",
       "customer_requirement": "Customer Requirement",
-      "other": "Other"
+      "other": "Other",
+      "horizontal_expansion": "Horizontal Expansion",
+      "direct_development": "Direct Development",
+      "pgm_improvement": "PGM Improvement",
+      "firmware_change": "F/W Change",
+      "bom_change": "BOM Change"
     },
     "processStatus": {
       "pending": "Pending",
@@ -250,9 +258,34 @@
     "direct_development": "Direct Development",
     "pgm_improvement": "PGM Improvement",
     "firmware_change": "F/W Change",
-    "bom_change": "BOM Change"
+    "bom_change": "BOM Change",
+    "formFactors": {
+      "2_5_inch": "2.5 inch",
+      "m2_2280": "M.2 2280",
+      "m2_2242": "M.2 2242"
+    },
+    "processes": {
+      "doe": "DOE (Design of Experiments)",
+      "ppq": "PPQ (Production Part Qualification)",
+      "prq": "PRQ (Production Readiness Qualification)",
+      "production_test": "Production Test",
+      "aql": "AQL (Acceptable Quality Level)"
+    },
+    "noOperationLogs": "No operation logs available",
+    "operations": {
+      "created": "Created evaluation",
+      "updated": "Updated evaluation",
+      "statusChanged": "Changed evaluation status",
+      "deleted": "Deleted evaluation",
+      "approved": "Approved evaluation",
+      "rejected": "Rejected evaluation",
+      "viewed": "Viewed evaluation",
+      "loggedIn": "User logged in",
+      "loggedOut": "User logged out",
+      "exported": "Exported data",
+      "unknown": "Unknown operation"
+    }
   },
-
   "formFactors": {
     "2_5_inch": "2.5 inch",
     "m2_2280": "M.2 2280",
@@ -265,7 +298,6 @@
     "production_test": "Production Test",
     "aql": "AQL (Acceptable Quality Level)"
   },
-  
   "noOperationLogs": "No operation logs available",
   "operations": {
     "created": "Created evaluation",

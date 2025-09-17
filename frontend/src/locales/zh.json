@@ -20,7 +20,9 @@
     "confirmAction": "确认操作",
     "saveSuccess": "保存成功",
     "saveError": "保存失败",
-    "deleteError": "删除失败"
+    "deleteError": "删除失败",
+    "details": "详情",
+    "hide": "隐藏"
   },
   "api": {
     "errors": {
@@ -39,7 +41,7 @@
     "fetchListFailed": "获取列表失败",
     "fetchDataFailed": "获取数据失败"
   },
-  
+
   "login": {
     "title": "产品评价管理系统",
     "subtitle": "请登录您的账户",
@@ -78,8 +80,7 @@
       "processFlow": "请输入工艺流程描述"
     }
   },
-  
-  
+
   "evaluation": {
     "title": "评价管理",
     "description": "管理和查看所有产品评价",

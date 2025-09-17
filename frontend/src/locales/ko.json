@@ -20,7 +20,9 @@
     "confirmAction": "작업 확인",
     "saveSuccess": "저장 성공",
     "saveError": "저장 실패",
-    "deleteError": "삭제 실패"
+    "deleteError": "삭제 실패",
+    "details": "자세히",
+    "hide": "숨기기"
   },
   "api": {
     "errors": {
@@ -207,13 +209,54 @@
       "quality_improvement": "품질 개선",
       "cost_optimization": "비용 최적화",
       "customer_requirement": "고객 요구사항",
-      "other": "기타"
+      "other": "기타",
+      "horizontal_expansion": "수평 전개",
+      "direct_development": "직접 개발",
+      "pgm_improvement": "PGM 개선",
+      "firmware_change": "펌웨어 변경",
+      "bom_change": "BOM 변경"
     },
     "processStatus": {
       "pending": "대기 중",
       "in_progress": "진행 중",
       "completed": "완료됨",
       "failed": "실패"
+    },
+    "formFactors": {
+      "2_5_inch": "2.5인치",
+      "m2_2280": "M.2 2280",
+      "m2_2242": "M.2 2242"
+    },
+    "processes": {
+      "doe": "DOE (실험계획법)",
+      "ppq": "PPQ (생산 부품 승인)",
+      "prq": "PRQ (생산 준비 승인)",
+      "production_test": "생산 테스트",
+      "aql": "AQL (허용품질한계)"
+    },
+    "noOperationLogs": "작업 로그가 없습니다",
+    "operations": {
+      "created": "평가를 생성",
+      "updated": "평가를 업데이트",
+      "statusChanged": "평가 상태 변경",
+      "deleted": "평가 삭제",
+      "approved": "평가 승인",
+      "rejected": "평가 거부",
+      "viewed": "평가 조회",
+      "loggedIn": "사용자 로그인",
+      "loggedOut": "사용자 로그아웃",
+      "exported": "데이터 내보냄",
+      "unknown": "알 수 없는 작업"
+    },
+    "statusDescriptions": {
+      "draft": "평가가 초안 상태입니다. 편집할 수 있습니다.",
+      "inProgress": "평가가 진행 중입니다.",
+      "paused": "평가가 일시 중지되었습니다.",
+      "pendingPartApproval": "Part 장 승인 대기 중.",
+      "pendingGroupApproval": "Group 장 승인 대기 중.",
+      "completed": "평가가 완료되었습니다.",
+      "cancelled": "평가가 취소되었습니다.",
+      "rejected": "평가가 반려되었습니다."
     }
   },
   "formFactors": {
@@ -250,5 +293,22 @@
     "paused": "일시정지",
     "cancelled": "취소됨",
     "rejected": "거부됨"
+  },
+  "login": {
+    "title": "제품 평가 관리 시스템",
+    "subtitle": "계정에 로그인하세요",
+    "username": "사용자명",
+    "password": "비밀번호",
+    "remember": "로그인 상태 유지",
+    "submit": "로그인",
+    "success": "로그인 성공",
+    "failed": "로그인 실패",
+    "errors": {
+      "invalidCredentials": "사용자명 또는 비밀번호가 올바르지 않습니다",
+      "missingCredentials": "사용자명과 비밀번호를 입력하세요",
+      "serverError": "서버 오류, 잠시 후 다시 시도하세요",
+      "networkError": "네트워크 오류, 연결을 확인하세요",
+      "accountInactive": "계정이 비활성화되었습니다"
+    }
   }
 }
