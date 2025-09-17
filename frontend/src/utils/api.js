@@ -105,7 +105,7 @@ api.interceptors.response.use(
     return response
   },
   async (error) => {
-    const { response, config } = error
+    const { response } = error
 
     if (response) {
       switch (response.status) {
