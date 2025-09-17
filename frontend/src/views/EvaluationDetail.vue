@@ -1,6 +1,6 @@
 <template>
-  <div v-loading="loading" class="evaluation-detail-page">
-    <div v-if="evaluation" class="page-header">
+  <div v-loading="loading" :class="['evaluation-detail-page', inDialog ? 'dialog-mode' : '']">
+    <div v-if="evaluation && !inDialog" class="page-header">
       <div class="header-left">
         <h1 class="page-title">
           {{ evaluation.evaluation_number }}
@@ -15,7 +15,7 @@
           v-if="canEdit"
           type="primary"
           :icon="Edit"
-          @click="$router.push(`/evaluations/${evaluation.id}/edit`)"
+          @click="handleEdit"
         >
           {{ $t('common.edit') }}
         </el-button>
@@ -26,12 +26,7 @@
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item v-if="canApprove" command="approve" :icon="Check">
-                {{ $t('evaluation.approve') }}
-              </el-dropdown-item>
-              <el-dropdown-item v-if="canReject" command="reject" :icon="Close">
-                {{ $t('evaluation.reject') }}
-              </el-dropdown-item>
+              <!-- Approvals removed in simplified mode -->
               <el-dropdown-item v-if="canPause" command="pause" :icon="VideoPause">
                 {{ $t('evaluation.pause') }}
               </el-dropdown-item>
@@ -47,14 +42,418 @@
       </div>
     </div>
 
-    <div v-if="evaluation" class="detail-content">
-      <el-row :gutter="20">
+    <div v-if="evaluation" class="detail-content dialog-scroll">
+      <!-- Dialog mode: Tabbed layout to reduce scrolling -->
+      <template v-if="inDialog">
+        <el-tabs v-model="activeTab" type="border-card" class="dialog-tabs">
+          <el-tab-pane :label="$t('evaluation.basicInformation')" name="details">
+            <el-card class="info-card">
+              <template #header>
+                <div class="card-header">
+                  <span>{{ $t('evaluation.basicInformation') }}</span>
+                  <div class="header-actions">
+                    <template v-if="!editing && canEdit">
+                      <el-button size="small" type="primary" :icon="Edit" @click="startEdit">
+                        {{ $t('common.edit') }}
+                      </el-button>
+                    </template>
+                    <template v-else-if="editing">
+                      <el-button size="small" @click="cancelEdit" :icon="Close">
+                        {{ $t('common.cancel') }}
+                      </el-button>
+                      <el-button size="small" type="primary" :loading="saving" :icon="Check" @click="saveEdit">
+                        {{ $t('common.save') }}
+                      </el-button>
+                    </template>
+                  </div>
+                </div>
+              </template>
+              <el-descriptions :column="2" border>
+                <el-descriptions-item :label="$t('evaluation.evaluationNumber')">
+                  {{ evaluation.evaluation_number }}
+                </el-descriptions-item>
+                <el-descriptions-item :label="$t('evaluation.evaluationType')">
+                  <el-tag :type="evaluation.evaluation_type === 'new_product' ? 'primary' : 'success'">
+                    {{ $t(`evaluation.type.${evaluation.evaluation_type}`) }}
+                  </el-tag>
+                </el-descriptions-item>
+                <el-descriptions-item :label="$t('evaluation.productName')">
+                  <template v-if="editing">
+                    <el-input v-model="editForm.product_name" />
+                  </template>
+                  <template v-else>
+                    {{ evaluation.product_name }}
+                  </template>
+                </el-descriptions-item>
+                <el-descriptions-item :label="$t('evaluation.partNumber')">
+                  <template v-if="editing">
+                    <el-input v-model="editForm.part_number" />
+                  </template>
+                  <template v-else>
+                    {{ evaluation.part_number }}
+                  </template>
+                </el-descriptions-item>
+                <el-descriptions-item :label="$t('evaluation.scsCharger')">
+                  <template v-if="editing">
+                    <el-input v-model="editForm.scs_charger_name" />
+                  </template>
+                  <template v-else>
+                    {{ evaluation.scs_charger_name || '-' }}
+                  </template>
+                </el-descriptions-item>
+                <el-descriptions-item :label="$t('evaluation.headOfficeCharger')">
+                  <template v-if="editing">
+                    <el-input v-model="editForm.head_office_charger_name" />
+                  </template>
+                  <template v-else>
+                    {{ evaluation.head_office_charger_name || '-' }}
+                  </template>
+                </el-descriptions-item>
+                <el-descriptions-item :label="$t('evaluation.startDate')">
+                  {{ formatDate(evaluation.start_date) }}
+                </el-descriptions-item>
+                <el-descriptions-item :label="$t('evaluation.actualEndDate')">
+                  {{ evaluation.actual_end_date ? formatDate(evaluation.actual_end_date) : '-' }}
+                </el-descriptions-item>
+                <el-descriptions-item :label="$t('evaluation.processStep')">
+                  <template v-if="editing">
+                    <el-input v-model="editForm.process_step" />
+                  </template>
+                  <template v-else>
+                    {{ evaluation.process_step || '-' }}
+                  </template>
+                </el-descriptions-item>
+                <el-descriptions-item :label="$t('evaluation.reason')">
+                  <template v-if="editing">
+                    <el-select v-model="editForm.evaluation_reason" style="width: 100%">
+                      <el-option v-for="opt in reasonOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+                    </el-select>
+                  </template>
+                  <template v-else>
+                    {{ getReasonText(evaluation.evaluation_reason) }}
+                  </template>
+                </el-descriptions-item>
+              </el-descriptions>
+
+              <div class="description-section">
+                <h4>{{ $t('evaluation.evaluationDescription') }}</h4>
+                <template v-if="editing">
+                  <el-input v-model="editForm.remarks" type="textarea" :rows="3" />
+                </template>
+                <template v-else>
+                  <p>{{ evaluation.remarks || evaluation.description || '-' }}</p>
+                </template>
+              </div>
+            </el-card>
+
+            <el-card class="sidebar-card" style="margin-top: 12px">
+              <template #header>
+                <span>{{ $t('evaluation.statusInformation') }}</span>
+              </template>
+              <div class="status-info">
+                <div class="status-item">
+                  <span class="label">{{ $t('evaluation.currentStatus') }}：</span>
+                  <template v-if="editing">
+                    <el-select v-model="editForm.status" size="small" style="width: 180px">
+                      <el-option
+                        v-for="opt in statusOptions"
+                        :key="opt.value"
+                        :label="opt.label"
+                        :value="opt.value"
+                      />
+                    </el-select>
+                  </template>
+                  <template v-else>
+                    <el-tag :type="getStatusTagType(evaluation.status)">
+                      {{ $t(`status.${evaluation.status}`) }}
+                    </el-tag>
+                  </template>
+                </div>
+                <div class="status-item">
+                  <span class="label">{{ $t('evaluation.createdAt') }}：</span>
+                  <span>{{ formatDateTime(evaluation.created_at) }}</span>
+                </div>
+                <div class="status-item">
+                  <span class="label">{{ $t('evaluation.updatedAt') }}：</span>
+                  <span>{{ formatDateTime(evaluation.updated_at) }}</span>
+                </div>
+              </div>
+            </el-card>
+
+            <el-card class="sidebar-card" style="margin-top: 12px">
+              <template #header>
+                <div class="card-header">
+                  <span>{{ $t('evaluation.relatedFiles') }}</span>
+                  <el-button v-if="canEdit" size="small" :icon="Plus" @click="handleUploadFile">
+                    {{ $t('evaluation.upload') }}
+                  </el-button>
+                </div>
+              </template>
+              <div class="files-list">
+                <div v-for="file in evaluation.files" :key="file.id" class="file-item">
+                  <el-icon class="file-icon"><Document /></el-icon>
+                  <div class="file-info">
+                    <div class="file-name">{{ file.filename }}</div>
+                    <div class="file-meta">
+                      {{ formatFileSize(file.size) }} •
+                      {{ formatDate(file.created_at) }}
+                    </div>
+                  </div>
+                  <el-button size="small" :icon="Download" @click="handleDownloadFile(file)" />
+                </div>
+                <div v-if="!evaluation.files || evaluation.files.length === 0" class="empty-files">
+                  {{ $t('evaluation.noRelatedFiles') }}
+                </div>
+              </div>
+            </el-card>
+          </el-tab-pane>
+
+          <el-tab-pane :label="$t('evaluation.technicalSpecifications')" name="specs">
+          <el-card class="info-card">
+            <template #header>
+              <div class="card-header">
+                <span>{{ $t('evaluation.technicalSpecifications') }}</span>
+                <div class="header-actions">
+                  <template v-if="!editing && canEdit">
+                    <el-button size="small" type="primary" :icon="Edit" @click="startEdit">
+                      {{ $t('common.edit') }}
+                    </el-button>
+                  </template>
+                  <template v-else-if="editing">
+                    <el-button size="small" @click="cancelEdit" :icon="Close">
+                      {{ $t('common.cancel') }}
+                    </el-button>
+                    <el-button size="small" type="primary" :loading="saving" :icon="Check" @click="saveEdit">
+                      {{ $t('common.save') }}
+                    </el-button>
+                  </template>
+                </div>
+              </div>
+            </template>
+            <el-descriptions :column="2" border class="technical-specs">
+              <el-descriptions-item :label="$t('evaluation.pgmVersion')">
+                <template v-if="editing">
+                  <el-input v-model="editForm.pgm_version" />
+                </template>
+                <template v-else>
+                  {{ evaluation.pgm_version || '-' }}
+                </template>
+              </el-descriptions-item>
+              <el-descriptions-item :label="$t('evaluation.capacity')">
+                <template v-if="editing">
+                  <el-input v-model="editForm.capacity" />
+                </template>
+                <template v-else>
+                  {{ evaluation.capacity || '-' }}
+                </template>
+              </el-descriptions-item>
+              <el-descriptions-item :label="$t('evaluation.interfaceType')">
+                <template v-if="editing">
+                  <el-select v-model="editForm.interface_type" style="width: 100%">
+                    <el-option :label="$t('evaluation.interfaceTypes.sata')" value="SATA" />
+                    <el-option :label="$t('evaluation.interfaceTypes.nvme')" value="NVMe" />
+                    <el-option :label="$t('evaluation.interfaceTypes.pcie')" value="PCIe" />
+                    <el-option :label="$t('common.other')" value="other" />
+                  </el-select>
+                </template>
+                <template v-else>
+                  {{ evaluation.interface_type || '-' }}
+                </template>
+              </el-descriptions-item>
+              <el-descriptions-item :label="$t('evaluation.formFactor')">
+                <template v-if="editing">
+                  <el-select v-model="editForm.form_factor" style="width: 100%">
+                    <el-option :label="$t('evaluation.formFactors.2_5_inch')" value="2.5" />
+                    <el-option :label="$t('evaluation.formFactors.m2_2280')" value="M.2_2280" />
+                    <el-option :label="$t('evaluation.formFactors.m2_2242')" value="M.2_2242" />
+                    <el-option :label="$t('common.other')" value="other" />
+                  </el-select>
+                </template>
+                <template v-else>
+                  {{ evaluation.form_factor || '-' }}
+                </template>
+              </el-descriptions-item>
+            </el-descriptions>
+          </el-card>
+          </el-tab-pane>
+
+          <el-tab-pane :label="$t('evaluation.evaluationProcesses')" name="processes">
+            <el-card class="info-card">
+              <template #header>
+                <span>{{ $t('evaluation.evaluationProcess') }}</span>
+              </template>
+              <div class="process-timeline">
+                <el-timeline>
+                  <el-timeline-item
+                    v-for="process in processSteps"
+                    :key="process.key"
+                    :timestamp="process.timestamp"
+                    :type="process.type"
+                    :icon="process.icon"
+                  >
+                    <div class="process-content">
+                      <h4>{{ process.title }}</h4>
+                      <p v-if="process.description">{{ process.description }}</p>
+                      <div v-if="process.result" class="process-result">
+                        <el-tag :type="process.result.type">
+                          {{ process.result.text }}
+                        </el-tag>
+                      </div>
+                    </div>
+                  </el-timeline-item>
+                </el-timeline>
+              </div>
+            </el-card>
+
+            <el-card v-if="evaluation.processes && evaluation.processes.length > 0" class="info-card" style="margin-top: 12px">
+              <template #header>
+                <span>{{ $t('evaluation.evaluationProcesses') }}</span>
+              </template>
+              <div class="processes-section">
+                <div v-for="process in evaluation.processes" :key="process.id" class="process-item">
+                  <div class="process-header">
+                    <h4>{{ process.title || process.eval_code }} - {{ process.lot_number }}</h4>
+                    <div class="header-actions">
+                      <template v-if="!isProcessEditing(process.id) && canEdit">
+                        <el-button size="small" type="primary" text :icon="Edit" @click="startEditProcess(process)">
+                          {{ $t('common.edit') }}
+                        </el-button>
+                      </template>
+                      <template v-else-if="isProcessEditing(process.id)">
+                        <el-button size="small" text @click="cancelEditProcess(process.id)" :icon="Close">
+                          {{ $t('common.cancel') }}
+                        </el-button>
+                        <el-button size="small" type="primary" :loading="processSaving[process.id]" @click="saveProcess(process.id)" :icon="Check">
+                          {{ $t('common.save') }}
+                        </el-button>
+                      </template>
+                    </div>
+                  </div>
+                  <div class="process-content">
+                    <template v-if="isProcessEditing(process.id)">
+                      <el-row :gutter="12" style="margin-bottom: 8px">
+                        <el-col :span="8">
+                          <label class="inline-label">{{ $t('evaluation.evalCode') }}</label>
+                          <el-input v-model="processEditState[process.id].eval_code" />
+                        </el-col>
+                        <el-col :span="8">
+                          <label class="inline-label">{{ $t('evaluation.lotNumber') }}</label>
+                          <el-input v-model="processEditState[process.id].lot_number" />
+                        </el-col>
+                        <el-col :span="8">
+                          <label class="inline-label">{{ $t('evaluation.quantity') }}</label>
+                          <el-input-number v-model="processEditState[process.id].quantity" :min="1" style="width: 100%" />
+                        </el-col>
+                      </el-row>
+                      <el-row :gutter="12" style="margin-bottom: 8px">
+                        <el-col :span="12">
+                          <label class="inline-label">{{ $t('evaluation.processFlow') }}</label>
+                          <el-input v-model="processEditState[process.id].process_description" type="textarea" :rows="2" />
+                        </el-col>
+                        <el-col :span="12">
+                          <label class="inline-label">{{ $t('evaluation.aqlResult') }}</label>
+                          <el-input v-model="processEditState[process.id].aql_result" />
+                        </el-col>
+                      </el-row>
+                      <el-row :gutter="12" style="margin-bottom: 8px">
+                        <el-col :span="12">
+                          <label class="inline-label">{{ $t('evaluation.manufacturingTestResults') }}</label>
+                          <el-input v-model="processEditState[process.id].manufacturing_test_results" type="textarea" :rows="2" />
+                        </el-col>
+                        <el-col :span="12">
+                          <label class="inline-label">{{ $t('evaluation.defectAnalysisResults') }}</label>
+                          <el-input v-model="processEditState[process.id].defect_analysis_results" type="textarea" :rows="2" />
+                        </el-col>
+                      </el-row>
+                      <div>
+                        <label class="inline-label">{{ $t('common.status') }}</label>
+                        <el-select v-model="processEditState[process.id].status" size="small" style="width: 200px">
+                          <el-option v-for="opt in processStatusOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+                        </el-select>
+                      </div>
+                    </template>
+                    <template v-else>
+                      <p>
+                        <strong>{{ $t('evaluation.quantity') }}：</strong>{{ process.quantity }}
+                      </p>
+                      <p>
+                        <strong>{{ $t('evaluation.processFlow') }}：</strong>{{ process.process_description }}
+                      </p>
+                      <p v-if="process.manufacturing_test_results">
+                        <strong>{{ $t('evaluation.manufacturingTestResults') }}：</strong>{{ process.manufacturing_test_results }}
+                      </p>
+                      <p v-if="process.defect_analysis_results">
+                        <strong>{{ $t('evaluation.defectAnalysisResults') }}：</strong>{{ process.defect_analysis_results }}
+                      </p>
+                      <p v-if="process.aql_result">
+                        <strong>{{ $t('evaluation.aqlResult') }}：</strong>{{ process.aql_result }}
+                      </p>
+                      <p class="process-meta">
+                        <small>{{ $t('evaluation.createdAt') }}：{{ formatDateTime(process.created_at) }}</small>
+                      </p>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </el-card>
+          </el-tab-pane>
+
+          <el-tab-pane :label="$t('evaluation.operationLogs')" name="logs">
+            <el-card class="sidebar-card">
+              <template #header>
+                <div class="card-header">
+                  <span>{{ $t('evaluation.operationLogs') }}</span>
+                </div>
+              </template>
+              <div class="logs-list">
+                <el-timeline>
+                  <el-timeline-item
+                    v-for="log in filteredLogs"
+                    :key="log.id"
+                    :icon="getOperationIcon(log.operation_type)"
+                    :color="getOperationColor(log.operation_type)"
+                  >
+                    <div class="log-content">
+                      <div class="log-time">{{ formatDateTime(log.created_at) }}</div>
+                      <div class="log-user">{{ log.ip_address }} • {{ log.request_method }} {{ log.request_path }}</div>
+                      <div class="log-action">{{ getOperationDescription(log) }}</div>
+                    </div>
+                  </el-timeline-item>
+                </el-timeline>
+                <div v-if="filteredLogs.length === 0" class="empty-logs">
+                  <el-empty :image-size="60" :description="$t('evaluation.noOperationLogs')" />
+                </div>
+              </div>
+            </el-card>
+          </el-tab-pane>
+        </el-tabs>
+      </template>
+
+      <!-- Full-page layout (non-dialog) -->
+      <el-row v-else :gutter="20">
         <!-- 左侧主要内容 -->
         <el-col :span="16">
           <!-- {{ $t('evaluation.basicInformation') }} -->
           <el-card class="info-card">
             <template #header>
-              <span>{{ $t('evaluation.basicInformation') }}</span>
+              <div class="card-header">
+                <span>{{ $t('evaluation.basicInformation') }}</span>
+                <div class="header-actions">
+                  <template v-if="!editing && canEdit">
+                    <el-button size="small" type="primary" :icon="Edit" @click="startEdit">
+                      {{ $t('common.edit') }}
+                    </el-button>
+                  </template>
+                  <template v-else-if="editing">
+                    <el-button size="small" @click="cancelEdit" :icon="Close">
+                      {{ $t('common.cancel') }}
+                    </el-button>
+                    <el-button size="small" type="primary" :loading="saving" :icon="Check" @click="saveEdit">
+                      {{ $t('common.save') }}
+                    </el-button>
+                  </template>
+                </div>
+              </div>
             </template>
             <el-descriptions :column="2" border>
               <el-descriptions-item :label="$t('evaluation.evaluationNumber')">
@@ -68,16 +467,36 @@
                 </el-tag>
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.productName')">
-                {{ evaluation.product_name }}
+                <template v-if="editing">
+                  <el-input v-model="editForm.product_name" />
+                </template>
+                <template v-else>
+                  {{ evaluation.product_name }}
+                </template>
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.partNumber')">
-                {{ evaluation.part_number }}
+                <template v-if="editing">
+                  <el-input v-model="editForm.part_number" />
+                </template>
+                <template v-else>
+                  {{ evaluation.part_number }}
+                </template>
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.scsCharger')">
-                {{ evaluation.scs_charger_name || '-' }}
+                <template v-if="editing">
+                  <el-input v-model="editForm.scs_charger_name" />
+                </template>
+                <template v-else>
+                  {{ evaluation.scs_charger_name || '-' }}
+                </template>
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.headOfficeCharger')">
-                {{ evaluation.head_office_charger_name || '-' }}
+                <template v-if="editing">
+                  <el-input v-model="editForm.head_office_charger_name" />
+                </template>
+                <template v-else>
+                  {{ evaluation.head_office_charger_name || '-' }}
+                </template>
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.startDate')">
                 {{ formatDate(evaluation.start_date) }}
@@ -86,14 +505,39 @@
               <el-descriptions-item :label="$t('evaluation.actualEndDate')">
                 {{ evaluation.actual_end_date ? formatDate(evaluation.actual_end_date) : '-' }}
               </el-descriptions-item>
+              <el-descriptions-item :label="$t('evaluation.processStep')">
+                <template v-if="editing">
+                  <el-input v-model="editForm.process_step" />
+                </template>
+                <template v-else>
+                  {{ evaluation.process_step || '-' }}
+                </template>
+              </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.reason')">
-                {{ getReasonText(evaluation.evaluation_reason) }}
+                <template v-if="editing">
+                  <el-select v-model="editForm.evaluation_reason" style="width: 100%">
+                    <el-option
+                      v-for="opt in reasonOptions"
+                      :key="opt.value"
+                      :label="opt.label"
+                      :value="opt.value"
+                    />
+                  </el-select>
+                </template>
+                <template v-else>
+                  {{ getReasonText(evaluation.evaluation_reason) }}
+                </template>
               </el-descriptions-item>
             </el-descriptions>
 
-            <div v-if="evaluation.description" class="description-section">
+            <div class="description-section">
               <h4>{{ $t('evaluation.evaluationDescription') }}</h4>
-              <p>{{ evaluation.description }}</p>
+              <template v-if="editing">
+                <el-input v-model="editForm.remarks" type="textarea" :rows="3" />
+              </template>
+              <template v-else>
+                <p>{{ evaluation.remarks || evaluation.description || '-' }}</p>
+              </template>
             </div>
           </el-card>
 
@@ -104,16 +548,46 @@
             </template>
             <el-descriptions :column="2" border class="technical-specs">
               <el-descriptions-item :label="$t('evaluation.pgmVersion')">
-                {{ evaluation.pgm_version || '-' }}
+                <template v-if="editing">
+                  <el-input v-model="editForm.pgm_version" />
+                </template>
+                <template v-else>
+                  {{ evaluation.pgm_version || '-' }}
+                </template>
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.capacity')">
-                {{ evaluation.capacity || '-' }}
+                <template v-if="editing">
+                  <el-input v-model="editForm.capacity" />
+                </template>
+                <template v-else>
+                  {{ evaluation.capacity || '-' }}
+                </template>
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.interfaceType')">
-                {{ evaluation.interface_type || '-' }}
+                <template v-if="editing">
+                  <el-select v-model="editForm.interface_type" style="width: 100%">
+                    <el-option :label="$t('evaluation.interfaceTypes.sata')" value="SATA" />
+                    <el-option :label="$t('evaluation.interfaceTypes.nvme')" value="NVMe" />
+                    <el-option :label="$t('evaluation.interfaceTypes.pcie')" value="PCIe" />
+                    <el-option :label="$t('common.other')" value="other" />
+                  </el-select>
+                </template>
+                <template v-else>
+                  {{ evaluation.interface_type || '-' }}
+                </template>
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.formFactor')">
-                {{ evaluation.form_factor || '-' }}
+                <template v-if="editing">
+                  <el-select v-model="editForm.form_factor" style="width: 100%">
+                    <el-option :label="$t('evaluation.formFactors.2_5_inch')" value="2.5" />
+                    <el-option :label="$t('evaluation.formFactors.m2_2280')" value="M.2_2280" />
+                    <el-option :label="$t('evaluation.formFactors.m2_2242')" value="M.2_2242" />
+                    <el-option :label="$t('common.other')" value="other" />
+                  </el-select>
+                </template>
+                <template v-else>
+                  {{ evaluation.form_factor || '-' }}
+                </template>
               </el-descriptions-item>
             </el-descriptions>
           </el-card>
@@ -230,9 +704,16 @@
             <div class="status-info">
               <div class="status-item">
                 <span class="label">{{ $t('evaluation.currentStatus') }}：</span>
-                <el-tag :type="getStatusTagType(evaluation.status)">
-                  {{ $t(`status.${evaluation.status}`) }}
-                </el-tag>
+                <template v-if="editing">
+                  <el-select v-model="editForm.status" size="small" style="width: 180px">
+                    <el-option v-for="opt in statusOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+                  </el-select>
+                </template>
+                <template v-else>
+                  <el-tag :type="getStatusTagType(evaluation.status)">
+                    {{ $t(`status.${evaluation.status}`) }}
+                  </el-tag>
+                </template>
               </div>
               <div class="status-item">
                 <span class="label">{{ $t('evaluation.createdAt') }}：</span>
@@ -286,13 +767,7 @@
             <template #header>
               <div class="card-header">
                 <span>{{ $t('evaluation.operationLogs') }}</span>
-                <el-switch
-                  v-if="authStore.isAdmin"
-                  v-model="showAllLogs"
-                  size="small"
-                  :active-text="$t('evaluation.showAllLogs')"
-                  :inactive-text="$t('evaluation.showCriticalLogs')"
-                />
+                <!-- Admin-only toggle removed -->
               </div>
             </template>
             <div class="logs-list">
@@ -307,7 +782,7 @@
                     <div class="log-time">
                       {{ formatDateTime(log.created_at) }}
                     </div>
-                    <div class="log-user">{{ log.user_name }}</div>
+                    <div class="log-user">{{ log.ip_address }} • {{ log.request_method }} {{ log.request_path }}</div>
                     <div class="log-action">
                       {{ getOperationDescription(log) }}
                     </div>
@@ -326,8 +801,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+const props = defineProps({
+  inDialog: { type: Boolean, default: false },
+  evaluationId: { type: [String, Number], default: null },
+})
+const emit = defineEmits(['edit'])
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -350,59 +830,144 @@ import {
   Download as DownloadIcon,
 } from '@element-plus/icons-vue'
 import api from '../utils/api'
-import { useAuthStore } from '../stores/auth'
+// Auth removed
 
 const route = useRoute()
 
 const { t } = useI18n()
-const authStore = useAuthStore()
+// Auth removed
 
 const loading = ref(false)
 const evaluation = ref(null)
 const showAllLogs = ref(false)
+const editing = ref(false)
+const saving = ref(false)
+
+const editForm = reactive({
+  product_name: '',
+  part_number: '',
+  evaluation_reason: '',
+  process_step: '',
+  scs_charger_name: '',
+  head_office_charger_name: '',
+  status: '',
+  remarks: '',
+  pgm_version: '',
+  capacity: '',
+  interface_type: '',
+  form_factor: '',
+})
+
+const reasonOptions = computed(() => {
+  if (!evaluation.value) return []
+  if (evaluation.value.evaluation_type === 'new_product') {
+    return [
+      { label: t('evaluation.reasons.horizontal_expansion'), value: 'horizontal_expansion' },
+      { label: t('evaluation.reasons.direct_development'), value: 'direct_development' },
+    ]
+  }
+  return [
+    { label: t('evaluation.reasons.pgm_improvement'), value: 'pgm_improvement' },
+    { label: t('evaluation.reasons.firmware_change'), value: 'firmware_change' },
+    { label: t('evaluation.reasons.bom_change'), value: 'bom_change' },
+    { label: t('evaluation.reasons.customer_requirement'), value: 'customer_requirement' },
+    { label: t('evaluation.reasons.other'), value: 'other' },
+  ]
+})
+
+const statusOptions = computed(() => [
+  { label: t('status.draft'), value: 'draft' },
+  { label: t('status.in_progress'), value: 'in_progress' },
+  { label: t('status.paused'), value: 'paused' },
+  { label: t('status.completed'), value: 'completed' },
+  { label: t('status.cancelled'), value: 'cancelled' },
+  { label: t('status.rejected'), value: 'rejected' },
+])
+
+const syncEditForm = () => {
+  if (!evaluation.value) return
+  Object.assign(editForm, {
+    product_name: evaluation.value.product_name || '',
+    part_number: evaluation.value.part_number || '',
+    evaluation_reason: evaluation.value.evaluation_reason || '',
+    process_step: evaluation.value.process_step || '',
+    scs_charger_name: evaluation.value.scs_charger_name || '',
+    head_office_charger_name: evaluation.value.head_office_charger_name || '',
+    status: evaluation.value.status || 'draft',
+    remarks: evaluation.value.remarks || evaluation.value.description || '',
+    pgm_version: evaluation.value.pgm_version || '',
+    capacity: evaluation.value.capacity || '',
+    interface_type: evaluation.value.interface_type || '',
+    form_factor: evaluation.value.form_factor || '',
+  })
+}
+
+const startEdit = () => {
+  syncEditForm()
+  editing.value = true
+}
+
+const cancelEdit = () => {
+  editing.value = false
+}
+
+const saveEdit = async () => {
+  if (!evaluation.value) return
+  try {
+    saving.value = true
+    const payload = {
+      product_name: editForm.product_name,
+      part_number: editForm.part_number,
+      evaluation_reason: editForm.evaluation_reason,
+      process_step: editForm.process_step,
+      scs_charger_name: editForm.scs_charger_name,
+      head_office_charger_name: editForm.head_office_charger_name,
+      remarks: editForm.remarks,
+      pgm_version: editForm.pgm_version,
+      capacity: editForm.capacity,
+      interface_type: editForm.interface_type,
+      form_factor: editForm.form_factor,
+    }
+    await api.put(`/evaluations/${evaluation.value.id}`, payload)
+    // Update status if changed
+    if (editForm.status && editForm.status !== evaluation.value.status) {
+      await api.put(`/evaluations/${evaluation.value.id}/status`, { status: editForm.status })
+    }
+    ElMessage.success(t('common.saveSuccess'))
+    await fetchEvaluation()
+    editing.value = false
+  } catch (error) {
+    ElMessage.error(t('common.saveError'))
+    console.error('Save evaluation failed:', error)
+  } finally {
+    saving.value = false
+  }
+}
 
 const canEdit = computed(() => {
   if (!evaluation.value) return false
-  return (
-    evaluation.value.status === 'in_progress' &&
-    (authStore.user.id === evaluation.value.evaluator_id || authStore.isAdmin)
-  )
+  return ['draft', 'in_progress', 'paused'].includes(evaluation.value.status)
 })
 
-const canOperate = computed(() => {
-  return authStore.canApprove || authStore.user.id === evaluation.value?.evaluator_id
-})
+const canOperate = computed(() => canPause.value || canResume.value || canCancel.value)
 
-const canApprove = computed(() => {
-  return evaluation.value?.status === 'pending_approval' && authStore.canApprove
-})
+const canApprove = computed(() => false)
 
-const canReject = computed(() => {
-  return evaluation.value?.status === 'pending_approval' && authStore.canApprove
-})
+const canReject = computed(() => false)
 
 const canPause = computed(() => {
   if (!evaluation.value) return false
-  return (
-    evaluation.value.status === 'in_progress' &&
-    (authStore.user.id === evaluation.value.evaluator_id || authStore.isAdmin)
-  )
+  return evaluation.value.status === 'in_progress'
 })
 
 const canResume = computed(() => {
   if (!evaluation.value) return false
-  return (
-    evaluation.value.status === 'paused' &&
-    (authStore.user.id === evaluation.value.evaluator_id || authStore.isAdmin)
-  )
+  return evaluation.value.status === 'paused'
 })
 
 const canCancel = computed(() => {
   if (!evaluation.value) return false
-  return (
-    ['in_progress', 'paused', 'pending_approval'].includes(evaluation.value.status) &&
-    (authStore.user.id === evaluation.value.evaluator_id || authStore.isAdmin)
-  )
+  return ['in_progress', 'paused', 'pending_approval'].includes(evaluation.value.status)
 })
 
 const processSteps = computed(() => {
@@ -427,13 +992,8 @@ const processSteps = computed(() => {
 const filteredLogs = computed(() => {
   if (!evaluation.value?.logs) return []
 
-  // If admin and showAllLogs is true, return all logs
-  if (authStore.isAdmin && showAllLogs.value) {
-    return evaluation.value.logs
-  }
-
-  // Filter for critical operations only
-  const criticalOperationTypes = ['create', 'update', 'delete', 'approve', 'reject']
+  // Filter for critical operations only (simplified mode)
+  const criticalOperationTypes = ['create', 'update', 'delete']
   return evaluation.value.logs.filter((log) => {
     // Include critical operation types
     if (criticalOperationTypes.includes(log.operation_type)) {
@@ -454,7 +1014,8 @@ const filteredLogs = computed(() => {
 const fetchEvaluation = async () => {
   try {
     loading.value = true
-    const response = await api.get(`/evaluations/${route.params.id}`)
+    const id = props.evaluationId || route.params.id
+    const response = await api.get(`/evaluations/${id}`)
     evaluation.value = response.data.data.evaluation
   } catch (error) {
     ElMessage.error(t('evaluation.getEvaluationDetailsFailed'))
@@ -462,6 +1023,11 @@ const fetchEvaluation = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const handleEdit = () => {
+  // Switch to inline edit mode within the detail view
+  startEdit()
 }
 
 const handleOperation = async (command) => {
@@ -499,11 +1065,7 @@ const handleOperation = async (command) => {
     })
 
     // Call appropriate API endpoint based on command
-    if (command === 'approve') {
-      await api.post(`/evaluations/${evaluation.value.id}/approve`)
-    } else if (command === 'reject') {
-      await api.post(`/evaluations/${evaluation.value.id}/reject`)
-    } else if (command === 'pause') {
+    if (command === 'pause') {
       await api.put(`/evaluations/${evaluation.value.id}/status`, {
         status: 'paused',
       })
@@ -636,10 +1198,8 @@ const getOperationDescription = (log) => {
     return t('evaluation.operations.updated')
   } else if (log.operation_type === 'delete') {
     return t('evaluation.operations.deleted')
-  } else if (log.operation_type === 'approve') {
-    return t('evaluation.operations.approved')
-  } else if (log.operation_type === 'reject') {
-    return t('evaluation.operations.rejected')
+  } else if (log.operation_type === 'export') {
+    return t('evaluation.operations.exported')
   } else if (log.operation_type === 'view') {
     return t('evaluation.operations.viewed')
   } else if (log.operation_type === 'login') {
@@ -665,20 +1225,74 @@ const getProcessStatusType = (status) => {
 }
 
 onMounted(async () => {
-  // 首先确保用户信息已加载
-  if (!authStore.user && authStore.token) {
-    await authStore.checkAuth()
-  }
-
-  // 然后获取评估信息
   await fetchEvaluation()
 })
+
+// Dialog tabs
+const activeTab = ref('details')
+
+// Inline edit for processes
+const processEditState = reactive({})
+const processSaving = reactive({})
+const isProcessEditing = (id) => !!processEditState[id]
+const startEditProcess = (process) => {
+  processEditState[process.id] = {
+    title: process.title || '',
+    eval_code: process.eval_code || '',
+    lot_number: process.lot_number || '',
+    quantity: process.quantity || 1,
+    process_description: process.process_description || '',
+    manufacturing_test_results: process.manufacturing_test_results || '',
+    defect_analysis_results: process.defect_analysis_results || '',
+    aql_result: process.aql_result || '',
+    status: process.status || 'pending',
+  }
+}
+const cancelEditProcess = (id) => {
+  delete processEditState[id]
+}
+const processStatusOptions = computed(() => [
+  { label: t('evaluation.processStatus.pending'), value: 'pending' },
+  { label: t('evaluation.processStatus.in_progress'), value: 'in_progress' },
+  { label: t('evaluation.processStatus.completed'), value: 'completed' },
+  { label: t('evaluation.processStatus.failed'), value: 'failed' },
+])
+const saveProcess = async (id) => {
+  if (!evaluation.value || !processEditState[id]) return
+  try {
+    processSaving[id] = true
+    const payload = { ...processEditState[id] }
+    await api.put(`/evaluations/${evaluation.value.id}/processes/${id}`, payload)
+    ElMessage.success(t('common.saveSuccess'))
+    await fetchEvaluation()
+    delete processEditState[id]
+  } catch (e) {
+    ElMessage.error(t('common.saveError'))
+    console.error('Save process failed:', e)
+  } finally {
+    processSaving[id] = false
+  }
+}
 </script>
 
 <style scoped>
-.evaluation-detail-page {
-  padding: 0;
+/* Header actions in info card */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
+.header-actions { display: flex; gap: 8px; }
+/* Dialog tab layout tweaks */
+.dialog-tabs :deep(.el-card__header) {
+  padding: 10px 14px;
+}
+.dialog-tabs :deep(.el-card__body) {
+  padding: 12px 14px;
+}
+.evaluation-detail-page { padding: 0; }
+.dialog-mode .page-header { display: none; }
+.dialog-scroll { max-height: calc(80vh - 140px); overflow: auto; padding-right: 4px; }
 
 .page-header {
   display: flex;
@@ -697,9 +1311,7 @@ onMounted(async () => {
   gap: 12px;
 }
 
-.status-tag {
-  font-size: 12px;
-}
+.status-tag { font-size: 12px; }
 
 .page-description {
   color: #7f8c8d;
@@ -982,6 +1594,13 @@ onMounted(async () => {
   border-top: 1px dashed #e8e8e8;
   color: #909399;
   font-size: 12px;
+}
+
+.inline-label {
+  display: inline-block;
+  font-size: 12px;
+  color: #606266;
+  margin-bottom: 6px;
 }
 
 @media (max-width: 1200px) {

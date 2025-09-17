@@ -6,12 +6,10 @@ import json
 from datetime import datetime
 
 from flask import Blueprint, Response, current_app, jsonify, request
-from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.models import db
 from app.models.evaluation import Evaluation, EvaluationProcess, EvaluationStatus
 from app.models.operation_log import OperationLog, OperationType
-from app.models.user import User
 
 evaluation_bp = Blueprint("evaluation", __name__)
 
@@ -49,7 +47,6 @@ def generate_evaluation_number() -> str:
 
 
 @evaluation_bp.route("", methods=["GET"])
-@jwt_required()
 def get_evaluations() -> tuple[Response, int]:
     """Get a list of evaluations with optional filtering.
 
@@ -59,7 +56,8 @@ def get_evaluations() -> tuple[Response, int]:
         status (str, optional): Filter by evaluation status.
         evaluation_type (str, optional): Filter by evaluation type.
         product_name (str, optional): Filter by product name (partial match).
-        evaluator_id (int, optional): Filter by evaluator ID.
+        scs_charger_name (str, optional): Filter by SCS Charger name.
+        head_office_charger_name (str, optional): Filter by Head Office Charger name.
 
     Returns:
         Tuple[Response, int]: JSON response with evaluation list and HTTP status code.
@@ -101,11 +99,16 @@ def get_evaluations() -> tuple[Response, int]:
         schema:
           type: string
         description: Filter by product name (partial match)
-      - name: evaluator_id
+      - name: scs_charger_name
         in: query
         schema:
-          type: integer
-        description: Filter by evaluator ID
+          type: string
+        description: Filter by SCS Charger name (partial match)
+      - name: head_office_charger_name
+        in: query
+        schema:
+          type: string
+        description: Filter by Head Office Charger name (partial match)
     responses:
       200:
         description: List of evaluations
@@ -169,9 +172,6 @@ def get_evaluations() -> tuple[Response, int]:
         status = request.args.get("status")
         evaluation_type = request.args.get("evaluation_type")
         product_name = request.args.get("product_name")
-        evaluator_id = request.args.get("evaluator_id", type=int)
-        scs_charger_id = request.args.get("scs_charger_id", type=int)
-        head_office_charger_id = request.args.get("head_office_charger_id", type=int)
         scs_charger_name = request.args.get("scs_charger_name")
         head_office_charger_name = request.args.get("head_office_charger_name")
 
@@ -185,23 +185,16 @@ def get_evaluations() -> tuple[Response, int]:
             query = query.filter(Evaluation.evaluation_type == evaluation_type)
         if product_name:
             query = query.filter(Evaluation.product_name.ilike(f"%{product_name}%"))
-        if evaluator_id:
-            query = query.filter(Evaluation.evaluator_id == evaluator_id)
-        if scs_charger_id:
-            query = query.filter(Evaluation.scs_charger_id == scs_charger_id)
-        if head_office_charger_id:
-            query = query.filter(
-                Evaluation.head_office_charger_id == head_office_charger_id
-            )
-        # Apply charger name filters using joins
         if scs_charger_name:
-            query = query.join(User, Evaluation.scs_charger_id == User.id).filter(
-                User.full_name.ilike(f"%{scs_charger_name}%")
+            query = query.filter(
+                Evaluation.scs_charger_name.ilike(f"%{scs_charger_name}%")
             )
         if head_office_charger_name:
-            query = query.join(
-                User, Evaluation.head_office_charger_id == User.id
-            ).filter(User.full_name.ilike(f"%{head_office_charger_name}%"))
+            query = query.filter(
+                Evaluation.head_office_charger_name.ilike(
+                    f"%{head_office_charger_name}%"
+                )
+            )
 
         # Paginate results
         paginated_evaluations = query.order_by(Evaluation.created_at.desc()).paginate(
@@ -211,27 +204,11 @@ def get_evaluations() -> tuple[Response, int]:
         # Format response
         evaluations = []
         for evaluation in paginated_evaluations.items:
-            evaluator = User.query.get(evaluation.evaluator_id)
-            evaluator_name = evaluator.full_name if evaluator else "Unknown"
-
-            scs_charger = User.query.get(evaluation.scs_charger_id)
-            scs_charger_name = scs_charger.full_name if scs_charger else "Unknown"
-
-            head_office_charger = User.query.get(evaluation.head_office_charger_id)
-            head_office_charger_name = (
-                head_office_charger.full_name if head_office_charger else "Unknown"
-            )
-
             evaluation_data = evaluation.to_dict()
-            evaluation_data["evaluator_name"] = evaluator_name
-            evaluation_data["scs_charger_name"] = scs_charger_name
-            evaluation_data["head_office_charger_name"] = head_office_charger_name
             evaluations.append(evaluation_data)
 
         # Log operation
-        user_id = get_jwt_identity()
         log = OperationLog(
-            user_id=user_id,
             operation_type=OperationType.VIEW.value,
             target_type="evaluation_list",
             target_id=None,
@@ -239,6 +216,12 @@ def get_evaluations() -> tuple[Response, int]:
             operation_description=f"User viewed evaluation list with filters: {request.args}",
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
+            request_method=request.method,
+            request_path=request.path,
+            query_string=request.query_string.decode()
+            if request.query_string
+            else None,
+            status_code=200,
             success=True,
         )
         db.session.add(log)
@@ -264,7 +247,6 @@ def get_evaluations() -> tuple[Response, int]:
 
 
 @evaluation_bp.route("/<int:evaluation_id>", methods=["GET"])
-@jwt_required()
 def get_evaluation(evaluation_id: int) -> tuple[Response, int]:
     """Get details of a specific evaluation.
 
@@ -347,39 +329,18 @@ def get_evaluation(evaluation_id: int) -> tuple[Response, int]:
         if not evaluation:
             return jsonify({"success": False, "message": "Evaluation not found"}), 404
 
-        # Get evaluator name
-        evaluator = User.query.get(evaluation.evaluator_id)
-        evaluator_name = evaluator.full_name if evaluator else "Unknown"
-
-        # Get charger names
-        scs_charger = User.query.get(evaluation.scs_charger_id)
-        scs_charger_name = scs_charger.full_name if scs_charger else "Unknown"
-
-        head_office_charger = User.query.get(evaluation.head_office_charger_id)
-        head_office_charger_name = (
-            head_office_charger.full_name if head_office_charger else "Unknown"
-        )
-
-        # Get evaluation data
-        evaluation_data = evaluation.to_dict()
-        evaluation_data["evaluator_name"] = evaluator_name
-        evaluation_data["scs_charger_name"] = scs_charger_name
-        evaluation_data["head_office_charger_name"] = head_office_charger_name
+        # Get evaluation data with related entities
+        evaluation_data = evaluation.to_dict(include_details=True)
 
         # Get operation logs
         logs = []
         for log in evaluation.operation_logs:
-            user = User.query.get(log.user_id)
-            log_data = log.to_dict()
-            log_data["user_name"] = user.full_name if user else "Unknown"
-            logs.append(log_data)
+            logs.append(log.to_dict())
 
         evaluation_data["logs"] = logs
 
         # Log operation
-        user_id = get_jwt_identity()
         log = OperationLog(
-            user_id=user_id,
             operation_type=OperationType.VIEW.value,
             target_type="evaluation",
             target_id=evaluation_id,
@@ -387,6 +348,12 @@ def get_evaluation(evaluation_id: int) -> tuple[Response, int]:
             operation_description="User viewed evaluation details",
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
+            request_method=request.method,
+            request_path=request.path,
+            query_string=request.query_string.decode()
+            if request.query_string
+            else None,
+            status_code=200,
             success=True,
         )
         db.session.add(log)
@@ -401,7 +368,6 @@ def get_evaluation(evaluation_id: int) -> tuple[Response, int]:
 
 
 @evaluation_bp.route("", methods=["POST"])
-@jwt_required()
 def create_evaluation() -> tuple[Response, int]:
     """Create a new evaluation.
 
@@ -467,12 +433,12 @@ def create_evaluation() -> tuple[Response, int]:
                 type: string
                 description: Process step identifier
                 description: Process step identifier (e.g., M031)
-              scs_charger_id:
-                type: integer
-                description: ID of the SCS charger user
-              head_office_charger_id:
-                type: integer
-                description: ID of the Head Office charger user
+              scs_charger_name:
+                type: string
+                description: Name of the SCS Charger
+              head_office_charger_name:
+                type: string
+                description: Name of the Head Office Charger
               status:
                 type: string
                 enum: [draft, in_progress]
@@ -490,7 +456,6 @@ def create_evaluation() -> tuple[Response, int]:
     """
     try:
         data = request.json
-        user_id = get_jwt_identity()
 
         # Validate required fields (evaluation_number is now optional)
         required_fields = [
@@ -522,9 +487,8 @@ def create_evaluation() -> tuple[Response, int]:
             status=data.get("status", EvaluationStatus.DRAFT.value),
             start_date=datetime.strptime(data["start_date"], "%Y-%m-%d").date(),
             process_step=data["process_step"],
-            evaluator_id=user_id,
-            scs_charger_id=data.get("scs_charger_id"),
-            head_office_charger_id=data.get("head_office_charger_id"),
+            scs_charger_name=data.get("scs_charger_name"),
+            head_office_charger_name=data.get("head_office_charger_name"),
             pgm_version=data.get("pgm_version"),
             capacity=data.get("capacity"),
             interface_type=data.get("interface_type"),
@@ -536,7 +500,6 @@ def create_evaluation() -> tuple[Response, int]:
 
         # Log operation
         log = OperationLog(
-            user_id=user_id,
             operation_type=OperationType.CREATE.value,
             target_type="evaluation",
             target_id=evaluation.id,
@@ -545,6 +508,12 @@ def create_evaluation() -> tuple[Response, int]:
             new_data=json.dumps(evaluation.to_dict()),
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
+            request_method=request.method,
+            request_path=request.path,
+            query_string=request.query_string.decode()
+            if request.query_string
+            else None,
+            status_code=201,
             success=True,
         )
         db.session.add(log)
@@ -570,7 +539,6 @@ def create_evaluation() -> tuple[Response, int]:
 
 
 @evaluation_bp.route("/<int:evaluation_id>", methods=["PUT"])
-@jwt_required()
 def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
     """Update an existing evaluation.
 
@@ -582,7 +550,8 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
         part_number (str, optional): Part number.
         evaluation_reason (str, optional): Reason for the evaluation.
         description (str, optional): Detailed description.
-
+        start_date (date, optional): Start date (YYYY-MM-DD).
+        actual_end_date|end_date (date, optional): Actual end date (YYYY-MM-DD).
         process_step (str, optional): Process step identifier.
 
     Returns:
@@ -625,12 +594,12 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
                 type: string
                 description: Detailed description
 
-              scs_charger_id:
-                type: integer
-                description: ID of the SCS charger user
-              head_office_charger_id:
-                type: integer
-                description: ID of the Head Office charger user
+              scs_charger_name:
+                type: string
+                description: Name of the SCS Charger
+              head_office_charger_name:
+                type: string
+                description: Name of the Head Office Charger
               process_step:
                 type: string
                 description: Process step identifier (e.g., M031)
@@ -649,20 +618,13 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
     """
     try:
         data = request.json
-        user_id = get_jwt_identity()
 
         evaluation = Evaluation.query.get(evaluation_id)
 
         if not evaluation:
             return jsonify({"success": False, "message": "Evaluation not found"}), 404
 
-        # Check if user is authorized to update the evaluation
-        if evaluation.evaluator_id != user_id and not User.query.get(
-            user_id
-        ).has_permission("admin"):
-            return jsonify(
-                {"success": False, "message": "Unauthorized to update this evaluation"}
-            ), 403
+        # Auth removed
 
         # Check if evaluation can be updated
         if evaluation.status not in [
@@ -689,14 +651,26 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
         if "description" in data or "remarks" in data:
             evaluation.remarks = data.get("remarks", data.get("description", ""))
 
+        # Dates
+        if "start_date" in data and data["start_date"]:
+            evaluation.start_date = datetime.strptime(
+                data["start_date"], "%Y-%m-%d"
+            ).date()
+        # Accept either 'actual_end_date' or 'end_date'
+        end_value = data.get("actual_end_date") or data.get("end_date")
+        if end_value is not None:
+            evaluation.actual_end_date = (
+                datetime.strptime(end_value, "%Y-%m-%d").date() if end_value else None
+            )
+
         if "process_step" in data:
             evaluation.process_step = data["process_step"]
 
         # Update charger assignments
-        if "scs_charger_id" in data:
-            evaluation.scs_charger_id = data["scs_charger_id"]
-        if "head_office_charger_id" in data:
-            evaluation.head_office_charger_id = data["head_office_charger_id"]
+        if "scs_charger_name" in data:
+            evaluation.scs_charger_name = data["scs_charger_name"]
+        if "head_office_charger_name" in data:
+            evaluation.head_office_charger_name = data["head_office_charger_name"]
 
         # Update technical specifications
         if "pgm_version" in data:
@@ -713,7 +687,6 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
 
         # Log operation
         log = OperationLog(
-            user_id=user_id,
             operation_type=OperationType.UPDATE.value,
             target_type="evaluation",
             target_id=evaluation.id,
@@ -723,6 +696,12 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
             new_data=json.dumps(evaluation.to_dict()),
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
+            request_method=request.method,
+            request_path=request.path,
+            query_string=request.query_string.decode()
+            if request.query_string
+            else None,
+            status_code=200,
             success=True,
         )
         db.session.add(log)
@@ -748,7 +727,6 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
 
 
 @evaluation_bp.route("/<int:evaluation_id>/processes", methods=["POST"])
-@jwt_required()
 def create_evaluation_process(evaluation_id: int) -> tuple[Response, int]:
     """Create a new evaluation process for an evaluation.
 
@@ -823,7 +801,6 @@ def create_evaluation_process(evaluation_id: int) -> tuple[Response, int]:
     """
     try:
         data = request.json
-        user_id = get_jwt_identity()
 
         # Check if evaluation exists
         evaluation = Evaluation.query.get(evaluation_id)
@@ -856,7 +833,6 @@ def create_evaluation_process(evaluation_id: int) -> tuple[Response, int]:
 
         # Log operation
         log = OperationLog(
-            user_id=user_id,
             operation_type=OperationType.CREATE.value,
             target_type="evaluation_process",
             target_id=process.id,
@@ -865,6 +841,12 @@ def create_evaluation_process(evaluation_id: int) -> tuple[Response, int]:
             new_data=json.dumps(process.to_dict()),
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
+            request_method=request.method,
+            request_path=request.path,
+            query_string=request.query_string.decode()
+            if request.query_string
+            else None,
+            status_code=201,
             success=True,
         )
         db.session.add(log)
@@ -890,7 +872,6 @@ def create_evaluation_process(evaluation_id: int) -> tuple[Response, int]:
 
 
 @evaluation_bp.route("/<int:evaluation_id>/processes", methods=["GET"])
-@jwt_required()
 def get_evaluation_processes(evaluation_id: int) -> tuple[Response, int]:
     """Get all processes for an evaluation.
 
@@ -974,9 +955,7 @@ def get_evaluation_processes(evaluation_id: int) -> tuple[Response, int]:
         processes = EvaluationProcess.query.filter_by(evaluation_id=evaluation_id).all()
 
         # Log operation
-        user_id = get_jwt_identity()
         log = OperationLog(
-            user_id=user_id,
             operation_type=OperationType.VIEW.value,
             target_type="evaluation_processes",
             target_id=evaluation_id,
@@ -984,6 +963,11 @@ def get_evaluation_processes(evaluation_id: int) -> tuple[Response, int]:
             operation_description="User viewed evaluation processes",
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
+            request_method=request.method,
+            request_path=request.path,
+            query_string=request.query_string.decode()
+            if request.query_string
+            else None,
             success=True,
         )
         db.session.add(log)
@@ -1009,7 +993,6 @@ def get_evaluation_processes(evaluation_id: int) -> tuple[Response, int]:
 
 
 @evaluation_bp.route("/<int:evaluation_id>/processes/<int:process_id>", methods=["GET"])
-@jwt_required()
 def get_evaluation_process(evaluation_id: int, process_id: int) -> tuple[Response, int]:
     """Get details of a specific evaluation process.
 
@@ -1102,9 +1085,7 @@ def get_evaluation_process(evaluation_id: int, process_id: int) -> tuple[Respons
             return jsonify({"success": False, "message": "Process not found"}), 404
 
         # Log operation
-        user_id = get_jwt_identity()
         log = OperationLog(
-            user_id=user_id,
             operation_type=OperationType.VIEW.value,
             target_type="evaluation_process",
             target_id=process_id,
@@ -1112,6 +1093,11 @@ def get_evaluation_process(evaluation_id: int, process_id: int) -> tuple[Respons
             operation_description="User viewed evaluation process details",
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
+            request_method=request.method,
+            request_path=request.path,
+            query_string=request.query_string.decode()
+            if request.query_string
+            else None,
             success=True,
         )
         db.session.add(log)
@@ -1135,7 +1121,6 @@ def get_evaluation_process(evaluation_id: int, process_id: int) -> tuple[Respons
 
 
 @evaluation_bp.route("/<int:evaluation_id>/processes/<int:process_id>", methods=["PUT"])
-@jwt_required()
 def update_evaluation_process(
     evaluation_id: int, process_id: int
 ) -> tuple[Response, int]:
@@ -1222,7 +1207,6 @@ def update_evaluation_process(
     """
     try:
         data = request.json
-        user_id = get_jwt_identity()
 
         # Check if evaluation exists
         evaluation = Evaluation.query.get(evaluation_id)
@@ -1237,6 +1221,7 @@ def update_evaluation_process(
             return jsonify({"success": False, "message": "Process not found"}), 404
 
         # Update process fields
+        old_data = process.to_dict()
         update_fields = [
             "title",
             "eval_code",
@@ -1257,15 +1242,21 @@ def update_evaluation_process(
 
         # Log operation
         log = OperationLog(
-            user_id=user_id,
             operation_type=OperationType.UPDATE.value,
             target_type="evaluation_process",
             target_id=process_id,
             target_description=f"Updated process {process.eval_code} for evaluation {evaluation.evaluation_number}",
             operation_description="User updated an evaluation process",
+            old_data=json.dumps(old_data),
             new_data=json.dumps(process.to_dict()),
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
+            request_method=request.method,
+            request_path=request.path,
+            query_string=request.query_string.decode()
+            if request.query_string
+            else None,
+            status_code=200,
             success=True,
         )
         db.session.add(log)
@@ -1293,7 +1284,6 @@ def update_evaluation_process(
 @evaluation_bp.route(
     "/<int:evaluation_id>/processes/<int:process_id>", methods=["DELETE"]
 )
-@jwt_required()
 def delete_evaluation_process(
     evaluation_id: int, process_id: int
 ) -> tuple[Response, int]:
@@ -1337,8 +1327,6 @@ def delete_evaluation_process(
 
     """
     try:
-        user_id = get_jwt_identity()
-
         # Check if evaluation exists
         evaluation = Evaluation.query.get(evaluation_id)
         if not evaluation:
@@ -1360,7 +1348,6 @@ def delete_evaluation_process(
 
         # Log operation
         log = OperationLog(
-            user_id=user_id,
             operation_type=OperationType.DELETE.value,
             target_type="evaluation_process",
             target_id=process_id,
@@ -1369,6 +1356,12 @@ def delete_evaluation_process(
             old_data=json.dumps(process_data),
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
+            request_method=request.method,
+            request_path=request.path,
+            query_string=request.query_string.decode()
+            if request.query_string
+            else None,
+            status_code=200,
             success=True,
         )
         db.session.add(log)
@@ -1393,7 +1386,6 @@ def delete_evaluation_process(
 
 
 @evaluation_bp.route("/<int:evaluation_id>/status", methods=["PUT"])
-@jwt_required()
 def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
     """Update the status of an evaluation.
 
@@ -1451,7 +1443,6 @@ def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
     """
     try:
         data = request.json
-        user_id = get_jwt_identity()
 
         if "status" not in data:
             return jsonify({"success": False, "message": "Status is required"}), 400
@@ -1461,15 +1452,7 @@ def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
         if not evaluation:
             return jsonify({"success": False, "message": "Evaluation not found"}), 404
 
-        # Check if user is authorized to update the status
-        user = User.query.get(user_id)
-        if evaluation.evaluator_id != user_id and not user.has_permission("admin"):
-            return jsonify(
-                {
-                    "success": False,
-                    "message": "Unauthorized to update this evaluation status",
-                }
-            ), 403
+        # Auth removed
 
         # Store old data for logging
         old_data = evaluation.to_dict()
@@ -1486,7 +1469,6 @@ def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
 
         # Log operation
         log = OperationLog(
-            user_id=user_id,
             operation_type=OperationType.UPDATE.value,
             target_type="evaluation_status",
             target_id=evaluation.id,
@@ -1496,6 +1478,12 @@ def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
             new_data=json.dumps({"status": new_status}),
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
+            request_method=request.method,
+            request_path=request.path,
+            query_string=request.query_string.decode()
+            if request.query_string
+            else None,
+            status_code=200,
             success=True,
         )
         db.session.add(log)
@@ -1521,7 +1509,6 @@ def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
 
 
 @evaluation_bp.route("/<int:evaluation_id>/logs", methods=["GET"])
-@jwt_required()
 def get_evaluation_logs(evaluation_id: int) -> tuple[Response, int]:
     """Get operation logs for a specific evaluation.
 
@@ -1559,24 +1546,55 @@ def get_evaluation_logs(evaluation_id: int) -> tuple[Response, int]:
 
     """
     try:
-        get_jwt_identity()
-
         evaluation = Evaluation.query.get(evaluation_id)
 
         if not evaluation:
             return jsonify({"success": False, "message": "Evaluation not found"}), 404
 
-        # Get operation logs
-        logs_query = OperationLog.query.filter_by(
-            target_type="evaluation", target_id=evaluation_id
-        ).order_by(OperationLog.created_at.desc())
+        # Collect related process IDs
+        process_ids = [
+            p.id
+            for p in EvaluationProcess.query.with_entities(EvaluationProcess.id)
+            .filter_by(evaluation_id=evaluation_id)
+            .all()
+        ]
+        process_ids = (
+            [pid for (pid,) in process_ids]
+            if process_ids and isinstance(process_ids[0], tuple)
+            else process_ids
+        )
 
+        # Compose logs across evaluation, status, and processes
         logs = []
-        for log in logs_query.all():
-            user = User.query.get(log.user_id)
-            log_data = log.to_dict()
-            log_data["user_name"] = user.full_name if user else "Unknown"
-            logs.append(log_data)
+        logs += [
+            log.to_dict()
+            for log in OperationLog.query.filter_by(
+                target_type="evaluation", target_id=evaluation_id
+            )
+            .order_by(OperationLog.created_at.desc())
+            .all()
+        ]
+        logs += [
+            log.to_dict()
+            for log in OperationLog.query.filter_by(
+                target_type="evaluation_status", target_id=evaluation_id
+            )
+            .order_by(OperationLog.created_at.desc())
+            .all()
+        ]
+        if process_ids:
+            logs += [
+                log.to_dict()
+                for log in OperationLog.query.filter(
+                    OperationLog.target_type == "evaluation_process",
+                    OperationLog.target_id.in_(process_ids),
+                )
+                .order_by(OperationLog.created_at.desc())
+                .all()
+            ]
+
+        # Sort logs by created_at descending
+        logs.sort(key=lambda x: x.get("created_at", ""), reverse=True)
 
         return jsonify({"success": True, "data": {"logs": logs}})
     except Exception as e:

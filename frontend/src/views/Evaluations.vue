@@ -7,8 +7,8 @@
         <p class="page-description">{{ $t('evaluation.description') }}</p>
       </div>
       <div class="header-right">
-        <el-button type="primary" :icon="Plus" @click="$router.push('/evaluations/new')">
-          {{ $t('dashboard.newEvaluation') }}
+        <el-button type="primary" :icon="Plus" @click="openNew()">
+          {{ $t('evaluation.new.title') }}
         </el-button>
       </div>
     </div>
@@ -136,7 +136,7 @@
             sortable="custom"
           >
             <template #default="{ row }">
-              <el-link type="primary" @click="$router.push(`/evaluations/${row.id}`)">
+              <el-link type="primary" @click="openDetail(row.id)">
                 {{ row.evaluation_number }}
               </el-link>
             </template>
@@ -223,21 +223,81 @@
         </div>
       </el-card>
     </AnimatedContainer>
+
+    <!-- Popout dialogs -->
+    <el-dialog
+      v-model="showDetail"
+      :title="$t('evaluation.title')"
+      width="80%"
+      destroy-on-close
+      :close-on-click-modal="false"
+      :close-on-press-escape="true"
+    >
+      <component :is="EvaluationDetail" :evaluation-id="selectedId" :in-dialog="true" @edit="onEdit" />
+      <template #footer>
+        <el-button @click="showDetail = false">{{ $t('common.cancel') }}</el-button>
+      </template>
+    </el-dialog>
+    <el-dialog
+      v-model="showNew"
+      :title="isEditing ? $t('evaluation.edit.title') : $t('evaluation.new.title')"
+      width="80%"
+      destroy-on-close
+      :close-on-click-modal="false"
+      :close-on-press-escape="true"
+    >
+      <component
+        :is="NewEvaluation"
+        ref="newEvalRef"
+        :in-dialog="true"
+        :evaluation-id="selectedId"
+        @saved="handleSaved"
+      />
+      <template #footer>
+        <el-button @click="showNew = false">{{ $t('common.cancel') }}</el-button>
+        <template v-if="!isEditing">
+          <el-button type="primary" @click="newEvalRef?.saveDraft()">
+            {{ $t('evaluation.saveDraft') }}
+          </el-button>
+          <el-button type="success" @click="newEvalRef?.submitForm()">
+            {{ $t('evaluation.submit') }}
+          </el-button>
+        </template>
+        <template v-else>
+          <el-button type="danger" @click="newEvalRef?.deleteEval()">
+            {{ $t('common.delete') }}
+          </el-button>
+          <el-button type="primary" @click="newEvalRef?.save()">
+            {{ $t('common.save') }}
+          </el-button>
+          <el-button type="success" @click="newEvalRef?.finish()">
+            {{ $t('evaluation.finish') }}
+          </el-button>
+        </template>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, defineAsyncComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { Plus, Search, Refresh, Download } from '@element-plus/icons-vue'
 import api from '../utils/api'
 import AnimatedContainer from '../components/AnimatedContainer.vue'
+const EvaluationDetail = defineAsyncComponent(() => import('./EvaluationDetail.vue'))
+const NewEvaluation = defineAsyncComponent(() => import('./NewEvaluation.vue'))
 
 const { t } = useI18n()
 
 const tableLoading = ref(false)
 const exportLoading = ref(false)
+const showDetail = ref(false)
+const showNew = ref(false)
+const selectedId = ref(null)
+const isEditing = computed(() => !!selectedId.value)
+const newEvalRef = ref(null)
 const tableData = ref([])
 const selectedRows = ref([])
 
@@ -325,6 +385,27 @@ const fetchEvaluations = async () => {
   } finally {
     tableLoading.value = false
   }
+}
+
+const openDetail = (id) => {
+  selectedId.value = id
+  showDetail.value = true
+}
+
+const openNew = () => {
+  selectedId.value = null
+  showNew.value = true
+}
+
+const onEdit = (id) => {
+  showDetail.value = false
+  selectedId.value = id
+  showNew.value = true
+}
+
+const handleSaved = () => {
+  showNew.value = false
+  fetchEvaluations()
 }
 
 const handleSearch = () => {
@@ -739,3 +820,5 @@ onMounted(() => {
   }
 }
 </style>
+
+ 

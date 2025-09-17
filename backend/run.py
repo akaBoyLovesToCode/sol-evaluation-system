@@ -30,31 +30,9 @@ def init_db():
         SystemConfig.initialize_default_configs()
         print("✓ Default system configurations initialized")
 
-        # Create default admin user if it doesn't exist
-        from app.models import User
-
-        admin_user = User.query.filter_by(username="admin").first()
-        if not admin_user:
-            admin_user = User(
-                username="admin",
-                email="admin@evaluation.local",
-                password="admin123",  # Change this in production!
-                full_name="System Administrator",
-                role="admin",
-                department="IT",
-            )
-            db.session.add(admin_user)
-            db.session.commit()
-            print("✓ Default admin user created (username: admin, password: admin123)")
-            print("  ⚠️  Please change the default password after first login!")
-        else:
-            print("✓ Admin user already exists")
-
         print("\n🎉 Database initialization completed successfully!")
         print("\nNext steps:")
         print("1. Start the application: python run.py")
-        print("2. Login with admin credentials and change the password")
-        print("3. Create additional users as needed")
 
     except Exception as e:
         print(f"❌ Database initialization failed: {str(e)}")
@@ -85,87 +63,7 @@ def reset_db():
         print("Database reset cancelled")
 
 
-@app.cli.command()
-@with_appcontext
-def create_user():
-    """Create a new user interactively"""
-    try:
-        from app.models import User
-
-        print("Create New User")
-        print("-" * 20)
-
-        username = click.prompt("Username")
-        email = click.prompt("Email")
-        password = click.prompt("Password", hide_input=True, confirmation_prompt=True)
-        full_name = click.prompt("Full Name")
-        role = click.prompt(
-            "Role",
-            type=click.Choice(["admin", "group_leader", "part_leader", "user"]),
-            default="user",
-        )
-        department = click.prompt("Department", default="")
-
-        # Check if user already exists
-        existing_user = User.query.filter(
-            (User.username == username) | (User.email == email)
-        ).first()
-
-        if existing_user:
-            print(
-                f"❌ User with username '{username}' or email '{email}' already exists"
-            )
-            return 1
-
-        # Create new user
-        user = User(
-            username=username,
-            email=email,
-            password=password,
-            full_name=full_name,
-            role=role,
-            department=department if department else None,
-        )
-
-        db.session.add(user)
-        db.session.commit()
-
-        print(f"✓ User '{username}' created successfully with role '{role}'")
-
-    except Exception as e:
-        print(f"❌ User creation failed: {str(e)}")
-        db.session.rollback()
-        return 1
-
-
-@app.cli.command()
-@with_appcontext
-def list_users():
-    """List all users in the system"""
-    try:
-        from app.models import User
-
-        users = User.query.all()
-
-        if not users:
-            print("No users found in the system")
-            return
-
-        print(
-            f"{'ID':<4} {'Username':<15} {'Email':<25} {'Full Name':<20} {'Role':<15} {'Active':<8}"
-        )
-        print("-" * 90)
-
-        for user in users:
-            print(
-                f"{user.id:<4} {user.username:<15} {user.email:<25} {user.full_name:<20} {user.role:<15} {'Yes' if user.is_active else 'No':<8}"
-            )
-
-        print(f"\nTotal users: {len(users)}")
-
-    except Exception as e:
-        print(f"❌ Failed to list users: {str(e)}")
-        return 1
+# User management commands removed (auth-less mode)
 
 
 @app.cli.command()
@@ -230,11 +128,9 @@ if __name__ == "__main__":
         except Exception:
             print("⚠️  Database not initialized. Run 'flask init-db' first.")
             print("\nAvailable commands:")
-            print("  flask init-db     - Initialize database with default data")
-            print("  flask reset-db    - Reset database (WARNING: deletes all data)")
-            print("  flask create-user - Create a new user")
-            print("  flask list-users  - List all users")
-            print("  flask backup-db   - Create database backup")
+            print("  flask init-db   - Initialize database with default data")
+            print("  flask reset-db  - Reset database (WARNING: deletes all data)")
+            print("  flask backup-db - Create database backup")
             exit(1)
 
     # Get configuration from environment

@@ -39,26 +39,6 @@
     "fetchListFailed": "목록 가져오기 실패",
     "fetchDataFailed": "데이터 가져오기 실패"
   },
-  "system": {
-    "name": "솔루션 평가"
-  },
-  "login": {
-    "title": "솔루션 평가 관리 시스템",
-    "subtitle": "계정에 로그인하세요",
-    "username": "사용자명",
-    "password": "비밀번호",
-    "remember": "로그인 상태 유지",
-    "submit": "로그인",
-    "success": "로그인 성공",
-    "failed": "로그인 실패",
-    "errors": {
-      "invalidCredentials": "사용자명 또는 비밀번호가 틀렸습니다",
-      "missingCredentials": "사용자명과 비밀번호를 입력하세요",
-      "serverError": "서버 오류가 발생했습니다. 다시 시도하세요",
-      "networkError": "네트워크 오류가 발생했습니다. 연결을 확인하세요",
-      "accountInactive": "계정이 비활성화되었습니다"
-    }
-  },
   "validation": {
     "required": "{field}은(는) 필수입니다",
     "length": "길이는 {min}-{max}자 사이여야 합니다",
@@ -80,35 +60,6 @@
       "processFlow": "공정 흐름 설명을 입력하세요"
     }
   },
-  "menu": {
-    "dashboard": "대시보드",
-    "evaluations": "평가 관리",
-    "reports": "보고서",
-    "users": "사용자 관리",
-    "messages": "메시지",
-    "profile": "프로필",
-    "logout": "로그아웃"
-  },
-  "dashboard": {
-    "description": "시스템 개요 및 주요 지표를 확인하세요",
-    "totalEvaluations": "총 평가 수",
-    "pendingApprovals": "승인 대기",
-    "completedEvaluations": "완료됨",
-    "activeUsers": "활성 사용자",
-    "statusDistribution": "상태 분포",
-    "monthlyTrend": "월별 추세",
-    "quickActions": "빠른 작업",
-    "newEvaluation": "새 평가",
-    "viewEvaluations": "평가 보기",
-    "viewReports": "보고서 보기",
-    "viewMessages": "메시지 보기",
-    "pendingItems": "대기 항목",
-    "noPendingItems": "대기 항목 없음",
-    "recentActivities": "최근 활동",
-    "evaluationStatus": "평가 상태",
-    "newEvaluations": "새 평가",
-    "loadError": "데이터 로드 실패"
-  },
   "evaluation": {
     "title": "평가 관리",
     "description": "모든 제품 평가를 관리하고 조회합니다",
@@ -116,31 +67,39 @@
       "title": "새 평가",
       "description": "새로운 제품 평가 프로젝트를 생성합니다"
     },
-    "basicInfo": "기본 정보",
-    "basicInformation": "기본 정보",
-    "technicalSpec": "기술 사양",
-    "technicalSpecifications": "기술 사양",
-    "process": "평가 프로세스",
-    "evaluationProcess": "평가 프로세스",
+    "edit": {
+      "title": "평가 수정",
+      "description": "평가 정보 수정"
+    },
+    "processStep": "Step",
     "evaluationProcesses": "평가 과정",
-    "evaluationResults": "평가 결과",
-    "statusInformation": "상태 정보",
-    "relatedFiles": "관련 파일",
-    "operationLogs": "작업 로그",
-    "newProductProcess": "신제품 평가 프로세스",
-    "massProductionProcess": "양산 평가 프로세스",
-    "newProductNote": "참고: 신제품 평가는 Part Leader와 Group Leader의 2단계 승인이 필요합니다",
+    "processTitle": "프로세스 제목",
     "evalCode": "평가 코드",
     "lotNumber": "로트 번호",
     "quantity": "수량",
-    "processTitle": "프로세스 제목",
     "processFlow": "공정 흐름",
     "manufacturingTestResults": "양산 테스트 결과",
     "defectAnalysisResults": "불량 분석 결과",
     "aqlResult": "AQL 결과",
     "addProcess": "과정 추가",
     "remove": "제거",
-    "massProductionNote": "참고: 양산 평가는 승인 없이 직접 완료됩니다",
+    "scsCharger": "SCS 담당자",
+    "headOfficeCharger": "본사 담당자",
+    "complete": "완료",
+    "basicInfo": "기본 정보",
+    "basicInformation": "기본 정보",
+    "technicalSpec": "기술 사양",
+    "technicalSpecifications": "기술 사양",
+    "process": "평가 프로세스",
+    "evaluationProcess": "평가 프로세스",
+    "evaluationResults": "평가 결과",
+    "statusInformation": "상태 정보",
+    "relatedFiles": "관련 파일",
+    "operationLogs": "작업 로그",
+    "newProductProcess": "신제품 평가 프로세스",
+    "massProductionProcess": "양산 평가 프로세스",
+    "newProductNote": "참고: 신제품 평가는 2단계 승인 필요",
+    "massProductionNote": "참고: 양산 평가는 승인 없이 완료",
     "saveDraft": "임시 저장",
     "submit": "제출",
     "submitSuccess": "평가 제출 성공",
@@ -149,10 +108,6 @@
     "evaluationNumber": "평가 번호",
     "typeLabel": "평가 유형",
     "evaluationType": "평가 유형",
-    "edit": {
-      "title": "평가 수정",
-      "description": "평가 정보 수정"
-    },
     "productName": "제품명",
     "partNumber": "P/N",
     "startDate": "시작 날짜",
@@ -252,62 +207,40 @@
       "quality_improvement": "품질 개선",
       "cost_optimization": "비용 최적화",
       "customer_requirement": "고객 요구사항",
-      "other": "기타",
-      "processStatus": {
-        "pending": "대기 중",
-        "in_progress": "진행 중",
-        "completed": "완료됨",
-        "failed": "실패"
-      },
-      "horizontal_expansion": "횡전개",
-      "direct_development": "직개발",
-      "pgm_improvement": "PGM개선",
-      "firmware_change": "F/W변경",
-      "bom_change": "BOM변경"
+      "other": "기타"
     },
-    "formFactors": {
-      "2_5_inch": "2.5인치",
-      "m2_2280": "M.2 2280",
-      "m2_2242": "M.2 2242"
-    },
-    "processes": {
-      "doe": "DOE (실험 설계)",
-      "ppq": "PPQ (생산 부품 승인)",
-      "prq": "PRQ (생산 준비도 승인)",
-      "production_test": "생산 테스트",
-      "aql": "AQL (허용 품질 수준)"
-    },
-
-    "showAllLogs": "모든 로그",
-    "showCriticalLogs": "중요 로그만",
-    "noOperationLogs": "운영 로그가 없습니다",
-    "operations": {
-      "created": "평가를 생성했습니다",
-      "updated": "평가를 수정했습니다",
-      "statusChanged": "평가 상태를 변경했습니다",
-      "deleted": "평가를 삭제했습니다",
-      "approved": "평가를 승인했습니다",
-      "rejected": "평가를 거부했습니다",
-      "viewed": "평가를 조회했습니다",
-      "loggedIn": "사용자가 로그인했습니다",
-      "loggedOut": "사용자가 로그아웃했습니다",
-      "exported": "데이터를 내보냈습니다",
-      "unknown": "알 수 없는 작업"
-    },
-    "processStep": "평가 Step",
-    "scsCharger": "SCS 담당자",
-    "headOfficeCharger": "본사 담당자",
-    "complete": "완료",
-    "statusDescriptions": {
-      "draft": "평가가 초안 상태이며 편집할 수 있습니다.",
-      "inProgress": "평가가 현재 진행 중입니다.",
-      "paused": "평가가 일시적으로 중단되었습니다.",
-      "pendingPartApproval": "파트 리더 승인을 기다리고 있습니다.",
-      "pendingGroupApproval": "그룹 리더 승인을 기다리고 있습니다.",
-      "completed": "평가가 성공적으로 완료되었습니다.",
-      "cancelled": "평가가 취소되었습니다.",
-      "rejected": "평가가 거부되었습니다."
+    "processStatus": {
+      "pending": "대기 중",
+      "in_progress": "진행 중",
+      "completed": "완료됨",
+      "failed": "실패"
     }
+  },
+  "formFactors": {
+    "2_5_inch": "2.5인치",
+    "m2_2280": "M.2 2280",
+    "m2_2242": "M.2 2242"
+  },
+  "processes": {
+    "doe": "DOE (실험 설계)",
+    "ppq": "PPQ (생산 부품 승인)",
+    "prq": "PRQ (생산 준비도 승인)",
+    "production_test": "생산 테스트",
+    "aql": "AQL (허용 품질 수준)"
+  },
+  "noOperationLogs": "운영 로그가 없습니다",
+  "operations": {
+    "created": "평가를 생성했습니다",
+    "updated": "평가를 수정했습니다",
+    "statusChanged": "평가 상태를 변경했습니다",
+    "deleted": "평가를 삭제했습니다",
+    "approved": "평가를 승인했습니다",
+    "rejected": "평가를 거부했습니다",
+    "viewed": "평가를 조회했습니다",
+    "loggedIn": "사용자가 로그인했습니다",
+    "loggedOut": "사용자가 로그아웃했습니다",
+    "exported": "데이터를 내보냈습니다",
+    "unknown": "알 수 없는 작업"
   },
   "status": {
     "draft": "초안",
@@ -317,106 +250,5 @@
     "paused": "일시정지",
     "cancelled": "취소됨",
     "rejected": "거부됨"
-  },
-  "users": {
-    "title": "사용자 관리",
-    "description": "시스템 사용자 및 권한 설정을 관리합니다",
-    "comingSoon": "사용자 관리 기능 개발 중",
-    "comingSoonDesc": "사용자 관리 기능이 개발 중입니다. 곧 만나보실 수 있습니다",
-    "addUser": "사용자 추가",
-    "createUser": "사용자 생성",
-    "editUser": "사용자 편집",
-    "username": "사용자명",
-    "fullName": "이름",
-    "email": "이메일",
-    "department": "부서",
-    "position": "직위",
-    "role": "역할",
-    "status": "상태",
-    "password": "비밀번호",
-    "confirmPassword": "비밀번호 확인",
-    "active": "활성",
-    "inactive": "비활성",
-    "activate": "활성화",
-    "deactivate": "비활성화",
-    "confirmActivate": "활성화 확인",
-    "confirmDeactivate": "비활성화 확인",
-    "activateWarning": "{username} 사용자를 활성화하시겠습니까?",
-    "deactivateWarning": "{username} 사용자를 비활성화하시겠습니까?",
-    "activateSuccess": "사용자가 성공적으로 활성화되었습니다",
-    "deactivateSuccess": "사용자가 성공적으로 비활성화되었습니다",
-    "statusUpdateError": "사용자 상태 업데이트 실패",
-    "confirmDelete": "삭제 확인",
-    "deleteWarning": "{username} 사용자를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
-    "deleteSuccess": "사용자가 성공적으로 삭제되었습니다",
-    "deleteError": "사용자 삭제 실패",
-    "createSuccess": "사용자가 성공적으로 생성되었습니다",
-    "createError": "사용자 생성 실패",
-    "updateSuccess": "사용자가 성공적으로 업데이트되었습니다",
-    "updateError": "사용자 업데이트 실패",
-    "fetchError": "사용자 목록 가져오기 실패",
-    "invalidEmail": "유효한 이메일 주소를 입력하세요",
-    "roles": {
-      "user": "일반 사용자",
-      "part_leader": "부서 책임자",
-      "group_leader": "그룹 리더",
-      "admin": "관리자"
-    },
-    "placeholders": {
-      "username": "사용자명 입력",
-      "fullName": "이름 입력",
-      "email": "이메일 주소 입력",
-      "department": "부서 입력",
-      "position": "직위 입력",
-      "role": "역할 선택",
-      "status": "상태 선택",
-      "password": "비밀번호 입력",
-      "confirmPassword": "비밀번호 확인"
-    }
-  },
-  "messages": {
-    "title": "메시지 센터",
-    "description": "시스템 알림 및 평가 관련 메시지를 확인하세요",
-    "comingSoon": "메시지 기능 개발 중",
-    "comingSoonDesc": "메시지 센터 기능이 개발 중입니다. 곧 만나보실 수 있습니다"
-  },
-  "reports": {
-    "title": "보고서 및 통계",
-    "description": "평가 데이터 통계 및 분석 보고서를 확인하세요",
-    "comingSoon": "보고서 기능 개발 중",
-    "comingSoonDesc": "통계 보고서 기능이 개발 중입니다. 곧 만나보실 수 있습니다"
-  },
-  "profile": {
-    "title": "사용자 프로필",
-    "description": "개인 정보 및 계정 설정 관리",
-    "personalInfo": "개인 정보",
-    "accountSettings": "계정 설정",
-    "fullName": "이름",
-    "username": "사용자명",
-    "email": "이메일",
-    "department": "부서",
-    "position": "직위",
-    "role": "역할",
-    "changePassword": "비밀번호 변경",
-    "currentPassword": "현재 비밀번호",
-    "newPassword": "새 비밀번호",
-    "confirmPassword": "비밀번호 확인",
-    "updateProfile": "프로필 업데이트",
-    "updateSuccess": "프로필이 성공적으로 업데이트되었습니다",
-    "updateError": "프로필 업데이트 실패",
-    "passwordChangeSuccess": "비밀번호가 성공적으로 변경되었습니다",
-    "passwordChangeError": "비밀번호 변경 실패",
-    "redirectingToLogin": "3초 후 로그인 페이지로 이동합니다...",
-    "passwordMismatch": "새 비밀번호가 일치하지 않습니다",
-    "passwordRequirements": "비밀번호는 최소 8자 이상이어야 하며, 대문자, 소문자, 숫자를 각각 하나 이상 포함해야 합니다",
-    "placeholders": {
-      "fullName": "이름을 입력하세요",
-      "email": "이메일을 입력하세요",
-      "department": "부서를 입력하세요",
-      "position": "직위를 입력하세요",
-      "currentPassword": "현재 비밀번호를 입력하세요",
-      "newPassword": "새 비밀번호를 입력하세요",
-      "confirmPassword": "비밀번호를 다시 입력하세요"
-    }
   }
 }

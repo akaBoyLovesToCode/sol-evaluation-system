@@ -1,6 +1,7 @@
 <template>
   <div v-loading="loading" class="new-evaluation-page">
-    <div class="page-header">
+    <div class="page-container">
+    <div v-if="!inDialog" class="page-header">
       <h1 class="page-title">
         {{ isEditMode ? $t('evaluation.edit.title') : $t('evaluation.new.title') }}
       </h1>
@@ -103,37 +104,19 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item :label="$t('evaluation.scsCharger')" prop="scs_charger_id">
-              <el-select
-                v-model="form.scs_charger_id"
+            <el-form-item :label="$t('evaluation.scsCharger')" prop="scs_charger_name">
+              <el-input
+                v-model="form.scs_charger_name"
                 :placeholder="$t('evaluation.placeholders.scsCharger')"
-                filterable
-                style="width: 100%"
-              >
-                <el-option
-                  v-for="user in users"
-                  :key="user.id"
-                  :label="user.fullName || user.username"
-                  :value="user.id"
-                />
-              </el-select>
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('evaluation.headOfficeCharger')" prop="head_office_charger_id">
-              <el-select
-                v-model="form.head_office_charger_id"
+            <el-form-item :label="$t('evaluation.headOfficeCharger')" prop="head_office_charger_name">
+              <el-input
+                v-model="form.head_office_charger_name"
                 :placeholder="$t('evaluation.placeholders.headOfficeCharger')"
-                filterable
-                style="width: 100%"
-              >
-                <el-option
-                  v-for="user in users"
-                  :key="user.id"
-                  :label="user.fullName || user.username"
-                  :value="user.id"
-                />
-              </el-select>
+              />
             </el-form-item>
           </el-col>
         </el-row>
@@ -362,7 +345,7 @@
         </div>
       </el-card>
 
-      <div class="form-actions fade-in-up" style="animation-delay: 0.7s">
+      <div v-if="!inDialog" class="form-actions fade-in-up" style="animation-delay: 0.7s">
         <el-button @click="handleCancel">{{ $t('common.cancel') }}</el-button>
 
         <!-- Create Mode Buttons -->
@@ -389,12 +372,18 @@
         </template>
       </div>
     </el-form>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+const props = defineProps({
+  inDialog: { type: Boolean, default: false },
+  evaluationId: { type: [String, Number], default: null },
+})
+const emit = defineEmits(['saved'])
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { nextTick } from 'vue'
@@ -410,11 +399,11 @@ const submitting = ref(false)
 const loading = ref(false)
 const deleting = ref(false)
 const finishing = ref(false)
-const users = ref([])
+// Simplified app: no user directory; chargers are free-text
 
 // Check if in edit mode
-const isEditMode = computed(() => route.name === 'EditEvaluation' && route.params.id)
-const evaluationId = computed(() => route.params.id)
+const isEditMode = computed(() => !!(props.evaluationId || (route.name === 'EditEvaluation' && route.params.id)))
+const evaluationId = computed(() => props.evaluationId || route.params.id)
 
 // Default process template
 const defaultProcess = () => ({
@@ -478,9 +467,10 @@ const form = reactive({
   capacity: '',
   interface_type: '',
   form_factor: '',
-  processes: [defaultProcess()],
-  scs_charger_id: '',
-  head_office_charger_id: '',
+  // Start with no default process; user adds explicitly
+  processes: [],
+  scs_charger_name: '',
+  head_office_charger_name: '',
 })
 
 const rules = computed(() => ({
@@ -533,18 +523,18 @@ const rules = computed(() => ({
       trigger: 'blur',
     },
   ],
-  scs_charger_id: [
+  scs_charger_name: [
     {
-      required: true,
+      required: false,
       message: t('validation.requiredField.scsCharger'),
-      trigger: 'change',
+      trigger: 'blur',
     },
   ],
-  head_office_charger_id: [
+  head_office_charger_name: [
     {
-      required: true,
+      required: false,
       message: t('validation.requiredField.headOfficeCharger'),
-      trigger: 'change',
+      trigger: 'blur',
     },
   ],
   end_date: [
@@ -607,7 +597,8 @@ const handleCancel = async () => {
       cancelButtonText: t('common.cancel'),
       type: 'warning',
     })
-    router.push('/evaluations')
+    if (props.inDialog) emit('saved')
+    else router.push('/evaluations')
   } catch {
     // User cancelled
   }
@@ -628,8 +619,8 @@ const buildPayload = () => ({
   capacity: form.capacity,
   interface_type: form.interface_type,
   form_factor: form.form_factor,
-  scs_charger_id: form.scs_charger_id,
-  head_office_charger_id: form.head_office_charger_id,
+  scs_charger_name: form.scs_charger_name || null,
+  head_office_charger_name: form.head_office_charger_name || null,
 })
 
 const handleSave = async (submit = false) => {
@@ -656,7 +647,8 @@ const handleSave = async (submit = false) => {
       response = await api.put(`/evaluations/${evaluationId.value}`, payload)
       ElMessage.success(t('common.saveSuccess'))
       // Redirect to detail view after successful save
-      router.push(`/evaluations/${evaluationId.value}`)
+      if (props.inDialog) emit('saved')
+      else router.push(`/evaluations/${evaluationId.value}`)
     } else {
       response = await api.post('/evaluations', payload)
       ElMessage.success(submit ? t('evaluation.submitSuccess') : t('evaluation.saveSuccess'))
@@ -691,7 +683,8 @@ const handleSave = async (submit = false) => {
       }
 
       if (targetId) {
-        router.push(`/evaluations/${targetId}`)
+        if (props.inDialog) emit('saved')
+        else router.push(`/evaluations/${targetId}`)
       } else {
         console.error('Invalid response structure:', response.data)
         ElMessage.error(t('common.responseError'))
@@ -730,7 +723,8 @@ const handleFinish = async () => {
     })
 
     ElMessage.success(t('evaluation.finishSuccess'))
-    router.push(`/evaluations/${evaluationId.value}`)
+    if (props.inDialog) emit('saved')
+    else router.push(`/evaluations/${evaluationId.value}`)
   } catch (error) {
     if (error && error.name !== 'ValidationError' && error !== 'cancel') {
       ElMessage.error(t('evaluation.finishError'))
@@ -755,7 +749,8 @@ const handleDelete = async () => {
     await api.delete(`/evaluations/${evaluationId.value}`)
 
     ElMessage.success(t('evaluation.deleteSuccess'))
-    router.push('/evaluations')
+    if (props.inDialog) emit('saved')
+    else router.push('/evaluations')
   } catch (error) {
     if (error && error !== 'cancel') {
       ElMessage.error(t('common.deleteError'))
@@ -766,15 +761,7 @@ const handleDelete = async () => {
   }
 }
 
-const fetchUsers = async () => {
-  try {
-    const response = await api.get('/users')
-    users.value = response.data.data.users || []
-  } catch (error) {
-    console.error('Failed to fetch users:', error)
-    ElMessage.error(t('ui.fetchDataFailed'))
-  }
-}
+// No user fetching in simplified mode
 
 const fetchEvaluation = async () => {
   if (!isEditMode.value) return
@@ -784,7 +771,7 @@ const fetchEvaluation = async () => {
     const response = await api.get(`/evaluations/${evaluationId.value}`)
     const evaluation = response.data.data.evaluation
 
-    Object.assign(form, {
+  Object.assign(form, {
       evaluation_type: evaluation.evaluation_type || '',
       product_name: evaluation.product_name || '',
       part_number: evaluation.part_number || '',
@@ -802,29 +789,54 @@ const fetchEvaluation = async () => {
         editingTitle: false,
         editTitle: '',
       })),
-      scs_charger_id: evaluation.scs_charger_id || '',
-      head_office_charger_id: evaluation.head_office_charger_id || '',
+      scs_charger_name: evaluation.scs_charger_name || '',
+      head_office_charger_name: evaluation.head_office_charger_name || '',
     })
   } catch (error) {
     ElMessage.error(t('ui.fetchDataFailed'))
     console.error('Failed to fetch evaluation:', error)
-    router.push('/evaluations')
+    if (props.inDialog) emit('saved')
+    else router.push('/evaluations')
   } finally {
     loading.value = false
   }
 }
 
 onMounted(() => {
-  fetchUsers()
   fetchEvaluation()
 })
+
+// Expose methods for dialog footer controls in parent
+const saveDraft = async () => {
+  await handleSave(false)
+}
+const submitForm = async () => {
+  await handleSave(true)
+}
+const save = async () => {
+  await handleSave(false)
+}
+const finish = async () => {
+  await handleFinish()
+}
+const deleteEval = async () => {
+  await handleDelete()
+}
+
+defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
 </script>
 
 <style scoped>
 .new-evaluation-page {
   padding: 0;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: #f5f6f8;
   min-height: 100vh;
+}
+
+.page-container {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 16px 16px 40px;
 }
 
 .page-header {
@@ -854,9 +866,7 @@ onMounted(() => {
   opacity: 0.8;
 }
 
-.evaluation-form {
-  max-width: 1200px;
-}
+.evaluation-form { max-width: 100%; }
 
 .form-section {
   margin-bottom: 24px;
@@ -874,10 +884,10 @@ onMounted(() => {
 }
 
 .form-section :deep(.el-card__header) {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  background: #f7f8fa; /* Flattened, no gradient */
   font-weight: 600;
   color: #2c3e50;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .form-section :deep(.el-card__body) {

@@ -39,9 +39,7 @@
     "fetchListFailed": "Failed to fetch list",
     "fetchDataFailed": "Failed to fetch data"
   },
-  "system": {
-    "name": "Solution Evaluation"
-  },
+  
   "login": {
     "title": "Solution Evaluation Management System",
     "subtitle": "Please login to your account",
@@ -80,35 +78,7 @@
       "processFlow": "Please enter process flow description"
     }
   },
-  "menu": {
-    "dashboard": "Dashboard",
-    "evaluations": "Evaluations",
-    "reports": "Reports",
-    "users": "Users",
-    "messages": "Messages",
-    "profile": "Profile",
-    "logout": "Logout"
-  },
-  "dashboard": {
-    "description": "View system overview and key metrics",
-    "totalEvaluations": "Total Evaluations",
-    "pendingApprovals": "Pending Approvals",
-    "completedEvaluations": "Completed",
-    "activeUsers": "Active Users",
-    "statusDistribution": "Status Distribution",
-    "monthlyTrend": "Monthly Trend",
-    "quickActions": "Quick Actions",
-    "newEvaluation": "New Evaluation",
-    "viewEvaluations": "View Evaluations",
-    "viewReports": "View Reports",
-    "viewMessages": "View Messages",
-    "pendingItems": "Pending Items",
-    "noPendingItems": "No pending items",
-    "recentActivities": "Recent Activities",
-    "evaluationStatus": "Evaluation Status",
-    "newEvaluations": "New Evaluations",
-    "loadError": "Failed to load data"
-  },
+  
   "evaluation": {
     "title": "Evaluation Management",
     "description": "Manage and view all product evaluations",
@@ -295,8 +265,7 @@
     "production_test": "Production Test",
     "aql": "AQL (Acceptable Quality Level)"
   },
-  "showAllLogs": "All Logs",
-  "showCriticalLogs": "Critical Only",
+  
   "noOperationLogs": "No operation logs available",
   "operations": {
     "created": "Created evaluation",
@@ -319,106 +288,5 @@
     "paused": "Paused",
     "cancelled": "Cancelled",
     "rejected": "Rejected"
-  },
-  "users": {
-    "title": "User Management",
-    "description": "Manage system users and permission settings",
-    "comingSoon": "User Management Feature Under Development",
-    "comingSoonDesc": "The user management feature is under development, please stay tuned",
-    "addUser": "Add User",
-    "createUser": "Create User",
-    "editUser": "Edit User",
-    "username": "Username",
-    "fullName": "Full Name",
-    "email": "Email",
-    "department": "Department",
-    "position": "Position",
-    "role": "Role",
-    "status": "Status",
-    "password": "Password",
-    "confirmPassword": "Confirm Password",
-    "active": "Active",
-    "inactive": "Inactive",
-    "activate": "Activate",
-    "deactivate": "Deactivate",
-    "confirmActivate": "Confirm Activate",
-    "confirmDeactivate": "Confirm Deactivate",
-    "activateWarning": "Are you sure you want to activate user {username}?",
-    "deactivateWarning": "Are you sure you want to deactivate user {username}?",
-    "activateSuccess": "User activated successfully",
-    "deactivateSuccess": "User deactivated successfully",
-    "statusUpdateError": "Failed to update user status",
-    "confirmDelete": "Confirm Delete",
-    "deleteWarning": "Are you sure you want to delete user {username}? This action cannot be undone.",
-    "deleteSuccess": "User deleted successfully",
-    "deleteError": "Failed to delete user",
-    "createSuccess": "User created successfully",
-    "createError": "Failed to create user",
-    "updateSuccess": "User updated successfully",
-    "updateError": "Failed to update user",
-    "fetchError": "Failed to fetch users",
-    "invalidEmail": "Please enter a valid email address",
-    "roles": {
-      "user": "User",
-      "part_leader": "Part Leader",
-      "group_leader": "Group Leader",
-      "admin": "Administrator"
-    },
-    "placeholders": {
-      "username": "Enter username",
-      "fullName": "Enter full name",
-      "email": "Enter email address",
-      "department": "Enter department",
-      "position": "Enter position",
-      "role": "Select role",
-      "status": "Select status",
-      "password": "Enter password",
-      "confirmPassword": "Confirm password"
-    }
-  },
-  "messages": {
-    "title": "Message Center",
-    "description": "View system notifications and evaluation-related messages",
-    "comingSoon": "Message Feature Under Development",
-    "comingSoonDesc": "The message center feature is under development, please stay tuned"
-  },
-  "reports": {
-    "title": "Reports & Statistics",
-    "description": "View evaluation data statistics and analysis reports",
-    "comingSoon": "Report Feature Under Development",
-    "comingSoonDesc": "The statistical report feature is under development, please stay tuned"
-  },
-  "profile": {
-    "title": "User Profile",
-    "description": "Manage your personal information and account settings",
-    "personalInfo": "Personal Information",
-    "accountSettings": "Account Settings",
-    "fullName": "Full Name",
-    "username": "Username",
-    "email": "Email",
-    "department": "Department",
-    "position": "Position",
-    "role": "Role",
-    "changePassword": "Change Password",
-    "currentPassword": "Current Password",
-    "newPassword": "New Password",
-    "confirmPassword": "Confirm Password",
-    "updateProfile": "Update Profile",
-    "updateSuccess": "Profile updated successfully",
-    "updateError": "Failed to update profile",
-    "passwordChangeSuccess": "Password changed successfully",
-    "passwordChangeError": "Failed to change password",
-    "redirectingToLogin": "Redirecting to login page in 3 seconds...",
-    "passwordMismatch": "New passwords do not match",
-    "passwordRequirements": "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, and one number",
-    "placeholders": {
-      "fullName": "Enter your full name",
-      "email": "Enter your email",
-      "department": "Enter your department",
-      "position": "Enter your position",
-      "currentPassword": "Enter your current password",
-      "newPassword": "Enter your new password",
-      "confirmPassword": "Confirm your new password"
-    }
   }
 }

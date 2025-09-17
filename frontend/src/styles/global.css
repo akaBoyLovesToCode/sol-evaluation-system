@@ -12,13 +12,13 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #c0c4cc;
   border-radius: 4px;
   transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6a4c93 100%);
+  background: #a8abb2;
 }
 
 /* Element Plus 组件样式覆盖 */
@@ -31,13 +31,13 @@
 }
 
 .el-button--primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background: #4f46e5 !important; /* indigo-600 */
   border: none !important;
 }
 
 .el-button--primary:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6a4c93 100%) !important;
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4) !important;
+  background: #4338ca !important; /* indigo-700 */
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.25) !important;
 }
 
 .el-button--success {
@@ -51,16 +51,10 @@
 }
 
 .el-card {
-  border-radius: 20px !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-  backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  transition: all 0.3s ease !important;
-}
-
-.el-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06) !important;
+  background: #fff !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
 }
 
 .el-input__wrapper {
@@ -73,7 +67,7 @@
 }
 
 .el-input__wrapper.is-focus {
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3) !important;
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.2) !important;
 }
 
 .el-select .el-input__wrapper {
@@ -104,21 +98,13 @@
 }
 
 .el-table th {
-  background: linear-gradient(
-    135deg,
-    rgba(102, 126, 234, 0.1) 0%,
-    rgba(118, 75, 162, 0.1) 100%
-  ) !important;
+  background: #f7f8fa !important;
   font-weight: 600 !important;
   color: #2c3e50 !important;
 }
 
 .el-table tr:hover > td {
-  background: linear-gradient(
-    135deg,
-    rgba(102, 126, 234, 0.05) 0%,
-    rgba(118, 75, 162, 0.05) 100%
-  ) !important;
+  background: #fafafa !important;
 }
 
 .el-dropdown-menu {
@@ -135,17 +121,13 @@
 }
 
 .el-dropdown-menu__item:hover {
-  background: linear-gradient(
-    135deg,
-    rgba(102, 126, 234, 0.1) 0%,
-    rgba(118, 75, 162, 0.1) 100%
-  ) !important;
-  transform: translateX(4px);
+  background: #f6f7fb !important;
+  transform: translateX(2px);
 }
 
 .el-pagination {
   --el-pagination-button-bg-color: transparent !important;
-  --el-pagination-hover-color: #667eea !important;
+  --el-pagination-hover-color: #4f46e5 !important;
 }
 
 .el-pagination .btn-next,

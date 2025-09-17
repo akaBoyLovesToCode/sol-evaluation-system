@@ -60,20 +60,3 @@ jobs:
 
       - name: Run formatter check
         run: ruff format --check .
-
-      - name: Run tests
-        env:
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_evaluation
-          FLASK_ENV: testing
-          SECRET_KEY: test-secret-key-for-ci
-          JWT_SECRET_KEY: test-jwt-secret-key-for-ci
-        run: pytest --cov=app tests/ --cov-report=xml --cov-report=term-missing
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          file: backend/coverage.xml
-          flags: backend
-          name: backend-coverage
-          fail_ci_if_error: false

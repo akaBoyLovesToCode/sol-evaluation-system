@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from app import db
 
-if TYPE_CHECKING:
-    from app.models.user import User
 
 
 class EvaluationStatus(Enum):
@@ -81,9 +79,9 @@ class Evaluation(db.Model):
     start_date = db.Column(db.Date, nullable=False)
     actual_end_date = db.Column(db.Date)  # Renamed from completion_date
 
-    # Charger assignments
-    scs_charger_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    head_office_charger_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    # Charger assignments (free text; users removed)
+    scs_charger_name = db.Column(db.String(100))
+    head_office_charger_name = db.Column(db.String(100))
 
     # Process information
     process_step = db.Column(
@@ -96,12 +94,7 @@ class Evaluation(db.Model):
     interface_type = db.Column(db.String(100))  # Interface type
     form_factor = db.Column(db.String(100))  # Form factor
 
-    # User relationships
-    evaluator_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    part_approver_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    group_approver_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    scs_charger_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    head_office_charger_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    # User relationships removed (auth-less mode)
 
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -137,16 +130,7 @@ class Evaluation(db.Model):
         lazy="dynamic",
         viewonly=True,
     )
-    scs_charger = db.relationship(
-        "User",
-        foreign_keys=[scs_charger_id],
-        backref="scs_charger_evaluations",
-    )
-    head_office_charger = db.relationship(
-        "User",
-        foreign_keys=[head_office_charger_id],
-        backref="head_office_charger_evaluations",
-    )
+    # User relationships removed in simplified mode
 
     def __init__(
         self,
@@ -154,7 +138,6 @@ class Evaluation(db.Model):
         evaluation_type: str,
         product_name: str,
         part_number: str,
-        evaluator_id: int,
         start_date: date,
         **kwargs: Any,
     ) -> None:
@@ -165,7 +148,6 @@ class Evaluation(db.Model):
             evaluation_type: Type of evaluation ('new_product' or 'mass_production').
             product_name: Product name.
             part_number: Product part number.
-            evaluator_id: ID of the evaluator.
             start_date: Evaluation start date.
             **kwargs: Additional optional fields.
 
@@ -174,7 +156,6 @@ class Evaluation(db.Model):
         self.evaluation_type = evaluation_type
         self.product_name = product_name
         self.part_number = part_number
-        self.evaluator_id = evaluator_id
         self.start_date = start_date
 
         # Set optional fields
@@ -182,7 +163,7 @@ class Evaluation(db.Model):
             if hasattr(self, key):
                 setattr(self, key, value)
 
-    def can_be_approved_by(self, user: User) -> bool:
+    def can_be_approved_by(self, user: Any) -> bool:
         """Check if user can approve this evaluation.
 
         Args:
@@ -195,10 +176,8 @@ class Evaluation(db.Model):
         if self.evaluation_type == "mass_production":
             return False  # Mass production evaluations don't need approval
 
-        if self.status == "pending_part_approval":
-            return user.has_permission("part_leader")
-        elif self.status == "pending_group_approval":
-            return user.has_permission("group_leader")
+        # Approvals eliminated; keep statuses reserved but no role checks
+        return False
 
         return False
 
@@ -210,14 +189,8 @@ class Evaluation(db.Model):
             approval_level: 'part' or 'group'.
 
         """
-        if approval_level == "part":
-            self.part_approver_id = approver_id
-            if self.evaluation_type == "new_product":
-                self.status = "pending_group_approval"
-        elif approval_level == "group":
-            self.group_approver_id = approver_id
-            self.status = "completed"
-            self.actual_end_date = datetime.utcnow().date()
+        # No-op (approvals removed). Kept for backward compatibility.
+        return
 
     def reject(self) -> None:
         """Reject the evaluation."""
@@ -251,10 +224,12 @@ class Evaluation(db.Model):
         if self.evaluation_type == "mass_production":
             return None
 
-        if self.status == "pending_part_approval":
-            return "part_leader"
-        elif self.status == "pending_group_approval":
-            return "group_leader"
+        # Reserved statuses retained, but no approver required
+        if self.status in [
+            "pending_part_approval",
+            "pending_group_approval",
+        ]:
+            return None
 
         return None
 
@@ -286,11 +261,8 @@ class Evaluation(db.Model):
             "capacity": self.capacity,
             "interface_type": self.interface_type,
             "form_factor": self.form_factor,
-            "evaluator_id": self.evaluator_id,
-            "part_approver_id": self.part_approver_id,
-            "group_approver_id": self.group_approver_id,
-            "scs_charger_id": self.scs_charger_id,
-            "head_office_charger_id": self.head_office_charger_id,
+            "scs_charger_name": self.scs_charger_name,
+            "head_office_charger_name": self.head_office_charger_name,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

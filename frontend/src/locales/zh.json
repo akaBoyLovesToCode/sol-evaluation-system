@@ -39,9 +39,7 @@
     "fetchListFailed": "获取列表失败",
     "fetchDataFailed": "获取数据失败"
   },
-  "system": {
-    "name": "产品评价"
-  },
+  
   "login": {
     "title": "产品评价管理系统",
     "subtitle": "请登录您的账户",
@@ -80,35 +78,8 @@
       "processFlow": "请输入工艺流程描述"
     }
   },
-  "menu": {
-    "dashboard": "仪表板",
-    "evaluations": "评价管理",
-    "reports": "报告统计",
-    "users": "用户管理",
-    "messages": "消息中心",
-    "profile": "个人资料",
-    "logout": "退出登录"
-  },
-  "dashboard": {
-    "description": "查看系统概览和关键指标",
-    "totalEvaluations": "总评价数",
-    "pendingApprovals": "待审批",
-    "completedEvaluations": "已完成",
-    "activeUsers": "活跃用户",
-    "statusDistribution": "评价状态分布",
-    "monthlyTrend": "月度评价趋势",
-    "quickActions": "快速操作",
-    "newEvaluation": "新建评价",
-    "viewEvaluations": "查看评价",
-    "viewReports": "查看报告",
-    "viewMessages": "查看消息",
-    "pendingItems": "待处理事项",
-    "noPendingItems": "暂无待处理事项",
-    "recentActivities": "最近活动",
-    "evaluationStatus": "评价状态",
-    "newEvaluations": "新建评价",
-    "loadError": "数据加载失败"
-  },
+  
+  
   "evaluation": {
     "title": "评价管理",
     "description": "管理和查看所有产品评价",
@@ -253,17 +224,17 @@
       "cost_optimization": "成本优化",
       "customer_requirement": "客户要求",
       "other": "其他",
-      "processStatus": {
-        "pending": "待处理",
-        "in_progress": "进行中",
-        "completed": "已完成",
-        "failed": "失败"
-      },
       "horizontal_expansion": "横展开",
       "direct_development": "直开发",
       "pgm_improvement": "PGM改善",
       "firmware_change": "F/W变更",
       "bom_change": "BOM变更"
+    },
+    "processStatus": {
+      "pending": "待处理",
+      "in_progress": "进行中",
+      "completed": "已完成",
+      "failed": "失败"
     },
     "formFactors": {
       "2_5_inch": "2.5寸",
@@ -277,9 +248,6 @@
       "production_test": "生产测试",
       "aql": "AQL (Acceptable Quality Level)"
     },
-
-    "showAllLogs": "所有日志",
-    "showCriticalLogs": "仅重要日志",
     "noOperationLogs": "暂无操作日志",
     "operations": {
       "created": "创建了评价",
@@ -317,106 +285,5 @@
     "paused": "已暂停",
     "cancelled": "已取消",
     "rejected": "已拒绝"
-  },
-  "users": {
-    "title": "用户管理",
-    "description": "管理系统用户和权限设置",
-    "comingSoon": "用户管理功能开发中",
-    "comingSoonDesc": "用户管理功能正在开发中，敬请期待",
-    "addUser": "添加用户",
-    "createUser": "创建用户",
-    "editUser": "编辑用户",
-    "username": "用户名",
-    "fullName": "姓名",
-    "email": "邮箱",
-    "department": "部门",
-    "position": "职位",
-    "role": "角色",
-    "status": "状态",
-    "password": "密码",
-    "confirmPassword": "确认密码",
-    "active": "激活",
-    "inactive": "未激活",
-    "activate": "激活",
-    "deactivate": "停用",
-    "confirmActivate": "确认激活",
-    "confirmDeactivate": "确认停用",
-    "activateWarning": "确定要激活用户 {username} 吗？",
-    "deactivateWarning": "确定要停用用户 {username} 吗？",
-    "activateSuccess": "用户激活成功",
-    "deactivateSuccess": "用户停用成功",
-    "statusUpdateError": "更新用户状态失败",
-    "confirmDelete": "确认删除",
-    "deleteWarning": "确定要删除用户 {username} 吗？此操作无法撤销。",
-    "deleteSuccess": "用户删除成功",
-    "deleteError": "删除用户失败",
-    "createSuccess": "用户创建成功",
-    "createError": "创建用户失败",
-    "updateSuccess": "用户更新成功",
-    "updateError": "更新用户失败",
-    "fetchError": "获取用户列表失败",
-    "invalidEmail": "请输入有效的邮箱地址",
-    "roles": {
-      "user": "普通用户",
-      "part_leader": "部门负责人",
-      "group_leader": "组长",
-      "admin": "管理员"
-    },
-    "placeholders": {
-      "username": "请输入用户名",
-      "fullName": "请输入姓名",
-      "email": "请输入邮箱地址",
-      "department": "请输入部门",
-      "position": "请输入职位",
-      "role": "请选择角色",
-      "status": "请选择状态",
-      "password": "请输入密码",
-      "confirmPassword": "请确认密码"
-    }
-  },
-  "messages": {
-    "title": "消息中心",
-    "description": "查看系统通知和评价相关消息",
-    "comingSoon": "消息功能开发中",
-    "comingSoonDesc": "消息中心功能正在开发中，敬请期待"
-  },
-  "reports": {
-    "title": "报告统计",
-    "description": "查看评价数据统计和分析报告",
-    "comingSoon": "报告功能开发中",
-    "comingSoonDesc": "统计报告功能正在开发中，敬请期待"
-  },
-  "profile": {
-    "title": "个人资料",
-    "description": "管理您的个人信息和账户设置",
-    "personalInfo": "个人信息",
-    "accountSettings": "账户设置",
-    "fullName": "姓名",
-    "username": "用户名",
-    "email": "邮箱",
-    "department": "部门",
-    "position": "职位",
-    "role": "角色",
-    "changePassword": "修改密码",
-    "currentPassword": "当前密码",
-    "newPassword": "新密码",
-    "confirmPassword": "确认密码",
-    "updateProfile": "更新资料",
-    "updateSuccess": "资料更新成功",
-    "updateError": "资料更新失败",
-    "passwordChangeSuccess": "密码修改成功",
-    "passwordChangeError": "密码修改失败",
-    "redirectingToLogin": "3秒后将跳转到登录页面...",
-    "passwordMismatch": "两次输入的新密码不一致",
-    "passwordRequirements": "密码长度至少为8个字符，且必须包含至少一个大写字母、一个小写字母和一个数字",
-    "placeholders": {
-      "fullName": "请输入姓名",
-      "email": "请输入邮箱",
-      "department": "请输入部门",
-      "position": "请输入职位",
-      "currentPassword": "请输入当前密码",
-      "newPassword": "请输入新密码",
-      "confirmPassword": "请确认新密码"
-    }
   }
 }

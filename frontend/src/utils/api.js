@@ -93,18 +93,10 @@ const api = axios.create({
   },
 })
 
-// 请求拦截器
+// 请求拦截器（no auth headers）
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
-  },
+  (config) => config,
+  (error) => Promise.reject(error),
 )
 
 // 响应拦截器
@@ -117,57 +109,6 @@ api.interceptors.response.use(
 
     if (response) {
       switch (response.status) {
-        case 401: {
-          // 如果是login端点失败，让组件处理错误
-          if (config.url === '/auth/login') {
-            break
-          }
-
-          // 如果是refresh端点失败，直接登出
-          if (config.url === '/auth/refresh') {
-            localStorage.removeItem('token')
-            localStorage.removeItem('refreshToken')
-            window.location.href = '/login'
-            break
-          }
-
-          // 尝试刷新token
-          const refreshToken = localStorage.getItem('refreshToken')
-          if (refreshToken && !config._retry) {
-            config._retry = true
-
-            try {
-              const refreshResponse = await axios.post(
-                `${getApiBaseUrl()}/auth/refresh`,
-                {},
-                {
-                  headers: {
-                    Authorization: `Bearer ${refreshToken}`,
-                  },
-                },
-              )
-
-              const { access_token } = refreshResponse.data
-              localStorage.setItem('token', access_token)
-
-              // 重新发送原始请求
-              config.headers.Authorization = `Bearer ${access_token}`
-              return api(config)
-            } catch {
-              // 刷新token失败，清除tokens并跳转到登录页
-              localStorage.removeItem('token')
-              localStorage.removeItem('refreshToken')
-              window.location.href = '/login'
-              break
-            }
-          } else {
-            // 没有refresh token或重试失败，清除token并跳转到登录页
-            localStorage.removeItem('token')
-            localStorage.removeItem('refreshToken')
-            window.location.href = '/login'
-          }
-          break
-        }
         case 403:
           ElMessage.error(t('api.errors.forbidden'))
           break

@@ -9,7 +9,6 @@ from typing import Any
 
 from flask import Flask
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
@@ -25,7 +24,6 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 # Initialize extensions
 db = SQLAlchemy()
 migrate = Migrate()
-jwt = JWTManager()
 cors = CORS()
 socketio = SocketIO()
 
@@ -70,7 +68,6 @@ def create_app(config_name: str | None = None) -> Flask:
     # Initialize extensions with app
     db.init_app(app)
     migrate.init_app(app, db)
-    jwt.init_app(app)
 
     # Debug CORS configuration
     cors_origins = app.config["CORS_ORIGINS"]
@@ -81,7 +78,7 @@ def create_app(config_name: str | None = None) -> Flask:
         app,
         origins=cors_origins,
         supports_credentials=True,
-        allow_headers=["Content-Type", "Authorization"],
+        allow_headers=["Content-Type"],
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     )
     socketio.init_app(app, cors_allowed_origins=cors_origins)
@@ -93,21 +90,9 @@ def create_app(config_name: str | None = None) -> Flask:
         SQLAlchemyInstrumentor().instrument(engine=db.engine)
 
     # Register blueprints
-    from app.api import auth_bp, dashboard_bp, evaluation_bp, operation_log_bp, user_bp
-    from app.api.notifications import notifications_bp
-    from app.api.swagger import register_api_routes
-    from app.api.workflow import workflow_bp
+    from app.api import evaluation_bp
 
-    app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(evaluation_bp, url_prefix="/api/evaluations")
-    app.register_blueprint(user_bp, url_prefix="/api/users")
-    app.register_blueprint(dashboard_bp, url_prefix="/api/dashboard")
-    app.register_blueprint(workflow_bp, url_prefix="/api/workflow")
-    app.register_blueprint(notifications_bp, url_prefix="/api/notifications")
-    app.register_blueprint(operation_log_bp, url_prefix="/api/logs")
-
-    # Register Swagger API documentation
-    register_api_routes(app)
 
     # Configure logging
     if not app.debug and not app.testing:
@@ -170,58 +155,14 @@ def create_app(config_name: str | None = None) -> Flask:
             },
         }
 
-    # Auto-initialize database if empty
+    # Auto-initialize database if empty (tables only)
     with app.app_context():
         try:
-            # Check if database is initialized by looking for users table
-            from app.models.user import User
-
-            User.query.first()
-            app.logger.info("Database already initialized")
-        except Exception as e:
+            db.create_all()
+            app.logger.info("Database tables ensured.")
+        except Exception as init_error:
             app.logger.info(
-                f"Database check failed: {str(e)}, attempting initialization..."
+                f"Database initialization handled elsewhere: {str(init_error)}"
             )
-            try:
-                # Database is empty, create tables and default data
-                app.logger.info("Creating database tables...")
-                db.create_all()
-
-                # Create default admin user if it doesn't exist
-                from datetime import datetime
-
-                from werkzeug.security import generate_password_hash
-
-                from app.models.user import User
-
-                try:
-                    admin_user = User.query.filter_by(username="admin").first()
-                    if not admin_user:
-                        admin_user = User(
-                            username="admin",
-                            email="admin@evaluation.system",
-                            password_hash=generate_password_hash("admin123"),
-                            full_name="System Administrator",
-                            role="admin",
-                            is_active=True,
-                            created_at=datetime.utcnow(),
-                            updated_at=datetime.utcnow(),
-                        )
-                        db.session.add(admin_user)
-                        db.session.commit()
-                        app.logger.info(
-                            "Database initialized with default admin user (admin/admin123)"
-                        )
-                    else:
-                        app.logger.info("Admin user already exists")
-                except Exception as user_error:
-                    app.logger.info(
-                        f"Admin user creation handled by another worker: {str(user_error)}"
-                    )
-
-            except Exception as init_error:
-                app.logger.info(
-                    f"Database initialization handled by another worker: {str(init_error)}"
-                )
 
     return app

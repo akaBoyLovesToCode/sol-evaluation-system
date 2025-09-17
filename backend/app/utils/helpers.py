@@ -8,23 +8,11 @@ from datetime import date, datetime
 from typing import Any
 
 from flask import Request
-from flask_jwt_extended import get_jwt_identity
 
 from app.models import SystemConfig
 
 
-def get_current_user_id() -> int | None:
-    """Get current user ID from JWT token, converting from string to int.
-
-    Returns:
-        Current user ID or None if not authenticated.
-
-    """
-    try:
-        identity = get_jwt_identity()
-        return int(identity) if identity else None
-    except (ValueError, TypeError):
-        return None
+# Authentication removed: user identity is no longer tracked.
 
 
 def get_client_ip(request: Request) -> str | None:
