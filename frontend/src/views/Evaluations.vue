@@ -233,7 +233,12 @@
       :close-on-click-modal="false"
       :close-on-press-escape="true"
     >
-      <component :is="EvaluationDetail" :evaluation-id="selectedId" :in-dialog="true" @edit="onEdit" />
+      <component
+        :is="EvaluationDetail"
+        :evaluation-id="selectedId"
+        :in-dialog="true"
+        @edit="onEdit"
+      />
       <template #footer>
         <el-button @click="showDetail = false">{{ $t('common.cancel') }}</el-button>
       </template>
@@ -820,5 +825,3 @@ onMounted(() => {
   }
 }
 </style>
-
- 
