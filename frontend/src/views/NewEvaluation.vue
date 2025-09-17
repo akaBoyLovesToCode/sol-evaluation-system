@@ -1,377 +1,386 @@
 <template>
   <div v-loading="loading" class="new-evaluation-page">
     <div class="page-container">
-    <div v-if="!inDialog" class="page-header">
-      <h1 class="page-title">
-        {{ isEditMode ? $t('evaluation.edit.title') : $t('evaluation.new.title') }}
-      </h1>
-      <p class="page-description">
-        {{ isEditMode ? $t('evaluation.edit.description') : $t('evaluation.new.description') }}
-      </p>
-    </div>
+      <div v-if="!inDialog" class="page-header">
+        <h1 class="page-title">
+          {{ isEditMode ? $t('evaluation.edit.title') : $t('evaluation.new.title') }}
+        </h1>
+        <p class="page-description">
+          {{ isEditMode ? $t('evaluation.edit.description') : $t('evaluation.new.description') }}
+        </p>
+      </div>
 
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="120px" class="evaluation-form">
-      <el-card class="form-section fade-in-up" style="animation-delay: 0.1s">
-        <template #header>
-          <span>{{ $t('evaluation.basicInfo') }}</span>
-        </template>
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="120px"
+        class="evaluation-form"
+      >
+        <el-card class="form-section fade-in-up" style="animation-delay: 0.1s">
+          <template #header>
+            <span>{{ $t('evaluation.basicInfo') }}</span>
+          </template>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item :label="$t('evaluation.typeLabel')" prop="evaluation_type">
-              <el-radio-group v-model="form.evaluation_type" @change="handleTypeChange">
-                <el-radio value="new_product">{{ $t('evaluation.type.new_product') }}</el-radio>
-                <el-radio value="mass_production">{{
-                  $t('evaluation.type.mass_production')
-                }}</el-radio>
-              </el-radio-group>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item :label="$t('evaluation.productName')" prop="product_name">
-              <el-input
-                v-model="form.product_name"
-                :placeholder="$t('evaluation.placeholders.productName')"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item :label="$t('evaluation.partNumber')" prop="part_number">
-              <el-input
-                v-model="form.part_number"
-                :placeholder="$t('evaluation.placeholders.partNumber')"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item :label="$t('evaluation.startDate')" prop="start_date">
-              <el-date-picker
-                v-model="form.start_date"
-                type="date"
-                :placeholder="$t('evaluation.placeholders.startDate')"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row :gutter="20">
-          <el-col v-if="isEditMode" :span="12">
-            <el-form-item :label="$t('evaluation.actualEndDate')" prop="end_date">
-              <el-date-picker
-                v-model="form.end_date"
-                type="date"
-                :placeholder="$t('evaluation.placeholders.actualEndDate')"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item :label="$t('evaluation.reason')" prop="reason">
-              <el-select
-                v-model="form.reason"
-                :placeholder="$t('evaluation.placeholders.reason')"
-                style="width: 100%"
-              >
-                <el-option
-                  v-for="option in reasonOptions"
-                  :key="option.value"
-                  :label="option.label"
-                  :value="option.value"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item :label="$t('evaluation.processStep')" prop="process_step">
-              <el-input
-                v-model="form.process_step"
-                :placeholder="$t('evaluation.placeholders.processStep')"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item :label="$t('evaluation.scsCharger')" prop="scs_charger_name">
-              <el-input
-                v-model="form.scs_charger_name"
-                :placeholder="$t('evaluation.placeholders.scsCharger')"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item :label="$t('evaluation.headOfficeCharger')" prop="head_office_charger_name">
-              <el-input
-                v-model="form.head_office_charger_name"
-                :placeholder="$t('evaluation.placeholders.headOfficeCharger')"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-form-item :label="$t('evaluation.descriptionLabel')" prop="description">
-          <el-input
-            v-model="form.description"
-            type="textarea"
-            :rows="3"
-            :placeholder="$t('evaluation.placeholders.description')"
-          />
-        </el-form-item>
-      </el-card>
-
-      <el-card class="form-section fade-in-up" style="animation-delay: 0.3s">
-        <template #header>
-          <span>{{ $t('evaluation.technicalSpec') }}</span>
-        </template>
-
-        <el-row :gutter="20">
-          <el-col :span="8">
-            <el-form-item :label="$t('evaluation.pgmVersion')" prop="pgm_version">
-              <el-input
-                v-model="form.pgm_version"
-                :placeholder="$t('evaluation.placeholders.pgmVersion')"
-              />
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="8">
-            <el-form-item :label="$t('evaluation.capacity')" prop="capacity">
-              <el-input
-                v-model="form.capacity"
-                :placeholder="$t('evaluation.placeholders.capacity')"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row :gutter="20">
-          <el-col :span="8">
-            <el-form-item :label="$t('evaluation.interfaceType')" prop="interface_type">
-              <el-select
-                v-model="form.interface_type"
-                :placeholder="$t('evaluation.placeholders.interfaceType')"
-                style="width: 100%"
-              >
-                <el-option :label="$t('evaluation.interfaceTypes.sata')" value="SATA" />
-                <el-option :label="$t('evaluation.interfaceTypes.nvme')" value="NVMe" />
-                <el-option :label="$t('evaluation.interfaceTypes.pcie')" value="PCIe" />
-                <el-option :label="$t('common.other')" value="other" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item :label="$t('evaluation.formFactor')" prop="form_factor">
-              <el-select
-                v-model="form.form_factor"
-                :placeholder="$t('evaluation.placeholders.formFactor')"
-                style="width: 100%"
-              >
-                <el-option :label="$t('evaluation.formFactors.2_5_inch')" value="2.5" />
-                <el-option :label="$t('evaluation.formFactors.m2_2280')" value="M.2_2280" />
-                <el-option :label="$t('evaluation.formFactors.m2_2242')" value="M.2_2242" />
-                <el-option :label="$t('common.other')" value="other" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-card>
-
-      <el-card class="form-section fade-in-up" style="animation-delay: 0.5s">
-        <template #header>
-          <span>{{ $t('evaluation.evaluationProcesses') }}</span>
-        </template>
-
-        <div class="processes-section">
-          <div v-for="(process, index) in form.processes" :key="index" class="process-item">
-            <div class="process-header">
-              <div class="title-with-edit">
-                <h4 v-if="!process.editingTitle">
-                  {{ process.title || $t('evaluation.process') + ' ' + (index + 1) }}
-                </h4>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item :label="$t('evaluation.typeLabel')" prop="evaluation_type">
+                <el-radio-group v-model="form.evaluation_type" @change="handleTypeChange">
+                  <el-radio value="new_product">{{ $t('evaluation.type.new_product') }}</el-radio>
+                  <el-radio value="mass_production">{{
+                    $t('evaluation.type.mass_production')
+                  }}</el-radio>
+                </el-radio-group>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item :label="$t('evaluation.productName')" prop="product_name">
                 <el-input
-                  v-else
-                  v-model="process.editTitle"
-                  size="small"
-                  @blur="saveProcessTitle(index)"
-                  @keyup.enter="saveProcessTitle(index)"
-                  @keyup.escape="cancelProcessTitleEdit(index)"
+                  v-model="form.product_name"
+                  :placeholder="$t('evaluation.placeholders.productName')"
                 />
-                <el-button
-                  link
-                  size="small"
-                  :icon="Edit"
-                  style="color: #909399; margin-left: 8px"
-                  @click="startProcessTitleEdit(index)"
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item :label="$t('evaluation.partNumber')" prop="part_number">
+                <el-input
+                  v-model="form.part_number"
+                  :placeholder="$t('evaluation.placeholders.partNumber')"
                 />
-              </div>
-              <el-button
-                v-if="form.processes.length > 1"
-                type="danger"
-                size="small"
-                :icon="Delete"
-                @click="removeProcess(index)"
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item :label="$t('evaluation.startDate')" prop="start_date">
+                <el-date-picker
+                  v-model="form.start_date"
+                  type="date"
+                  :placeholder="$t('evaluation.placeholders.startDate')"
+                  format="YYYY-MM-DD"
+                  value-format="YYYY-MM-DD"
+                  style="width: 100%"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-row :gutter="20">
+            <el-col v-if="isEditMode" :span="12">
+              <el-form-item :label="$t('evaluation.actualEndDate')" prop="end_date">
+                <el-date-picker
+                  v-model="form.end_date"
+                  type="date"
+                  :placeholder="$t('evaluation.placeholders.actualEndDate')"
+                  format="YYYY-MM-DD"
+                  value-format="YYYY-MM-DD"
+                  style="width: 100%"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item :label="$t('evaluation.reason')" prop="reason">
+                <el-select
+                  v-model="form.reason"
+                  :placeholder="$t('evaluation.placeholders.reason')"
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="option in reasonOptions"
+                    :key="option.value"
+                    :label="option.label"
+                    :value="option.value"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item :label="$t('evaluation.processStep')" prop="process_step">
+                <el-input
+                  v-model="form.process_step"
+                  :placeholder="$t('evaluation.placeholders.processStep')"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item :label="$t('evaluation.scsCharger')" prop="scs_charger_name">
+                <el-input
+                  v-model="form.scs_charger_name"
+                  :placeholder="$t('evaluation.placeholders.scsCharger')"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item
+                :label="$t('evaluation.headOfficeCharger')"
+                prop="head_office_charger_name"
               >
-                {{ $t('evaluation.remove') }}
-              </el-button>
+                <el-input
+                  v-model="form.head_office_charger_name"
+                  :placeholder="$t('evaluation.placeholders.headOfficeCharger')"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-form-item :label="$t('evaluation.descriptionLabel')" prop="description">
+            <el-input
+              v-model="form.description"
+              type="textarea"
+              :rows="3"
+              :placeholder="$t('evaluation.placeholders.description')"
+            />
+          </el-form-item>
+        </el-card>
+
+        <el-card class="form-section fade-in-up" style="animation-delay: 0.3s">
+          <template #header>
+            <span>{{ $t('evaluation.technicalSpec') }}</span>
+          </template>
+
+          <el-row :gutter="20">
+            <el-col :span="8">
+              <el-form-item :label="$t('evaluation.pgmVersion')" prop="pgm_version">
+                <el-input
+                  v-model="form.pgm_version"
+                  :placeholder="$t('evaluation.placeholders.pgmVersion')"
+                />
+              </el-form-item>
+            </el-col>
+
+            <el-col :span="8">
+              <el-form-item :label="$t('evaluation.capacity')" prop="capacity">
+                <el-input
+                  v-model="form.capacity"
+                  :placeholder="$t('evaluation.placeholders.capacity')"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-row :gutter="20">
+            <el-col :span="8">
+              <el-form-item :label="$t('evaluation.interfaceType')" prop="interface_type">
+                <el-select
+                  v-model="form.interface_type"
+                  :placeholder="$t('evaluation.placeholders.interfaceType')"
+                  style="width: 100%"
+                >
+                  <el-option :label="$t('evaluation.interfaceTypes.sata')" value="SATA" />
+                  <el-option :label="$t('evaluation.interfaceTypes.nvme')" value="NVMe" />
+                  <el-option :label="$t('evaluation.interfaceTypes.pcie')" value="PCIe" />
+                  <el-option :label="$t('common.other')" value="other" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item :label="$t('evaluation.formFactor')" prop="form_factor">
+                <el-select
+                  v-model="form.form_factor"
+                  :placeholder="$t('evaluation.placeholders.formFactor')"
+                  style="width: 100%"
+                >
+                  <el-option :label="$t('evaluation.formFactors.2_5_inch')" value="2.5" />
+                  <el-option :label="$t('evaluation.formFactors.m2_2280')" value="M.2_2280" />
+                  <el-option :label="$t('evaluation.formFactors.m2_2242')" value="M.2_2242" />
+                  <el-option :label="$t('common.other')" value="other" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-card>
+
+        <el-card class="form-section fade-in-up" style="animation-delay: 0.5s">
+          <template #header>
+            <span>{{ $t('evaluation.evaluationProcesses') }}</span>
+          </template>
+
+          <div class="processes-section">
+            <div v-for="(process, index) in form.processes" :key="index" class="process-item">
+              <div class="process-header">
+                <div class="title-with-edit">
+                  <h4 v-if="!process.editingTitle">
+                    {{ process.title || $t('evaluation.process') + ' ' + (index + 1) }}
+                  </h4>
+                  <el-input
+                    v-else
+                    v-model="process.editTitle"
+                    size="small"
+                    @blur="saveProcessTitle(index)"
+                    @keyup.enter="saveProcessTitle(index)"
+                    @keyup.escape="cancelProcessTitleEdit(index)"
+                  />
+                  <el-button
+                    link
+                    size="small"
+                    :icon="Edit"
+                    style="color: #909399; margin-left: 8px"
+                    @click="startProcessTitleEdit(index)"
+                  />
+                </div>
+                <el-button
+                  v-if="form.processes.length > 1"
+                  type="danger"
+                  size="small"
+                  :icon="Delete"
+                  @click="removeProcess(index)"
+                >
+                  {{ $t('evaluation.remove') }}
+                </el-button>
+              </div>
+
+              <el-row :gutter="20">
+                <el-col :span="8">
+                  <el-form-item
+                    :label="$t('evaluation.evalCode')"
+                    :prop="`processes.${index}.eval_code`"
+                    :rules="[
+                      {
+                        required: true,
+                        message: $t('validation.requiredField.evalCode'),
+                        trigger: 'blur',
+                      },
+                    ]"
+                  >
+                    <el-input
+                      v-model="process.eval_code"
+                      :placeholder="$t('evaluation.placeholders.evalCode')"
+                    />
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="8">
+                  <el-form-item
+                    :label="$t('evaluation.lotNumber')"
+                    :prop="`processes.${index}.lot_number`"
+                    :rules="[
+                      {
+                        required: true,
+                        message: $t('validation.requiredField.lotNumber'),
+                        trigger: 'blur',
+                      },
+                    ]"
+                  >
+                    <el-input
+                      v-model="process.lot_number"
+                      :placeholder="$t('evaluation.placeholders.lotNumber')"
+                    />
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="8">
+                  <el-form-item
+                    :label="$t('evaluation.quantity')"
+                    :prop="`processes.${index}.quantity`"
+                    :rules="[
+                      {
+                        required: true,
+                        message: $t('validation.requiredField.quantity'),
+                        trigger: 'blur',
+                      },
+                    ]"
+                  >
+                    <el-input-number
+                      v-model="process.quantity"
+                      :min="1"
+                      :placeholder="$t('evaluation.placeholders.quantity')"
+                      style="width: 100%"
+                    />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+
+              <el-form-item
+                :label="$t('evaluation.processFlow')"
+                :prop="`processes.${index}.process_description`"
+                :rules="[
+                  {
+                    required: true,
+                    message: $t('validation.requiredField.processFlow'),
+                    trigger: 'blur',
+                  },
+                ]"
+              >
+                <el-input
+                  v-model="process.process_description"
+                  type="textarea"
+                  :rows="2"
+                  :placeholder="$t('evaluation.placeholders.processFlow')"
+                />
+              </el-form-item>
+
+              <el-row :gutter="20">
+                <el-col :span="12">
+                  <el-form-item :label="$t('evaluation.manufacturingTestResults')">
+                    <el-input
+                      v-model="process.manufacturing_test_results"
+                      type="textarea"
+                      :rows="2"
+                      :placeholder="$t('evaluation.placeholders.manufacturingTestResults')"
+                    />
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item :label="$t('evaluation.defectAnalysisResults')">
+                    <el-input
+                      v-model="process.defect_analysis_results"
+                      type="textarea"
+                      :rows="2"
+                      :placeholder="$t('evaluation.placeholders.defectAnalysisResults')"
+                    />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+
+              <el-form-item :label="$t('evaluation.aqlResult')">
+                <el-input
+                  v-model="process.aql_result"
+                  :placeholder="$t('evaluation.placeholders.aqlResult')"
+                />
+              </el-form-item>
             </div>
 
-            <el-row :gutter="20">
-              <el-col :span="8">
-                <el-form-item
-                  :label="$t('evaluation.evalCode')"
-                  :prop="`processes.${index}.eval_code`"
-                  :rules="[
-                    {
-                      required: true,
-                      message: $t('validation.requiredField.evalCode'),
-                      trigger: 'blur',
-                    },
-                  ]"
-                >
-                  <el-input
-                    v-model="process.eval_code"
-                    :placeholder="$t('evaluation.placeholders.evalCode')"
-                  />
-                </el-form-item>
-              </el-col>
-
-              <el-col :span="8">
-                <el-form-item
-                  :label="$t('evaluation.lotNumber')"
-                  :prop="`processes.${index}.lot_number`"
-                  :rules="[
-                    {
-                      required: true,
-                      message: $t('validation.requiredField.lotNumber'),
-                      trigger: 'blur',
-                    },
-                  ]"
-                >
-                  <el-input
-                    v-model="process.lot_number"
-                    :placeholder="$t('evaluation.placeholders.lotNumber')"
-                  />
-                </el-form-item>
-              </el-col>
-
-              <el-col :span="8">
-                <el-form-item
-                  :label="$t('evaluation.quantity')"
-                  :prop="`processes.${index}.quantity`"
-                  :rules="[
-                    {
-                      required: true,
-                      message: $t('validation.requiredField.quantity'),
-                      trigger: 'blur',
-                    },
-                  ]"
-                >
-                  <el-input-number
-                    v-model="process.quantity"
-                    :min="1"
-                    :placeholder="$t('evaluation.placeholders.quantity')"
-                    style="width: 100%"
-                  />
-                </el-form-item>
-              </el-col>
-            </el-row>
-
-            <el-form-item
-              :label="$t('evaluation.processFlow')"
-              :prop="`processes.${index}.process_description`"
-              :rules="[
-                {
-                  required: true,
-                  message: $t('validation.requiredField.processFlow'),
-                  trigger: 'blur',
-                },
-              ]"
-            >
-              <el-input
-                v-model="process.process_description"
-                type="textarea"
-                :rows="2"
-                :placeholder="$t('evaluation.placeholders.processFlow')"
-              />
-            </el-form-item>
-
-            <el-row :gutter="20">
-              <el-col :span="12">
-                <el-form-item :label="$t('evaluation.manufacturingTestResults')">
-                  <el-input
-                    v-model="process.manufacturing_test_results"
-                    type="textarea"
-                    :rows="2"
-                    :placeholder="$t('evaluation.placeholders.manufacturingTestResults')"
-                  />
-                </el-form-item>
-              </el-col>
-
-              <el-col :span="12">
-                <el-form-item :label="$t('evaluation.defectAnalysisResults')">
-                  <el-input
-                    v-model="process.defect_analysis_results"
-                    type="textarea"
-                    :rows="2"
-                    :placeholder="$t('evaluation.placeholders.defectAnalysisResults')"
-                  />
-                </el-form-item>
-              </el-col>
-            </el-row>
-
-            <el-form-item :label="$t('evaluation.aqlResult')">
-              <el-input
-                v-model="process.aql_result"
-                :placeholder="$t('evaluation.placeholders.aqlResult')"
-              />
-            </el-form-item>
+            <el-button type="primary" :icon="Plus" @click="addProcess">
+              {{ $t('evaluation.addProcess') }}
+            </el-button>
           </div>
+        </el-card>
 
-          <el-button type="primary" :icon="Plus" @click="addProcess">
-            {{ $t('evaluation.addProcess') }}
-          </el-button>
+        <div v-if="!inDialog" class="form-actions fade-in-up" style="animation-delay: 0.7s">
+          <el-button @click="handleCancel">{{ $t('common.cancel') }}</el-button>
+
+          <!-- Create Mode Buttons -->
+          <template v-if="!isEditMode">
+            <el-button type="primary" :loading="saving" @click="handleSave(false)">
+              {{ $t('evaluation.saveDraft') }}
+            </el-button>
+            <el-button type="success" :loading="submitting" @click="handleSave(true)">
+              {{ $t('evaluation.submit') }}
+            </el-button>
+          </template>
+
+          <!-- Edit Mode Buttons -->
+          <template v-if="isEditMode">
+            <el-button type="danger" :loading="deleting" @click="handleDelete">
+              {{ $t('common.delete') }}
+            </el-button>
+            <el-button type="primary" :loading="saving" @click="handleSave(false)">
+              {{ $t('common.save') }}
+            </el-button>
+            <el-button type="success" :loading="finishing" @click="handleFinish">
+              {{ $t('evaluation.finish') }}
+            </el-button>
+          </template>
         </div>
-      </el-card>
-
-      <div v-if="!inDialog" class="form-actions fade-in-up" style="animation-delay: 0.7s">
-        <el-button @click="handleCancel">{{ $t('common.cancel') }}</el-button>
-
-        <!-- Create Mode Buttons -->
-        <template v-if="!isEditMode">
-          <el-button type="primary" :loading="saving" @click="handleSave(false)">
-            {{ $t('evaluation.saveDraft') }}
-          </el-button>
-          <el-button type="success" :loading="submitting" @click="handleSave(true)">
-            {{ $t('evaluation.submit') }}
-          </el-button>
-        </template>
-
-        <!-- Edit Mode Buttons -->
-        <template v-if="isEditMode">
-          <el-button type="danger" :loading="deleting" @click="handleDelete">
-            {{ $t('common.delete') }}
-          </el-button>
-          <el-button type="primary" :loading="saving" @click="handleSave(false)">
-            {{ $t('common.save') }}
-          </el-button>
-          <el-button type="success" :loading="finishing" @click="handleFinish">
-            {{ $t('evaluation.finish') }}
-          </el-button>
-        </template>
-      </div>
-    </el-form>
+      </el-form>
     </div>
   </div>
 </template>
@@ -402,7 +411,9 @@ const finishing = ref(false)
 // Simplified app: no user directory; chargers are free-text
 
 // Check if in edit mode
-const isEditMode = computed(() => !!(props.evaluationId || (route.name === 'EditEvaluation' && route.params.id)))
+const isEditMode = computed(
+  () => !!(props.evaluationId || (route.name === 'EditEvaluation' && route.params.id)),
+)
 const evaluationId = computed(() => props.evaluationId || route.params.id)
 
 // Default process template
@@ -771,7 +782,7 @@ const fetchEvaluation = async () => {
     const response = await api.get(`/evaluations/${evaluationId.value}`)
     const evaluation = response.data.data.evaluation
 
-  Object.assign(form, {
+    Object.assign(form, {
       evaluation_type: evaluation.evaluation_type || '',
       product_name: evaluation.product_name || '',
       part_number: evaluation.part_number || '',
@@ -834,9 +845,9 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
 }
 
 .page-container {
-  max-width: 980px;
+  max-width: 1200px; /* widen content to reduce side blanks */
   margin: 0 auto;
-  padding: 16px 16px 40px;
+  padding: 12px 12px 28px; /* slightly tighter padding */
 }
 
 .page-header {
@@ -866,7 +877,9 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
   opacity: 0.8;
 }
 
-.evaluation-form { max-width: 100%; }
+.evaluation-form {
+  max-width: 100%;
+}
 
 .form-section {
   margin-bottom: 24px;
