@@ -7,7 +7,6 @@ from typing import Any
 from app import db
 
 
-
 class EvaluationStatus(Enum):
     """Evaluation status enumeration."""
 

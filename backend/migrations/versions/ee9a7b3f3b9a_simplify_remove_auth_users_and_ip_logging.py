@@ -148,4 +148,3 @@ def downgrade() -> None:
             )
     # Users/messages tables are not recreated in downgrade.
     # If full downgrade is required, reintroduce the dropped models and constraints.
-
