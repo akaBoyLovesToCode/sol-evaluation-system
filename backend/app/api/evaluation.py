@@ -196,8 +196,32 @@ def get_evaluations() -> tuple[Response, int]:
                 )
             )
 
+        # Sorting
+        sort_by = request.args.get("sort_by")
+        sort_order = request.args.get("sort_order", "desc").lower()
+        allowed_sorts = {
+            "evaluation_number": Evaluation.evaluation_number,
+            "evaluation_type": Evaluation.evaluation_type,
+            "product_name": Evaluation.product_name,
+            "part_number": Evaluation.part_number,
+            "status": Evaluation.status,
+            "start_date": Evaluation.start_date,
+            "actual_end_date": Evaluation.actual_end_date,
+            "scs_charger_name": Evaluation.scs_charger_name,
+            "head_office_charger_name": Evaluation.head_office_charger_name,
+        }
+
+        if sort_by in allowed_sorts:
+            column = allowed_sorts[sort_by]
+            if sort_order == "asc":
+                query = query.order_by(column.asc(), Evaluation.created_at.desc())
+            else:
+                query = query.order_by(column.desc(), Evaluation.created_at.desc())
+        else:
+            query = query.order_by(Evaluation.created_at.desc())
+
         # Paginate results
-        paginated_evaluations = query.order_by(Evaluation.created_at.desc()).paginate(
+        paginated_evaluations = query.paginate(
             page=page, per_page=per_page, error_out=False
         )
 
