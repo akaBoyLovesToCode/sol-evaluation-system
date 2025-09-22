@@ -226,7 +226,6 @@
                   />
                 </div>
                 <el-button
-                  v-if="form.processes.length > 1"
                   type="danger"
                   size="small"
                   :icon="Delete"
@@ -596,9 +595,7 @@ const cancelProcessTitleEdit = (index) => {
 }
 
 const removeProcess = (index) => {
-  if (form.processes.length > 1) {
-    form.processes.splice(index, 1)
-  }
+  form.processes.splice(index, 1)
 }
 
 const handleCancel = async () => {
