@@ -207,6 +207,12 @@
               {{ row.actual_end_date ? formatDate(row.actual_end_date) : '-' }}
             </template>
           </el-table-column>
+
+          <el-table-column :label="$t('evaluation.tat')" width="140">
+            <template #default="{ row }">
+              {{ formatTat(row) }}
+            </template>
+          </el-table-column>
         </el-table>
 
         <!-- 分页 -->
@@ -478,6 +484,7 @@ const handleExport = async () => {
       t('common.status'),
       t('evaluation.startDate'),
       t('evaluation.endDate'),
+      t('evaluation.tat'),
     ].join(',')
 
     const rows = dataToExport.map((row) =>
@@ -492,6 +499,7 @@ const handleExport = async () => {
         t(`status.${row.status}`) || '',
         formatDate(row.start_date) || '',
         formatDate(row.actual_end_date) || '',
+        formatTat(row) || '',
       ]
         .map((cell) => `"${cell}"`)
         .join(','),
@@ -543,6 +551,35 @@ const getStatusTagType = (status) => {
 const formatDate = (dateString) => {
   if (!dateString) return '-'
   return new Date(dateString).toLocaleDateString()
+}
+
+const formatTat = (row) => {
+  if (!row?.created_at || !row?.actual_end_date) {
+    return '-'
+  }
+
+  const start = new Date(row.created_at)
+  const end = new Date(row.actual_end_date)
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return '-'
+  }
+
+  // Normalize both dates to midnight UTC so we measure whole days only.
+  const startUtcMidnight = Date.UTC(
+    start.getUTCFullYear(),
+    start.getUTCMonth(),
+    start.getUTCDate(),
+  )
+  const endUtcMidnight = Date.UTC(
+    end.getUTCFullYear(),
+    end.getUTCMonth(),
+    end.getUTCDate(),
+  )
+
+  const diffDays = Math.max(0, Math.round((endUtcMidnight - startUtcMidnight) / (1000 * 60 * 60 * 24)))
+
+  return `${diffDays}d`
 }
 
 onMounted(() => {

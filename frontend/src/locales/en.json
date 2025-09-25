@@ -154,6 +154,7 @@
     "product": "Product",
     "evaluator": "Evaluator",
     "endDate": "End Date",
+    "tat": "TAT",
     "dateRange": "Date Range",
     "list": "Evaluation List",
     "export": "Export",
