@@ -6,7 +6,7 @@ from app.models.evaluation import Evaluation, EvaluationStatus, EvaluationType
 from tests.helpers import create_test_evaluation
 
 
-def test_evaluation_creation(session, regular_user):
+def test_evaluation_creation(session):
     """Test creating a new evaluation."""
     import uuid
 
@@ -18,7 +18,6 @@ def test_evaluation_creation(session, regular_user):
         evaluation_type=EvaluationType.NEW_PRODUCT.value,
         product_name="Test Product",
         part_number="TP-001",
-        evaluator_id=regular_user.id,
         evaluation_reason="Testing",
         status=EvaluationStatus.DRAFT.value,
         start_date=start_date,
@@ -43,10 +42,9 @@ def test_evaluation_creation(session, regular_user):
     assert retrieved_evaluation.status == EvaluationStatus.DRAFT.value
     assert retrieved_evaluation.start_date == start_date
     assert retrieved_evaluation.process_step == "M001"
-    assert retrieved_evaluation.evaluator_id == regular_user.id
 
 
-def test_evaluation_status_validation(regular_user):
+def test_evaluation_status_validation():
     """Test that evaluation status is validated correctly."""
     # Valid status
     evaluation = Evaluation(
@@ -54,7 +52,6 @@ def test_evaluation_status_validation(regular_user):
         evaluation_type=EvaluationType.NEW_PRODUCT.value,
         product_name="Status Test",
         part_number="ST-001",
-        evaluator_id=regular_user.id,
         status=EvaluationStatus.IN_PROGRESS.value,
         start_date=datetime.now().date(),
     )
@@ -65,7 +62,7 @@ def test_evaluation_status_validation(regular_user):
     assert evaluation.status == EvaluationStatus.COMPLETED.value
 
 
-def test_evaluation_type_validation(regular_user):
+def test_evaluation_type_validation():
     """Test that evaluation type is validated correctly."""
     # Valid type
     evaluation = Evaluation(
@@ -73,7 +70,6 @@ def test_evaluation_type_validation(regular_user):
         evaluation_type=EvaluationType.MASS_PRODUCTION.value,
         product_name="Type Test",
         part_number="TT-001",
-        evaluator_id=regular_user.id,
         status=EvaluationStatus.DRAFT.value,
         start_date=datetime.now().date(),
     )
@@ -84,9 +80,9 @@ def test_evaluation_type_validation(regular_user):
     assert evaluation.evaluation_type == EvaluationType.NEW_PRODUCT.value
 
 
-def test_evaluation_to_dict(session, regular_user):
+def test_evaluation_to_dict(session):
     """Test the to_dict method of the Evaluation model."""
-    evaluation = create_test_evaluation(session, regular_user.id)
+    evaluation = create_test_evaluation(session)
 
     evaluation_dict = evaluation.to_dict()
 
@@ -99,13 +95,3 @@ def test_evaluation_to_dict(session, regular_user):
     assert evaluation_dict["process_step"] == evaluation.process_step
     assert "start_date" in evaluation_dict
     assert "actual_end_date" in evaluation_dict
-
-
-def test_evaluation_relationships(session, regular_user):
-    """Test the relationships of the Evaluation model."""
-    evaluation = create_test_evaluation(session, regular_user.id)
-
-    # Test evaluator relationship
-    assert evaluation.evaluator is not None
-    assert evaluation.evaluator.id == regular_user.id
-    assert evaluation.evaluator.username == regular_user.username

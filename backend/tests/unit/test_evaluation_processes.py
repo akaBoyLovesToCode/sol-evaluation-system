@@ -5,10 +5,10 @@ from app.models.evaluation import EvaluationProcess
 from tests.helpers import create_test_evaluation
 
 
-def test_evaluation_process_creation(session, regular_user):
+def test_evaluation_process_creation(session):
     """Test creating a new evaluation process."""
     # Create a test evaluation first
-    evaluation = create_test_evaluation(session, regular_user.id)
+    evaluation = create_test_evaluation(session)
 
     # Create evaluation process
     process = EvaluationProcess(
@@ -51,9 +51,9 @@ def test_evaluation_process_creation(session, regular_user):
     assert retrieved_process.updated_at is not None
 
 
-def test_evaluation_process_required_fields(session, regular_user):
+def test_evaluation_process_required_fields(session):
     """Test that required fields are enforced."""
-    evaluation = create_test_evaluation(session, regular_user.id)
+    evaluation = create_test_evaluation(session)
 
     # Test missing eval_code
     with pytest.raises(Exception):
@@ -114,9 +114,9 @@ def test_evaluation_process_required_fields(session, regular_user):
         session.commit()
 
 
-def test_evaluation_process_status_validation(session, regular_user):
+def test_evaluation_process_status_validation(session):
     """Test that process status is validated correctly."""
-    evaluation = create_test_evaluation(session, regular_user.id)
+    evaluation = create_test_evaluation(session)
 
     # Valid statuses
     valid_statuses = ["pending", "in_progress", "completed", "failed"]
@@ -142,9 +142,9 @@ def test_evaluation_process_status_validation(session, regular_user):
     # In production (MySQL), invalid statuses would raise a database constraint error
 
 
-def test_evaluation_process_to_dict(session, regular_user):
+def test_evaluation_process_to_dict(session):
     """Test the to_dict method of the EvaluationProcess model."""
-    evaluation = create_test_evaluation(session, regular_user.id)
+    evaluation = create_test_evaluation(session)
 
     process = EvaluationProcess(
         evaluation_id=evaluation.id,
@@ -178,9 +178,9 @@ def test_evaluation_process_to_dict(session, regular_user):
     assert "updated_at" in process_dict
 
 
-def test_evaluation_process_relationship(session, regular_user):
+def test_evaluation_process_relationship(session):
     """Test the relationship between Evaluation and EvaluationProcess."""
-    evaluation = create_test_evaluation(session, regular_user.id)
+    evaluation = create_test_evaluation(session)
 
     # Create multiple processes for the same evaluation
     process1 = EvaluationProcess(
@@ -219,9 +219,9 @@ def test_evaluation_process_relationship(session, regular_user):
     assert process1.evaluation.evaluation_number == evaluation.evaluation_number
 
 
-def test_evaluation_process_timestamps(session, regular_user):
+def test_evaluation_process_timestamps(session):
     """Test that created_at and updated_at timestamps work correctly."""
-    evaluation = create_test_evaluation(session, regular_user.id)
+    evaluation = create_test_evaluation(session)
 
     process = EvaluationProcess(
         evaluation_id=evaluation.id,
@@ -252,9 +252,9 @@ def test_evaluation_process_timestamps(session, regular_user):
     assert process.created_at == initial_created_at  # created_at should not change
 
 
-def test_evaluation_process_optional_fields(session, regular_user):
+def test_evaluation_process_optional_fields(session):
     """Test that optional fields can be null."""
-    evaluation = create_test_evaluation(session, regular_user.id)
+    evaluation = create_test_evaluation(session)
 
     # Create process without optional fields
     process = EvaluationProcess(

@@ -8,7 +8,9 @@ import json
 import sys
 from datetime import datetime
 
-import requests
+import pytest
+
+requests = pytest.importorskip("requests")
 
 # Test configuration
 BASE_URL = "http://localhost:5000/api"

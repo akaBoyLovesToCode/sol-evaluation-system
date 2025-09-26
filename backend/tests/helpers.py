@@ -6,12 +6,11 @@ from datetime import datetime, timedelta
 from app.models.evaluation import Evaluation, EvaluationStatus, EvaluationType
 
 
-def create_test_evaluation(session, user_id, **kwargs):
+def create_test_evaluation(session, **kwargs):
     """Create a test evaluation with default values.
 
     Args:
         session: SQLAlchemy session
-        user_id: ID of the user who created the evaluation
         **kwargs: Override default values
 
     Returns:
@@ -31,7 +30,6 @@ def create_test_evaluation(session, user_id, **kwargs):
         "start_date": datetime.now().date(),
         "expected_end_date": (datetime.now() + timedelta(days=30)).date(),
         "process_step": "M001",
-        "evaluator_id": user_id,
     }
 
     # Override defaults with kwargs
