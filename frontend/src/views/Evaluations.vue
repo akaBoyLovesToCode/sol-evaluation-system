@@ -554,11 +554,18 @@ const formatDate = (dateString) => {
 }
 
 const formatTat = (row) => {
-  if (!row?.created_at || !row?.actual_end_date) {
+  if (!row) {
     return '-'
   }
 
-  const start = new Date(row.created_at)
+  // Prefer the explicit evaluation start date; fall back to creation time if missing.
+  const startDateSource = row.start_date || row.created_at
+
+  if (!startDateSource || !row.actual_end_date) {
+    return '-'
+  }
+
+  const start = new Date(startDateSource)
   const end = new Date(row.actual_end_date)
 
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
