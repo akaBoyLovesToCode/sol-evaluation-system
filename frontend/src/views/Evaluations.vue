@@ -243,6 +243,7 @@
         :is="EvaluationDetail"
         :evaluation-id="selectedId"
         :in-dialog="true"
+        :process-step-options="processStepOptions"
         @edit="onEdit"
       />
       <template #footer>
@@ -262,6 +263,7 @@
         ref="newEvalRef"
         :in-dialog="true"
         :evaluation-id="selectedId"
+        :process-step-options="processStepOptions"
         @saved="handleSaved"
       />
       <template #footer>
@@ -311,6 +313,7 @@ const isEditing = computed(() => !!selectedId.value)
 const newEvalRef = ref(null)
 const tableData = ref([])
 const selectedRows = ref([])
+const processStepOptions = ['iARTS', 'Aging', 'LI', 'Repair']
 
 const searchForm = reactive({
   evaluation_number: '',
@@ -573,18 +576,13 @@ const formatTat = (row) => {
   }
 
   // Normalize both dates to midnight UTC so we measure whole days only.
-  const startUtcMidnight = Date.UTC(
-    start.getUTCFullYear(),
-    start.getUTCMonth(),
-    start.getUTCDate(),
-  )
-  const endUtcMidnight = Date.UTC(
-    end.getUTCFullYear(),
-    end.getUTCMonth(),
-    end.getUTCDate(),
-  )
+  const startUtcMidnight = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate())
+  const endUtcMidnight = Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate())
 
-  const diffDays = Math.max(0, Math.round((endUtcMidnight - startUtcMidnight) / (1000 * 60 * 60 * 24)))
+  const diffDays = Math.max(
+    0,
+    Math.round((endUtcMidnight - startUtcMidnight) / (1000 * 60 * 60 * 24)),
+  )
 
   return `${diffDays}d`
 }

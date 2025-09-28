@@ -100,10 +100,20 @@
             </el-col>
             <el-col :span="12">
               <el-form-item :label="$t('evaluation.processStep')" prop="process_step">
-                <el-input
+                <el-select
                   v-model="form.process_step"
                   :placeholder="$t('evaluation.placeholders.processStep')"
-                />
+                  multiple
+                  collapse-tags
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="step in processStepChoices"
+                    :key="step"
+                    :label="step"
+                    :value="step"
+                  />
+                </el-select>
               </el-form-item>
             </el-col>
           </el-row>
@@ -225,12 +235,7 @@
                     @click="startProcessTitleEdit(index)"
                   />
                 </div>
-                <el-button
-                  type="danger"
-                  size="small"
-                  :icon="Delete"
-                  @click="removeProcess(index)"
-                >
+                <el-button type="danger" size="small" :icon="Delete" @click="removeProcess(index)">
                   {{ $t('evaluation.remove') }}
                 </el-button>
               </div>
@@ -390,6 +395,10 @@ import { useRouter, useRoute } from 'vue-router'
 const props = defineProps({
   inDialog: { type: Boolean, default: false },
   evaluationId: { type: [String, Number], default: null },
+  processStepOptions: {
+    type: Array,
+    default: () => ['iARTS', 'Aging', 'LI', 'Repair'],
+  },
 })
 const emit = defineEmits(['saved'])
 import { useI18n } from 'vue-i18n'
@@ -401,6 +410,21 @@ import api from '../utils/api'
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
+const processStepChoices = computed(() => props.processStepOptions || [])
+
+const parseProcessSteps = (value) => {
+  if (!value) return []
+  if (Array.isArray(value)) return value.filter(Boolean)
+  return String(value)
+    .split(/[|,]/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+const serializeProcessSteps = (steps) => {
+  if (!Array.isArray(steps)) return steps ? String(steps) : ''
+  return steps.filter(Boolean).join('|')
+}
 const formRef = ref()
 const saving = ref(false)
 const submitting = ref(false)
@@ -471,7 +495,7 @@ const form = reactive({
   start_date: '',
   end_date: '',
   reason: '',
-  process_step: '',
+  process_step: [],
   description: '',
   pgm_version: '',
   capacity: '',
@@ -514,9 +538,14 @@ const rules = computed(() => ({
   ],
   process_step: [
     {
-      required: true,
-      message: t('validation.requiredField.processStep'),
-      trigger: 'blur',
+      trigger: 'change',
+      validator: (_, value, callback) => {
+        if (!value || value.length === 0) {
+          callback(new Error(t('validation.requiredField.processStep')))
+        } else {
+          callback()
+        }
+      },
     },
   ],
   reason: [
@@ -619,7 +648,7 @@ const buildPayload = () => ({
   start_date: form.start_date,
   end_date: form.end_date || null,
   reason: form.reason,
-  process_step: form.process_step,
+  process_step: serializeProcessSteps(form.process_step),
   evaluation_reason: form.reason, // Map reason to evaluation_reason for backend compatibility
   description: form.description,
   remarks: form.description, // Map description to remarks for backend compatibility
@@ -786,7 +815,7 @@ const fetchEvaluation = async () => {
       start_date: evaluation.start_date || '',
       end_date: evaluation.end_date || '',
       reason: evaluation.evaluation_reason || evaluation.reason || '',
-      process_step: evaluation.process_step || '',
+      process_step: parseProcessSteps(evaluation.process_step),
       description: evaluation.remarks || evaluation.description || '',
       pgm_version: evaluation.pgm_version || '',
       capacity: evaluation.capacity || '',

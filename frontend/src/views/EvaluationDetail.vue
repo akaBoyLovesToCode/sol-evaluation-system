@@ -142,10 +142,22 @@
                 </el-descriptions-item>
                 <el-descriptions-item :label="$t('evaluation.processStep')">
                   <template v-if="editing">
-                    <el-input v-model="editForm.process_step" />
+                    <el-select
+                      v-model="editForm.process_step"
+                      multiple
+                      collapse-tags
+                      style="width: 100%"
+                    >
+                      <el-option
+                        v-for="step in processStepChoices"
+                        :key="step"
+                        :label="step"
+                        :value="step"
+                      />
+                    </el-select>
                   </template>
                   <template v-else>
-                    {{ evaluation.process_step || '-' }}
+                    {{ formatProcessSteps(evaluation.process_step) }}
                   </template>
                 </el-descriptions-item>
                 <el-descriptions-item :label="$t('evaluation.reason')">
@@ -774,10 +786,22 @@
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.processStep')">
                 <template v-if="editing">
-                  <el-input v-model="editForm.process_step" />
+                  <el-select
+                    v-model="editForm.process_step"
+                    multiple
+                    collapse-tags
+                    style="width: 100%"
+                  >
+                    <el-option
+                      v-for="step in processStepChoices"
+                      :key="step"
+                      :label="step"
+                      :value="step"
+                    />
+                  </el-select>
                 </template>
                 <template v-else>
-                  {{ evaluation.process_step || '-' }}
+                  {{ formatProcessSteps(evaluation.process_step) }}
                 </template>
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.reason')">
@@ -1079,6 +1103,10 @@ import { useRoute } from 'vue-router'
 const props = defineProps({
   inDialog: { type: Boolean, default: false },
   evaluationId: { type: [String, Number], default: null },
+  processStepOptions: {
+    type: Array,
+    default: () => ['iARTS', 'Aging', 'LI', 'Repair'],
+  },
 })
 // No emits used currently (inline editing in same view)
 import { useI18n } from 'vue-i18n'
@@ -1111,6 +1139,26 @@ const { t } = useI18n()
 // Auth removed
 
 const loading = ref(false)
+const processStepChoices = computed(() => props.processStepOptions || [])
+
+const parseProcessSteps = (value) => {
+  if (!value) return []
+  if (Array.isArray(value)) return value.filter(Boolean)
+  return String(value)
+    .split(/[|,]/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+const serializeProcessSteps = (steps) => {
+  if (!Array.isArray(steps)) return steps ? String(steps) : ''
+  return steps.filter(Boolean).join('|')
+}
+
+const formatProcessSteps = (value) => {
+  const steps = parseProcessSteps(value)
+  return steps.length > 0 ? steps.join(' / ') : '-'
+}
 const evaluation = ref(null)
 // removed unused showAllLogs
 const editing = ref(false)
@@ -1120,7 +1168,7 @@ const editForm = reactive({
   product_name: '',
   part_number: '',
   evaluation_reason: '',
-  process_step: '',
+  process_step: [],
   scs_charger_name: '',
   head_office_charger_name: '',
   status: '',
@@ -1165,7 +1213,7 @@ const syncEditForm = () => {
     product_name: evaluation.value.product_name || '',
     part_number: evaluation.value.part_number || '',
     evaluation_reason: evaluation.value.evaluation_reason || '',
-    process_step: evaluation.value.process_step || '',
+    process_step: parseProcessSteps(evaluation.value.process_step),
     scs_charger_name: evaluation.value.scs_charger_name || '',
     head_office_charger_name: evaluation.value.head_office_charger_name || '',
     status: evaluation.value.status || 'draft',
@@ -1196,7 +1244,7 @@ const saveEdit = async () => {
       product_name: editForm.product_name,
       part_number: editForm.part_number,
       evaluation_reason: editForm.evaluation_reason,
-      process_step: editForm.process_step,
+      process_step: serializeProcessSteps(editForm.process_step),
       scs_charger_name: editForm.scs_charger_name,
       head_office_charger_name: editForm.head_office_charger_name,
       start_date: editForm.start_date || null,
