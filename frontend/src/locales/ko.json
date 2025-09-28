@@ -215,7 +215,11 @@
       "direct_development": "직접 개발",
       "pgm_improvement": "PGM 개선",
       "firmware_change": "펌웨어 변경",
-      "bom_change": "BOM 변경"
+      "bom_change": "BOM 변경",
+      "nand": "NAND",
+      "nprr": "NPRR",
+      "repair": "Repair",
+      "facility": "설비"
     },
     "processStatus": {
       "pending": "대기 중",

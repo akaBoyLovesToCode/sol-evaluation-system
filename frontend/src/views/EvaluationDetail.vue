@@ -1194,6 +1194,10 @@ const reasonOptions = computed(() => {
     { label: t('evaluation.reasons.firmware_change'), value: 'firmware_change' },
     { label: t('evaluation.reasons.bom_change'), value: 'bom_change' },
     { label: t('evaluation.reasons.customer_requirement'), value: 'customer_requirement' },
+    { label: t('evaluation.reasons.nand'), value: 'nand' },
+    { label: t('evaluation.reasons.nprr'), value: 'nprr' },
+    { label: t('evaluation.reasons.repair'), value: 'repair' },
+    { label: t('evaluation.reasons.facility'), value: 'facility' },
     { label: t('evaluation.reasons.other'), value: 'other' },
   ]
 })

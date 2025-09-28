@@ -247,7 +247,11 @@
       "direct_development": "Direct Development",
       "pgm_improvement": "PGM Improvement",
       "firmware_change": "F/W Change",
-      "bom_change": "BOM Change"
+      "bom_change": "BOM Change",
+      "nand": "NAND",
+      "nprr": "NPRR",
+      "repair": "Repair",
+      "facility": "Facility"
     },
     "processStatus": {
       "pending": "Pending",
