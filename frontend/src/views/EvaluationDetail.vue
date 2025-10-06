@@ -287,38 +287,12 @@
                     {{ evaluation.pgm_version || '-' }}
                   </template>
                 </el-descriptions-item>
-                <el-descriptions-item :label="$t('evaluation.capacity')">
+                <el-descriptions-item :label="$t('evaluation.testTime')">
                   <template v-if="editing">
-                    <el-input v-model="editForm.capacity" />
+                    <el-input v-model="editForm.pgm_test_time" />
                   </template>
                   <template v-else>
-                    {{ evaluation.capacity || '-' }}
-                  </template>
-                </el-descriptions-item>
-                <el-descriptions-item :label="$t('evaluation.interfaceType')">
-                  <template v-if="editing">
-                    <el-select v-model="editForm.interface_type" style="width: 100%">
-                      <el-option :label="$t('evaluation.interfaceTypes.sata')" value="SATA" />
-                      <el-option :label="$t('evaluation.interfaceTypes.nvme')" value="NVMe" />
-                      <el-option :label="$t('evaluation.interfaceTypes.pcie')" value="PCIe" />
-                      <el-option :label="$t('common.other')" value="other" />
-                    </el-select>
-                  </template>
-                  <template v-else>
-                    {{ evaluation.interface_type || '-' }}
-                  </template>
-                </el-descriptions-item>
-                <el-descriptions-item :label="$t('evaluation.formFactor')">
-                  <template v-if="editing">
-                    <el-select v-model="editForm.form_factor" style="width: 100%">
-                      <el-option :label="$t('evaluation.formFactors.2_5_inch')" value="2.5" />
-                      <el-option :label="$t('evaluation.formFactors.m2_2280')" value="M.2_2280" />
-                      <el-option :label="$t('evaluation.formFactors.m2_2242')" value="M.2_2242" />
-                      <el-option :label="$t('common.other')" value="other" />
-                    </el-select>
-                  </template>
-                  <template v-else>
-                    {{ evaluation.form_factor || '-' }}
+                    {{ evaluation.pgm_test_time || '-' }}
                   </template>
                 </el-descriptions-item>
               </el-descriptions>
@@ -846,38 +820,12 @@
                   {{ evaluation.pgm_version || '-' }}
                 </template>
               </el-descriptions-item>
-              <el-descriptions-item :label="$t('evaluation.capacity')">
+              <el-descriptions-item :label="$t('evaluation.testTime')">
                 <template v-if="editing">
-                  <el-input v-model="editForm.capacity" />
+                  <el-input v-model="editForm.pgm_test_time" />
                 </template>
                 <template v-else>
-                  {{ evaluation.capacity || '-' }}
-                </template>
-              </el-descriptions-item>
-              <el-descriptions-item :label="$t('evaluation.interfaceType')">
-                <template v-if="editing">
-                  <el-select v-model="editForm.interface_type" style="width: 100%">
-                    <el-option :label="$t('evaluation.interfaceTypes.sata')" value="SATA" />
-                    <el-option :label="$t('evaluation.interfaceTypes.nvme')" value="NVMe" />
-                    <el-option :label="$t('evaluation.interfaceTypes.pcie')" value="PCIe" />
-                    <el-option :label="$t('common.other')" value="other" />
-                  </el-select>
-                </template>
-                <template v-else>
-                  {{ evaluation.interface_type || '-' }}
-                </template>
-              </el-descriptions-item>
-              <el-descriptions-item :label="$t('evaluation.formFactor')">
-                <template v-if="editing">
-                  <el-select v-model="editForm.form_factor" style="width: 100%">
-                    <el-option :label="$t('evaluation.formFactors.2_5_inch')" value="2.5" />
-                    <el-option :label="$t('evaluation.formFactors.m2_2280')" value="M.2_2280" />
-                    <el-option :label="$t('evaluation.formFactors.m2_2242')" value="M.2_2242" />
-                    <el-option :label="$t('common.other')" value="other" />
-                  </el-select>
-                </template>
-                <template v-else>
-                  {{ evaluation.form_factor || '-' }}
+                  {{ evaluation.pgm_test_time || '-' }}
                 </template>
               </el-descriptions-item>
             </el-descriptions>
@@ -1176,9 +1124,7 @@ const editForm = reactive({
   end_date: '',
   remarks: '',
   pgm_version: '',
-  capacity: '',
-  interface_type: '',
-  form_factor: '',
+  pgm_test_time: '',
 })
 
 const reasonOptions = computed(() => {
@@ -1225,9 +1171,7 @@ const syncEditForm = () => {
     end_date: evaluation.value.actual_end_date || '',
     remarks: evaluation.value.remarks || evaluation.value.description || '',
     pgm_version: evaluation.value.pgm_version || '',
-    capacity: evaluation.value.capacity || '',
-    interface_type: evaluation.value.interface_type || '',
-    form_factor: evaluation.value.form_factor || '',
+    pgm_test_time: evaluation.value.pgm_test_time || '',
   })
 }
 
@@ -1255,9 +1199,7 @@ const saveEdit = async () => {
       end_date: editForm.end_date || null,
       remarks: editForm.remarks,
       pgm_version: editForm.pgm_version,
-      capacity: editForm.capacity,
-      interface_type: editForm.interface_type,
-      form_factor: editForm.form_factor,
+      pgm_test_time: editForm.pgm_test_time,
     }
     await api.put(`/evaluations/${evaluation.value.id}`, payload)
     // Update status if changed

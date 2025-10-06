@@ -166,42 +166,11 @@
             </el-col>
 
             <el-col :span="8">
-              <el-form-item :label="$t('evaluation.capacity')" prop="capacity">
+              <el-form-item :label="$t('evaluation.testTime')" prop="pgm_test_time">
                 <el-input
-                  v-model="form.capacity"
-                  :placeholder="$t('evaluation.placeholders.capacity')"
+                  v-model="form.pgm_test_time"
+                  :placeholder="$t('evaluation.placeholders.testTime')"
                 />
-              </el-form-item>
-            </el-col>
-          </el-row>
-
-          <el-row :gutter="20">
-            <el-col :span="8">
-              <el-form-item :label="$t('evaluation.interfaceType')" prop="interface_type">
-                <el-select
-                  v-model="form.interface_type"
-                  :placeholder="$t('evaluation.placeholders.interfaceType')"
-                  style="width: 100%"
-                >
-                  <el-option :label="$t('evaluation.interfaceTypes.sata')" value="SATA" />
-                  <el-option :label="$t('evaluation.interfaceTypes.nvme')" value="NVMe" />
-                  <el-option :label="$t('evaluation.interfaceTypes.pcie')" value="PCIe" />
-                  <el-option :label="$t('common.other')" value="other" />
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="8">
-              <el-form-item :label="$t('evaluation.formFactor')" prop="form_factor">
-                <el-select
-                  v-model="form.form_factor"
-                  :placeholder="$t('evaluation.placeholders.formFactor')"
-                  style="width: 100%"
-                >
-                  <el-option :label="$t('evaluation.formFactors.2_5_inch')" value="2.5" />
-                  <el-option :label="$t('evaluation.formFactors.m2_2280')" value="M.2_2280" />
-                  <el-option :label="$t('evaluation.formFactors.m2_2242')" value="M.2_2242" />
-                  <el-option :label="$t('common.other')" value="other" />
-                </el-select>
               </el-form-item>
             </el-col>
           </el-row>
@@ -502,9 +471,7 @@ const form = reactive({
   process_step: [],
   description: '',
   pgm_version: '',
-  capacity: '',
-  interface_type: '',
-  form_factor: '',
+  pgm_test_time: '',
   // Start with no default process; user adds explicitly
   processes: [],
   scs_charger_name: '',
@@ -657,9 +624,7 @@ const buildPayload = () => ({
   description: form.description,
   remarks: form.description, // Map description to remarks for backend compatibility
   pgm_version: form.pgm_version,
-  capacity: form.capacity,
-  interface_type: form.interface_type,
-  form_factor: form.form_factor,
+  pgm_test_time: form.pgm_test_time,
   scs_charger_name: form.scs_charger_name || null,
   head_office_charger_name: form.head_office_charger_name || null,
 })
@@ -822,9 +787,7 @@ const fetchEvaluation = async () => {
       process_step: parseProcessSteps(evaluation.process_step),
       description: evaluation.remarks || evaluation.description || '',
       pgm_version: evaluation.pgm_version || '',
-      capacity: evaluation.capacity || '',
-      interface_type: evaluation.interface_type || '',
-      form_factor: evaluation.form_factor || '',
+      pgm_test_time: evaluation.pgm_test_time || '',
       processes: (evaluation.processes || []).map((process) => ({
         ...process,
         editingTitle: false,
