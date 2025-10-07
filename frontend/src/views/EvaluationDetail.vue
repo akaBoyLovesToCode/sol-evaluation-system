@@ -11,6 +11,14 @@
         <p class="page-description">{{ evaluation.product_name }}</p>
       </div>
       <div class="header-right">
+        <el-button
+          type="primary"
+          plain
+          :icon="Connection"
+          @click="goToNestedEditor"
+        >
+          {{ $t('evaluation.manageNestedProcesses') }}
+        </el-button>
         <el-button v-if="canEdit" type="primary" :icon="Edit" @click="handleEdit">
           {{ $t('common.edit') }}
         </el-button>
@@ -247,6 +255,15 @@
                   {{ $t('evaluation.noRelatedFiles') }}
                 </div>
               </div>
+            <el-card v-if="legacyProcessNotes.length" class="legacy-card" shadow="never">
+              <template #header>
+                <span>Legacy (view-only)</span>
+              </template>
+              <div v-for="(note, index) in legacyProcessNotes" :key="`legacy-note-${index}`" class="legacy-note">
+                <h4 class="legacy-title">{{ note.title }}</h4>
+                <pre class="legacy-content">{{ note.content }}</pre>
+              </div>
+            </el-card>
             </el-card>
           </el-tab-pane>
 
@@ -300,282 +317,59 @@
           </el-tab-pane>
 
           <el-tab-pane :label="$t('evaluation.evaluationProcesses')" name="processes">
-            <el-card
-              v-if="evaluation.processes && evaluation.processes.length >= 0"
-              class="info-card"
-            >
+            <el-card class="info-card">
               <template #header>
                 <div class="card-header">
                   <span>{{ $t('evaluation.evaluationProcesses') }}</span>
-                  <div v-if="canEdit" class="header-actions">
-                    <template v-if="!isProcessEditing('new')">
-                      <el-button size="small" type="primary" :icon="Plus" @click="startAddProcess">
-                        {{ $t('evaluation.addProcess') }}
-                      </el-button>
-                    </template>
-                    <template v-else>
-                      <el-button size="small" :icon="Close" @click="cancelEditProcess('new')">
-                        {{ $t('common.cancel') }}
-                      </el-button>
-                      <el-button
-                        size="small"
-                        type="primary"
-                        :loading="processSaving['new']"
-                        :icon="Check"
-                        @click="saveProcess('new')"
-                      >
-                        {{ $t('common.save') }}
-                      </el-button>
-                    </template>
-                  </div>
+                  <el-button
+                    v-if="canEdit"
+                    size="small"
+                    type="primary"
+                    :icon="Connection"
+                    @click="openProcessDrawer"
+                  >
+                    {{ $t('evaluation.manageNestedProcesses') }}
+                  </el-button>
                 </div>
               </template>
-              <div class="processes-section">
-                <!-- New process inline editor -->
-                <div v-if="isProcessEditing('new')" class="process-item">
-                  <div class="process-header">
-                    <div class="title-with-edit">
-                      <el-input
-                        v-model="processEditState['new'].title"
-                        size="small"
-                        :placeholder="$t('evaluation.process') + ' 1'"
-                        style="max-width: 240px"
-                      />
-                    </div>
-                    <el-tag :type="getProcessStatusType(processEditState['new'].status)">
-                      {{ $t(`evaluation.processStatus.${processEditState['new'].status}`) }}
-                    </el-tag>
+
+              <el-empty v-if="!builderHasStepsSummary" description="No nested processes configured yet" />
+
+              <div v-else class="nested-summary">
+                <div v-for="step in builderSummarySteps" :key="step.order_index" class="nested-summary-item">
+                  <div class="nested-step-title">
+                    <strong>{{ step.order_index }}. {{ step.step_code }}</strong>
+                    <span v-if="step.step_label"> - {{ step.step_label }}</span>
                   </div>
-                  <div class="process-content">
-                    <el-row :gutter="12" style="margin-bottom: 8px">
-                      <el-col :span="8">
-                        <label class="inline-label">{{ $t('evaluation.evalCode') }}</label>
-                        <el-input v-model="processEditState['new'].eval_code" />
-                      </el-col>
-                      <el-col :span="8">
-                        <label class="inline-label">{{ $t('evaluation.lotNumber') }}</label>
-                        <el-input v-model="processEditState['new'].lot_number" />
-                      </el-col>
-                      <el-col :span="8">
-                        <label class="inline-label">{{ $t('evaluation.quantity') }}</label>
-                        <el-input-number
-                          v-model="processEditState['new'].quantity"
-                          :min="1"
-                          style="width: 100%"
-                        />
-                      </el-col>
-                    </el-row>
-                    <el-row :gutter="12" style="margin-bottom: 8px">
-                      <el-col :span="12">
-                        <label class="inline-label">{{ $t('evaluation.processFlow') }}</label>
-                        <el-input
-                          v-model="processEditState['new'].process_description"
-                          type="textarea"
-                          :rows="2"
-                        />
-                      </el-col>
-                      <el-col :span="12">
-                        <label class="inline-label">{{ $t('evaluation.aqlResult') }}</label>
-                        <el-input v-model="processEditState['new'].aql_result" />
-                      </el-col>
-                    </el-row>
-                    <el-row :gutter="12" style="margin-bottom: 8px">
-                      <el-col :span="12">
-                        <label class="inline-label">{{
-                          $t('evaluation.manufacturingTestResults')
-                        }}</label>
-                        <el-input
-                          v-model="processEditState['new'].manufacturing_test_results"
-                          type="textarea"
-                          :rows="2"
-                        />
-                      </el-col>
-                      <el-col :span="12">
-                        <label class="inline-label">{{
-                          $t('evaluation.defectAnalysisResults')
-                        }}</label>
-                        <el-input
-                          v-model="processEditState['new'].defect_analysis_results"
-                          type="textarea"
-                          :rows="2"
-                        />
-                      </el-col>
-                    </el-row>
-                    <div>
-                      <label class="inline-label">{{ $t('common.status') }}</label>
-                      <el-select
-                        v-model="processEditState['new'].status"
-                        size="small"
-                        style="width: 200px"
-                      >
-                        <el-option
-                          v-for="opt in processStatusOptions"
-                          :key="opt.value"
-                          :label="opt.label"
-                          :value="opt.value"
-                        />
-                      </el-select>
-                    </div>
+                  <div class="nested-step-meta">
+                    Eval: {{ step.eval_code }} · Total {{ step.total_units }} (Pass {{ step.pass_units }}, Fail {{ step.fail_units }})
                   </div>
-                </div>
-                <div v-for="process in evaluation.processes" :key="process.id" class="process-item">
-                  <div class="process-header">
-                    <template v-if="isProcessEditing(process.id)">
-                      <div class="title-with-edit">
-                        <el-input
-                          v-model="processEditState[process.id].title"
-                          size="small"
-                          :placeholder="$t('evaluation.process')"
-                          style="max-width: 240px"
-                        />
-                      </div>
-                    </template>
-                    <template v-else>
-                      <h4>{{ process.title || process.eval_code }} - {{ process.lot_number }}</h4>
-                    </template>
-                    <div class="header-actions">
-                      <template v-if="!isProcessEditing(process.id) && canEdit">
-                        <el-button
-                          size="small"
-                          text
-                          :icon="Edit"
-                          @click="startEditProcess(process)"
-                        >
-                          {{ $t('common.edit') }}
-                        </el-button>
-                        <el-button
-                          size="small"
-                          text
-                          type="danger"
-                          :icon="Delete"
-                          @click="deleteProcess(process.id)"
-                        >
-                          {{ $t('common.delete') }}
-                        </el-button>
-                      </template>
-                      <template v-else-if="isProcessEditing(process.id)">
-                        <el-button
-                          size="small"
-                          text
-                          :icon="Close"
-                          @click="cancelEditProcess(process.id)"
-                        >
-                          {{ $t('common.cancel') }}
-                        </el-button>
-                        <el-button
-                          size="small"
-                          type="primary"
-                          :loading="processSaving[process.id]"
-                          :icon="Check"
-                          @click="saveProcess(process.id)"
-                        >
-                          {{ $t('common.save') }}
-                        </el-button>
-                      </template>
-                    </div>
-                  </div>
-                  <div class="process-content">
-                    <template v-if="isProcessEditing(process.id)">
-                      <el-row :gutter="12" style="margin-bottom: 8px">
-                        <el-col :span="8">
-                          <label class="inline-label">{{ $t('evaluation.evalCode') }}</label>
-                          <el-input v-model="processEditState[process.id].eval_code" />
-                        </el-col>
-                        <el-col :span="8">
-                          <label class="inline-label">{{ $t('evaluation.lotNumber') }}</label>
-                          <el-input v-model="processEditState[process.id].lot_number" />
-                        </el-col>
-                        <el-col :span="8">
-                          <label class="inline-label">{{ $t('evaluation.quantity') }}</label>
-                          <el-input-number
-                            v-model="processEditState[process.id].quantity"
-                            :min="1"
-                            style="width: 100%"
-                          />
-                        </el-col>
-                      </el-row>
-                      <el-row :gutter="12" style="margin-bottom: 8px">
-                        <el-col :span="12">
-                          <label class="inline-label">{{ $t('evaluation.processFlow') }}</label>
-                          <el-input
-                            v-model="processEditState[process.id].process_description"
-                            type="textarea"
-                            :rows="2"
-                          />
-                        </el-col>
-                        <el-col :span="12">
-                          <label class="inline-label">{{ $t('evaluation.aqlResult') }}</label>
-                          <el-input v-model="processEditState[process.id].aql_result" />
-                        </el-col>
-                      </el-row>
-                      <el-row :gutter="12" style="margin-bottom: 8px">
-                        <el-col :span="12">
-                          <label class="inline-label">{{
-                            $t('evaluation.manufacturingTestResults')
-                          }}</label>
-                          <el-input
-                            v-model="processEditState[process.id].manufacturing_test_results"
-                            type="textarea"
-                            :rows="2"
-                          />
-                        </el-col>
-                        <el-col :span="12">
-                          <label class="inline-label">{{
-                            $t('evaluation.defectAnalysisResults')
-                          }}</label>
-                          <el-input
-                            v-model="processEditState[process.id].defect_analysis_results"
-                            type="textarea"
-                            :rows="2"
-                          />
-                        </el-col>
-                      </el-row>
-                      <div>
-                        <label class="inline-label">{{ $t('common.status') }}</label>
-                        <el-select
-                          v-model="processEditState[process.id].status"
-                          size="small"
-                          style="width: 200px"
-                        >
-                          <el-option
-                            v-for="opt in processStatusOptions"
-                            :key="opt.value"
-                            :label="opt.label"
-                            :value="opt.value"
-                          />
-                        </el-select>
-                      </div>
-                    </template>
-                    <template v-else>
-                      <p>
-                        <strong>{{ $t('evaluation.quantity') }}：</strong>{{ process.quantity }}
-                      </p>
-                      <p>
-                        <strong>{{ $t('evaluation.processFlow') }}：</strong
-                        >{{ process.process_description }}
-                      </p>
-                      <p v-if="process.manufacturing_test_results">
-                        <strong>{{ $t('evaluation.manufacturingTestResults') }}：</strong
-                        >{{ process.manufacturing_test_results }}
-                      </p>
-                      <p v-if="process.defect_analysis_results">
-                        <strong>{{ $t('evaluation.defectAnalysisResults') }}：</strong
-                        >{{ process.defect_analysis_results }}
-                      </p>
-                      <p v-if="process.aql_result">
-                        <strong>{{ $t('evaluation.aqlResult') }}：</strong>{{ process.aql_result }}
-                      </p>
-                      <p class="process-meta">
-                        <small
-                          >{{ $t('evaluation.createdAt') }}：{{
-                            formatDateTime(process.created_at)
-                          }}</small
-                        >
-                      </p>
-                    </template>
+                  <div v-if="Array.isArray(step.failures) && step.failures.length" class="nested-failure-count">
+                    Failures: {{ step.failures.length }}
                   </div>
                 </div>
               </div>
+
+              <el-alert
+                v-if="nestedSaveWarnings.length"
+                type="warning"
+                show-icon
+                class="nested-warning"
+                @close="clearNestedWarnings"
+              >
+                <ul class="alert-list">
+                  <li v-for="(warning, index) in nestedSaveWarnings" :key="`nested-warning-${index}`">{{ warning }}</li>
+                </ul>
+              </el-alert>
+              <el-alert
+                v-if="nestedSaveError"
+                type="error"
+                show-icon
+                class="nested-warning"
+                @close="clearNestedError"
+              >
+                {{ nestedSaveError }}
+              </el-alert>
             </el-card>
           </el-tab-pane>
 
@@ -862,73 +656,68 @@
             </div>
           </el-card>
 
-          <el-card
-            v-if="evaluation.processes && evaluation.processes.length >= 0"
-            class="info-card"
-          >
+          <el-card class="info-card">
             <template #header>
               <div class="card-header">
                 <span>{{ $t('evaluation.evaluationProcesses') }}</span>
-                <div v-if="canEdit" class="header-actions">
-                  <template v-if="!isProcessEditing('new')">
-                    <el-button size="small" type="primary" :icon="Plus" @click="startAddProcess">
-                      {{ $t('evaluation.addProcess') }}
-                    </el-button>
-                  </template>
-                  <template v-else>
-                    <el-button size="small" :icon="Close" @click="cancelEditProcess('new')">
-                      {{ $t('common.cancel') }}
-                    </el-button>
-                    <el-button
-                      size="small"
-                      type="primary"
-                      :loading="processSaving['new']"
-                      :icon="Check"
-                      @click="saveProcess('new')"
-                    >
-                      {{ $t('common.save') }}
-                    </el-button>
-                  </template>
-                </div>
+                <el-button
+                  v-if="canEdit"
+                  type="primary"
+                  plain
+                  :icon="Connection"
+                  @click="openProcessDrawer"
+                >
+                  {{ $t('evaluation.manageNestedProcesses') }}
+                </el-button>
               </div>
             </template>
-            <div class="processes-section">
-              <div v-for="process in evaluation.processes" :key="process.id" class="process-item">
-                <div class="process-header">
-                  <h4>{{ process.title || process.eval_code }} - {{ process.lot_number }}</h4>
-                  <el-tag :type="getProcessStatusType(process.status)">
-                    {{ $t(`evaluation.processStatus.${process.status}`) }}
-                  </el-tag>
+
+            <el-empty v-if="!builderHasStepsSummary" description="No nested processes configured yet" />
+
+            <div v-else class="nested-summary">
+              <div v-for="step in builderSummarySteps" :key="step.order_index" class="nested-summary-item">
+                <div class="nested-step-title">
+                  <strong>{{ step.order_index }}. {{ step.step_code }}</strong>
+                  <span v-if="step.step_label"> - {{ step.step_label }}</span>
                 </div>
-                <div class="process-content">
-                  <p>
-                    <strong>{{ $t('evaluation.quantity') }}：</strong>{{ process.quantity }}
-                  </p>
-                  <p>
-                    <strong>{{ $t('evaluation.processFlow') }}：</strong
-                    >{{ process.process_description }}
-                  </p>
-                  <p v-if="process.manufacturing_test_results">
-                    <strong>{{ $t('evaluation.manufacturingTestResults') }}：</strong
-                    >{{ process.manufacturing_test_results }}
-                  </p>
-                  <p v-if="process.defect_analysis_results">
-                    <strong>{{ $t('evaluation.defectAnalysisResults') }}：</strong
-                    >{{ process.defect_analysis_results }}
-                  </p>
-                  <p v-if="process.aql_result">
-                    <strong>{{ $t('evaluation.aqlResult') }}：</strong>{{ process.aql_result }}
-                  </p>
-                  <p class="process-meta">
-                    <small
-                      >{{ $t('evaluation.createdAt') }}：{{
-                        formatDateTime(process.created_at)
-                      }}</small
-                    >
-                  </p>
+                <div class="nested-step-meta">
+                  Eval: {{ step.eval_code }} · Total {{ step.total_units }} (Pass {{ step.pass_units }}, Fail {{ step.fail_units }})
+                </div>
+                <div v-if="Array.isArray(step.failures) && step.failures.length" class="nested-failure-count">
+                  Failures: {{ step.failures.length }}
                 </div>
               </div>
             </div>
+
+            <el-alert
+              v-if="nestedSaveWarnings.length"
+              type="warning"
+              show-icon
+              class="nested-warning"
+              @close="clearNestedWarnings"
+            >
+              <ul class="alert-list">
+                <li v-for="(warning, index) in nestedSaveWarnings" :key="`nested-warning-${index}`">{{ warning }}</li>
+              </ul>
+            </el-alert>
+            <el-alert
+              v-if="nestedSaveError"
+              type="error"
+              show-icon
+              class="nested-warning"
+              @close="clearNestedError"
+            >
+              {{ nestedSaveError }}
+            </el-alert>
+          <el-card v-if="legacyProcessNotes.length" class="legacy-card" shadow="never">
+            <template #header>
+              <span>Legacy (view-only)</span>
+            </template>
+            <div v-for="(note, index) in legacyProcessNotes" :key="`legacy-note-${index}`" class="legacy-note">
+              <h4 class="legacy-title">{{ note.title }}</h4>
+              <pre class="legacy-content">{{ note.content }}</pre>
+            </div>
+          </el-card>
           </el-card>
         </el-col>
 
@@ -1041,12 +830,32 @@
           </el-card>
         </el-col>
       </el-row>
+    <el-drawer
+      v-model="processDrawerVisible"
+      size="60%"
+      :before-close="handleProcessDrawerBeforeClose"
+      :title="$t('evaluation.manageNestedProcesses')"
+    >
+      <ProcessBuilder
+        ref="processBuilderRef"
+        :initial-payload="builderPayload"
+        :server-warnings="processBuilderWarnings"
+        :show-save-button="false"
+        @dirty-change="handleBuilderDirtyChange"
+      />
+      <template #footer>
+        <div class="drawer-footer">
+          <el-button @click="handleDrawerCancel">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="commitBuilderChanges">{{ $t('common.save') }}</el-button>
+        </div>
+      </template>
+    </el-drawer>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 const props = defineProps({
   inDialog: { type: Boolean, default: false },
@@ -1070,15 +879,24 @@ import {
   Document,
   Download,
   View,
-  CirclePlus,
   EditPen,
   Delete,
+  CirclePlus,
   CircleCheck,
   CircleClose,
   User,
   Download as DownloadIcon,
+  Connection,
 } from '@element-plus/icons-vue'
 import api from '../utils/api'
+import ProcessBuilder from '../components/ProcessBuilder.vue'
+import {
+  builderPayloadToNestedRequest,
+  createEmptyBuilderPayload,
+  evaluationToBuilderPayload,
+  extractLegacyProcessNotes,
+  hasBuilderSteps,
+} from '../utils/processMapper'
 // Auth removed
 
 const route = useRoute()
@@ -1108,9 +926,81 @@ const formatProcessSteps = (value) => {
   return steps.length > 0 ? steps.join(' / ') : '-'
 }
 const evaluation = ref(null)
-// removed unused showAllLogs
+const builderPayload = ref(createEmptyBuilderPayload())
+const processDrawerVisible = ref(false)
+const processBuilderRef = ref(null)
+const processBuilderWarnings = ref([])
+const processBuilderDirty = ref(false)
+const nestedSaveWarnings = ref([])
+const nestedSaveError = ref(null)
+const builderSummarySteps = computed(() =>
+  Array.isArray(builderPayload.value.steps) ? builderPayload.value.steps : [],
+)
+const builderHasStepsSummary = computed(() => hasBuilderSteps(builderPayload.value))
+const legacyProcessNotes = computed(() => extractLegacyProcessNotes(evaluation.value) || [])
 const editing = ref(false)
 const saving = ref(false)
+
+function handleBuilderDirtyChange(value) {
+  processBuilderDirty.value = value
+}
+
+async function openProcessDrawer() {
+  processBuilderWarnings.value = []
+  processDrawerVisible.value = true
+  await nextTick()
+  processBuilderRef.value?.setPayload(builderPayload.value, { markClean: true })
+  processBuilderDirty.value = false
+}
+
+async function handleProcessDrawerBeforeClose(done) {
+  if (processBuilderDirty.value) {
+    try {
+      await ElMessageBox.confirm('Discard unsaved process changes?', t('common.confirmAction'), {
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning',
+      })
+      processBuilderRef.value?.markPristine()
+      processBuilderDirty.value = false
+    } catch {
+      if (typeof done === 'function') {
+        return
+      }
+      return
+    }
+  }
+  processDrawerVisible.value = false
+  if (typeof done === 'function') {
+    done()
+  }
+}
+
+function handleDrawerCancel() {
+  handleProcessDrawerBeforeClose(() => {
+    processDrawerVisible.value = false
+  })
+}
+
+function clearNestedWarnings() {
+  nestedSaveWarnings.value = []
+}
+
+function clearNestedError() {
+  nestedSaveError.value = null
+}
+
+async function commitBuilderChanges() {
+  if (!processBuilderRef.value || !evaluation.value) return
+  builderPayload.value = processBuilderRef.value.getPayload()
+  processBuilderWarnings.value = []
+  processBuilderRef.value.markPristine()
+  processBuilderDirty.value = false
+  processDrawerVisible.value = false
+  nestedSaveWarnings.value = []
+  nestedSaveError.value = null
+  await saveNestedProcesses(evaluation.value.id)
+}
 
 const editForm = reactive({
   product_name: '',
@@ -1248,12 +1138,16 @@ const filteredLogs = computed(() => {
   return logs
 })
 
-const fetchEvaluation = async () => {
+async function fetchEvaluation() {
   try {
     loading.value = true
     const id = props.evaluationId || route.params.id
     const response = await api.get(`/evaluations/${id}`)
     evaluation.value = response.data.data.evaluation
+    if (evaluation.value) {
+      builderPayload.value = evaluationToBuilderPayload(evaluation.value)
+      processBuilderWarnings.value = []
+    }
     // Fetch combined logs (evaluation, status, processes)
     try {
       const logsResp = await api.get(`/evaluations/${id}/logs`)
@@ -1270,6 +1164,11 @@ const fetchEvaluation = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const goToNestedEditor = () => {
+  if (!evaluation.value) return
+  openProcessDrawer()
 }
 
 const handleEdit = () => {
@@ -1475,14 +1374,28 @@ const toggleLog = (id) => {
   logExpanded[id] = !logExpanded[id]
 }
 
-const getProcessStatusType = (status) => {
-  const typeMap = {
-    pending: 'info',
-    in_progress: 'primary',
-    completed: 'success',
-    failed: 'danger',
+async function saveNestedProcesses(targetId) {
+  if (!targetId) return
+  if (!hasBuilderSteps(builderPayload.value)) {
+    nestedSaveWarnings.value = []
+    nestedSaveError.value = null
+    return
   }
-  return typeMap[status] || 'info'
+  try {
+    const payload = builderPayloadToNestedRequest(builderPayload.value)
+    const response = await api.post(`/evaluations/${targetId}/processes/nested`, payload)
+    nestedSaveWarnings.value = response.data?.data?.warnings || []
+    nestedSaveError.value = null
+    await fetchEvaluation()
+    if (nestedSaveWarnings.value.length) {
+      ElMessage.warning('Nested processes saved with warnings. Review details below.')
+    } else {
+      ElMessage.success('Nested processes saved')
+    }
+  } catch (error) {
+    nestedSaveError.value = 'Failed to save nested processes. Please retry.'
+    console.error('Failed to save nested processes', error)
+  }
 }
 
 onMounted(async () => {
@@ -1491,92 +1404,6 @@ onMounted(async () => {
 
 // Dialog tabs
 const activeTab = ref('details')
-
-// Inline edit for processes
-const processEditState = reactive({})
-const processSaving = reactive({})
-const isProcessEditing = (id) => !!processEditState[id]
-const startEditProcess = (process) => {
-  processEditState[process.id] = {
-    title: process.title || '',
-    eval_code: process.eval_code || '',
-    lot_number: process.lot_number || '',
-    quantity: process.quantity || 1,
-    process_description: process.process_description || '',
-    manufacturing_test_results: process.manufacturing_test_results || '',
-    defect_analysis_results: process.defect_analysis_results || '',
-    aql_result: process.aql_result || '',
-    status: process.status || 'pending',
-  }
-}
-const cancelEditProcess = (id) => {
-  delete processEditState[id]
-}
-const processStatusOptions = computed(() => [
-  { label: t('evaluation.processStatus.pending'), value: 'pending' },
-  { label: t('evaluation.processStatus.in_progress'), value: 'in_progress' },
-  { label: t('evaluation.processStatus.completed'), value: 'completed' },
-  { label: t('evaluation.processStatus.failed'), value: 'failed' },
-])
-const saveProcess = async (id) => {
-  if (!evaluation.value || !processEditState[id]) return
-  try {
-    processSaving[id] = true
-    const payload = { ...processEditState[id] }
-    if (id === 'new') {
-      // Create
-      await api.post(`/evaluations/${evaluation.value.id}/processes`, payload)
-    } else {
-      // Update
-      await api.put(`/evaluations/${evaluation.value.id}/processes/${id}`, payload)
-    }
-    ElMessage.success(t('common.saveSuccess'))
-    await fetchEvaluation()
-    delete processEditState[id]
-  } catch (e) {
-    ElMessage.error(t('common.saveError'))
-    console.error('Save process failed:', e)
-  } finally {
-    processSaving[id] = false
-  }
-}
-
-const startAddProcess = () => {
-  processEditState['new'] = {
-    title: '',
-    eval_code: '',
-    lot_number: '',
-    quantity: 1,
-    process_description: '',
-    manufacturing_test_results: '',
-    defect_analysis_results: '',
-    aql_result: '',
-    status: 'pending',
-  }
-}
-
-const deleteProcess = async (id) => {
-  if (!evaluation.value) return
-  try {
-    await ElMessageBox.confirm(
-      t('evaluation.deleteConfirm') || '确认删除该工序？',
-      t('common.confirmDelete') || '删除确认',
-      {
-        confirmButtonText: t('common.confirm'),
-        cancelButtonText: t('common.cancel'),
-        type: 'warning',
-      },
-    )
-    await api.delete(`/evaluations/${evaluation.value.id}/processes/${id}`)
-    ElMessage.success(t('evaluation.deleteSuccess') || '删除成功')
-    await fetchEvaluation()
-  } catch (e) {
-    if (e !== 'cancel') {
-      ElMessage.error(t('common.deleteError') || '删除失败')
-      console.error('Delete process failed:', e)
-    }
-  }
-}
 </script>
 
 <style scoped>
@@ -1859,58 +1686,71 @@ const deleteProcess = async (id) => {
   font-size: 10px;
 }
 
-/* 响应式设计 */
-.processes-section {
-  margin-top: 10px;
-}
-
-.process-item {
-  border: 1px solid #e6e6e6;
-  border-radius: 4px;
-  padding: 16px;
-  margin-bottom: 16px;
-  background-color: #fafafa;
-}
-
-.process-item:last-child {
-  margin-bottom: 0;
-}
-
-.process-header {
+/* Nested process summary */
+.nested-summary {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e8e8e8;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.process-header h4 {
-  margin: 0;
-  color: #303133;
-  font-size: 16px;
+.nested-summary-item {
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f9fafc;
 }
 
-.process-content p {
-  margin: 8px 0;
-  line-height: 1.5;
-}
-
-.process-content p:last-child {
-  margin-bottom: 0;
-}
-
-.process-content strong {
-  color: #606266;
+.nested-step-title {
   font-weight: 600;
+  color: #303133;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.process-meta {
-  margin-top: 12px !important;
-  padding-top: 8px;
-  border-top: 1px dashed #e8e8e8;
+.nested-step-meta {
+  margin-top: 4px;
+  color: #606266;
+  font-size: 13px;
+}
+
+.nested-failure-count {
+  margin-top: 4px;
   color: #909399;
   font-size: 12px;
+}
+
+.nested-warning {
+  margin-top: 12px;
+}
+
+.legacy-card {
+  margin-top: 16px;
+}
+
+.legacy-note {
+  margin-bottom: 12px;
+}
+
+.legacy-title {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: #303133;
+}
+
+.legacy-content {
+  margin: 0;
+  background: #f4f4f5;
+  border-radius: 4px;
+  padding: 12px;
+  white-space: pre-wrap;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+}
+
+.drawer-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .inline-label {
@@ -1918,11 +1758,6 @@ const deleteProcess = async (id) => {
   font-size: 12px;
   color: #606266;
   margin-bottom: 6px;
-}
-.title-with-edit {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 @media (max-width: 1200px) {

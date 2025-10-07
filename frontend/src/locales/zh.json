@@ -134,6 +134,7 @@
     "evaluationDescription": "评价描述",
     "pgmVersion": "PGM版本",
     "testTime": "测试时间",
+    "manageNestedProcesses": "编辑嵌套流程",
     "product": "产品",
     "evaluator": "评价人",
     "endDate": "结束日期",

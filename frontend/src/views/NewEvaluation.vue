@@ -178,154 +178,73 @@
 
         <el-card class="form-section fade-in-up" style="animation-delay: 0.5s">
           <template #header>
-            <span>{{ $t('evaluation.evaluationProcesses') }}</span>
+            <div class="card-header">
+              <span>{{ $t('evaluation.evaluationProcesses') }}</span>
+              <el-button type="primary" plain :icon="Connection" @click="openProcessDrawer">
+                {{ $t('evaluation.manageNestedProcesses') }}
+              </el-button>
+            </div>
           </template>
 
-          <div class="processes-section">
-            <div v-for="(process, index) in form.processes" :key="index" class="process-item">
-              <div class="process-header">
-                <div class="title-with-edit">
-                  <h4 v-if="!process.editingTitle">
-                    {{ process.title || $t('evaluation.process') + ' ' + (index + 1) }}
-                  </h4>
-                  <el-input
-                    v-else
-                    v-model="process.editTitle"
-                    size="small"
-                    @blur="saveProcessTitle(index)"
-                    @keyup.enter="saveProcessTitle(index)"
-                    @keyup.escape="cancelProcessTitleEdit(index)"
-                  />
-                  <el-button
-                    link
-                    size="small"
-                    :icon="Edit"
-                    style="color: #909399; margin-left: 8px"
-                    @click="startProcessTitleEdit(index)"
-                  />
-                </div>
-                <el-button type="danger" size="small" :icon="Delete" @click="removeProcess(index)">
-                  {{ $t('evaluation.remove') }}
-                </el-button>
+          <el-empty v-if="!builderHasStepsSummary" description="No nested processes configured yet" />
+
+          <div v-else class="nested-summary">
+            <div v-for="step in builderSummarySteps" :key="step.order_index" class="nested-summary-item">
+              <div class="nested-step-title">
+                <strong>{{ step.order_index }}. {{ step.step_code }}</strong>
+                <span v-if="step.step_label"> - {{ step.step_label }}</span>
               </div>
-
-              <el-row :gutter="20">
-                <el-col :span="8">
-                  <el-form-item
-                    :label="$t('evaluation.evalCode')"
-                    :prop="`processes.${index}.eval_code`"
-                    :rules="[
-                      {
-                        required: true,
-                        message: $t('validation.requiredField.evalCode'),
-                        trigger: 'blur',
-                      },
-                    ]"
-                  >
-                    <el-input
-                      v-model="process.eval_code"
-                      :placeholder="$t('evaluation.placeholders.evalCode')"
-                    />
-                  </el-form-item>
-                </el-col>
-
-                <el-col :span="8">
-                  <el-form-item
-                    :label="$t('evaluation.lotNumber')"
-                    :prop="`processes.${index}.lot_number`"
-                    :rules="[
-                      {
-                        required: true,
-                        message: $t('validation.requiredField.lotNumber'),
-                        trigger: 'blur',
-                      },
-                    ]"
-                  >
-                    <el-input
-                      v-model="process.lot_number"
-                      :placeholder="$t('evaluation.placeholders.lotNumber')"
-                    />
-                  </el-form-item>
-                </el-col>
-
-                <el-col :span="8">
-                  <el-form-item
-                    :label="$t('evaluation.quantity')"
-                    :prop="`processes.${index}.quantity`"
-                    :rules="[
-                      {
-                        required: true,
-                        message: $t('validation.requiredField.quantity'),
-                        trigger: 'blur',
-                      },
-                    ]"
-                  >
-                    <el-input-number
-                      v-model="process.quantity"
-                      :min="1"
-                      :placeholder="$t('evaluation.placeholders.quantity')"
-                      style="width: 100%"
-                    />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-
-              <el-form-item
-                :label="$t('evaluation.processFlow')"
-                :prop="`processes.${index}.process_description`"
-                :rules="[
-                  {
-                    required: true,
-                    message: $t('validation.requiredField.processFlow'),
-                    trigger: 'blur',
-                  },
-                ]"
-              >
-                <el-input
-                  v-model="process.process_description"
-                  type="textarea"
-                  :rows="2"
-                  :placeholder="$t('evaluation.placeholders.processFlow')"
-                />
-              </el-form-item>
-
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <el-form-item :label="$t('evaluation.manufacturingTestResults')">
-                    <el-input
-                      v-model="process.manufacturing_test_results"
-                      type="textarea"
-                      :rows="2"
-                      :placeholder="$t('evaluation.placeholders.manufacturingTestResults')"
-                    />
-                  </el-form-item>
-                </el-col>
-
-                <el-col :span="12">
-                  <el-form-item :label="$t('evaluation.defectAnalysisResults')">
-                    <el-input
-                      v-model="process.defect_analysis_results"
-                      type="textarea"
-                      :rows="2"
-                      :placeholder="$t('evaluation.placeholders.defectAnalysisResults')"
-                    />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-
-              <el-form-item :label="$t('evaluation.aqlResult')">
-                <el-input
-                  v-model="process.aql_result"
-                  :placeholder="$t('evaluation.placeholders.aqlResult')"
-                />
-              </el-form-item>
+              <div class="nested-step-meta">
+                Eval: {{ step.eval_code }} · Total {{ step.total_units }} (Pass {{ step.pass_units }}, Fail {{ step.fail_units }})
+              </div>
+              <div v-if="Array.isArray(step.failures) && step.failures.length" class="nested-failure-count">
+                Failures: {{ step.failures.length }}
+              </div>
             </div>
-
-            <el-button type="primary" :icon="Plus" @click="addProcess">
-              {{ $t('evaluation.addProcess') }}
-            </el-button>
           </div>
+
+          <el-alert
+            v-if="nestedSaveWarnings.length"
+            type="warning"
+            show-icon
+            class="nested-warning"
+            @close="clearNestedWarnings"
+          >
+            <ul class="alert-list">
+              <li v-for="(warning, index) in nestedSaveWarnings" :key="`nested-warning-${index}`">{{ warning }}</li>
+            </ul>
+          </el-alert>
+          <el-alert
+            v-if="nestedSaveError"
+            type="error"
+            show-icon
+            class="nested-warning"
+            @close="clearNestedError"
+          >
+            {{ nestedSaveError }}
+          </el-alert>
         </el-card>
+
+        <el-drawer
+          v-model="processDrawerVisible"
+          size="60%"
+          :before-close="handleProcessDrawerBeforeClose"
+          :title="$t('evaluation.manageNestedProcesses')"
+        >
+          <ProcessBuilder
+            ref="processBuilderRef"
+            :initial-payload="builderPayload"
+            :server-warnings="processBuilderWarnings"
+            :show-save-button="false"
+            @dirty-change="handleBuilderDirtyChange"
+          />
+          <template #footer>
+            <div class="drawer-footer">
+              <el-button @click="handleDrawerCancel">{{ $t('common.cancel') }}</el-button>
+              <el-button type="primary" @click="commitBuilderChanges">{{ $t('common.save') }}</el-button>
+            </div>
+          </template>
+        </el-drawer>
 
         <div v-if="!inDialog" class="form-actions fade-in-up" style="animation-delay: 0.7s">
           <el-button @click="handleCancel">{{ $t('common.cancel') }}</el-button>
@@ -359,7 +278,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 const props = defineProps({
   inDialog: { type: Boolean, default: false },
@@ -372,9 +291,15 @@ const props = defineProps({
 const emit = defineEmits(['saved'])
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { nextTick } from 'vue'
-import { Plus, Delete, Edit } from '@element-plus/icons-vue'
+import { Connection } from '@element-plus/icons-vue'
 import api from '../utils/api'
+import ProcessBuilder from '../components/ProcessBuilder.vue'
+import {
+  builderPayloadToNestedRequest,
+  createEmptyBuilderPayload,
+  evaluationToBuilderPayload,
+  hasBuilderSteps,
+} from '../utils/processMapper'
 
 const router = useRouter()
 const route = useRoute()
@@ -407,21 +332,6 @@ const isEditMode = computed(
   () => !!(props.evaluationId || (route.name === 'EditEvaluation' && route.params.id)),
 )
 const evaluationId = computed(() => props.evaluationId || route.params.id)
-
-// Default process template
-const defaultProcess = () => ({
-  title: '',
-  editingTitle: false,
-  editTitle: '',
-  eval_code: '',
-  lot_number: '',
-  quantity: 1,
-  process_description: '',
-  manufacturing_test_results: '',
-  defect_analysis_results: '',
-  aql_result: '',
-  status: 'pending',
-})
 
 // Computed property for dynamic reason options based on evaluation type
 const reasonOptions = computed(() => {
@@ -472,11 +382,98 @@ const form = reactive({
   description: '',
   pgm_version: '',
   pgm_test_time: '',
-  // Start with no default process; user adds explicitly
-  processes: [],
   scs_charger_name: '',
   head_office_charger_name: '',
 })
+
+const builderPayload = ref(createEmptyBuilderPayload())
+const processDrawerVisible = ref(false)
+const processBuilderRef = ref(null)
+const processBuilderWarnings = ref([])
+const processBuilderDirty = ref(false)
+const nestedSaveWarnings = ref([])
+const nestedSaveError = ref(null)
+
+const builderSummarySteps = computed(() =>
+  Array.isArray(builderPayload.value.steps) ? builderPayload.value.steps : [],
+)
+const builderHasStepsSummary = computed(() => hasBuilderSteps(builderPayload.value))
+
+function handleBuilderDirtyChange(value) {
+  processBuilderDirty.value = value
+}
+
+async function openProcessDrawer() {
+  processBuilderWarnings.value = []
+  processDrawerVisible.value = true
+  await nextTick()
+  processBuilderRef.value?.setPayload(builderPayload.value, { markClean: true })
+  processBuilderDirty.value = false
+}
+
+async function handleProcessDrawerBeforeClose(done) {
+  if (processBuilderDirty.value) {
+    try {
+      await ElMessageBox.confirm('Discard unsaved process changes?', t('common.confirmAction'), {
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning',
+      })
+      processBuilderRef.value?.markPristine()
+      processBuilderDirty.value = false
+    } catch {
+      if (typeof done === 'function') {
+        return
+      }
+      return
+    }
+  }
+  processDrawerVisible.value = false
+  if (typeof done === 'function') {
+    done()
+  }
+}
+
+function handleDrawerCancel() {
+  handleProcessDrawerBeforeClose(() => {
+    processDrawerVisible.value = false
+  })
+}
+
+function commitBuilderChanges() {
+  if (!processBuilderRef.value) return
+  builderPayload.value = processBuilderRef.value.getPayload()
+  processBuilderWarnings.value = []
+  processBuilderRef.value.markPristine()
+  processBuilderDirty.value = false
+  processDrawerVisible.value = false
+}
+
+function clearNestedWarnings() {
+  nestedSaveWarnings.value = []
+}
+
+function clearNestedError() {
+  nestedSaveError.value = null
+}
+
+async function saveNestedProcesses(targetId) {
+  if (!targetId) return
+  if (!hasBuilderSteps(builderPayload.value)) {
+    nestedSaveWarnings.value = []
+    nestedSaveError.value = null
+    return
+  }
+  try {
+    const payload = builderPayloadToNestedRequest(builderPayload.value)
+    const response = await api.post(`/evaluations/${targetId}/processes/nested`, payload)
+    nestedSaveWarnings.value = response.data?.data?.warnings || []
+    nestedSaveError.value = null
+  } catch (error) {
+    nestedSaveError.value = 'Failed to save nested processes. The raw payload was archived on the server.'
+    console.error('Failed to save nested processes', error)
+  }
+}
 
 const rules = computed(() => ({
   evaluation_type: [
@@ -566,38 +563,6 @@ const handleTypeChange = () => {
   form.reason = '' // Reset reason when type changes
 }
 
-const addProcess = () => {
-  form.processes.push(defaultProcess())
-}
-
-const startProcessTitleEdit = (index) => {
-  const process = form.processes[index]
-  process.editingTitle = true
-  process.editTitle = process.title || ''
-  // Focus the input field after it's rendered
-  nextTick(() => {
-    const input = document.querySelector(`.process-item:nth-child(${index + 1}) .el-input__inner`)
-    if (input) input.focus()
-  })
-}
-
-const saveProcessTitle = (index) => {
-  const process = form.processes[index]
-  process.title = process.editTitle.trim()
-  process.editingTitle = false
-  process.editTitle = ''
-}
-
-const cancelProcessTitleEdit = (index) => {
-  const process = form.processes[index]
-  process.editingTitle = false
-  process.editTitle = ''
-}
-
-const removeProcess = (index) => {
-  form.processes.splice(index, 1)
-}
-
 const handleCancel = async () => {
   try {
     await ElMessageBox.confirm(t('evaluation.cancelConfirm'), t('common.confirmCancel'), {
@@ -640,61 +605,42 @@ const handleSave = async (submit = false) => {
 
     const payload = buildPayload()
 
-    // Determine status based on action
-    if (isEditMode.value) {
-      // In edit mode, "Save" keeps the current status, it doesn't revert to draft
-      // The backend should handle preserving the status if not provided.
-    } else {
+    if (!isEditMode.value) {
       payload.status = submit ? 'in_progress' : 'draft'
     }
 
-    let response
+    let targetId = evaluationId.value
     if (isEditMode.value) {
-      response = await api.put(`/evaluations/${evaluationId.value}`, payload)
+      await api.put(`/evaluations/${targetId}`, payload)
       ElMessage.success(t('common.saveSuccess'))
-      // Redirect to detail view after successful save
-      if (props.inDialog) emit('saved')
-      else router.push(`/evaluations/${evaluationId.value}`)
     } else {
-      response = await api.post('/evaluations', payload)
-      ElMessage.success(submit ? t('evaluation.submitSuccess') : t('evaluation.saveSuccess'))
-      const targetId = response.data?.data?.evaluation?.id
-
-      // Create evaluation processes if evaluation was created successfully
-      if (targetId) {
-        const validProcesses = form.processes.filter(
-          (process) => process.eval_code && process.lot_number && process.process_description,
-        )
-
-        for (const process of validProcesses) {
-          try {
-            // Create a clean process object without frontend-only fields
-            const cleanProcess = {
-              title: process.title,
-              eval_code: process.eval_code,
-              lot_number: process.lot_number,
-              quantity: process.quantity,
-              process_description: process.process_description,
-              manufacturing_test_results: process.manufacturing_test_results,
-              defect_analysis_results: process.defect_analysis_results,
-              aql_result: process.aql_result,
-              status: process.status,
-            }
-            await api.post(`/evaluations/${targetId}/processes`, cleanProcess)
-          } catch (error) {
-            console.error('Failed to create process:', error)
-            // Continue with other processes even if one fails
-          }
-        }
-      }
-
-      if (targetId) {
-        if (props.inDialog) emit('saved')
-        else router.push(`/evaluations/${targetId}`)
-      } else {
+      const response = await api.post('/evaluations', payload)
+      targetId = response.data?.data?.evaluation?.id
+      if (!targetId) {
         console.error('Invalid response structure:', response.data)
         ElMessage.error(t('common.responseError'))
+        return
       }
+      ElMessage.success(submit ? t('evaluation.submitSuccess') : t('evaluation.saveSuccess'))
+    }
+
+    nestedSaveWarnings.value = []
+    nestedSaveError.value = null
+    await saveNestedProcesses(targetId)
+
+    if (nestedSaveWarnings.value.length) {
+      ElMessage.warning('Nested processes saved with warnings. Review details below.')
+    } else if (hasBuilderSteps(builderPayload.value)) {
+      ElMessage.success('Nested processes saved')
+    }
+
+    if (!isEditMode.value) {
+      if (props.inDialog) emit('saved')
+      else router.push(`/evaluations/${targetId}`)
+    } else if (props.inDialog) {
+      emit('saved')
+    } else {
+      router.push(`/evaluations/${targetId}`)
     }
   } catch (error) {
     if (error.name !== 'ValidationError') {
@@ -788,14 +734,14 @@ const fetchEvaluation = async () => {
       description: evaluation.remarks || evaluation.description || '',
       pgm_version: evaluation.pgm_version || '',
       pgm_test_time: evaluation.pgm_test_time || '',
-      processes: (evaluation.processes || []).map((process) => ({
-        ...process,
-        editingTitle: false,
-        editTitle: '',
-      })),
       scs_charger_name: evaluation.scs_charger_name || '',
       head_office_charger_name: evaluation.head_office_charger_name || '',
     })
+    const payload = evaluationToBuilderPayload(evaluation)
+    builderPayload.value = payload
+    processBuilderWarnings.value = []
+    nestedSaveWarnings.value = []
+    nestedSaveError.value = null
   } catch (error) {
     ElMessage.error(t('ui.fetchDataFailed'))
     console.error('Failed to fetch evaluation:', error)
@@ -975,65 +921,48 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
   gap: 16px;
 }
 
-.process-note {
-  margin: 20px 0 0 0;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(25, 118, 210, 0.1) 100%);
-  border-left: 4px solid #2196f3;
-  color: #1976d2;
-  font-size: 14px;
-  border-radius: 12px;
-  font-weight: 500;
-}
 
-.processes-section {
-  margin-top: 10px;
-}
-
-.process-item {
-  border: 1px solid #e6e6e6;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  background-color: #fafafa;
-}
-
-.process-item:last-child {
-  margin-bottom: 0;
-}
-
-.process-header {
+.nested-summary {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e8e8e8;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.process-header h4 {
-  margin: 0;
+.nested-summary-item {
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f9fafc;
+}
+
+.nested-step-title {
+  font-weight: 600;
   color: #303133;
-  font-size: 16px;
-  font-weight: 600;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
-.process-content p {
-  margin: 8px 0;
-  line-height: 1.5;
-}
-
-.process-content strong {
+.nested-step-meta {
+  margin-top: 4px;
   color: #606266;
-  font-weight: 600;
+  font-size: 13px;
 }
 
-.process-meta {
-  margin-top: 12px !important;
-  padding-top: 8px;
-  border-top: 1px dashed #e8e8e8;
+.nested-failure-count {
+  margin-top: 4px;
   color: #909399;
   font-size: 12px;
+}
+
+.nested-warning {
+  margin-top: 12px;
+}
+
+.drawer-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .form-actions {
@@ -1091,22 +1020,6 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
   box-shadow: 0 8px 24px rgba(255, 117, 140, 0.4);
 }
 
-.title-with-edit {
-  display: flex;
-  align-items: center;
-}
-
-.title-with-edit h4 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.title-with-edit .el-input {
-  width: 200px;
-}
-
 /* Responsive design */
 @media (max-width: 768px) {
   .evaluation-form {
@@ -1122,20 +1035,5 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
     width: 200px;
   }
 
-  .title-with-edit {
-    display: flex;
-    align-items: center;
-  }
-
-  .title-with-edit h4 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: #303133;
-  }
-
-  .title-with-edit .el-input {
-    width: 200px;
-  }
 }
 </style>

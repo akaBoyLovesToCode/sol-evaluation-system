@@ -7,7 +7,7 @@ import os
 from logging.handlers import RotatingFileHandler
 from typing import Any
 
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_socketio import SocketIO
@@ -164,5 +164,29 @@ def create_app(config_name: str | None = None) -> Flask:
             app.logger.info(
                 f"Database initialization handled elsewhere: {str(init_error)}"
             )
+
+    frontend_dist = app.config.get("FRONTEND_DIST")
+    if not frontend_dist:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        bundled_dist = os.path.abspath(os.path.join(base_dir, "..", "frontend_dist"))
+        repo_dist = os.path.abspath(os.path.join(base_dir, "..", "..", "frontend", "dist"))
+        if os.path.isdir(bundled_dist):
+            frontend_dist = bundled_dist
+        elif os.path.isdir(repo_dist):
+            frontend_dist = repo_dist
+
+    if frontend_dist and os.path.isdir(frontend_dist):
+
+        @app.route("/", defaults={"path": ""})
+        @app.route("/<path:path>")
+        def serve_frontend(path: str) -> Any:
+            if path.startswith("api/"):
+                return {"error": "Not found"}, 404
+            candidate = os.path.join(frontend_dist, path)
+            if path and os.path.isfile(candidate):
+                return send_from_directory(frontend_dist, path)
+            return send_from_directory(frontend_dist, "index.html")
+
+        app.logger.info(f"Serving frontend assets from {frontend_dist}")
 
     return app

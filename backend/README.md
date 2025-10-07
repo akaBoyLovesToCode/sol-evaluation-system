@@ -81,6 +81,12 @@ Notes
   - id, evaluation_id, eval_code, lot_number, quantity, process_description,
     manufacturing_test_results, defect_analysis_results, aql_result, status,
     created_at, updated_at
+- evaluation_processes_raw
+  - id, evaluation_id, payload (full JSON), source, created_at, updated_at
+- evaluation_process_steps / evaluation_step_failures
+  - normalized nested-step rows with lot/quantity/order indices and failure drill-down
+- fail_codes
+  - id, code (unique), short_name, description, created_at, updated_at
 - operation_logs
   - id, operation_type, target_type, target_id, operation_description,
     old_data, new_data, ip_address, user_agent, request_method,
@@ -120,3 +126,45 @@ backend/
 - Auth/user tests removed. Focus on evaluation, processes, and logging.
 - If configured: `PYTHONPATH=. uv run pytest`.
 
+## Fail-code dictionary bootstrap
+
+Use the helper script to seed/update the fail-code dictionary from CSV/XLSX datasets:
+
+```bash
+cd backend
+python -m scripts.bootstrap_fail_codes \
+  --code-column fail_code \
+  --name-column fail_name \
+  data/historical/fails/*.xlsx
+```
+
+Outputs (written to `reports/fail_code_bootstrap/` by default):
+- `missing_names.csv` – codes lacking names for curation.
+- `conflicts.csv` – codes with differing names across inputs.
+- `errors.csv` – problematic rows that were skipped (e.g., missing code).
+- `ingestion_log.json` – summary metrics per file and total rows affected.
+
+Use `--description-column` when legacy sheets include a longer explanation, and `--use-description` to populate the `description` column when available.
+All nested-process saves also archive the raw JSON payload in `evaluation_processes_raw`, providing a rollback safety net if structured inserts ever need to be replayed.
+
+### Text extraction mode
+
+When historical data mixes codes and descriptions inside free text (e.g., `评价过程`), switch to the new text-mining workflow:
+
+```bash
+python -m scripts.bootstrap_fail_codes \
+  --mode text-extract \
+  --text-col "评价过程" \
+  --text-col "评价描述" \
+  --stopwords-file ./stopwords.txt \
+  --deny-regex "^M\\d{3}$" --deny-regex "^R\\d{3}$" \
+  data/historical/*.xlsx --out-dir reports/text_extract
+```
+
+This mode:
+- mines numeric/acronym tokens (`code_regexes`) and Chinese failure phrases,
+- filters obvious non-codes using stopwords + deny regexes,
+- assigns provisional codes (e.g., `LEGACY-*`) when only a failure name is found,
+- records raw hits, distinct token rollups, alias mappings, and ingestion metrics.
+
+Review `distinct_tokens.csv`, merge aliases into canonical codes, and re-run as needed. You can supply extra patterns/stopwords via a YAML config file passed to `--config` if the defaults in the script need adjustment.

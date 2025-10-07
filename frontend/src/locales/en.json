@@ -149,6 +149,7 @@
     "evaluationDescription": "Evaluation Description",
     "pgmVersion": "PGM Version",
     "testTime": "Test Time",
+    "manageNestedProcesses": "Edit Nested Processes",
     "product": "Product",
     "evaluator": "Evaluator",
     "endDate": "End Date",

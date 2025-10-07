@@ -1,0 +1,16 @@
+# Default stopwords for text-extract mode
+DOE
+PFQ
+PRQ
+AQL
+TC
+SREP
+Hold
+Aging
+Repair
+QA
+Process
+Pass
+Retest
+All
+Close

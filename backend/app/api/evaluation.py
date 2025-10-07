@@ -4,14 +4,72 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
+from typing import List, Optional
 
 from flask import Blueprint, Response, current_app, jsonify, request
 
 from app.models import db
-from app.models.evaluation import Evaluation, EvaluationProcess, EvaluationStatus
+from app.models.evaluation import (
+    Evaluation,
+    EvaluationProcess,
+    EvaluationProcessRaw,
+    EvaluationProcessStep,
+    EvaluationStatus,
+    EvaluationStepFailure,
+    FailCode,
+)
 from app.models.operation_log import OperationLog, OperationType
 
 evaluation_bp = Blueprint("evaluation", __name__)
+
+
+def _safe_int(value: object, default: int = 0) -> int:
+    try:
+        if value is None:
+            return default
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _ensure_fail_code_record(
+    code_text: Optional[str],
+    provided_id: Optional[int],
+    snapshot: Optional[str],
+    warnings: List[str],
+) -> Optional[FailCode]:
+    normalized = (code_text or "").strip().upper()
+    if not normalized and not provided_id:
+        return None
+
+    fail_code = None
+    if provided_id is not None:
+        fail_code = FailCode.query.get(provided_id)
+        if fail_code and normalized and fail_code.code != normalized:
+            warnings.append(
+                f"Fail code id {provided_id} does not match provided text '{normalized}', using text value."
+            )
+            fail_code = None
+
+    if fail_code is None and normalized:
+        fail_code = FailCode.query.filter_by(code=normalized).first()
+
+    if fail_code is None and normalized:
+        fail_code = FailCode(
+            code=normalized,
+            short_name=(snapshot or None),
+            is_provisional=True,
+            source="nested-ui",
+        )
+        db.session.add(fail_code)
+        db.session.flush()
+    elif fail_code is not None:
+        if snapshot and not fail_code.short_name:
+            fail_code.short_name = snapshot
+        if not fail_code.source:
+            fail_code.source = "nested-ui"
+
+    return fail_code
 
 
 def generate_evaluation_number() -> str:
@@ -748,6 +806,188 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
                 "error": str(e),
             }
         ), 500
+
+
+@evaluation_bp.route("/<int:evaluation_id>/processes/nested", methods=["POST"])
+def save_nested_process(evaluation_id: int) -> tuple[Response, int]:
+    """Persist nested process data submitted from the new UI."""
+
+    evaluation = Evaluation.query.get(evaluation_id)
+    if not evaluation:
+        return jsonify({"success": False, "message": "Evaluation not found"}), 404
+
+    payload = request.get_json(silent=True) or {}
+    lot_number = str(payload.get("lot_number") or "").strip()
+    if not lot_number:
+        return (
+            jsonify({"success": False, "message": "lot_number is required"}),
+            400,
+        )
+
+    quantity = _safe_int(payload.get("quantity"), default=0)
+    steps_payload = payload.get("steps")
+    if not isinstance(steps_payload, list) or not steps_payload:
+        return (
+            jsonify({"success": False, "message": "steps array is required"}),
+            400,
+        )
+
+    warnings: List[str] = []
+    normalized_steps = []
+    for idx, raw_step in enumerate(steps_payload, start=1):
+        step_code = str(raw_step.get("step_code") or "").strip()
+        eval_code = str(raw_step.get("eval_code") or "").strip()
+        if not step_code or not eval_code:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "message": f"Step {idx} must include step_code and eval_code",
+                    }
+                ),
+                400,
+            )
+
+        order_index = raw_step.get("order_index")
+        order_index = _safe_int(order_index, default=idx)
+
+        total_units = _safe_int(raw_step.get("total_units"), default=0)
+        pass_units = _safe_int(raw_step.get("pass_units"), default=0)
+        fail_units = _safe_int(raw_step.get("fail_units"), default=0)
+        if total_units != pass_units + fail_units:
+            warnings.append(
+                f"Step {idx} totals mismatch: total={total_units}, pass={pass_units}, fail={fail_units}"
+            )
+
+        failures_payload = raw_step.get("failures") or []
+        if not isinstance(failures_payload, list):
+            warnings.append(f"Step {idx} failures data ignored (expected list)")
+            failures_payload = []
+
+        normalized_failures = []
+        for failure_idx, raw_failure in enumerate(failures_payload, start=1):
+            fail_code_text = str(raw_failure.get("fail_code_text") or "").strip()
+            if not fail_code_text:
+                warnings.append(
+                    f"Step {idx} failure {failure_idx}: missing fail_code_text, entry skipped"
+                )
+                continue
+
+            normalized_failures.append(
+                {
+                    "sequence": _safe_int(raw_failure.get("sequence"), default=failure_idx),
+                    "serial_number": (raw_failure.get("serial_number") or "").strip() or None,
+                    "fail_code_id": raw_failure.get("fail_code_id"),
+                    "fail_code_text": fail_code_text.upper(),
+                    "fail_code_name_snapshot": (
+                        (raw_failure.get("fail_code_name_snapshot") or "").strip() or None
+                    ),
+                    "analysis_result": (raw_failure.get("analysis_result") or "").strip() or None,
+                }
+            )
+
+        normalized_steps.append(
+            {
+                "order_index": order_index,
+                "step_code": step_code,
+                "step_label": (raw_step.get("step_label") or "").strip() or None,
+                "eval_code": eval_code,
+                "total_units": total_units,
+                "pass_units": pass_units,
+                "fail_units": fail_units,
+                "notes": (raw_step.get("notes") or "").strip() or None,
+                "failures": normalized_failures,
+            }
+        )
+
+    try:
+        # Remove existing nested steps to keep a single authoritative set
+        existing_steps = EvaluationProcessStep.query.filter_by(
+            evaluation_id=evaluation.id
+        ).all()
+        for step in existing_steps:
+            db.session.delete(step)
+
+        db.session.flush()
+
+        for step_data in normalized_steps:
+            step_record = EvaluationProcessStep(
+                evaluation_id=evaluation.id,
+                lot_number=lot_number,
+                quantity=quantity,
+                order_index=step_data["order_index"],
+                step_code=step_data["step_code"],
+                step_label=step_data["step_label"],
+                eval_code=step_data["eval_code"],
+                total_units=step_data["total_units"],
+                pass_units=step_data["pass_units"],
+                fail_units=step_data["fail_units"],
+                notes=step_data["notes"],
+            )
+            db.session.add(step_record)
+            db.session.flush()
+
+            for failure in step_data["failures"]:
+                fail_code_record = _ensure_fail_code_record(
+                    failure["fail_code_text"],
+                    failure.get("fail_code_id"),
+                    failure.get("fail_code_name_snapshot"),
+                    warnings,
+                )
+
+                failure_record = EvaluationStepFailure(
+                    step_id=step_record.id,
+                    sequence=failure["sequence"],
+                    serial_number=failure["serial_number"],
+                    fail_code_id=fail_code_record.id if fail_code_record else None,
+                    fail_code_text=failure["fail_code_text"],
+                    fail_code_name_snapshot=failure["fail_code_name_snapshot"],
+                    analysis_result=failure["analysis_result"],
+                )
+                db.session.add(failure_record)
+
+        raw_record = EvaluationProcessRaw(
+            evaluation_id=evaluation.id,
+            payload=payload,
+            source="rc0",
+        )
+        db.session.add(raw_record)
+        log = OperationLog(
+            operation_type=OperationType.UPDATE.value,
+            target_type="evaluation_nested_process",
+            target_id=evaluation.id,
+            target_description=f"Nested processes updated for {evaluation.evaluation_number}",
+            operation_description="Nested process payload saved",
+            new_data=payload,
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string,
+            request_method=request.method,
+            request_path=request.path,
+            status_code=200,
+            success=True,
+        )
+        db.session.add(log)
+
+        db.session.commit()
+
+        return jsonify({"success": True, "data": {"warnings": warnings}})
+    except Exception as exc:  # noqa: BLE001
+        db.session.rollback()
+        current_app.logger.error(
+            "Failed to save nested processes for evaluation %s: %s",
+            evaluation_id,
+            exc,
+        )
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "message": "Failed to save nested processes",
+                    "error": str(exc),
+                }
+            ),
+            500,
+        )
 
 
 @evaluation_bp.route("/<int:evaluation_id>/processes", methods=["POST"])

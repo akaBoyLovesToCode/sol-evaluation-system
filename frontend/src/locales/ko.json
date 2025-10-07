@@ -119,6 +119,7 @@
     "evaluationDescription": "평가 설명",
     "pgmVersion": "PGM 버전",
     "testTime": "테스트 시간",
+    "manageNestedProcesses": "중첩 공정 편집",
     "product": "제품",
     "evaluator": "평가자",
     "endDate": "종료 날짜",

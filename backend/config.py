@@ -125,6 +125,7 @@ class Config:
     BACKUP_RETENTION_DAYS = 30
 
 
+
 class DevelopmentConfig(Config):
     """Development configuration"""
 

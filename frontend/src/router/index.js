@@ -27,6 +27,17 @@ const routes = [
     component: () => import('../views/NewEvaluation.vue'),
     props: true,
   },
+  {
+    path: '/evaluations/:id/processes/edit',
+    name: 'NestedProcessEditor',
+    component: () => import('../views/ProcessPrototype.vue'),
+    props: true,
+  },
+  {
+    path: '/prototypes/process-builder',
+    name: 'ProcessPrototype',
+    component: () => import('../views/ProcessPrototype.vue'),
+  },
 ]
 
 const router = createRouter({

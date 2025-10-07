@@ -120,6 +120,18 @@ class Evaluation(db.Model):
         lazy="dynamic",
         cascade="all, delete-orphan",
     )
+    nested_process_steps = db.relationship(
+        "EvaluationProcessStep",
+        backref="evaluation",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+    process_raw_records = db.relationship(
+        "EvaluationProcessRaw",
+        backref="evaluation",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
     operation_logs = db.relationship(
         "OperationLog",
         primaryjoin="and_(OperationLog.target_type=='evaluation', "
@@ -470,3 +482,108 @@ class EvaluationProcess(db.Model):
         return (
             f"<EvaluationProcess {self.eval_code} for Evaluation {self.evaluation_id}>"
         )
+
+
+class EvaluationProcessRaw(db.Model):
+    """Stores full JSON submissions from the nested process editor."""
+
+    __tablename__ = "evaluation_processes_raw"
+
+    id = db.Column(db.Integer, primary_key=True)
+    evaluation_id = db.Column(
+        db.Integer, db.ForeignKey("evaluations.id"), nullable=False, index=True
+    )
+    payload = db.Column(db.JSON, nullable=False)
+    source = db.Column(db.String(32), nullable=False, default="rc0")
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    def __repr__(self) -> str:
+        return f"<EvaluationProcessRaw eval={self.evaluation_id} source={self.source}>"
+
+
+class EvaluationProcessStep(db.Model):
+    """Normalized nested process step information."""
+
+    __tablename__ = "evaluation_process_steps"
+
+    id = db.Column(db.Integer, primary_key=True)
+    evaluation_id = db.Column(
+        db.Integer, db.ForeignKey("evaluations.id"), nullable=False, index=True
+    )
+    lot_number = db.Column(db.String(100), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=0)
+    order_index = db.Column(db.Integer, nullable=False, default=1)
+    step_code = db.Column(db.String(32), nullable=False)
+    step_label = db.Column(db.String(255))
+    eval_code = db.Column(db.String(64), nullable=False)
+    total_units = db.Column(db.Integer, nullable=False, default=0)
+    pass_units = db.Column(db.Integer, nullable=False, default=0)
+    fail_units = db.Column(db.Integer, nullable=False, default=0)
+    notes = db.Column(db.Text)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    failures = db.relationship(
+        "EvaluationStepFailure",
+        backref="step",
+        lazy="joined",
+        cascade="all, delete-orphan",
+    )
+
+    def __repr__(self) -> str:
+        return f"<EvaluationProcessStep eval={self.evaluation_id} code={self.step_code} order={self.order_index}>"
+
+
+class EvaluationStepFailure(db.Model):
+    """Failure details captured under each nested process step."""
+
+    __tablename__ = "evaluation_step_failures"
+
+    id = db.Column(db.Integer, primary_key=True)
+    step_id = db.Column(
+        db.Integer, db.ForeignKey("evaluation_process_steps.id"), nullable=False
+    )
+    sequence = db.Column(db.Integer, nullable=False, default=1)
+    serial_number = db.Column(db.String(100))
+
+    fail_code_id = db.Column(db.Integer, db.ForeignKey("fail_codes.id"))
+    fail_code_text = db.Column(db.String(32), nullable=False)
+    fail_code_name_snapshot = db.Column(db.String(255))
+    analysis_result = db.Column(db.Text)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    def __repr__(self) -> str:
+        return f"<EvaluationStepFailure step={self.step_id} code={self.fail_code_text} seq={self.sequence}>"
+
+
+class FailCode(db.Model):
+    """Dictionary of known fail codes for evaluation analysis."""
+
+    __tablename__ = "fail_codes"
+
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(32), nullable=False, unique=True, index=True)
+    short_name = db.Column(db.String(255))
+    description = db.Column(db.Text)
+    is_provisional = db.Column(db.Boolean, nullable=False, default=False)
+    source = db.Column(db.String(64))
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    def __repr__(self) -> str:
+        status = "provisional" if self.is_provisional else "official"
+        return f"<FailCode {self.code} ({status})>"
