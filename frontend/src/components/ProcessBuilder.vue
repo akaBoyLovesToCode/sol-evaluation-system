@@ -342,11 +342,11 @@
       </el-alert>
     </div>
 
-    <el-card v-if="showNormalizedPanel" class="form-section">
+    <el-card v-if="showDebug" class="form-section">
       <template #header>
         <div class="payload-header">
-          <span>Normalized Payload</span>
-          <el-button v-if="showCopyButton" size="small" :icon="DocumentCopy" @click="copyPayload"
+          <span>Debug Payload</span>
+          <el-button size="small" :icon="DocumentCopy" @click="copyPayload"
             >Copy JSON</el-button
           >
         </div>
@@ -413,14 +413,6 @@ const props = defineProps({
   readonly: {
     type: Boolean,
     default: false,
-  },
-  showCopyButton: {
-    type: Boolean,
-    default: true,
-  },
-  showNormalizedPanel: {
-    type: Boolean,
-    default: true,
   },
   showSaveButton: {
     type: Boolean,
@@ -1361,6 +1353,19 @@ function markPristine(snapshot) {
 const emitSave = () => {
   emit('save', normalizedPayload.value)
 }
+
+const showDebug = computed(() => {
+  if (import.meta.env.VITE_BUILDER_DEBUG === '1') return true
+  if (import.meta.env.DEV) return true
+  if (typeof window !== 'undefined') {
+    const search = new URLSearchParams(window.location.search)
+    const debugParam = search.get('debug') || search.get('builderDebug')
+    if (debugParam && ['1', 'true', 'yes'].includes(debugParam.toLowerCase())) {
+      return true
+    }
+  }
+  return false
+})
 
 defineExpose({
   getPayload: () => normalizedPayload.value,

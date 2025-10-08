@@ -31,8 +31,6 @@
       :initial-payload="builderPayload"
       :server-warnings="builderWarnings"
       :show-save-button="true"
-      :show-copy-button="true"
-      :show-normalized-panel="true"
       @save="handleSave"
       @dirty-change="handleDirtyChange"
     />
