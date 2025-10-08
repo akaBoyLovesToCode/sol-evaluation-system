@@ -126,6 +126,12 @@ class Evaluation(db.Model):
         lazy="dynamic",
         cascade="all, delete-orphan",
     )
+    nested_process_lots = db.relationship(
+        "EvaluationProcessLot",
+        backref="evaluation",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
     process_raw_records = db.relationship(
         "EvaluationProcessRaw",
         backref="evaluation",
@@ -505,6 +511,34 @@ class EvaluationProcessRaw(db.Model):
         return f"<EvaluationProcessRaw eval={self.evaluation_id} source={self.source}>"
 
 
+class EvaluationProcessLot(db.Model):
+    """Lot definitions associated with a nested evaluation process."""
+
+    __tablename__ = "evaluation_process_lots"
+
+    id = db.Column(db.Integer, primary_key=True)
+    evaluation_id = db.Column(
+        db.Integer, db.ForeignKey("evaluations.id"), nullable=False, index=True
+    )
+    lot_number = db.Column(db.String(100), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=0)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    lot_assignments = db.relationship(
+        "EvaluationStepLot",
+        backref="lot",
+        lazy="select",
+        cascade="all, delete-orphan",
+    )
+
+    def __repr__(self) -> str:
+        return f"<EvaluationProcessLot eval={self.evaluation_id} lot={self.lot_number}>"
+
+
 class EvaluationProcessStep(db.Model):
     """Normalized nested process step information."""
 
@@ -519,10 +553,12 @@ class EvaluationProcessStep(db.Model):
     order_index = db.Column(db.Integer, nullable=False, default=1)
     step_code = db.Column(db.String(32), nullable=False)
     step_label = db.Column(db.String(255))
-    eval_code = db.Column(db.String(64), nullable=False)
-    total_units = db.Column(db.Integer, nullable=False, default=0)
-    pass_units = db.Column(db.Integer, nullable=False, default=0)
-    fail_units = db.Column(db.Integer, nullable=False, default=0)
+    eval_code = db.Column(db.String(64))
+    results_applicable = db.Column(db.Boolean, nullable=False, default=True)
+    total_units = db.Column(db.Integer)
+    total_units_manual = db.Column(db.Boolean, nullable=False, default=False)
+    pass_units = db.Column(db.Integer)
+    fail_units = db.Column(db.Integer)
     notes = db.Column(db.Text)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -536,9 +572,47 @@ class EvaluationProcessStep(db.Model):
         lazy="joined",
         cascade="all, delete-orphan",
     )
+    lot_assignments = db.relationship(
+        "EvaluationStepLot",
+        backref="step",
+        lazy="joined",
+        cascade="all, delete-orphan",
+    )
+    lots = db.relationship(
+        "EvaluationProcessLot",
+        secondary="evaluation_step_lots",
+        viewonly=True,
+        lazy="joined",
+    )
 
     def __repr__(self) -> str:
         return f"<EvaluationProcessStep eval={self.evaluation_id} code={self.step_code} order={self.order_index}>"
+
+
+class EvaluationStepLot(db.Model):
+    """Association table mapping steps to the lots they reference."""
+
+    __tablename__ = "evaluation_step_lots"
+
+    step_id = db.Column(
+        db.Integer,
+        db.ForeignKey("evaluation_process_steps.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    lot_id = db.Column(
+        db.Integer,
+        db.ForeignKey("evaluation_process_lots.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    quantity_override = db.Column(db.Integer)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    def __repr__(self) -> str:
+        return f"<EvaluationStepLot step={self.step_id} lot={self.lot_id}>"
 
 
 class EvaluationStepFailure(db.Model):

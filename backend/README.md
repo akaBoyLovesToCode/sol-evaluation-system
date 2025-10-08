@@ -10,8 +10,10 @@ Flask + SQLAlchemy + MySQL backend for the Evaluation Manager. This simplified v
 ## Key Changes
 - No authentication or roles (JWT removed).
 - No users/messages/notifications/workflow/dashboard modules.
-- Chargers are free‑text fields: `scs_charger_name`, `head_office_charger_name`.
-- Operation logs record IP/user‑agent and request metadata (method, path, query, status).
+- Chargers are free-text fields: `scs_charger_name`, `head_office_charger_name`.
+- Operation logs record IP/user-agent and request metadata (method, path, query, status).
+- `/api/evaluations/:id/processes/nested` is always enabled and now persists multi-lot nested
+  processes with optional totals per step.
 
 ## Requirements
 - Python 3.13+
@@ -80,11 +82,21 @@ Notes
 - evaluation_processes
   - id, evaluation_id, eval_code, lot_number, quantity, process_description,
     manufacturing_test_results, defect_analysis_results, aql_result, status,
-    created_at, updated_at
+    created_at, updated_at (legacy free-form records; still readable)
 - evaluation_processes_raw
   - id, evaluation_id, payload (full JSON), source, created_at, updated_at
-- evaluation_process_steps / evaluation_step_failures
-  - normalized nested-step rows with lot/quantity/order indices and failure drill-down
+- evaluation_process_lots
+  - id, evaluation_id, lot_number, quantity, created_at, updated_at
+- evaluation_process_steps
+  - id, evaluation_id, lot_number (legacy aggregate label), quantity (legacy sum),
+    order_index, step_code, step_label, eval_code (nullable), results_applicable,
+    total_units (nullable), total_units_manual, pass_units (nullable),
+    fail_units (nullable), notes, created_at, updated_at
+- evaluation_step_lots
+  - step_id, lot_id, quantity_override (reserved), created_at, updated_at
+- evaluation_step_failures
+  - id, step_id, sequence, serial_number, fail_code_id, fail_code_text,
+    fail_code_name_snapshot, analysis_result, created_at, updated_at
 - fail_codes
   - id, code (unique), short_name, description, created_at, updated_at
 - operation_logs
@@ -119,8 +131,21 @@ backend/
 ```
 
 ## Migrations
-- Alembic migration `ee9a7b3f3b9a` drops user FKs/columns and adds name fields + request metadata to logs.
-- Apply with `flask db upgrade`.
+- `ee9a7b3f3b9a`: drops user FKs/columns and adds name fields + request metadata to logs.
+- `e8a1d6b1f2c3`: introduces the original nested process tables (raw payload + step/failure rows).
+- `5f8c7d9e3b10`: adds multi-lot support (`evaluation_process_lots`, `evaluation_step_lots`) and
+  relaxes step columns (`eval_code` optional, totals nullable, `results_applicable`,
+  `total_units_manual`).
+
+Run migrations via uv to ensure the managed virtualenv is used:
+
+```bash
+cd backend
+uv run flask db upgrade
+# to verify reversibility during development
+uv run flask db downgrade e8a1d6b1f2c3
+uv run flask db upgrade
+```
 
 ## Testing
 - Auth/user tests removed. Focus on evaluation, processes, and logging.

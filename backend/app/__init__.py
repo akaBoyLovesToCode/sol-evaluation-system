@@ -169,7 +169,9 @@ def create_app(config_name: str | None = None) -> Flask:
     if not frontend_dist:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         bundled_dist = os.path.abspath(os.path.join(base_dir, "..", "frontend_dist"))
-        repo_dist = os.path.abspath(os.path.join(base_dir, "..", "..", "frontend", "dist"))
+        repo_dist = os.path.abspath(
+            os.path.join(base_dir, "..", "..", "frontend", "dist")
+        )
         if os.path.isdir(bundled_dist):
             frontend_dist = bundled_dist
         elif os.path.isdir(repo_dist):

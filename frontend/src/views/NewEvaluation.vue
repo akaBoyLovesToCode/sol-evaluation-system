@@ -186,18 +186,40 @@
             </div>
           </template>
 
-          <el-empty v-if="!builderHasStepsSummary" description="No nested processes configured yet" />
+          <div v-if="builderSummaryLots.length" class="nested-lots-summary">
+            <h4>Lots</h4>
+            <ul>
+              <li v-for="lot in builderSummaryLots" :key="lot.client_id">
+                {{ lot.label }}
+              </li>
+            </ul>
+          </div>
+
+          <el-empty
+            v-if="!builderHasStepsSummary"
+            description="No nested processes configured yet"
+          />
 
           <div v-else class="nested-summary">
-            <div v-for="step in builderSummarySteps" :key="step.order_index" class="nested-summary-item">
+            <div
+              v-for="step in builderSummarySteps"
+              :key="step.order_index"
+              class="nested-summary-item"
+            >
               <div class="nested-step-title">
                 <strong>{{ step.order_index }}. {{ step.step_code }}</strong>
                 <span v-if="step.step_label"> - {{ step.step_label }}</span>
               </div>
-              <div class="nested-step-meta">
-                Eval: {{ step.eval_code }} · Total {{ step.total_units }} (Pass {{ step.pass_units }}, Fail {{ step.fail_units }})
+              <div v-if="step.results_applicable !== false" class="nested-step-meta">
+                Eval: {{ step.eval_code || '—' }} · Total {{ formatUnit(step.total_units) }} (Pass
+                {{ formatUnit(step.pass_units) }}, Fail {{ formatUnit(step.fail_units) }})
               </div>
-              <div v-if="Array.isArray(step.failures) && step.failures.length" class="nested-failure-count">
+              <div v-else class="nested-step-meta">No test results recorded</div>
+              <div class="nested-step-lots">Applies to: {{ describeStepLots(step.lot_refs) }}</div>
+              <div
+                v-if="Array.isArray(step.failures) && step.failures.length"
+                class="nested-failure-count"
+              >
                 Failures: {{ step.failures.length }}
               </div>
             </div>
@@ -211,7 +233,9 @@
             @close="clearNestedWarnings"
           >
             <ul class="alert-list">
-              <li v-for="(warning, index) in nestedSaveWarnings" :key="`nested-warning-${index}`">{{ warning }}</li>
+              <li v-for="(warning, index) in nestedSaveWarnings" :key="`nested-warning-${index}`">
+                {{ warning }}
+              </li>
             </ul>
           </el-alert>
           <el-alert
@@ -241,7 +265,9 @@
           <template #footer>
             <div class="drawer-footer">
               <el-button @click="handleDrawerCancel">{{ $t('common.cancel') }}</el-button>
-              <el-button type="primary" @click="commitBuilderChanges">{{ $t('common.save') }}</el-button>
+              <el-button type="primary" @click="commitBuilderChanges">{{
+                $t('common.save')
+              }}</el-button>
             </div>
           </template>
         </el-drawer>
@@ -299,6 +325,7 @@ import {
   createEmptyBuilderPayload,
   evaluationToBuilderPayload,
   hasBuilderSteps,
+  normalizeBuilderPayload,
 } from '../utils/processMapper'
 
 const router = useRouter()
@@ -386,7 +413,7 @@ const form = reactive({
   head_office_charger_name: '',
 })
 
-const builderPayload = ref(createEmptyBuilderPayload())
+const builderPayload = ref(normalizeBuilderPayload(createEmptyBuilderPayload()))
 const processDrawerVisible = ref(false)
 const processBuilderRef = ref(null)
 const processBuilderWarnings = ref([])
@@ -394,17 +421,100 @@ const processBuilderDirty = ref(false)
 const nestedSaveWarnings = ref([])
 const nestedSaveError = ref(null)
 
+const builderSummaryLots = computed(() => {
+  const lots = Array.isArray(builderPayload.value.lots) ? builderPayload.value.lots : []
+  return lots
+    .filter((lot) => (lot.lot_number || '').trim())
+    .map((lot, index) => {
+      const quantity = Number(lot.quantity) || 0
+      const lotNumber = lot.lot_number || `Lot ${index + 1}`
+      return {
+        client_id: lot.client_id || lot.temp_id || `lot-${index + 1}`,
+        lot_number: lotNumber,
+        quantity,
+        label: quantity ? `${lotNumber} (${quantity})` : lotNumber,
+      }
+    })
+})
+
+const builderLotLabelMap = computed(() => {
+  const map = new Map()
+  builderSummaryLots.value.forEach((lot) => {
+    map.set(String(lot.client_id), lot.label)
+  })
+  return map
+})
+
 const builderSummarySteps = computed(() =>
   Array.isArray(builderPayload.value.steps) ? builderPayload.value.steps : [],
 )
 const builderHasStepsSummary = computed(() => hasBuilderSteps(builderPayload.value))
+
+const describeStepLots = (lotRefs) => {
+  if (!Array.isArray(lotRefs) || !lotRefs.length) {
+    return 'All lots'
+  }
+  const labels = lotRefs
+    .map((ref) => builderLotLabelMap.value.get(String(ref)) || builderLotLabelMap.value.get(ref))
+    .filter(Boolean)
+  if (!labels.length) {
+    return 'All lots'
+  }
+  return labels.join(', ')
+}
+
+const formatUnit = (value) =>
+  value === null || value === undefined || Number.isNaN(value) ? '—' : value
+
+async function refreshNestedPayload(targetId, evaluationContext = null, options = {}) {
+  const { preserveWarnings = false } = options
+  if (!targetId) {
+    const fallback = evaluationContext
+      ? evaluationToBuilderPayload(evaluationContext)
+      : createEmptyBuilderPayload()
+    builderPayload.value = normalizeBuilderPayload(fallback)
+    if (!preserveWarnings) {
+      nestedSaveWarnings.value = []
+    }
+    processBuilderWarnings.value = []
+    return
+  }
+
+  try {
+    const response = await api.get(`/evaluations/${targetId}/processes/nested`)
+    const payload = response.data?.data?.payload
+    const warnings = response.data?.data?.warnings || []
+
+    if (payload) {
+      builderPayload.value = normalizeBuilderPayload(payload)
+    } else if (evaluationContext) {
+      builderPayload.value = normalizeBuilderPayload(evaluationToBuilderPayload(evaluationContext))
+    }
+
+    if (!preserveWarnings) {
+      nestedSaveWarnings.value = warnings
+    }
+    processBuilderWarnings.value = warnings
+  } catch (error) {
+    console.error('Failed to load nested process payload', error)
+    if (evaluationContext) {
+      builderPayload.value = normalizeBuilderPayload(evaluationToBuilderPayload(evaluationContext))
+    }
+    if (!preserveWarnings) {
+      nestedSaveWarnings.value = []
+    }
+    processBuilderWarnings.value = []
+  }
+}
 
 function handleBuilderDirtyChange(value) {
   processBuilderDirty.value = value
 }
 
 async function openProcessDrawer() {
-  processBuilderWarnings.value = []
+  processBuilderWarnings.value = Array.isArray(nestedSaveWarnings.value)
+    ? [...nestedSaveWarnings.value]
+    : []
   processDrawerVisible.value = true
   await nextTick()
   processBuilderRef.value?.setPayload(builderPayload.value, { markClean: true })
@@ -451,6 +561,7 @@ function commitBuilderChanges() {
 
 function clearNestedWarnings() {
   nestedSaveWarnings.value = []
+  processBuilderWarnings.value = []
 }
 
 function clearNestedError() {
@@ -469,8 +580,10 @@ async function saveNestedProcesses(targetId) {
     const response = await api.post(`/evaluations/${targetId}/processes/nested`, payload)
     nestedSaveWarnings.value = response.data?.data?.warnings || []
     nestedSaveError.value = null
+    await refreshNestedPayload(targetId, null, { preserveWarnings: true })
   } catch (error) {
-    nestedSaveError.value = 'Failed to save nested processes. The raw payload was archived on the server.'
+    nestedSaveError.value =
+      'Failed to save nested processes. The raw payload was archived on the server.'
     console.error('Failed to save nested processes', error)
   }
 }
@@ -738,10 +851,11 @@ const fetchEvaluation = async () => {
       head_office_charger_name: evaluation.head_office_charger_name || '',
     })
     const payload = evaluationToBuilderPayload(evaluation)
-    builderPayload.value = payload
-    processBuilderWarnings.value = []
+    builderPayload.value = normalizeBuilderPayload(payload)
     nestedSaveWarnings.value = []
     nestedSaveError.value = null
+    processBuilderWarnings.value = []
+    await refreshNestedPayload(evaluation.id, evaluation)
   } catch (error) {
     ElMessage.error(t('ui.fetchDataFailed'))
     console.error('Failed to fetch evaluation:', error)
@@ -921,11 +1035,28 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
   gap: 16px;
 }
 
-
 .nested-summary {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.nested-lots-summary {
+  margin-bottom: 12px;
+}
+
+.nested-lots-summary h4 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.nested-lots-summary ul {
+  margin: 0;
+  padding-left: 16px;
+  color: #606266;
+  font-size: 13px;
 }
 
 .nested-summary-item {
@@ -947,6 +1078,12 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
   margin-top: 4px;
   color: #606266;
   font-size: 13px;
+}
+
+.nested-step-lots {
+  margin-top: 4px;
+  color: #909399;
+  font-size: 12px;
 }
 
 .nested-failure-count {
@@ -1034,6 +1171,5 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
   .form-actions .el-button {
     width: 200px;
   }
-
 }
 </style>

@@ -28,10 +28,14 @@ def upgrade():
             sa.Column("id", sa.Integer(), nullable=False),
             sa.Column("evaluation_id", sa.Integer(), nullable=False),
             sa.Column("payload", sa.JSON(), nullable=False),
-            sa.Column("source", sa.String(length=32), nullable=False, server_default="rc0"),
+            sa.Column(
+                "source", sa.String(length=32), nullable=False, server_default="rc0"
+            ),
             sa.Column("created_at", sa.DateTime(), nullable=False),
             sa.Column("updated_at", sa.DateTime(), nullable=False),
-            sa.ForeignKeyConstraint(["evaluation_id"], ["evaluations.id"], ondelete="CASCADE"),
+            sa.ForeignKeyConstraint(
+                ["evaluation_id"], ["evaluations.id"], ondelete="CASCADE"
+            ),
             sa.PrimaryKeyConstraint("id"),
         )
         op.create_index(
@@ -84,7 +88,9 @@ def upgrade():
             sa.Column("notes", sa.Text(), nullable=True),
             sa.Column("created_at", sa.DateTime(), nullable=False),
             sa.Column("updated_at", sa.DateTime(), nullable=False),
-            sa.ForeignKeyConstraint(["evaluation_id"], ["evaluations.id"], ondelete="CASCADE"),
+            sa.ForeignKeyConstraint(
+                ["evaluation_id"], ["evaluations.id"], ondelete="CASCADE"
+            ),
             sa.PrimaryKeyConstraint("id"),
         )
         op.create_index(
@@ -119,8 +125,12 @@ def upgrade():
             sa.Column("analysis_result", sa.Text(), nullable=True),
             sa.Column("created_at", sa.DateTime(), nullable=False),
             sa.Column("updated_at", sa.DateTime(), nullable=False),
-            sa.ForeignKeyConstraint(["fail_code_id"], ["fail_codes.id"], ondelete="SET NULL"),
-            sa.ForeignKeyConstraint(["step_id"], ["evaluation_process_steps.id"], ondelete="CASCADE"),
+            sa.ForeignKeyConstraint(
+                ["fail_code_id"], ["fail_codes.id"], ondelete="SET NULL"
+            ),
+            sa.ForeignKeyConstraint(
+                ["step_id"], ["evaluation_process_steps.id"], ondelete="CASCADE"
+            ),
             sa.PrimaryKeyConstraint("id"),
         )
         op.create_index(

@@ -11,12 +11,7 @@
         <p class="page-description">{{ evaluation.product_name }}</p>
       </div>
       <div class="header-right">
-        <el-button
-          type="primary"
-          plain
-          :icon="Connection"
-          @click="goToNestedEditor"
-        >
+        <el-button type="primary" plain :icon="Connection" @click="goToNestedEditor">
           {{ $t('evaluation.manageNestedProcesses') }}
         </el-button>
         <el-button v-if="canEdit" type="primary" :icon="Edit" @click="handleEdit">
@@ -255,15 +250,19 @@
                   {{ $t('evaluation.noRelatedFiles') }}
                 </div>
               </div>
-            <el-card v-if="legacyProcessNotes.length" class="legacy-card" shadow="never">
-              <template #header>
-                <span>Legacy (view-only)</span>
-              </template>
-              <div v-for="(note, index) in legacyProcessNotes" :key="`legacy-note-${index}`" class="legacy-note">
-                <h4 class="legacy-title">{{ note.title }}</h4>
-                <pre class="legacy-content">{{ note.content }}</pre>
-              </div>
-            </el-card>
+              <el-card v-if="legacyProcessNotes.length" class="legacy-card" shadow="never">
+                <template #header>
+                  <span>Legacy (view-only)</span>
+                </template>
+                <div
+                  v-for="(note, index) in legacyProcessNotes"
+                  :key="`legacy-note-${index}`"
+                  class="legacy-note"
+                >
+                  <h4 class="legacy-title">{{ note.title }}</h4>
+                  <pre class="legacy-content">{{ note.content }}</pre>
+                </div>
+              </el-card>
             </el-card>
           </el-tab-pane>
 
@@ -333,18 +332,43 @@
                 </div>
               </template>
 
-              <el-empty v-if="!builderHasStepsSummary" description="No nested processes configured yet" />
+              <div v-if="builderSummaryLots.length" class="nested-lots-summary">
+                <h4>Lots</h4>
+                <ul>
+                  <li v-for="lot in builderSummaryLots" :key="lot.client_id">
+                    {{ lot.label }}
+                  </li>
+                </ul>
+              </div>
+
+              <el-empty
+                v-if="!builderHasStepsSummary"
+                description="No nested processes configured yet"
+              />
 
               <div v-else class="nested-summary">
-                <div v-for="step in builderSummarySteps" :key="step.order_index" class="nested-summary-item">
+                <div
+                  v-for="step in builderSummarySteps"
+                  :key="step.order_index"
+                  class="nested-summary-item"
+                >
                   <div class="nested-step-title">
                     <strong>{{ step.order_index }}. {{ step.step_code }}</strong>
                     <span v-if="step.step_label"> - {{ step.step_label }}</span>
                   </div>
-                  <div class="nested-step-meta">
-                    Eval: {{ step.eval_code }} · Total {{ step.total_units }} (Pass {{ step.pass_units }}, Fail {{ step.fail_units }})
+                  <div v-if="step.results_applicable !== false" class="nested-step-meta">
+                    Eval: {{ step.eval_code || '—' }} · Total
+                    {{ formatUnit(step.total_units) }} (Pass {{ formatUnit(step.pass_units) }}, Fail
+                    {{ formatUnit(step.fail_units) }})
                   </div>
-                  <div v-if="Array.isArray(step.failures) && step.failures.length" class="nested-failure-count">
+                  <div v-else class="nested-step-meta">No test results recorded</div>
+                  <div class="nested-step-lots">
+                    Applies to: {{ describeStepLots(step.lot_refs) }}
+                  </div>
+                  <div
+                    v-if="Array.isArray(step.failures) && step.failures.length"
+                    class="nested-failure-count"
+                  >
                     Failures: {{ step.failures.length }}
                   </div>
                 </div>
@@ -358,7 +382,12 @@
                 @close="clearNestedWarnings"
               >
                 <ul class="alert-list">
-                  <li v-for="(warning, index) in nestedSaveWarnings" :key="`nested-warning-${index}`">{{ warning }}</li>
+                  <li
+                    v-for="(warning, index) in nestedSaveWarnings"
+                    :key="`nested-warning-${index}`"
+                  >
+                    {{ warning }}
+                  </li>
                 </ul>
               </el-alert>
               <el-alert
@@ -672,18 +701,42 @@
               </div>
             </template>
 
-            <el-empty v-if="!builderHasStepsSummary" description="No nested processes configured yet" />
+            <div v-if="builderSummaryLots.length" class="nested-lots-summary">
+              <h4>Lots</h4>
+              <ul>
+                <li v-for="lot in builderSummaryLots" :key="lot.client_id">
+                  {{ lot.label }}
+                </li>
+              </ul>
+            </div>
+
+            <el-empty
+              v-if="!builderHasStepsSummary"
+              description="No nested processes configured yet"
+            />
 
             <div v-else class="nested-summary">
-              <div v-for="step in builderSummarySteps" :key="step.order_index" class="nested-summary-item">
+              <div
+                v-for="step in builderSummarySteps"
+                :key="step.order_index"
+                class="nested-summary-item"
+              >
                 <div class="nested-step-title">
                   <strong>{{ step.order_index }}. {{ step.step_code }}</strong>
                   <span v-if="step.step_label"> - {{ step.step_label }}</span>
                 </div>
-                <div class="nested-step-meta">
-                  Eval: {{ step.eval_code }} · Total {{ step.total_units }} (Pass {{ step.pass_units }}, Fail {{ step.fail_units }})
+                <div v-if="step.results_applicable !== false" class="nested-step-meta">
+                  Eval: {{ step.eval_code || '—' }} · Total {{ formatUnit(step.total_units) }} (Pass
+                  {{ formatUnit(step.pass_units) }}, Fail {{ formatUnit(step.fail_units) }})
                 </div>
-                <div v-if="Array.isArray(step.failures) && step.failures.length" class="nested-failure-count">
+                <div v-else class="nested-step-meta">No test results recorded</div>
+                <div class="nested-step-lots">
+                  Applies to: {{ describeStepLots(step.lot_refs) }}
+                </div>
+                <div
+                  v-if="Array.isArray(step.failures) && step.failures.length"
+                  class="nested-failure-count"
+                >
                   Failures: {{ step.failures.length }}
                 </div>
               </div>
@@ -697,7 +750,9 @@
               @close="clearNestedWarnings"
             >
               <ul class="alert-list">
-                <li v-for="(warning, index) in nestedSaveWarnings" :key="`nested-warning-${index}`">{{ warning }}</li>
+                <li v-for="(warning, index) in nestedSaveWarnings" :key="`nested-warning-${index}`">
+                  {{ warning }}
+                </li>
               </ul>
             </el-alert>
             <el-alert
@@ -709,15 +764,19 @@
             >
               {{ nestedSaveError }}
             </el-alert>
-          <el-card v-if="legacyProcessNotes.length" class="legacy-card" shadow="never">
-            <template #header>
-              <span>Legacy (view-only)</span>
-            </template>
-            <div v-for="(note, index) in legacyProcessNotes" :key="`legacy-note-${index}`" class="legacy-note">
-              <h4 class="legacy-title">{{ note.title }}</h4>
-              <pre class="legacy-content">{{ note.content }}</pre>
-            </div>
-          </el-card>
+            <el-card v-if="legacyProcessNotes.length" class="legacy-card" shadow="never">
+              <template #header>
+                <span>Legacy (view-only)</span>
+              </template>
+              <div
+                v-for="(note, index) in legacyProcessNotes"
+                :key="`legacy-note-${index}`"
+                class="legacy-note"
+              >
+                <h4 class="legacy-title">{{ note.title }}</h4>
+                <pre class="legacy-content">{{ note.content }}</pre>
+              </div>
+            </el-card>
           </el-card>
         </el-col>
 
@@ -830,26 +889,28 @@
           </el-card>
         </el-col>
       </el-row>
-    <el-drawer
-      v-model="processDrawerVisible"
-      size="60%"
-      :before-close="handleProcessDrawerBeforeClose"
-      :title="$t('evaluation.manageNestedProcesses')"
-    >
-      <ProcessBuilder
-        ref="processBuilderRef"
-        :initial-payload="builderPayload"
-        :server-warnings="processBuilderWarnings"
-        :show-save-button="false"
-        @dirty-change="handleBuilderDirtyChange"
-      />
-      <template #footer>
-        <div class="drawer-footer">
-          <el-button @click="handleDrawerCancel">{{ $t('common.cancel') }}</el-button>
-          <el-button type="primary" @click="commitBuilderChanges">{{ $t('common.save') }}</el-button>
-        </div>
-      </template>
-    </el-drawer>
+      <el-drawer
+        v-model="processDrawerVisible"
+        size="60%"
+        :before-close="handleProcessDrawerBeforeClose"
+        :title="$t('evaluation.manageNestedProcesses')"
+      >
+        <ProcessBuilder
+          ref="processBuilderRef"
+          :initial-payload="builderPayload"
+          :server-warnings="processBuilderWarnings"
+          :show-save-button="false"
+          @dirty-change="handleBuilderDirtyChange"
+        />
+        <template #footer>
+          <div class="drawer-footer">
+            <el-button @click="handleDrawerCancel">{{ $t('common.cancel') }}</el-button>
+            <el-button type="primary" @click="commitBuilderChanges">{{
+              $t('common.save')
+            }}</el-button>
+          </div>
+        </template>
+      </el-drawer>
     </div>
   </div>
 </template>
@@ -896,6 +957,7 @@ import {
   evaluationToBuilderPayload,
   extractLegacyProcessNotes,
   hasBuilderSteps,
+  normalizeBuilderPayload,
 } from '../utils/processMapper'
 // Auth removed
 
@@ -926,17 +988,99 @@ const formatProcessSteps = (value) => {
   return steps.length > 0 ? steps.join(' / ') : '-'
 }
 const evaluation = ref(null)
-const builderPayload = ref(createEmptyBuilderPayload())
+const builderPayload = ref(normalizeBuilderPayload(createEmptyBuilderPayload()))
 const processDrawerVisible = ref(false)
 const processBuilderRef = ref(null)
 const processBuilderWarnings = ref([])
 const processBuilderDirty = ref(false)
 const nestedSaveWarnings = ref([])
 const nestedSaveError = ref(null)
+const builderSummaryLots = computed(() => {
+  const lots = Array.isArray(builderPayload.value.lots) ? builderPayload.value.lots : []
+  return lots
+    .filter((lot) => (lot.lot_number || '').trim())
+    .map((lot, index) => {
+      const quantity = Number(lot.quantity) || 0
+      const lotNumber = lot.lot_number || `Lot ${index + 1}`
+      return {
+        client_id: lot.client_id || lot.temp_id || `lot-${index + 1}`,
+        lot_number: lotNumber,
+        quantity,
+        label: quantity ? `${lotNumber} (${quantity})` : lotNumber,
+      }
+    })
+})
+
+const builderLotLabelMap = computed(() => {
+  const map = new Map()
+  builderSummaryLots.value.forEach((lot) => {
+    map.set(String(lot.client_id), lot.label)
+  })
+  return map
+})
+
 const builderSummarySteps = computed(() =>
   Array.isArray(builderPayload.value.steps) ? builderPayload.value.steps : [],
 )
 const builderHasStepsSummary = computed(() => hasBuilderSteps(builderPayload.value))
+
+const describeStepLots = (lotRefs) => {
+  if (!Array.isArray(lotRefs) || !lotRefs.length) {
+    return 'All lots'
+  }
+  const labels = lotRefs
+    .map((ref) => builderLotLabelMap.value.get(String(ref)) || builderLotLabelMap.value.get(ref))
+    .filter(Boolean)
+  if (!labels.length) {
+    return 'All lots'
+  }
+  return labels.join(', ')
+}
+
+const formatUnit = (value) =>
+  value === null || value === undefined || Number.isNaN(value) ? '—' : value
+
+async function refreshNestedPayload(targetId, evaluationContext = null, options = {}) {
+  const { preserveWarnings = false } = options
+  if (!targetId) {
+    const fallback = evaluationContext
+      ? evaluationToBuilderPayload(evaluationContext)
+      : createEmptyBuilderPayload()
+    builderPayload.value = normalizeBuilderPayload(fallback)
+    if (!preserveWarnings) {
+      nestedSaveWarnings.value = []
+    }
+    processBuilderWarnings.value = []
+    return
+  }
+
+  try {
+    const response = await api.get(`/evaluations/${targetId}/processes/nested`)
+    const payload = response.data?.data?.payload
+    const warnings = response.data?.data?.warnings || []
+
+    if (payload) {
+      builderPayload.value = normalizeBuilderPayload(payload)
+    } else if (evaluationContext) {
+      builderPayload.value = normalizeBuilderPayload(evaluationToBuilderPayload(evaluationContext))
+    }
+
+    if (!preserveWarnings) {
+      nestedSaveWarnings.value = warnings
+    }
+    processBuilderWarnings.value = warnings
+  } catch (error) {
+    console.error('Failed to load nested process payload', error)
+    if (evaluationContext) {
+      builderPayload.value = normalizeBuilderPayload(evaluationToBuilderPayload(evaluationContext))
+    }
+    if (!preserveWarnings) {
+      nestedSaveWarnings.value = []
+    }
+    processBuilderWarnings.value = []
+  }
+}
+
 const legacyProcessNotes = computed(() => extractLegacyProcessNotes(evaluation.value) || [])
 const editing = ref(false)
 const saving = ref(false)
@@ -946,7 +1090,9 @@ function handleBuilderDirtyChange(value) {
 }
 
 async function openProcessDrawer() {
-  processBuilderWarnings.value = []
+  processBuilderWarnings.value = Array.isArray(nestedSaveWarnings.value)
+    ? [...nestedSaveWarnings.value]
+    : []
   processDrawerVisible.value = true
   await nextTick()
   processBuilderRef.value?.setPayload(builderPayload.value, { markClean: true })
@@ -984,6 +1130,7 @@ function handleDrawerCancel() {
 
 function clearNestedWarnings() {
   nestedSaveWarnings.value = []
+  processBuilderWarnings.value = []
 }
 
 function clearNestedError() {
@@ -1138,15 +1285,20 @@ const filteredLogs = computed(() => {
   return logs
 })
 
-async function fetchEvaluation() {
+async function fetchEvaluation(options = {}) {
+  const { preserveWarnings = false } = options
   try {
     loading.value = true
     const id = props.evaluationId || route.params.id
     const response = await api.get(`/evaluations/${id}`)
     evaluation.value = response.data.data.evaluation
     if (evaluation.value) {
-      builderPayload.value = evaluationToBuilderPayload(evaluation.value)
+      builderPayload.value = normalizeBuilderPayload(evaluationToBuilderPayload(evaluation.value))
+      if (!preserveWarnings) {
+        nestedSaveWarnings.value = []
+      }
       processBuilderWarnings.value = []
+      await refreshNestedPayload(evaluation.value.id, evaluation.value, { preserveWarnings })
     }
     // Fetch combined logs (evaluation, status, processes)
     try {
@@ -1386,7 +1538,7 @@ async function saveNestedProcesses(targetId) {
     const response = await api.post(`/evaluations/${targetId}/processes/nested`, payload)
     nestedSaveWarnings.value = response.data?.data?.warnings || []
     nestedSaveError.value = null
-    await fetchEvaluation()
+    await fetchEvaluation({ preserveWarnings: true })
     if (nestedSaveWarnings.value.length) {
       ElMessage.warning('Nested processes saved with warnings. Review details below.')
     } else {
@@ -1693,6 +1845,24 @@ const activeTab = ref('details')
   gap: 12px;
 }
 
+.nested-lots-summary {
+  margin-bottom: 12px;
+}
+
+.nested-lots-summary h4 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.nested-lots-summary ul {
+  margin: 0;
+  padding-left: 16px;
+  color: #606266;
+  font-size: 13px;
+}
+
 .nested-summary-item {
   border: 1px solid #ebeef5;
   border-radius: 8px;
@@ -1712,6 +1882,12 @@ const activeTab = ref('details')
   margin-top: 4px;
   color: #606266;
   font-size: 13px;
+}
+
+.nested-step-lots {
+  margin-top: 4px;
+  color: #909399;
+  font-size: 12px;
 }
 
 .nested-failure-count {

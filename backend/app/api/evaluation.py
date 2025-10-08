@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from flask import Blueprint, Response, current_app, jsonify, request
 
@@ -12,10 +13,12 @@ from app.models import db
 from app.models.evaluation import (
     Evaluation,
     EvaluationProcess,
+    EvaluationProcessLot,
     EvaluationProcessRaw,
     EvaluationProcessStep,
     EvaluationStatus,
     EvaluationStepFailure,
+    EvaluationStepLot,
     FailCode,
 )
 from app.models.operation_log import OperationLog, OperationType
@@ -30,6 +33,53 @@ def _safe_int(value: object, default: int = 0) -> int:
         return int(value)
     except (TypeError, ValueError):
         return default
+
+
+def _split_legacy_lot_numbers(value: str) -> List[str]:
+    if not value:
+        return []
+    tokens: List[str] = []
+    for chunk in re.split(r"[\r\n,;]+", value):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        if " " in chunk:
+            for part in chunk.split():
+                part = part.strip()
+                if part:
+                    tokens.append(part)
+        else:
+            tokens.append(chunk)
+    return tokens
+
+
+def _dedupe_preserve_order(values: List[str]) -> List[str]:
+    seen = set()
+    result: List[str] = []
+    for value in values:
+        if value not in seen:
+            seen.add(value)
+            result.append(value)
+    return result
+
+
+STEP_CODE_CANONICAL = {
+    "M031": "M031",
+    "M033": "M033",
+    "M100": "M100",
+    "M111": "M111",
+    "M130": "M130",
+    "AQL": "AQL",
+    "BASIC": "Basic",
+}
+
+
+def _canonical_step_code(value: str) -> str:
+    candidate = (value or "").strip().upper()
+    canonical = STEP_CODE_CANONICAL.get(candidate)
+    if not canonical:
+        raise ValueError(f"Unsupported step code '{value}'")
+    return canonical
 
 
 def _ensure_fail_code_record(
@@ -70,6 +120,286 @@ def _ensure_fail_code_record(
             fail_code.source = "nested-ui"
 
     return fail_code
+
+
+def _normalize_nested_payload(
+    payload: Dict[str, Any],
+    warnings: List[str],
+) -> Dict[str, Any]:
+    lots_input = payload.get("lots")
+    legacy_lot_number_raw = str(
+        payload.get("legacy_lot_number") or payload.get("lot_number") or ""
+    ).strip()
+    legacy_quantity_raw = payload.get("legacy_quantity")
+    if legacy_quantity_raw is None:
+        legacy_quantity_raw = payload.get("quantity")
+
+    normalized_lots: List[Dict[str, Any]] = []
+    alias_map: Dict[str, Dict[str, Any]] = {}
+    primary_alias_map: Dict[str, Dict[str, Any]] = {}
+
+    if isinstance(lots_input, list) and lots_input:
+        for idx, raw_lot in enumerate(lots_input, start=1):
+            lot_number = str(raw_lot.get("lot_number") or "").strip()
+            if not lot_number:
+                raise ValueError(f"Lot {idx} must include lot_number")
+
+            quantity = _safe_int(raw_lot.get("quantity"), default=0)
+            alias = str(
+                raw_lot.get("temp_id")
+                or raw_lot.get("client_id")
+                or raw_lot.get("id")
+                or f"lot-{idx}"
+            )
+
+            entry = {
+                "lot_number": lot_number,
+                "quantity": quantity,
+                "alias": alias,
+                "id": raw_lot.get("id"),
+            }
+            normalized_lots.append(entry)
+            primary_alias_map[alias] = entry
+            alias_map[str(alias)] = entry
+            if raw_lot.get("id") is not None:
+                alias_map[str(raw_lot.get("id"))] = entry
+            if raw_lot.get("client_id") is not None:
+                alias_map[str(raw_lot.get("client_id"))] = entry
+    else:
+        tokens = _split_legacy_lot_numbers(legacy_lot_number_raw)
+        if not tokens:
+            raise ValueError("At least one lot is required")
+
+        distribution_total = _safe_int(legacy_quantity_raw, default=0)
+        base = distribution_total // len(tokens) if tokens else 0
+        remainder = distribution_total - base * len(tokens)
+
+        for idx, token in enumerate(tokens, start=1):
+            quantity = base
+            if remainder > 0:
+                quantity += 1
+                remainder -= 1
+            alias = f"legacy-{idx}"
+            entry = {
+                "lot_number": token,
+                "quantity": quantity,
+                "alias": alias,
+                "id": None,
+            }
+            normalized_lots.append(entry)
+            primary_alias_map[alias] = entry
+            alias_map[alias] = entry
+
+    if not normalized_lots:
+        raise ValueError("At least one lot is required")
+
+    steps_input = payload.get("steps")
+    if not isinstance(steps_input, list) or not steps_input:
+        raise ValueError("steps array is required")
+
+    all_aliases = [entry["alias"] for entry in normalized_lots]
+    normalized_steps: List[Dict[str, Any]] = []
+
+    for idx, raw_step in enumerate(steps_input, start=1):
+        canonical_code = _canonical_step_code(raw_step.get("step_code"))
+        step_label_value = (raw_step.get("step_label") or "").strip()
+        if not step_label_value:
+            raise ValueError(f"Step {idx} must include step_label")
+
+        eval_code_raw = (raw_step.get("eval_code") or "").strip()
+        eval_code = eval_code_raw.upper() if eval_code_raw else None
+
+        order_index = _safe_int(raw_step.get("order_index"), default=idx)
+        notes_value = (raw_step.get("notes") or "").strip() or None
+
+        results_applicable = raw_step.get("results_applicable")
+        if results_applicable is None:
+            results_applicable = canonical_code not in {"M033", "M100"}
+        else:
+            results_applicable = bool(results_applicable)
+
+        total_units_manual = bool(raw_step.get("total_units_manual", False))
+
+        lot_refs_raw = raw_step.get("lot_refs")
+        mapped_aliases: List[str] = []
+        if isinstance(lot_refs_raw, list) and lot_refs_raw:
+            for ref in lot_refs_raw:
+                entry = alias_map.get(str(ref))
+                if not entry:
+                    raise ValueError(f"Step {idx} references unknown lot '{ref}'")
+                mapped_aliases.append(entry["alias"])
+        else:
+            mapped_aliases = all_aliases.copy()
+
+        mapped_aliases = _dedupe_preserve_order(mapped_aliases)
+        if not mapped_aliases:
+            raise ValueError(f"Step {idx} must reference at least one lot")
+
+        lot_quantity_sum = sum(
+            primary_alias_map[alias]["quantity"]
+            for alias in mapped_aliases
+            if alias in primary_alias_map
+        )
+
+        failures_input = raw_step.get("failures") or []
+        if not isinstance(failures_input, list):
+            warnings.append(f"Step {idx} failures data ignored (expected list)")
+            failures_input = []
+
+        normalized_failures: List[Dict[str, Any]] = []
+        if results_applicable:
+            for failure_idx, raw_failure in enumerate(failures_input, start=1):
+                fail_code_text = str(raw_failure.get("fail_code_text") or "").strip()
+                if not fail_code_text:
+                    warnings.append(
+                        f"Step {idx} failure {failure_idx}: missing fail_code_text, entry skipped"
+                    )
+                    continue
+
+                normalized_failures.append(
+                    {
+                        "sequence": _safe_int(
+                            raw_failure.get("sequence"), default=failure_idx
+                        ),
+                        "serial_number": (
+                            raw_failure.get("serial_number") or ""
+                        ).strip()
+                        or None,
+                        "fail_code_id": raw_failure.get("fail_code_id"),
+                        "fail_code_text": fail_code_text.upper(),
+                        "fail_code_name_snapshot": (
+                            raw_failure.get("fail_code_name_snapshot") or ""
+                        ).strip()
+                        or None,
+                        "analysis_result": (
+                            raw_failure.get("analysis_result") or ""
+                        ).strip()
+                        or None,
+                    }
+                )
+        else:
+            if failures_input:
+                warnings.append(
+                    f"Step {idx}: ignoring failures because results_applicable is false"
+                )
+            normalized_failures = []
+
+        if results_applicable:
+            declared_fail_units = raw_step.get("fail_units")
+            normalized_fail_units = len(normalized_failures)
+            if (
+                declared_fail_units is not None
+                and _safe_int(declared_fail_units, default=normalized_fail_units)
+                != normalized_fail_units
+            ):
+                warnings.append(
+                    f"Step {idx} fail units adjusted to match failure rows ({normalized_fail_units})"
+                )
+
+            declared_total_units = raw_step.get("total_units")
+            if declared_total_units is None:
+                total_units_value = None
+            else:
+                total_units_value = _safe_int(declared_total_units, default=None)
+
+            if not total_units_manual or total_units_value is None:
+                total_units_value = lot_quantity_sum
+            elif total_units_value != lot_quantity_sum:
+                warnings.append(
+                    f"Step {idx} manual total {total_units_value} differs from lot sum {lot_quantity_sum}"
+                )
+
+            declared_pass_units = raw_step.get("pass_units")
+            if declared_pass_units is None:
+                pass_units_value = None
+            else:
+                pass_units_value = _safe_int(declared_pass_units, default=None)
+
+            if total_units_value is not None:
+                if total_units_value < normalized_fail_units:
+                    warnings.append(
+                        f"Step {idx} total units increased to match failure count ({normalized_fail_units})"
+                    )
+                    total_units_value = normalized_fail_units
+
+                if pass_units_value is None:
+                    pass_units_value = max(total_units_value - normalized_fail_units, 0)
+
+                if total_units_value != (pass_units_value or 0) + normalized_fail_units:
+                    warnings.append(
+                        f"Step {idx} totals mismatch: total={total_units_value}, pass={pass_units_value}, fail={normalized_fail_units}"
+                    )
+            else:
+                pass_units_value = None
+
+        else:
+            total_units_manual = False
+            total_units_value = None
+            normalized_fail_units = 0
+            pass_units_value = None
+
+        normalized_steps.append(
+            {
+                "order_index": order_index,
+                "step_code": canonical_code,
+                "step_label": step_label_value,
+                "eval_code": eval_code,
+                "notes": notes_value,
+                "lot_aliases": mapped_aliases,
+                "lot_quantity_sum": lot_quantity_sum,
+                "results_applicable": results_applicable,
+                "total_units_manual": total_units_manual
+                if results_applicable
+                else False,
+                "total_units": total_units_value if results_applicable else None,
+                "pass_units": pass_units_value if results_applicable else None,
+                "fail_units": normalized_fail_units if results_applicable else None,
+                "failures": normalized_failures,
+            }
+        )
+
+    legacy_lot_number_value = legacy_lot_number_raw or None
+    legacy_quantity_value = _safe_int(legacy_quantity_raw, default=None)
+
+    payload_for_storage = {
+        "lots": [
+            {
+                "id": entry["id"],
+                "temp_id": entry["alias"],
+                "client_id": entry["alias"],
+                "lot_number": entry["lot_number"],
+                "quantity": entry["quantity"],
+            }
+            for entry in normalized_lots
+        ],
+        "steps": [
+            {
+                "order_index": step["order_index"],
+                "step_code": step["step_code"],
+                "step_label": step["step_label"],
+                "eval_code": step["eval_code"],
+                "results_applicable": step["results_applicable"],
+                "total_units": step["total_units"],
+                "total_units_manual": step["total_units_manual"],
+                "pass_units": step["pass_units"],
+                "fail_units": step["fail_units"],
+                "notes": step["notes"],
+                "lot_refs": step["lot_aliases"],
+                "failures": step["failures"],
+            }
+            for step in normalized_steps
+        ],
+        "legacy_lot_number": legacy_lot_number_value,
+        "legacy_quantity": legacy_quantity_value,
+    }
+
+    return {
+        "payload": payload_for_storage,
+        "lots": normalized_lots,
+        "steps": normalized_steps,
+        "legacy_lot_number": legacy_lot_number_value,
+        "legacy_quantity": legacy_quantity_value,
+    }
 
 
 def generate_evaluation_number() -> str:
@@ -817,119 +1147,94 @@ def save_nested_process(evaluation_id: int) -> tuple[Response, int]:
         return jsonify({"success": False, "message": "Evaluation not found"}), 404
 
     payload = request.get_json(silent=True) or {}
-    lot_number = str(payload.get("lot_number") or "").strip()
-    if not lot_number:
-        return (
-            jsonify({"success": False, "message": "lot_number is required"}),
-            400,
-        )
-
-    quantity = _safe_int(payload.get("quantity"), default=0)
-    steps_payload = payload.get("steps")
-    if not isinstance(steps_payload, list) or not steps_payload:
-        return (
-            jsonify({"success": False, "message": "steps array is required"}),
-            400,
-        )
-
     warnings: List[str] = []
-    normalized_steps = []
-    for idx, raw_step in enumerate(steps_payload, start=1):
-        step_code = str(raw_step.get("step_code") or "").strip()
-        eval_code = str(raw_step.get("eval_code") or "").strip()
-        if not step_code or not eval_code:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "message": f"Step {idx} must include step_code and eval_code",
-                    }
-                ),
-                400,
-            )
-
-        order_index = raw_step.get("order_index")
-        order_index = _safe_int(order_index, default=idx)
-
-        total_units = _safe_int(raw_step.get("total_units"), default=0)
-        pass_units = _safe_int(raw_step.get("pass_units"), default=0)
-        fail_units = _safe_int(raw_step.get("fail_units"), default=0)
-        if total_units != pass_units + fail_units:
-            warnings.append(
-                f"Step {idx} totals mismatch: total={total_units}, pass={pass_units}, fail={fail_units}"
-            )
-
-        failures_payload = raw_step.get("failures") or []
-        if not isinstance(failures_payload, list):
-            warnings.append(f"Step {idx} failures data ignored (expected list)")
-            failures_payload = []
-
-        normalized_failures = []
-        for failure_idx, raw_failure in enumerate(failures_payload, start=1):
-            fail_code_text = str(raw_failure.get("fail_code_text") or "").strip()
-            if not fail_code_text:
-                warnings.append(
-                    f"Step {idx} failure {failure_idx}: missing fail_code_text, entry skipped"
-                )
-                continue
-
-            normalized_failures.append(
-                {
-                    "sequence": _safe_int(raw_failure.get("sequence"), default=failure_idx),
-                    "serial_number": (raw_failure.get("serial_number") or "").strip() or None,
-                    "fail_code_id": raw_failure.get("fail_code_id"),
-                    "fail_code_text": fail_code_text.upper(),
-                    "fail_code_name_snapshot": (
-                        (raw_failure.get("fail_code_name_snapshot") or "").strip() or None
-                    ),
-                    "analysis_result": (raw_failure.get("analysis_result") or "").strip() or None,
-                }
-            )
-
-        normalized_steps.append(
-            {
-                "order_index": order_index,
-                "step_code": step_code,
-                "step_label": (raw_step.get("step_label") or "").strip() or None,
-                "eval_code": eval_code,
-                "total_units": total_units,
-                "pass_units": pass_units,
-                "fail_units": fail_units,
-                "notes": (raw_step.get("notes") or "").strip() or None,
-                "failures": normalized_failures,
-            }
-        )
 
     try:
-        # Remove existing nested steps to keep a single authoritative set
+        normalized = _normalize_nested_payload(payload, warnings)
+    except ValueError as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
+
+    normalized_lots = normalized["lots"]
+    normalized_steps = normalized["steps"]
+    normalized_payload = normalized["payload"]
+
+    try:
         existing_steps = EvaluationProcessStep.query.filter_by(
             evaluation_id=evaluation.id
         ).all()
         for step in existing_steps:
             db.session.delete(step)
 
+        existing_lots = EvaluationProcessLot.query.filter_by(
+            evaluation_id=evaluation.id
+        ).all()
+        for lot in existing_lots:
+            db.session.delete(lot)
+
         db.session.flush()
 
+        lot_records: List[tuple[str, EvaluationProcessLot]] = []
+        for entry in normalized_lots:
+            lot_record = EvaluationProcessLot(
+                evaluation_id=evaluation.id,
+                lot_number=entry["lot_number"],
+                quantity=entry["quantity"],
+            )
+            db.session.add(lot_record)
+            lot_records.append((entry["alias"], lot_record))
+
+        db.session.flush()
+
+        alias_to_record: Dict[str, EvaluationProcessLot] = {
+            alias: record for alias, record in lot_records
+        }
+
         for step_data in normalized_steps:
+            mapped_records = [
+                alias_to_record[alias] for alias in step_data["lot_aliases"]
+            ]
+            lot_quantity_sum = sum(record.quantity for record in mapped_records)
+            lot_number_value = (
+                mapped_records[0].lot_number if len(mapped_records) == 1 else "MULTI"
+            )
+
+            results_applicable = step_data["results_applicable"]
+            total_units_value = step_data["total_units"] if results_applicable else None
+            pass_units_value = step_data["pass_units"] if results_applicable else None
+            fail_units_value = step_data["fail_units"] if results_applicable else None
+
             step_record = EvaluationProcessStep(
                 evaluation_id=evaluation.id,
-                lot_number=lot_number,
-                quantity=quantity,
+                lot_number=lot_number_value,
+                quantity=lot_quantity_sum,
                 order_index=step_data["order_index"],
                 step_code=step_data["step_code"],
                 step_label=step_data["step_label"],
                 eval_code=step_data["eval_code"],
-                total_units=step_data["total_units"],
-                pass_units=step_data["pass_units"],
-                fail_units=step_data["fail_units"],
+                results_applicable=results_applicable,
+                total_units=total_units_value,
+                total_units_manual=step_data["total_units_manual"]
+                if results_applicable
+                else False,
+                pass_units=pass_units_value,
+                fail_units=fail_units_value,
                 notes=step_data["notes"],
             )
             db.session.add(step_record)
             db.session.flush()
 
+            for lot_record in mapped_records:
+                db.session.add(
+                    EvaluationStepLot(
+                        step_id=step_record.id,
+                        lot_id=lot_record.id,
+                        quantity_override=None,
+                    )
+                )
+
             for failure in step_data["failures"]:
                 fail_code_record = _ensure_fail_code_record(
-                    failure["fail_code_text"],
+                    failure.get("fail_code_text"),
                     failure.get("fail_code_id"),
                     failure.get("fail_code_name_snapshot"),
                     warnings,
@@ -937,28 +1242,29 @@ def save_nested_process(evaluation_id: int) -> tuple[Response, int]:
 
                 failure_record = EvaluationStepFailure(
                     step_id=step_record.id,
-                    sequence=failure["sequence"],
-                    serial_number=failure["serial_number"],
+                    sequence=failure.get("sequence"),
+                    serial_number=failure.get("serial_number"),
                     fail_code_id=fail_code_record.id if fail_code_record else None,
-                    fail_code_text=failure["fail_code_text"],
-                    fail_code_name_snapshot=failure["fail_code_name_snapshot"],
-                    analysis_result=failure["analysis_result"],
+                    fail_code_text=failure.get("fail_code_text"),
+                    fail_code_name_snapshot=failure.get("fail_code_name_snapshot"),
+                    analysis_result=failure.get("analysis_result"),
                 )
                 db.session.add(failure_record)
 
         raw_record = EvaluationProcessRaw(
             evaluation_id=evaluation.id,
-            payload=payload,
+            payload=normalized_payload,
             source="rc0",
         )
         db.session.add(raw_record)
+
         log = OperationLog(
             operation_type=OperationType.UPDATE.value,
             target_type="evaluation_nested_process",
             target_id=evaluation.id,
             target_description=f"Nested processes updated for {evaluation.evaluation_number}",
             operation_description="Nested process payload saved",
-            new_data=payload,
+            new_data=normalized_payload,
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
             request_method=request.method,
@@ -988,6 +1294,179 @@ def save_nested_process(evaluation_id: int) -> tuple[Response, int]:
             ),
             500,
         )
+
+
+@evaluation_bp.route("/<int:evaluation_id>/processes/nested", methods=["GET"])
+def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
+    """Return the nested process payload for an evaluation."""
+
+    evaluation = Evaluation.query.get(evaluation_id)
+    if not evaluation:
+        return jsonify({"success": False, "message": "Evaluation not found"}), 404
+
+    lots = (
+        EvaluationProcessLot.query.filter_by(evaluation_id=evaluation_id)
+        .order_by(EvaluationProcessLot.id.asc())
+        .all()
+    )
+    steps = (
+        EvaluationProcessStep.query.filter_by(evaluation_id=evaluation_id)
+        .order_by(
+            EvaluationProcessStep.order_index.asc(), EvaluationProcessStep.id.asc()
+        )
+        .all()
+    )
+
+    payload_lots: List[Dict[str, Any]] = []
+    lot_alias_map: Dict[int, str] = {}
+    lot_quantity_map: Dict[int, int] = {}
+
+    for lot in lots:
+        alias = f"lot-{lot.id}"
+        payload_lots.append(
+            {
+                "id": lot.id,
+                "temp_id": alias,
+                "client_id": alias,
+                "lot_number": lot.lot_number,
+                "quantity": lot.quantity,
+            }
+        )
+        lot_alias_map[lot.id] = alias
+        lot_quantity_map[lot.id] = lot.quantity
+
+    fallback_alias_by_label: Dict[str, str] = {}
+    fallback_quantity_by_alias: Dict[str, int] = {}
+    if not payload_lots and steps:
+        for step in steps:
+            label = (
+                step.lot_number or ""
+            ).strip() or f"legacy-{len(fallback_alias_by_label) + 1}"
+            if label not in fallback_alias_by_label:
+                alias = f"legacy-{len(fallback_alias_by_label) + 1}"
+                fallback_alias_by_label[label] = alias
+                quantity_value = step.quantity or 0
+                payload_lots.append(
+                    {
+                        "id": None,
+                        "temp_id": alias,
+                        "client_id": alias,
+                        "lot_number": label,
+                        "quantity": quantity_value,
+                    }
+                )
+                fallback_quantity_by_alias[alias] = quantity_value
+
+    warnings: List[str] = []
+    payload_steps: List[Dict[str, Any]] = []
+
+    for index, step in enumerate(steps, start=1):
+        lot_refs: List[str] = []
+        if step.lot_assignments:
+            lot_refs = _dedupe_preserve_order(
+                [
+                    lot_alias_map.get(link.lot_id)
+                    for link in step.lot_assignments
+                    if link.lot_id in lot_alias_map
+                ]
+            )
+
+        if not lot_refs and fallback_alias_by_label:
+            label = (step.lot_number or "").strip()
+            alias = fallback_alias_by_label.get(label)
+            if alias:
+                lot_refs = [alias]
+
+        if not lot_refs and payload_lots:
+            lot_refs = [lot["temp_id"] for lot in payload_lots]
+
+        results_applicable = (
+            step.results_applicable if step.results_applicable is not None else True
+        )
+        total_units = step.total_units if step.total_units is not None else None
+        pass_units = step.pass_units if step.pass_units is not None else None
+        fail_units = step.fail_units if step.fail_units is not None else None
+
+        lot_sum = 0
+        if step.lot_assignments:
+            lot_sum = sum(
+                lot_quantity_map.get(link.lot_id, 0) for link in step.lot_assignments
+            )
+        elif lot_refs and fallback_quantity_by_alias:
+            lot_sum = sum(
+                fallback_quantity_by_alias.get(alias, 0) for alias in lot_refs
+            )
+
+        if results_applicable:
+            if fail_units is None:
+                fail_units = len(step.failures or [])
+            if total_units is not None and pass_units is not None:
+                if total_units != (pass_units or 0) + fail_units:
+                    warnings.append(
+                        f"Step {index} totals mismatch: total={total_units}, pass={pass_units}, fail={fail_units}"
+                    )
+            if lot_refs and total_units is not None and total_units != lot_sum:
+                warnings.append(
+                    f"Step {index} lot quantity mismatch: total_units={total_units}, lot_sum={lot_sum}"
+                )
+        else:
+            total_units = None
+            pass_units = None
+            fail_units = None
+
+        failures_payload = sorted(
+            step.failures, key=lambda failure: failure.sequence or 0
+        )
+        payload_steps.append(
+            {
+                "order_index": step.order_index,
+                "step_code": step.step_code,
+                "step_label": step.step_label,
+                "eval_code": step.eval_code,
+                "results_applicable": results_applicable,
+                "total_units": total_units,
+                "total_units_manual": bool(step.total_units_manual)
+                if results_applicable
+                else False,
+                "pass_units": pass_units,
+                "fail_units": fail_units,
+                "notes": step.notes,
+                "lot_refs": lot_refs,
+                "failures": [
+                    {
+                        "sequence": failure.sequence,
+                        "serial_number": failure.serial_number,
+                        "fail_code_id": failure.fail_code_id,
+                        "fail_code_text": failure.fail_code_text,
+                        "fail_code_name_snapshot": failure.fail_code_name_snapshot,
+                        "analysis_result": failure.analysis_result,
+                    }
+                    for failure in failures_payload
+                ],
+            }
+        )
+
+    latest_raw = (
+        EvaluationProcessRaw.query.filter_by(evaluation_id=evaluation_id)
+        .order_by(EvaluationProcessRaw.created_at.desc())
+        .first()
+    )
+    legacy_lot_number = None
+    legacy_quantity = None
+    if latest_raw and isinstance(latest_raw.payload, dict):
+        legacy_lot_number = latest_raw.payload.get("legacy_lot_number")
+        legacy_quantity = latest_raw.payload.get("legacy_quantity")
+
+    response_payload = {
+        "lots": payload_lots,
+        "steps": payload_steps,
+        "legacy_lot_number": legacy_lot_number,
+        "legacy_quantity": legacy_quantity,
+    }
+
+    return jsonify(
+        {"success": True, "data": {"payload": response_payload, "warnings": warnings}}
+    )
 
 
 @evaluation_bp.route("/<int:evaluation_id>/processes", methods=["POST"])

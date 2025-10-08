@@ -160,8 +160,12 @@ def iter_xlsx_rows(path: Path) -> Iterator[tuple[int, dict[str, object]]]:
         worksheet = workbook.active
         header_row = next(worksheet.iter_rows(min_row=1, max_row=1, values_only=True))
         headers = [str(cell).strip() if cell is not None else "" for cell in header_row]
-        for idx, row in enumerate(worksheet.iter_rows(min_row=2, values_only=True), start=2):
-            values = [row[col] if col < len(row) else None for col in range(len(headers))]
+        for idx, row in enumerate(
+            worksheet.iter_rows(min_row=2, values_only=True), start=2
+        ):
+            values = [
+                row[col] if col < len(row) else None for col in range(len(headers))
+            ]
             yield idx, {headers[i]: values[i] for i in range(len(headers))}
     finally:
         workbook.close()
@@ -222,7 +226,9 @@ def compile_patterns(patterns: Iterable[str]) -> list[re.Pattern[str]]:
         try:
             compiled.append(re.compile(pattern))
         except re.error as exc:
-            raise click.BadParameter(f"Invalid regex pattern '{pattern}': {exc}") from exc
+            raise click.BadParameter(
+                f"Invalid regex pattern '{pattern}': {exc}"
+            ) from exc
     return compiled
 
 
@@ -437,7 +443,11 @@ def write_structured_reports(
         for code, aggregate in sorted(aggregates.items()):
             if aggregate.missing_name_count > 0:
                 writer.writerow(
-                    [code, aggregate.missing_name_count, "|".join(sorted(aggregate.sources))]
+                    [
+                        code,
+                        aggregate.missing_name_count,
+                        "|".join(sorted(aggregate.sources)),
+                    ]
                 )
 
     conflicts_path = output_dir / "conflicts.csv"
@@ -446,7 +456,11 @@ def write_structured_reports(
         writer.writerow(["code", "names", "sources"])
         for code, names in sorted(conflicts.items()):
             writer.writerow(
-                [code, "|".join(sorted(names)), "|".join(sorted(aggregates[code].sources))]
+                [
+                    code,
+                    "|".join(sorted(names)),
+                    "|".join(sorted(aggregates[code].sources)),
+                ]
             )
 
     errors_path = output_dir / "errors.csv"
@@ -496,9 +510,13 @@ def run_text_mode(
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    code_patterns = config.get("code_regexes", DEFAULT_CODE_PATTERNS) or DEFAULT_CODE_PATTERNS
+    code_patterns = (
+        config.get("code_regexes", DEFAULT_CODE_PATTERNS) or DEFAULT_CODE_PATTERNS
+    )
     deny_patterns = list(DEFAULT_DENY_PATTERNS)
-    deny_patterns.extend(pattern for pattern in config.get("deny_regexes", []) if pattern)
+    deny_patterns.extend(
+        pattern for pattern in config.get("deny_regexes", []) if pattern
+    )
     deny_patterns.extend(deny_regex_options)
     stopwords = load_stopwords(stopwords_file)
     stopwords.update({word.upper() for word in config.get("stopwords", [])})
@@ -743,9 +761,7 @@ def write_text_reports(
     distinct_path = output_dir / "distinct_tokens.csv"
     write_csv(
         distinct_path,
-        [
-            ("token", "token_type", "canonical_code", "occurrences", "sources")
-        ]
+        [("token", "token_type", "canonical_code", "occurrences", "sources")]
         + [
             (
                 agg.token,
@@ -763,15 +779,15 @@ def write_text_reports(
     aliases_path = output_dir / "aliases.csv"
     write_csv(
         aliases_path,
-        [
-            ("token", "token_type", "canonical_code", "source")
-        ]
+        [("token", "token_type", "canonical_code", "source")]
         + [
             (
                 token,
                 "code" if canonical == token.upper() or canonical == token else "name",
                 canonical,
-                "text-extract" if canonical == token.upper() or canonical == token else "legacy-text",
+                "text-extract"
+                if canonical == token.upper() or canonical == token
+                else "legacy-text",
             )
             for token, canonical in sorted(alias_map.items())
         ],
@@ -780,9 +796,7 @@ def write_text_reports(
     missing_names_path = output_dir / "missing_names.csv"
     write_csv(
         missing_names_path,
-        [
-            ("code", "occurrences", "sources")
-        ]
+        [("code", "occurrences", "sources")]
         + [
             (
                 code,
@@ -810,10 +824,7 @@ def write_text_reports(
     conflicts_path = output_dir / "conflicts.csv"
     write_csv(
         conflicts_path,
-        [
-            ("token", "existing_code", "new_code")
-        ]
-        + alias_conflicts,
+        [("token", "existing_code", "new_code")] + alias_conflicts,
     )
 
     ingestion_log_path = output_dir / "ingestion_log.json"
@@ -886,7 +897,9 @@ class app_context:
     help="Structured mode: optional column containing the fail description",
 )
 @click.option("--text-col", "text_columns", multiple=True, default=("评价过程",))
-@click.option("--delimiter", default=None, help="Optional delimiter override for CSV files")
+@click.option(
+    "--delimiter", default=None, help="Optional delimiter override for CSV files"
+)
 @click.option("--encoding", default=DEFAULT_ENCODING, show_default=True)
 @click.option("--config", type=click.Path(exists=True, path_type=Path))
 @click.option(
