@@ -58,10 +58,12 @@ import { computed, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Delete, DocumentDelete, Refresh } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import ProcessBuilder from '../components/ProcessBuilder.vue'
 import { createEmptyBuilderPayload, normalizeBuilderPayload } from '../utils/processMapper'
 
 const router = useRouter()
+const { t } = useI18n()
 
 const builderRef = ref(null)
 const builderWarnings = ref([])
@@ -168,7 +170,7 @@ function handleSave(payload) {
   builderDirty.value = false
   builderRef.value?.markPristine(payload)
   builderRef.value?.setWarnings(warnings)
-  ElMessage.success('Mock save complete')
+  ElMessage.success(t('nested.mockSaveComplete'))
 }
 
 function nextTickMarkClean() {
@@ -198,14 +200,14 @@ function collectMockWarnings(payload) {
   steps.forEach((step, index) => {
     if (step.results_applicable === false) {
       if (Array.isArray(step.failures) && step.failures.length) {
-        warnings.push(`Step ${index + 1}: failures ignored because results are disabled`)
+        warnings.push(t('nested.warnings.failuresIgnored', { index: index + 1 }))
       }
       return
     }
 
     const failCount = Array.isArray(step.failures) ? step.failures.length : 0
     if (typeof step.fail_units === 'number' && step.fail_units !== failCount) {
-      warnings.push(`Step ${index + 1}: fail units reset to ${failCount}`)
+      warnings.push(t('nested.warnings.failUnitsReset', { index: index + 1, count: failCount }))
     }
 
     if (step.total_units_manual && Array.isArray(step.lot_refs) && step.lot_refs.length) {
@@ -215,7 +217,11 @@ function collectMockWarnings(payload) {
       )
       if (typeof step.total_units === 'number' && lotSum !== step.total_units) {
         warnings.push(
-          `Step ${index + 1}: manual total ${step.total_units} differs from lot sum ${lotSum}`,
+          t('nested.warnings.lotTotalMismatch', {
+            index: index + 1,
+            total: step.total_units,
+            auto: lotSum,
+          }),
         )
       }
     }

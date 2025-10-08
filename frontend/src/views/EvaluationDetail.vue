@@ -333,7 +333,7 @@
               </template>
 
               <div v-if="builderSummaryLots.length" class="nested-lots-summary">
-                <h4>Lots</h4>
+                <h4>{{ $t('nested.summary.lotsHeading') }}</h4>
                 <ul>
                   <li v-for="lot in builderSummaryLots" :key="lot.client_id">
                     {{ lot.label }}
@@ -341,10 +341,7 @@
                 </ul>
               </div>
 
-              <el-empty
-                v-if="!builderHasStepsSummary"
-                description="No nested processes configured yet"
-              />
+              <el-empty v-if="!builderHasStepsSummary" :description="$t('nested.summary.empty')" />
 
               <div v-else class="nested-summary">
                 <div
@@ -357,19 +354,24 @@
                     <span v-if="step.step_label"> - {{ step.step_label }}</span>
                   </div>
                   <div v-if="step.results_applicable !== false" class="nested-step-meta">
-                    Eval: {{ step.eval_code || '—' }} · Total
-                    {{ formatUnit(step.total_units) }} (Pass {{ formatUnit(step.pass_units) }}, Fail
-                    {{ formatUnit(step.fail_units) }})
+                    {{
+                      $t('nested.summary.evalLine', {
+                        eval: step.eval_code || '—',
+                        total: formatUnit(step.total_units),
+                        pass: formatUnit(step.pass_units),
+                        fail: formatUnit(step.fail_units),
+                      })
+                    }}
                   </div>
-                  <div v-else class="nested-step-meta">No test results recorded</div>
+                  <div v-else class="nested-step-meta">{{ $t('nested.summary.noResults') }}</div>
                   <div class="nested-step-lots">
-                    Applies to: {{ describeStepLots(step.lot_refs) }}
+                    {{ $t('nested.summary.appliesTo') }} {{ describeStepLots(step.lot_refs) }}
                   </div>
                   <div
                     v-if="Array.isArray(step.failures) && step.failures.length"
                     class="nested-failure-count"
                   >
-                    Failures: {{ step.failures.length }}
+                    {{ $t('nested.summary.failuresCount', { count: step.failures.length }) }}
                   </div>
                 </div>
               </div>
@@ -702,7 +704,7 @@
             </template>
 
             <div v-if="builderSummaryLots.length" class="nested-lots-summary">
-              <h4>Lots</h4>
+              <h4>{{ $t('nested.summary.lotsHeading') }}</h4>
               <ul>
                 <li v-for="lot in builderSummaryLots" :key="lot.client_id">
                   {{ lot.label }}
@@ -710,10 +712,7 @@
               </ul>
             </div>
 
-            <el-empty
-              v-if="!builderHasStepsSummary"
-              description="No nested processes configured yet"
-            />
+            <el-empty v-if="!builderHasStepsSummary" :description="$t('nested.summary.empty')" />
 
             <div v-else class="nested-summary">
               <div
@@ -726,18 +725,24 @@
                   <span v-if="step.step_label"> - {{ step.step_label }}</span>
                 </div>
                 <div v-if="step.results_applicable !== false" class="nested-step-meta">
-                  Eval: {{ step.eval_code || '—' }} · Total {{ formatUnit(step.total_units) }} (Pass
-                  {{ formatUnit(step.pass_units) }}, Fail {{ formatUnit(step.fail_units) }})
+                  {{
+                    $t('nested.summary.evalLine', {
+                      eval: step.eval_code || '—',
+                      total: formatUnit(step.total_units),
+                      pass: formatUnit(step.pass_units),
+                      fail: formatUnit(step.fail_units),
+                    })
+                  }}
                 </div>
-                <div v-else class="nested-step-meta">No test results recorded</div>
+                <div v-else class="nested-step-meta">{{ $t('nested.summary.noResults') }}</div>
                 <div class="nested-step-lots">
-                  Applies to: {{ describeStepLots(step.lot_refs) }}
+                  {{ $t('nested.summary.appliesTo') }} {{ describeStepLots(step.lot_refs) }}
                 </div>
                 <div
                   v-if="Array.isArray(step.failures) && step.failures.length"
                   class="nested-failure-count"
                 >
-                  Failures: {{ step.failures.length }}
+                  {{ $t('nested.summary.failuresCount', { count: step.failures.length }) }}
                 </div>
               </div>
             </div>
@@ -923,7 +928,7 @@ const props = defineProps({
   evaluationId: { type: [String, Number], default: null },
   processStepOptions: {
     type: Array,
-    default: () => ['iARTS', 'Aging', 'LI', 'Repair'],
+    default: () => ['iARTs', 'Aging', 'LI', 'Repair'],
   },
 })
 // No emits used currently (inline editing in same view)
@@ -1026,13 +1031,13 @@ const builderHasStepsSummary = computed(() => hasBuilderSteps(builderPayload.val
 
 const describeStepLots = (lotRefs) => {
   if (!Array.isArray(lotRefs) || !lotRefs.length) {
-    return 'All lots'
+    return t('nested.summary.allLots')
   }
   const labels = lotRefs
     .map((ref) => builderLotLabelMap.value.get(String(ref)) || builderLotLabelMap.value.get(ref))
     .filter(Boolean)
   if (!labels.length) {
-    return 'All lots'
+    return t('nested.summary.allLots')
   }
   return labels.join(', ')
 }
@@ -1102,7 +1107,7 @@ async function openProcessDrawer() {
 async function handleProcessDrawerBeforeClose(done) {
   if (processBuilderDirty.value) {
     try {
-      await ElMessageBox.confirm('Discard unsaved process changes?', t('common.confirmAction'), {
+      await ElMessageBox.confirm(t('nested.discardChanges'), t('common.confirmAction'), {
         confirmButtonText: t('common.confirm'),
         cancelButtonText: t('common.cancel'),
         type: 'warning',

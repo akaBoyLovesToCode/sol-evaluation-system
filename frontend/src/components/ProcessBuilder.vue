@@ -3,18 +3,24 @@
     <el-card class="form-section">
       <template #header>
         <div class="card-header">
-          <span>Process Lots</span>
+          <span>{{ $t('nested.processLots') }}</span>
           <div class="header-actions">
             <slot name="actions">
               <el-button v-if="showSaveButton" type="primary" :icon="Check" @click="emitSave">
-                Save
+                {{ $t('common.save') }}
               </el-button>
             </slot>
             <el-button v-if="!readonly" size="small" :icon="DocumentCopy" @click="openPasteLots">
-              Paste List
+              {{ $t('nested.pasteList') }}
             </el-button>
-            <el-button v-if="!readonly" type="primary" size="small" :icon="Plus" @click="addLot">
-              Add Lot
+            <el-button
+              v-if="!readonly"
+              type="primary"
+              size="small"
+              :icon="Plus"
+              @click="addLot"
+            >
+              {{ $t('nested.addLot') }}
             </el-button>
           </div>
         </div>
@@ -29,16 +35,16 @@
         <el-table-column label="#" width="60">
           <template #default="{ $index }">{{ $index + 1 }}</template>
         </el-table-column>
-        <el-table-column label="Lot Number">
+        <el-table-column :label="$t('nested.lotNumber')">
           <template #default="{ row }">
             <el-input
               v-model="row.lot_number"
-              placeholder="Enter lot number"
+              :placeholder="$t('nested.lotNumberPlaceholder')"
               :readonly="readonly"
             />
           </template>
         </el-table-column>
-        <el-table-column label="Quantity" width="180">
+        <el-table-column :label="$t('nested.quantity')" width="180">
           <template #default="{ row }">
             <el-input-number
               v-model="row.quantity"
@@ -49,18 +55,18 @@
             />
           </template>
         </el-table-column>
-        <el-table-column v-if="!readonly" label="Actions" width="160" align="right">
+        <el-table-column v-if="!readonly" :label="$t('nested.actions')" width="160" align="right">
           <template #default="{ $index }">
             <div class="lots-actions">
               <el-button size="small" :icon="DocumentCopy" @click="duplicateLot($index)">
-                Duplicate
+                {{ $t('nested.duplicate') }}
               </el-button>
               <el-button size="small" type="danger" :icon="Delete" @click="removeLot($index)" />
             </div>
           </template>
         </el-table-column>
       </el-table>
-      <el-empty v-else description="Add at least one lot" />
+      <el-empty v-else :description="$t('nested.emptyLotsDescription')" />
     </el-card>
 
     <div class="steps-container">
@@ -72,17 +78,17 @@
         <template #header>
           <div class="step-header">
             <div class="step-title">
-              <el-tag type="info">Step {{ index + 1 }}</el-tag>
-              <span>{{ step.step_code || 'New Step' }}</span>
+              <el-tag type="info">{{ $t('nested.stepTag') }} {{ index + 1 }}</el-tag>
+              <span>{{ step.step_code || $t('nested.newStep') }}</span>
               <span v-if="step.step_label" class="step-label">{{ step.step_label }}</span>
             </div>
             <div v-if="!readonly" class="step-actions">
-              <el-button size="small" :icon="Plus" @click="addStepAfter(index)"
-                >Add After</el-button
-              >
-              <el-button size="small" :icon="DocumentCopy" @click="duplicateStep(index)"
-                >Duplicate</el-button
-              >
+              <el-button size="small" :icon="Plus" @click="addStepAfter(index)">
+                {{ $t('nested.addAfter') }}
+              </el-button>
+              <el-button size="small" :icon="DocumentCopy" @click="duplicateStep(index)">
+                {{ $t('nested.duplicate') }}
+              </el-button>
               <el-button size="small" :icon="Delete" type="danger" @click="removeStep(index)" />
             </div>
           </div>
@@ -90,10 +96,10 @@
 
         <el-form label-position="top" class="step-form">
           <div class="step-header-row">
-            <el-form-item label="Step Code" required class="header-item code-item">
+            <el-form-item :label="$t('nested.stepCode')" required class="header-item code-item">
               <el-select
                 v-model="step.step_code"
-                placeholder="Select code"
+                :placeholder="$t('nested.stepCode')"
                 :disabled="readonly"
                 @change="(value) => handleStepCodeChange(index, value)"
               >
@@ -105,8 +111,12 @@
                 />
               </el-select>
             </el-form-item>
-            <el-form-item label="Step Label" required class="header-item label-item">
-              <el-input v-model="step.step_label" placeholder="Enter label" :readonly="readonly" />
+            <el-form-item :label="$t('nested.stepLabel')" required class="header-item label-item">
+              <el-input
+                v-model="step.step_label"
+                :placeholder="$t('nested.stepLabelPlaceholder')"
+                :readonly="readonly"
+              />
               <el-link
                 v-if="labelSuggestionAvailable(step)"
                 type="primary"
@@ -114,17 +124,17 @@
                 :underline="false"
                 @click="applyLabelSuggestion(index)"
               >
-                Apply suggestion: {{ getStepLabelSuggestion(step) }}
+                {{ $t('nested.applySuggestion', { suggestion: getStepLabelSuggestion(step) }) }}
               </el-link>
             </el-form-item>
-            <el-form-item label="Eval Code" class="header-item eval-item">
+            <el-form-item :label="$t('nested.evalCode')" class="header-item eval-item">
               <el-input
                 v-model="step.eval_code"
-                placeholder="Optional eval code"
+                :placeholder="$t('nested.evalCodePlaceholder')"
                 :readonly="readonly"
               />
             </el-form-item>
-            <el-form-item label="No test results" class="header-item toggle-item">
+            <el-form-item :label="$t('nested.noTestResults')" class="header-item toggle-item">
               <el-switch
                 v-model="step.results_applicable"
                 :active-value="false"
@@ -136,14 +146,14 @@
           </div>
 
           <div class="step-header-row second-row">
-            <el-form-item label="Applies to lots" required class="header-item lots-item">
+            <el-form-item :label="$t('nested.appliesToLots')" required class="header-item lots-item">
               <el-select
                 v-model="step.lot_refs"
                 multiple
                 collapse-tags
                 collapse-tags-tooltip
                 :disabled="readonly || !processForm.lots.length"
-                placeholder="Select lots"
+                :placeholder="$t('nested.selectLots')"
                 @change="(value) => handleLotRefsChange(index, value)"
               >
                 <el-option
@@ -156,7 +166,7 @@
             </el-form-item>
 
             <template v-if="step.results_applicable">
-              <el-form-item label="Total Units" class="header-item number-item total-item">
+              <el-form-item :label="$t('nested.totalUnits')" class="header-item number-item total-item">
                 <div class="total-field">
                   <el-input-number
                     v-model="step.total_units"
@@ -177,14 +187,14 @@
                         class="reset-link"
                         @click="resetTotalToComputed(index)"
                       >
-                        Reset to computed
+                        {{ $t('nested.resetToComputed') }}
                       </el-link>
                     </template>
                   </div>
                 </div>
               </el-form-item>
 
-              <el-form-item label="Pass Units" class="header-item number-item">
+              <el-form-item :label="$t('nested.passUnits')" class="header-item number-item">
                 <el-input-number
                   v-model="step.pass_units"
                   :min="0"
@@ -195,7 +205,7 @@
                 />
               </el-form-item>
 
-              <el-form-item label="Fail Units" class="header-item number-item">
+              <el-form-item :label="$t('nested.failUnits')" class="header-item number-item">
                 <div class="fail-field">
                   <el-input-number
                     v-model="step.fail_units"
@@ -205,9 +215,9 @@
                     :disabled="readonly"
                     @change="() => syncPassUnits(index)"
                   />
-                  <span v-if="resultsMismatch(step)" class="inline-error"
-                    >Rows {{ step.failures.length }}</span
-                  >
+                  <span v-if="resultsMismatch(step)" class="inline-error">
+                    {{ $t('nested.rowsLabel', { count: step.failures.length }) }}
+                  </span>
                 </div>
               </el-form-item>
             </template>
@@ -215,8 +225,12 @@
 
           <el-row :gutter="12" class="step-inputs">
             <el-col :span="24">
-              <el-form-item label="Notes">
-                <el-input v-model="step.notes" placeholder="Optional notes" :readonly="readonly" />
+              <el-form-item :label="$t('nested.notes')">
+                <el-input
+                  v-model="step.notes"
+                  :placeholder="$t('nested.notesPlaceholder')"
+                  :readonly="readonly"
+                />
               </el-form-item>
             </el-col>
           </el-row>
@@ -228,14 +242,14 @@
           class="compact-alert"
           show-icon
           :closable="false"
-          :title="`Mismatch: pass (${step.pass_units}) + fail (${step.fail_units}) !== total (${step.total_units})`"
+          :title="$t('nested.inlineMismatch', { pass: step.pass_units ?? 0, fail: step.fail_units ?? 0, total: step.total_units ?? 0 })"
         />
 
         <template v-if="step.results_applicable">
           <div class="failure-header">
-            <h4>Failure Details</h4>
+            <h4>{{ $t('nested.failureTitle') }}</h4>
             <el-button v-if="!readonly" size="small" :icon="Plus" @click="addFailureRow(index)">
-              Add Failure
+              {{ $t('nested.addFailure') }}
             </el-button>
           </div>
 
@@ -244,62 +258,66 @@
             border
             size="small"
             class="failure-table"
-            empty-text="No failure rows"
+            :empty-text="$t('nested.emptyFailures')"
           >
-            <el-table-column label="#" width="50">
-              <template #default="{ row }">
-                <span>{{ row.sequence }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="Serial Number" min-width="160">
-              <template #default="{ row }">
-                <el-input v-model="row.serial_number" placeholder="Enter SN" :readonly="readonly" />
-              </template>
-            </el-table-column>
-            <el-table-column label="Fail Code" min-width="120">
-              <template #default="{ row, $index }">
-                <el-autocomplete
-                  v-model="row.fail_code_text"
-                  class="code-input"
-                  :fetch-suggestions="(query, cb) => queryFailCodes(query, cb)"
-                  :trigger-on-focus="false"
-                  placeholder="Fail code"
-                  :disabled="readonly"
-                  @select="(item) => assignFailCode(index, $index, item)"
-                  @blur="() => normalizeFailCode(index, $index)"
-                >
-                  <template #suffix>
-                    <el-tooltip
-                      v-if="!row.fail_code_id && row.fail_code_text"
-                      content="Not in dictionary"
-                      placement="top"
-                    >
-                      <el-icon class="code-hint-icon"><WarningFilled /></el-icon>
-                    </el-tooltip>
-                  </template>
-                </el-autocomplete>
-              </template>
-            </el-table-column>
-            <el-table-column label="Fail Name" min-width="160">
-              <template #default="{ row }">
-                <el-input
-                  v-model="row.fail_code_name_snapshot"
-                  placeholder="Optional fail name"
-                  :readonly="readonly"
-                />
-              </template>
-            </el-table-column>
-            <el-table-column label="Analysis Result" min-width="260">
-              <template #default="{ row }">
-                <el-input
-                  v-model="row.analysis_result"
-                  type="textarea"
-                  :rows="2"
-                  placeholder="Analysis details"
-                  :readonly="readonly"
-                />
-              </template>
-            </el-table-column>
+          <el-table-column label="#" width="50">
+            <template #default="{ row }">
+              <span>{{ row.sequence }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column :label="$t('nested.serialNumber')" min-width="160">
+            <template #default="{ row }">
+              <el-input
+                v-model="row.serial_number"
+                :placeholder="$t('nested.serialNumberPlaceholder')"
+                :readonly="readonly"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column :label="$t('nested.failCode')" min-width="120">
+            <template #default="{ row, $index }">
+              <el-autocomplete
+                v-model="row.fail_code_text"
+                class="code-input"
+                :fetch-suggestions="(query, cb) => queryFailCodes(query, cb)"
+                :trigger-on-focus="false"
+                :placeholder="$t('nested.failCodePlaceholder')"
+                :disabled="readonly"
+                @select="(item) => assignFailCode(index, $index, item)"
+                @blur="() => normalizeFailCode(index, $index)"
+              >
+                <template #suffix>
+                  <el-tooltip
+                    v-if="!row.fail_code_id && row.fail_code_text"
+                    :content="$t('nested.notInDictionary')"
+                    placement="top"
+                  >
+                    <el-icon class="code-hint-icon"><WarningFilled /></el-icon>
+                  </el-tooltip>
+                </template>
+              </el-autocomplete>
+            </template>
+          </el-table-column>
+          <el-table-column :label="$t('nested.failName')" min-width="160">
+            <template #default="{ row }">
+              <el-input
+                v-model="row.fail_code_name_snapshot"
+                :placeholder="$t('nested.failNamePlaceholder')"
+                :readonly="readonly"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column :label="$t('nested.analysisResult')" min-width="260">
+            <template #default="{ row }">
+              <el-input
+                v-model="row.analysis_result"
+                type="textarea"
+                :rows="2"
+                :placeholder="$t('nested.analysisPlaceholder')"
+                :readonly="readonly"
+              />
+            </template>
+          </el-table-column>
             <el-table-column v-if="!readonly" width="70" fixed="right">
               <template #default="{ $index }">
                 <el-button
@@ -322,12 +340,12 @@
         :icon="Plus"
         @click="addStepAfter(processForm.steps.length - 1)"
       >
-        Add Step
+        {{ $t('nested.addStep') }}
       </el-button>
     </div>
 
     <div v-if="validationMessages.length" class="validation-block">
-      <el-alert title="Validation issues" type="warning" :closable="false" show-icon>
+      <el-alert :title="$t('nested.validationTitle')" type="warning" :closable="false" show-icon>
         <ul class="validation-list">
           <li v-for="(message, idx) in validationMessages" :key="idx">{{ message }}</li>
         </ul>
@@ -335,7 +353,7 @@
     </div>
 
     <div v-if="combinedWarnings.length" class="validation-block">
-      <el-alert title="Warnings" type="warning" :closable="false" show-icon>
+      <el-alert :title="$t('nested.warningTitle')" type="warning" :closable="false" show-icon>
         <ul class="validation-list">
           <li v-for="(message, idx) in combinedWarnings" :key="`warning-${idx}`">{{ message }}</li>
         </ul>
@@ -345,9 +363,9 @@
     <el-card v-if="showDebug" class="form-section">
       <template #header>
         <div class="payload-header">
-          <span>Debug Payload</span>
+          <span>{{ $t('nested.debugPayload') }}</span>
           <el-button size="small" :icon="DocumentCopy" @click="copyPayload"
-            >Copy JSON</el-button
+            >{{ $t('nested.copyPayload') }}</el-button
           >
         </div>
       </template>
@@ -356,7 +374,7 @@
         type="success"
         :closable="false"
         show-icon
-        title="Payload currently passes validation rules"
+        :title="$t('nested.payloadValid')"
         class="compact-alert"
       />
       <pre class="payload-preview">{{ formattedPayload }}</pre>
@@ -366,8 +384,11 @@
 
 <script setup>
 import { computed, reactive, ref, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, DocumentCopy, Plus, Check, WarningFilled } from '@element-plus/icons-vue'
+
+const { t } = useI18n()
 
 const STEP_CODE_OPTIONS = [
   { label: 'M031', value: 'M031' },
@@ -696,7 +717,7 @@ const lotOptions = computed(() =>
     value: lot.client_id,
     label: lot.lot_number
       ? `${lot.lot_number}${lot.quantity ? ` (${lot.quantity})` : ''}`
-      : 'Unnamed lot',
+      : t('nested.unnamedLot'),
   })),
 )
 
@@ -731,17 +752,17 @@ function getTotalDelta(step) {
 
 function totalHintText(step) {
   if (!step || !step.results_applicable) {
-    return 'from lots: —'
+    return t('nested.fromLotsNone')
   }
   const values = lotQuantitiesForStep(step)
   if (!values.length) {
-    return 'from lots: —'
+    return t('nested.fromLotsNone')
   }
   const total = values.reduce((sum, val) => sum + val, 0)
   if (values.length > 1) {
-    return `from lots: ${values.join(' + ')} = ${total}`
+    return t('nested.fromLotsFormula', { formula: values.join(' + '), total })
   }
-  return `from lots: ${total}`
+  return t('nested.fromLotsSingle', { total })
 }
 
 function showTotalDelta(step) {
@@ -750,9 +771,9 @@ function showTotalDelta(step) {
 
 function formatTotalDelta(step) {
   const delta = getTotalDelta(step)
-  if (!delta) return 'Δ 0'
+  if (!delta) return t('nested.deltaTag', { delta: '+0' })
   const prefix = delta > 0 ? '+' : ''
-  return `Δ ${prefix}${delta}`
+  return t('nested.deltaTag', { delta: `${prefix}${delta}` })
 }
 
 function refreshTotalsForStep(index) {
@@ -995,7 +1016,7 @@ const duplicateStep = (index) => {
 
 const removeStep = (index) => {
   if (processForm.steps.length === 1) {
-    ElMessage.warning('At least one step is required')
+    ElMessage.warning(t('nested.stepRequiredMessage'))
     return
   }
   processForm.steps.splice(index, 1)
@@ -1091,7 +1112,7 @@ function duplicateLot(index) {
 
 function removeLot(index) {
   if (processForm.lots.length <= 1) {
-    ElMessage.warning('At least one lot is required')
+    ElMessage.warning(t('nested.lotRequiredMessage'))
     return
   }
   processForm.lots.splice(index, 1)
@@ -1101,13 +1122,13 @@ function removeLot(index) {
 async function openPasteLots() {
   try {
     const result = await ElMessageBox.prompt(
-      'Enter one lot per line. Use "LOT123,27" or "LOT123 27" to include quantities.',
-      'Paste Lots',
+      t('nested.pasteLotsMessage'),
+      t('nested.pasteLotsTitle'),
       {
-        confirmButtonText: 'Apply',
-        cancelButtonText: 'Cancel',
+        confirmButtonText: t('nested.apply'),
+        cancelButtonText: t('common.cancel'),
         inputType: 'textarea',
-        inputPlaceholder: 'LOT123,27\nLOT124,31',
+        inputPlaceholder: t('nested.pasteLotsPlaceholder'),
       },
     )
 
@@ -1157,53 +1178,60 @@ const validationMessages = computed(() => {
   const messages = []
 
   if (!processForm.lots.length) {
-    messages.push('Add at least one lot before saving')
+    messages.push(t('nested.validation.addLot'))
   }
 
   processForm.lots.forEach((lot, index) => {
+    const lotNumber = index + 1
     if (!lot.lot_number?.trim()) {
-      messages.push(`Lot ${index + 1}: lot number is required`)
+      messages.push(t('nested.validation.lotNumber', { index: lotNumber }))
     }
     if (Number(lot.quantity) <= 0) {
-      messages.push(`Lot ${index + 1}: quantity must be greater than zero`)
+      messages.push(t('nested.validation.lotQuantity', { index: lotNumber }))
     }
   })
 
   if (!processForm.steps.length) {
-    messages.push('At least one process step is required')
+    messages.push(t('nested.validation.stepRequired'))
   }
 
   processForm.steps.forEach((step, index) => {
+    const stepIndex = index + 1
     if (!step.step_code?.trim()) {
-      messages.push(`Step ${index + 1}: step code is required`)
+      messages.push(t('nested.validation.stepCode', { index: stepIndex }))
     }
     if (!step.step_label?.trim()) {
-      messages.push(`Step ${index + 1}: step label is required`)
+      messages.push(t('nested.validation.stepLabel', { index: stepIndex }))
     }
     if (!Array.isArray(step.lot_refs) || !step.lot_refs.length) {
-      messages.push(`Step ${index + 1}: select at least one lot`)
+      messages.push(t('nested.validation.stepLots', { index: stepIndex }))
     }
     if (step.results_applicable) {
       if (stepMismatch(index)) {
-        messages.push(`Step ${index + 1}: pass + fail must equal total units`)
+        messages.push(t('nested.validation.totalsMismatch', { index: stepIndex }))
       }
       if (
         step.total_units !== null &&
         Number(step.total_units ?? 0) < Number(step.fail_units ?? 0)
       ) {
-        messages.push(`Step ${index + 1}: total units must be greater than or equal to fail units`)
+        messages.push(t('nested.validation.totalLessThanFail', { index: stepIndex }))
       }
       if (Number(step.fail_units ?? 0) !== step.failures.length) {
-        messages.push(`Step ${index + 1}: fail units must match number of failure rows`)
+        messages.push(t('nested.validation.failUnitsMismatch', { index: stepIndex }))
       }
       step.failures.forEach((failure, failureIndex) => {
         if (!failure.fail_code_text?.trim()) {
-          messages.push(`Step ${index + 1}, failure ${failureIndex + 1}: fail code is required`)
+          messages.push(
+            t('nested.validation.failCodeEmpty', {
+              index: stepIndex,
+              row: failureIndex + 1,
+            }),
+          )
         }
       })
     } else {
       if (step.failures.length) {
-        messages.push(`Step ${index + 1}: remove failure rows when no test results`)
+        messages.push(t('nested.validation.removeFailures', { index: stepIndex }))
       }
     }
   })
@@ -1310,7 +1338,11 @@ const lotTotalsWarnings = computed(() => {
       const autoValue = autoTotalForStep(step)
       const totalUnits = Number(step.total_units ?? 0)
       warnings.push(
-        `Step ${index + 1}: total units ${totalUnits} differ from selected lot quantity sum ${autoValue}`,
+        t('nested.warnings.lotTotalMismatch', {
+          index: index + 1,
+          total: totalUnits,
+          auto: autoValue,
+        }),
       )
     }
   })
@@ -1336,9 +1368,9 @@ const formattedPayload = computed(() => JSON.stringify(normalizedPayload.value, 
 const copyPayload = async () => {
   try {
     await navigator.clipboard.writeText(formattedPayload.value)
-    ElMessage.success('Payload copied to clipboard')
+    ElMessage.success(t('nested.copySuccess'))
   } catch (error) {
-    ElMessage.error('Unable to copy payload')
+    ElMessage.error(t('nested.copyError'))
     console.error(error)
   }
 }
