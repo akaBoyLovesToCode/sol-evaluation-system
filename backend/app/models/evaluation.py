@@ -522,6 +522,10 @@ class EvaluationProcessLot(db.Model):
     )
     lot_number = db.Column(db.String(100), nullable=False)
     quantity = db.Column(db.Integer, nullable=False, default=0)
+    client_id = db.Column(db.String(64))
+    process_key = db.Column(db.String(64))
+    process_name = db.Column(db.String(255))
+    process_order_index = db.Column(db.Integer)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(
@@ -560,6 +564,9 @@ class EvaluationProcessStep(db.Model):
     pass_units = db.Column(db.Integer)
     fail_units = db.Column(db.Integer)
     notes = db.Column(db.Text)
+    process_key = db.Column(db.String(64))
+    process_name = db.Column(db.String(255))
+    process_order_index = db.Column(db.Integer)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(

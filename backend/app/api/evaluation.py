@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from flask import Blueprint, Response, current_app, jsonify, request
 
@@ -125,53 +125,93 @@ def _ensure_fail_code_record(
     return fail_code
 
 
-def _normalize_nested_payload(
-    payload: Dict[str, Any],
-    warnings: List[str],
-) -> Dict[str, Any]:
-    lots_input = payload.get("lots")
-    legacy_lot_number_raw = str(
-        payload.get("legacy_lot_number") or payload.get("lot_number") or ""
-    ).strip()
-    legacy_quantity_raw = payload.get("legacy_quantity")
-    if legacy_quantity_raw is None:
-        legacy_quantity_raw = payload.get("quantity")
+def _normalize_process_key(raw_key: Optional[str], index: int, seen: set[str]) -> str:
+    candidate = (raw_key or "").strip()
+    if not candidate:
+        candidate = f"proc_{index:02d}"
+    candidate = candidate[:64] or f"proc_{index:02d}"
+    base = candidate
+    suffix = 1
+    while candidate in seen:
+        candidate = f"{base}_{suffix}"[:64] or f"proc_{index:02d}_{suffix}"
+        suffix += 1
+    seen.add(candidate)
+    return candidate
 
+
+def _normalize_process_lots(
+    lots_input: Optional[List[Dict[str, Any]]],
+    legacy_lot_number_raw: Optional[str],
+    legacy_quantity_raw: Optional[object],
+    process_key: str,
+    process_name: str,
+    process_index: int,
+) -> tuple[
+    List[Dict[str, Any]],
+    Dict[str, Dict[str, Any]],
+    Dict[str, Dict[str, Any]],
+    List[Dict[str, Any]],
+]:
     normalized_lots: List[Dict[str, Any]] = []
     alias_map: Dict[str, Dict[str, Any]] = {}
     primary_alias_map: Dict[str, Dict[str, Any]] = {}
+    payload_lots: List[Dict[str, Any]] = []
+
+    seen_client_ids: Set[str] = set()
 
     if isinstance(lots_input, list) and lots_input:
         for idx, raw_lot in enumerate(lots_input, start=1):
             lot_number = str(raw_lot.get("lot_number") or "").strip()
             if not lot_number:
-                raise ValueError(f"Lot {idx} must include lot_number")
+                raise ValueError(
+                    f"Process {process_name}: Lot {idx} must include lot_number"
+                )
 
             quantity = _safe_int(raw_lot.get("quantity"), default=0)
             alias = str(
                 raw_lot.get("temp_id")
                 or raw_lot.get("client_id")
                 or raw_lot.get("id")
-                or f"lot-{idx}"
+                or f"lot-{process_index}-{idx}"
             )
+            raw_client_id = str(raw_lot.get("client_id") or "").strip()
+            if not raw_client_id:
+                raw_client_id = f"{process_key or f'proc_{process_index:02d}'}-lot-{idx:02d}"
+            client_id = raw_client_id[:64] or f"{process_key or f'proc_{process_index:02d}'}-lot-{idx:02d}"
+            base_client_id = client_id
+            suffix = 1
+            while client_id in seen_client_ids:
+                client_id = f"{base_client_id}-{suffix}"[:64]
+                suffix += 1
+            seen_client_ids.add(client_id)
 
             entry = {
                 "lot_number": lot_number,
                 "quantity": quantity,
                 "alias": alias,
+                "client_id": client_id,
                 "id": raw_lot.get("id"),
             }
             normalized_lots.append(entry)
             primary_alias_map[alias] = entry
             alias_map[str(alias)] = entry
+            alias_map[str(client_id)] = entry
             if raw_lot.get("id") is not None:
                 alias_map[str(raw_lot.get("id"))] = entry
-            if raw_lot.get("client_id") is not None:
-                alias_map[str(raw_lot.get("client_id"))] = entry
+
+            payload_lots.append(
+                {
+                    "id": raw_lot.get("id"),
+                    "temp_id": alias,
+                    "client_id": client_id,
+                    "lot_number": lot_number,
+                    "quantity": quantity,
+                }
+            )
     else:
-        tokens = _split_legacy_lot_numbers(legacy_lot_number_raw)
+        tokens = _split_legacy_lot_numbers(legacy_lot_number_raw or "")
         if not tokens:
-            raise ValueError("At least one lot is required")
+            raise ValueError(f"Process {process_name}: at least one lot is required")
 
         distribution_total = _safe_int(legacy_quantity_raw, default=0)
         base = distribution_total // len(tokens) if tokens else 0
@@ -182,30 +222,59 @@ def _normalize_nested_payload(
             if remainder > 0:
                 quantity += 1
                 remainder -= 1
-            alias = f"legacy-{idx}"
+            alias = f"legacy-{process_index}-{idx}"
+            client_id = f"{process_key or f'proc_{process_index:02d}'}-lot-{idx:02d}"
+            base_client_id = client_id
+            suffix = 1
+            while client_id in seen_client_ids:
+                client_id = f"{base_client_id}-{suffix}"[:64]
+                suffix += 1
+            seen_client_ids.add(client_id)
             entry = {
                 "lot_number": token,
                 "quantity": quantity,
                 "alias": alias,
+                "client_id": client_id,
                 "id": None,
             }
             normalized_lots.append(entry)
             primary_alias_map[alias] = entry
             alias_map[alias] = entry
+            payload_lots.append(
+                {
+                    "id": None,
+                    "temp_id": alias,
+                    "client_id": client_id,
+                    "lot_number": token,
+                    "quantity": quantity,
+                }
+            )
 
-    if not normalized_lots:
-        raise ValueError("At least one lot is required")
+    return normalized_lots, alias_map, primary_alias_map, payload_lots
 
-    steps_input = payload.get("steps")
+
+def _normalize_process_steps(
+    steps_input: List[Dict[str, Any]],
+    normalized_lots: List[Dict[str, Any]],
+    alias_map: Dict[str, Dict[str, Any]],
+    primary_alias_map: Dict[str, Dict[str, Any]],
+    process_name: str,
+    process_index: int,
+    warnings: List[str],
+) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     if not isinstance(steps_input, list) or not steps_input:
-        raise ValueError("steps array is required")
+        raise ValueError(f"Process {process_name}: steps array is required")
 
     all_aliases = [entry["alias"] for entry in normalized_lots]
+    client_by_alias = {entry["alias"]: entry.get("client_id") for entry in normalized_lots}
+    alias_by_client = {entry.get("client_id"): entry["alias"] for entry in normalized_lots if entry.get("client_id")}
     normalized_steps: List[Dict[str, Any]] = []
+    payload_steps: List[Dict[str, Any]] = []
 
     for idx, raw_step in enumerate(steps_input, start=1):
+        context = f"Process {process_name} Step {idx}"
         canonical_code = _canonical_step_code(raw_step.get("step_code"))
-        step_label_value = (raw_step.get("step_label") or "").strip()
+        step_label_value = (raw_step.get("step_label") or "").strip() or None
 
         eval_code_raw = (raw_step.get("eval_code") or "").strip()
         eval_code = eval_code_raw.upper() if eval_code_raw else None
@@ -225,16 +294,24 @@ def _normalize_nested_payload(
         mapped_aliases: List[str] = []
         if isinstance(lot_refs_raw, list) and lot_refs_raw:
             for ref in lot_refs_raw:
-                entry = alias_map.get(str(ref))
+                ref_str = str(ref)
+                entry = alias_map.get(ref_str)
                 if not entry:
-                    raise ValueError(f"Step {idx} references unknown lot '{ref}'")
+                    alias_from_client = alias_by_client.get(ref_str)
+                    entry = alias_map.get(alias_from_client) if alias_from_client else None
+                if not entry:
+                    warnings.append(
+                        f"{context}: lot reference '{ref}' not found in process, ignoring"
+                    )
+                    continue
                 mapped_aliases.append(entry["alias"])
         else:
             mapped_aliases = all_aliases.copy()
 
         mapped_aliases = _dedupe_preserve_order(mapped_aliases)
         if not mapped_aliases:
-            raise ValueError(f"Step {idx} must reference at least one lot")
+            warnings.append(f"{context}: no valid lot references; defaulting to all process lots")
+            mapped_aliases = all_aliases.copy()
 
         lot_quantity_sum = sum(
             primary_alias_map[alias]["quantity"]
@@ -244,7 +321,7 @@ def _normalize_nested_payload(
 
         failures_input = raw_step.get("failures") or []
         if not isinstance(failures_input, list):
-            warnings.append(f"Step {idx} failures data ignored (expected list)")
+            warnings.append(f"{context}: failures data ignored (expected list)")
             failures_input = []
 
         normalized_failures: List[Dict[str, Any]] = []
@@ -253,7 +330,7 @@ def _normalize_nested_payload(
                 fail_code_text = str(raw_failure.get("fail_code_text") or "").strip()
                 if not fail_code_text:
                     warnings.append(
-                        f"Step {idx} failure {failure_idx}: missing fail_code_text, entry skipped"
+                        f"{context}: failure {failure_idx} missing fail_code_text, entry skipped"
                     )
                     continue
 
@@ -281,7 +358,7 @@ def _normalize_nested_payload(
         else:
             if failures_input:
                 warnings.append(
-                    f"Step {idx}: ignoring failures because results_applicable is false"
+                    f"{context}: ignoring failures because results_applicable is false"
                 )
             normalized_failures = []
 
@@ -296,11 +373,11 @@ def _normalize_nested_payload(
                     declared_fail_units, default=len(normalized_failures)
                 )
             if normalized_fail_units < 0:
-                raise ValueError(f"Step {idx} fail_units must be non-negative")
+                raise ValueError(f"{context}: fail_units must be non-negative")
 
             if normalized_fail_units != len(normalized_failures):
                 warnings.append(
-                    f"Step {idx} fail units ({normalized_fail_units}) differ from failure rows ({len(normalized_failures)})"
+                    f"{context}: fail units ({normalized_fail_units}) differ from failure rows ({len(normalized_failures)})"
                 )
 
             if declared_total_units is None:
@@ -309,17 +386,17 @@ def _normalize_nested_payload(
             else:
                 total_units_value = _safe_int(declared_total_units, default=0)
                 if total_units_value < 0:
-                    raise ValueError(f"Step {idx} total_units must be non-negative")
+                    raise ValueError(f"{context}: total_units must be non-negative")
                 if not total_units_manual and total_units_value != lot_quantity_sum:
                     total_units_manual = True
                 if total_units_value != lot_quantity_sum:
                     warnings.append(
-                        f"Step {idx} manual total {total_units_value} differs from lot sum {lot_quantity_sum}"
+                        f"{context}: manual total {total_units_value} differs from lot sum {lot_quantity_sum}"
                     )
 
             if total_units_value < normalized_fail_units:
                 raise ValueError(
-                    f"Step {idx} fail_units ({normalized_fail_units}) exceed test units ({total_units_value})"
+                    f"{context}: fail_units ({normalized_fail_units}) exceed test units ({total_units_value})"
                 )
 
             pass_units_value = max(total_units_value - normalized_fail_units, 0)
@@ -333,15 +410,13 @@ def _normalize_nested_payload(
             {
                 "order_index": order_index,
                 "step_code": canonical_code,
-                "step_label": step_label_value or None,
+                "step_label": step_label_value,
                 "eval_code": eval_code,
                 "notes": notes_value,
                 "lot_aliases": mapped_aliases,
                 "lot_quantity_sum": lot_quantity_sum,
                 "results_applicable": results_applicable,
-                "total_units_manual": total_units_manual
-                if results_applicable
-                else False,
+                "total_units_manual": total_units_manual if results_applicable else False,
                 "total_units": total_units_value if results_applicable else None,
                 "pass_units": pass_units_value if results_applicable else None,
                 "fail_units": normalized_fail_units if results_applicable else None,
@@ -349,45 +424,180 @@ def _normalize_nested_payload(
             }
         )
 
+        payload_steps.append(
+            {
+                "order_index": order_index,
+                "step_code": canonical_code,
+                "step_label": step_label_value,
+                "eval_code": eval_code,
+                "results_applicable": results_applicable,
+                "total_units": total_units_value if results_applicable else None,
+                "total_units_manual": total_units_manual if results_applicable else False,
+                "pass_units": pass_units_value if results_applicable else None,
+                "fail_units": normalized_fail_units if results_applicable else None,
+                "notes": notes_value,
+                "lot_refs": [client_by_alias.get(alias) or alias for alias in mapped_aliases],
+                "failures": [dict(failure) for failure in normalized_failures],
+            }
+        )
+
+    return normalized_steps, payload_steps
+
+
+def _normalize_nested_payload(
+    payload: Dict[str, Any],
+    warnings: List[str],
+) -> Dict[str, Any]:
+    legacy_lot_number_raw = str(
+        payload.get("legacy_lot_number") or payload.get("lot_number") or ""
+    ).strip()
+    legacy_quantity_raw = payload.get("legacy_quantity")
+    if legacy_quantity_raw is None:
+        legacy_quantity_raw = payload.get("quantity")
+
+    processes_input = payload.get("processes")
+    has_explicit_processes = isinstance(processes_input, list) and bool(processes_input)
+
+    if not has_explicit_processes:
+        processes_input = [
+            {
+                "key": payload.get("key") or payload.get("process_key"),
+                "name": payload.get("name") or payload.get("process_name"),
+                "order_index": payload.get("order_index")
+                or payload.get("process_order_index"),
+                "lots": payload.get("lots"),
+                "steps": payload.get("steps"),
+            }
+        ]
+    else:
+        processes_input = [proc for proc in processes_input if isinstance(proc, dict)]
+        if not processes_input:
+            raise ValueError("processes array is required")
+
+    normalized_processes: List[Dict[str, Any]] = []
+    combined_lots: List[Dict[str, Any]] = []
+    combined_steps: List[Dict[str, Any]] = []
+    payload_processes: List[Dict[str, Any]] = []
+    root_lots_payload: List[Dict[str, Any]] = []
+    root_steps_payload: List[Dict[str, Any]] = []
+
+    seen_keys: Set[str] = set()
+
+    for process_index, raw_process in enumerate(processes_input, start=1):
+        process_name_raw = (
+            raw_process.get("name")
+            or raw_process.get("process_name")
+            or ""
+        )
+        process_name = str(process_name_raw).strip() or f"Process {process_index}"
+        order_value = raw_process.get("order_index")
+        if order_value is None:
+            order_value = raw_process.get("process_order_index")
+        process_order_index = _safe_int(order_value, default=process_index)
+
+        process_key = _normalize_process_key(
+            raw_process.get("key") or raw_process.get("process_key"),
+            process_index,
+            seen_keys,
+        )
+
+        lots_input = raw_process.get("lots")
+        legacy_lots = legacy_lot_number_raw if not has_explicit_processes else None
+        legacy_qty = legacy_quantity_raw if not has_explicit_processes else None
+        if lots_input is None and not has_explicit_processes:
+            lots_input = payload.get("lots")
+            if lots_input is None:
+                legacy_lots = legacy_lot_number_raw
+                legacy_qty = legacy_quantity_raw
+        elif lots_input is None:
+            raise ValueError(f"Process {process_name}: lots array is required")
+
+        normalized_lots, alias_map, primary_alias_map, payload_lots = _normalize_process_lots(
+            lots_input,
+            legacy_lots,
+            legacy_qty,
+            process_key,
+            process_name,
+            process_index,
+        )
+
+        for entry in normalized_lots:
+            entry["process_key"] = process_key
+            entry["process_name"] = process_name
+            entry["process_order_index"] = process_order_index
+
+        for entry in payload_lots:
+            entry["process_key"] = process_key
+            entry["process_name"] = process_name
+            entry["process_order_index"] = process_order_index
+
+        combined_lots.extend(normalized_lots)
+
+        steps_input = raw_process.get("steps")
+        if steps_input is None and not has_explicit_processes:
+            steps_input = payload.get("steps")
+        if not isinstance(steps_input, list) or not steps_input:
+            raise ValueError(f"Process {process_name}: steps array is required")
+
+        normalized_steps, payload_steps = _normalize_process_steps(
+            steps_input,
+            normalized_lots,
+            alias_map,
+            primary_alias_map,
+            process_name,
+            process_index,
+            warnings,
+        )
+
+        for entry in normalized_steps:
+            entry["process_key"] = process_key
+            entry["process_name"] = process_name
+            entry["process_order_index"] = process_order_index
+
+        combined_steps.extend(normalized_steps)
+
+        payload_processes.append(
+            {
+                "key": process_key,
+                "name": process_name,
+                "order_index": process_order_index,
+                "lots": payload_lots,
+                "steps": payload_steps,
+            }
+        )
+
+        normalized_processes.append(
+            {
+                "key": process_key,
+                "name": process_name,
+                "order_index": process_order_index,
+                "lots": normalized_lots,
+                "steps": normalized_steps,
+            }
+        )
+
+        if process_index == 1:
+            root_lots_payload = payload_lots
+            root_steps_payload = payload_steps
+
     legacy_lot_number_value = legacy_lot_number_raw or None
     legacy_quantity_value = _safe_int(legacy_quantity_raw, default=None)
 
-    payload_for_storage = {
-        "lots": [
-            {
-                "id": entry["id"],
-                "temp_id": entry["alias"],
-                "client_id": entry["alias"],
-                "lot_number": entry["lot_number"],
-                "quantity": entry["quantity"],
-            }
-            for entry in normalized_lots
-        ],
-        "steps": [
-            {
-                "order_index": step["order_index"],
-                "step_code": step["step_code"],
-                "step_label": step["step_label"] or None,
-                "eval_code": step["eval_code"],
-                "results_applicable": step["results_applicable"],
-                "total_units": step["total_units"],
-                "total_units_manual": step["total_units_manual"],
-                "pass_units": step["pass_units"],
-                "fail_units": step["fail_units"],
-                "notes": step["notes"],
-                "lot_refs": step["lot_aliases"],
-                "failures": step["failures"],
-            }
-            for step in normalized_steps
-        ],
+    payload_for_storage: Dict[str, Any] = {
+        "processes": payload_processes,
         "legacy_lot_number": legacy_lot_number_value,
         "legacy_quantity": legacy_quantity_value,
     }
+    if root_lots_payload:
+        payload_for_storage["lots"] = root_lots_payload
+    if root_steps_payload:
+        payload_for_storage["steps"] = root_steps_payload
 
     return {
         "payload": payload_for_storage,
-        "lots": normalized_lots,
-        "steps": normalized_steps,
+        "processes": normalized_processes,
+        "lots": combined_lots,
+        "steps": combined_steps,
         "legacy_lot_number": legacy_lot_number_value,
         "legacy_quantity": legacy_quantity_value,
     }
@@ -1145,8 +1355,7 @@ def save_nested_process(evaluation_id: int) -> tuple[Response, int]:
     except ValueError as exc:
         return jsonify({"success": False, "message": str(exc)}), 400
 
-    normalized_lots = normalized["lots"]
-    normalized_steps = normalized["steps"]
+    normalized_processes = normalized["processes"]
     normalized_payload = normalized["payload"]
 
     try:
@@ -1164,83 +1373,113 @@ def save_nested_process(evaluation_id: int) -> tuple[Response, int]:
 
         db.session.flush()
 
-        lot_records: List[tuple[str, EvaluationProcessLot]] = []
-        for entry in normalized_lots:
-            lot_record = EvaluationProcessLot(
-                evaluation_id=evaluation.id,
-                lot_number=entry["lot_number"],
-                quantity=entry["quantity"],
-            )
-            db.session.add(lot_record)
-            lot_records.append((entry["alias"], lot_record))
+        lot_records: Dict[str, EvaluationProcessLot] = {}
+        for process in normalized_processes:
+            for entry in process["lots"]:
+                lot_record = EvaluationProcessLot(
+                    evaluation_id=evaluation.id,
+                    lot_number=entry["lot_number"],
+                    quantity=entry["quantity"],
+                    process_key=process["key"],
+                    process_name=process["name"],
+                    process_order_index=process["order_index"],
+                    client_id=entry.get("client_id"),
+                )
+                db.session.add(lot_record)
+                alias = entry["alias"]
+                client_id = entry.get("client_id") or alias
+                lot_records[alias] = lot_record
+                lot_records[client_id] = lot_record
+                if entry.get("id") is not None:
+                    lot_records[str(entry["id"])] = lot_record
 
         db.session.flush()
 
-        alias_to_record: Dict[str, EvaluationProcessLot] = {
-            alias: record for alias, record in lot_records
-        }
+        for process in normalized_processes:
+            for step_data in process["steps"]:
+                mapped_records: List[EvaluationProcessLot] = []
+                for alias in step_data["lot_aliases"]:
+                    record = lot_records.get(alias)
+                    if not record:
+                        current_app.logger.warning(
+                            "Missing lot mapping for alias %s in process %s",
+                            alias,
+                            process["key"],
+                        )
+                        continue
+                    mapped_records.append(record)
 
-        for step_data in normalized_steps:
-            mapped_records = [
-                alias_to_record[alias] for alias in step_data["lot_aliases"]
-            ]
-            lot_quantity_sum = sum(record.quantity for record in mapped_records)
-            lot_number_value = (
-                mapped_records[0].lot_number if len(mapped_records) == 1 else "MULTI"
-            )
-
-            results_applicable = step_data["results_applicable"]
-            total_units_value = step_data["total_units"] if results_applicable else None
-            pass_units_value = step_data["pass_units"] if results_applicable else None
-            fail_units_value = step_data["fail_units"] if results_applicable else None
-
-            step_record = EvaluationProcessStep(
-                evaluation_id=evaluation.id,
-                lot_number=lot_number_value,
-                quantity=lot_quantity_sum,
-                order_index=step_data["order_index"],
-                step_code=step_data["step_code"],
-                step_label=step_data["step_label"],
-                eval_code=step_data["eval_code"],
-                results_applicable=results_applicable,
-                total_units=total_units_value,
-                total_units_manual=step_data["total_units_manual"]
-                if results_applicable
-                else False,
-                pass_units=pass_units_value,
-                fail_units=fail_units_value,
-                notes=step_data["notes"],
-            )
-            db.session.add(step_record)
-            db.session.flush()
-
-            for lot_record in mapped_records:
-                db.session.add(
-                    EvaluationStepLot(
-                        step_id=step_record.id,
-                        lot_id=lot_record.id,
-                        quantity_override=None,
+                if not mapped_records:
+                    raise ValueError(
+                        f"Process {process['name']}: unable to resolve lots for step {step_data['order_index']}"
                     )
+
+                lot_quantity_sum = sum(record.quantity for record in mapped_records)
+                lot_number_value = (
+                    mapped_records[0].lot_number if len(mapped_records) == 1 else "MULTI"
                 )
 
-            for failure in step_data["failures"]:
-                fail_code_record = _ensure_fail_code_record(
-                    failure.get("fail_code_text"),
-                    failure.get("fail_code_id"),
-                    failure.get("fail_code_name_snapshot"),
-                    warnings,
+                results_applicable = step_data["results_applicable"]
+                total_units_value = (
+                    step_data["total_units"] if results_applicable else None
                 )
+                fail_units_value = (
+                    step_data["fail_units"] if results_applicable else None
+                )
+                pass_units_value = None
+                if results_applicable and total_units_value is not None and fail_units_value is not None:
+                    pass_units_value = max(total_units_value - fail_units_value, 0)
 
-                failure_record = EvaluationStepFailure(
-                    step_id=step_record.id,
-                    sequence=failure.get("sequence"),
-                    serial_number=failure.get("serial_number"),
-                    fail_code_id=fail_code_record.id if fail_code_record else None,
-                    fail_code_text=failure.get("fail_code_text"),
-                    fail_code_name_snapshot=failure.get("fail_code_name_snapshot"),
-                    analysis_result=failure.get("analysis_result"),
+                step_record = EvaluationProcessStep(
+                    evaluation_id=evaluation.id,
+                    lot_number=lot_number_value,
+                    quantity=lot_quantity_sum,
+                    order_index=step_data["order_index"],
+                    step_code=step_data["step_code"],
+                    step_label=step_data["step_label"],
+                    eval_code=step_data["eval_code"],
+                    results_applicable=results_applicable,
+                    total_units=total_units_value,
+                    total_units_manual=step_data["total_units_manual"]
+                    if results_applicable
+                    else False,
+                    pass_units=pass_units_value if results_applicable else None,
+                    fail_units=fail_units_value if results_applicable else None,
+                    notes=step_data["notes"],
+                    process_key=process["key"],
+                    process_name=process["name"],
+                    process_order_index=process["order_index"],
                 )
-                db.session.add(failure_record)
+                db.session.add(step_record)
+                db.session.flush()
+
+                for lot_record in mapped_records:
+                    db.session.add(
+                        EvaluationStepLot(
+                            step_id=step_record.id,
+                            lot_id=lot_record.id,
+                            quantity_override=None,
+                        )
+                    )
+
+                for failure in step_data["failures"]:
+                    fail_code_record = _ensure_fail_code_record(
+                        failure.get("fail_code_text"),
+                        failure.get("fail_code_id"),
+                        failure.get("fail_code_name_snapshot"),
+                        warnings,
+                    )
+
+                    failure_record = EvaluationStepFailure(
+                        step_id=step_record.id,
+                        sequence=failure.get("sequence"),
+                        serial_number=failure.get("serial_number"),
+                        fail_code_id=fail_code_record.id if fail_code_record else None,
+                        fail_code_text=failure.get("fail_code_text"),
+                        fail_code_name_snapshot=failure.get("fail_code_name_snapshot"),
+                        analysis_result=failure.get("analysis_result"),
+                    )
+                    db.session.add(failure_record)
 
         raw_record = EvaluationProcessRaw(
             evaluation_id=evaluation.id,
@@ -1268,6 +1507,9 @@ def save_nested_process(evaluation_id: int) -> tuple[Response, int]:
         db.session.commit()
 
         return jsonify({"success": True, "data": {"warnings": warnings}})
+    except ValueError as exc:  # type: ignore[union-attr]
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(exc)}), 400
     except Exception as exc:  # noqa: BLE001
         db.session.rollback()
         current_app.logger.error(
@@ -1308,107 +1550,157 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
         .all()
     )
 
-    payload_lots: List[Dict[str, Any]] = []
-    lot_alias_map: Dict[int, str] = {}
-    lot_quantity_map: Dict[int, int] = {}
+    process_groups: Dict[str, Dict[str, Any]] = {}
+    used_output_keys: Set[str] = set()
+    fallback_counter = 1
+
+    def resolve_group(
+        raw_key: Optional[str],
+        raw_name: Optional[str],
+        raw_order: Optional[int],
+    ) -> Dict[str, Any]:
+        nonlocal fallback_counter
+        trimmed_key = (raw_key or "").strip()
+        trimmed_name = (raw_name or "").strip()
+        identifier = (
+            f"key::{trimmed_key}" if trimmed_key else f"default::{raw_order or 0}::{trimmed_name}"
+        )
+        group = process_groups.get(identifier)
+        if group:
+            return group
+
+        order_index = _safe_int(raw_order, default=None)
+        if order_index is None or order_index <= 0:
+            order_index = fallback_counter
+
+        name = trimmed_name or f"Process {order_index}"
+        base_key = trimmed_key[:64] if trimmed_key else f"proc_{order_index:02d}"
+        candidate = base_key or f"proc_{order_index:02d}"
+        suffix = 1
+        while candidate in used_output_keys:
+            candidate = f"{base_key}_{suffix}"[:64] or f"proc_{order_index:02d}_{suffix}"
+            suffix += 1
+        used_output_keys.add(candidate)
+
+        group = {
+            "identifier": identifier,
+            "key": candidate,
+            "name": name,
+            "order_index": order_index,
+            "lots": [],
+            "steps": [],
+        }
+        process_groups[identifier] = group
+        fallback_counter += 1
+        return group
+
+    lot_id_to_client: Dict[int, str] = {}
+    lot_id_to_record: Dict[int, EvaluationProcessLot] = {}
 
     for lot in lots:
-        alias = f"lot-{lot.id}"
-        payload_lots.append(
-            {
-                "id": lot.id,
-                "temp_id": alias,
-                "client_id": alias,
-                "lot_number": lot.lot_number,
-                "quantity": lot.quantity,
-            }
-        )
-        lot_alias_map[lot.id] = alias
-        lot_quantity_map[lot.id] = lot.quantity
-
-    fallback_alias_by_label: Dict[str, str] = {}
-    fallback_quantity_by_alias: Dict[str, int] = {}
-    if not payload_lots and steps:
-        for step in steps:
-            label = (
-                step.lot_number or ""
-            ).strip() or f"legacy-{len(fallback_alias_by_label) + 1}"
-            if label not in fallback_alias_by_label:
-                alias = f"legacy-{len(fallback_alias_by_label) + 1}"
-                fallback_alias_by_label[label] = alias
-                quantity_value = step.quantity or 0
-                payload_lots.append(
-                    {
-                        "id": None,
-                        "temp_id": alias,
-                        "client_id": alias,
-                        "lot_number": label,
-                        "quantity": quantity_value,
-                    }
-                )
-                fallback_quantity_by_alias[alias] = quantity_value
+        group = resolve_group(lot.process_key, lot.process_name, lot.process_order_index)
+        client_id = (lot.client_id or f"{group['key']}-lot-{len(group['lots']) + 1}")
+        lot_payload = {
+            "id": lot.id,
+            "temp_id": client_id,
+            "client_id": client_id,
+            "lot_number": lot.lot_number,
+            "quantity": lot.quantity,
+        }
+        group["lots"].append(lot_payload)
+        if lot.id is not None:
+            lot_id_to_client[lot.id] = client_id
+            lot_id_to_record[lot.id] = lot
 
     warnings: List[str] = []
-    payload_steps: List[Dict[str, Any]] = []
 
-    for index, step in enumerate(steps, start=1):
+    for step in steps:
+        group = resolve_group(
+            step.process_key, step.process_name, step.process_order_index
+        )
+
         lot_refs: List[str] = []
         if step.lot_assignments:
             lot_refs = _dedupe_preserve_order(
                 [
-                    lot_alias_map.get(link.lot_id)
+                    lot_id_to_client.get(link.lot_id)
                     for link in step.lot_assignments
-                    if link.lot_id in lot_alias_map
+                    if lot_id_to_client.get(link.lot_id)
                 ]
             )
 
-        if not lot_refs and fallback_alias_by_label:
-            label = (step.lot_number or "").strip()
-            alias = fallback_alias_by_label.get(label)
-            if alias:
-                lot_refs = [alias]
+        if not lot_refs and group["lots"]:
+            lot_refs = [lot["client_id"] for lot in group["lots"]]
 
-        if not lot_refs and payload_lots:
-            lot_refs = [lot["temp_id"] for lot in payload_lots]
+        if not group["lots"] and lot_refs:
+            # ensure referenced lots exist in payload
+            for ref in lot_refs:
+                group["lots"].append(
+                    {
+                        "id": None,
+                        "temp_id": ref,
+                        "client_id": ref,
+                        "lot_number": step.lot_number or ref,
+                        "quantity": step.quantity or 0,
+                    }
+                )
+
+        if not lot_refs:
+            client_id = f"{group['key']}-lot-{len(group['lots']) + 1}"
+            group["lots"].append(
+                {
+                    "id": None,
+                    "temp_id": client_id,
+                    "client_id": client_id,
+                    "lot_number": step.lot_number or client_id,
+                    "quantity": step.quantity or 0,
+                }
+            )
+            lot_refs = [client_id]
 
         results_applicable = (
             step.results_applicable if step.results_applicable is not None else True
         )
-        total_units = step.total_units if step.total_units is not None else None
-        pass_units = step.pass_units if step.pass_units is not None else None
-        fail_units = step.fail_units if step.fail_units is not None else None
+        total_units = step.total_units if results_applicable else None
+        fail_units = step.fail_units if results_applicable else None
+        if results_applicable and fail_units is None:
+            fail_units = len(step.failures or [])
+        pass_units = None
+        if results_applicable and total_units is not None and fail_units is not None:
+            pass_units = max(total_units - fail_units, 0)
 
         lot_sum = 0
         if step.lot_assignments:
-            lot_sum = sum(
-                lot_quantity_map.get(link.lot_id, 0) for link in step.lot_assignments
-            )
-        elif lot_refs and fallback_quantity_by_alias:
-            lot_sum = sum(
-                fallback_quantity_by_alias.get(alias, 0) for alias in lot_refs
-            )
+            for link in step.lot_assignments:
+                record = lot_id_to_record.get(link.lot_id)
+                if record is not None:
+                    lot_sum += record.quantity or 0
+        if not lot_sum and group["lots"]:
+            for lot_payload in group["lots"]:
+                if lot_payload["client_id"] in lot_refs:
+                    lot_sum += lot_payload.get("quantity") or 0
 
-        if results_applicable:
-            if fail_units is None:
-                fail_units = len(step.failures or [])
-            if total_units is not None and pass_units is not None:
-                if total_units != (pass_units or 0) + fail_units:
-                    warnings.append(
-                        f"Step {index} totals mismatch: total={total_units}, pass={pass_units}, fail={fail_units}"
-                    )
-            if lot_refs and total_units is not None and total_units != lot_sum:
+        if results_applicable and total_units is not None and fail_units is not None:
+            if total_units != (pass_units or 0) + fail_units:
                 warnings.append(
-                    f"Step {index} lot quantity mismatch: total_units={total_units}, lot_sum={lot_sum}"
+                    f"Process {group['name']} Step {step.order_index} totals mismatch: total={total_units}, pass={pass_units}, fail={fail_units}"
                 )
-        else:
-            total_units = None
-            pass_units = None
-            fail_units = None
+        if (
+            results_applicable
+            and total_units is not None
+            and lot_refs
+            and lot_sum is not None
+            and total_units != lot_sum
+        ):
+            warnings.append(
+                f"Process {group['name']} Step {step.order_index} lot quantity mismatch: total_units={total_units}, lot_sum={lot_sum}"
+            )
 
         failures_payload = sorted(
             step.failures, key=lambda failure: failure.sequence or 0
         )
-        payload_steps.append(
+
+        group["steps"].append(
             {
                 "order_index": step.order_index,
                 "step_code": step.step_code,
@@ -1437,6 +1729,20 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
             }
         )
 
+    processes_payload = sorted(
+        (
+            {
+                "key": group["key"],
+                "name": group["name"],
+                "order_index": group["order_index"],
+                "lots": group["lots"],
+                "steps": sorted(group["steps"], key=lambda step: step["order_index"]),
+            }
+            for group in process_groups.values()
+        ),
+        key=lambda item: (item["order_index"], item["key"]),
+    )
+
     latest_raw = (
         EvaluationProcessRaw.query.filter_by(evaluation_id=evaluation_id)
         .order_by(EvaluationProcessRaw.created_at.desc())
@@ -1448,12 +1754,18 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
         legacy_lot_number = latest_raw.payload.get("legacy_lot_number")
         legacy_quantity = latest_raw.payload.get("legacy_quantity")
 
-    response_payload = {
-        "lots": payload_lots,
-        "steps": payload_steps,
+    response_payload: Dict[str, Any] = {
+        "processes": processes_payload,
         "legacy_lot_number": legacy_lot_number,
         "legacy_quantity": legacy_quantity,
     }
+
+    if processes_payload:
+        response_payload["lots"] = processes_payload[0]["lots"]
+        response_payload["steps"] = processes_payload[0]["steps"]
+    else:
+        response_payload["lots"] = []
+        response_payload["steps"] = []
 
     return jsonify(
         {"success": True, "data": {"payload": response_payload, "warnings": warnings}}
