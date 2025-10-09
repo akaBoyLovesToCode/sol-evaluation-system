@@ -362,7 +362,15 @@
       "totalLessThanFail": "Step {index}: Total Units는 불량 수량보다 작을 수 없습니다",
       "failUnitsMismatch": "Step {index}: 불량 수량이 행 수와 일치해야 합니다",
       "failCodeEmpty": "Step {index}, {row}행: 불량 Code가 필요합니다",
-      "removeFailures": "Step {index}: 시험 결과가 없으면 불량 행을 삭제하세요"
+      "removeFailures": "Step {index}: 시험 결과가 없으면 불량 행을 삭제하세요",
+      "processRequired": "Process를 하나 이상 추가하세요",
+      "processName": "Process {index}: 이름이 필요합니다",
+      "processLotRequired": "Process {index}: Lot을 하나 이상 추가하세요",
+      "stepRequiredProcess": "Process {process}: Step을 하나 이상 추가하세요",
+      "stepCodeProcess": "Process {process}, Step {index}: Step Code가 필요합니다",
+      "totalLessThanFailProcess": "Process {process}, Step {index}: Test Units는 Fail Units 이상이어야 합니다",
+      "failCodeEmptyProcess": "Process {process}, Step {index}, Row {row}: Fail Code가 필요합니다",
+      "removeFailuresProcess": "Process {process}, Step {index}: 시험 결과가 없으면 불량 행을 제거하세요"
     },
     "warnings": {
       "lotTotalMismatch": "Step {index}: Total Units {total} 값이 Lot 합계 {auto}와 다릅니다",
@@ -376,8 +384,24 @@
       "allLots": "모든 Lot",
       "noResults": "시험 결과 없음",
       "failuresCount": "불량: {count}",
-      "evalLine": "Eval: {eval} · 총 수량 {total} (Pass {pass}, 불량 {fail})"
-    }
+      "evalLine": "Eval: {eval} · 총 수량 {total} (Pass {pass}, 불량 {fail})",
+      "lotFallback": "Lot {index}"
+    },
+    "processSummary": "Process 요약:",
+    "addProcess": "Process 추가",
+    "duplicateProcess": "Process 복제",
+    "deleteProcess": "Process 삭제",
+    "processTag": "Process",
+    "processNamePlaceholder": "Process 이름을 입력하세요",
+    "expand": "펼치기",
+    "collapse": "접기",
+    "copySuffix": "(복제)",
+    "processRequiredMessage": "최소 한 개의 Process가 필요합니다",
+    "defaultProcessName": "Process {index}",
+    "autoTotalHint": "Auto: {formula} = {total}",
+    "processLotName": "Lot 이름",
+    "lotId": "Client ID",
+    "noProcess": "등록된 Process 없음"
   },
   "status": {
     "draft": "초안",

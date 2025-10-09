@@ -11,27 +11,33 @@
         <p class="page-description">{{ evaluation.product_name }}</p>
       </div>
       <div class="header-right">
-        <el-button type="primary" plain :icon="Connection" @click="goToNestedEditor">
+        <el-button type="primary" plain @click="goToNestedEditor">
+          <template #icon><Connection /></template>
           {{ $t('evaluation.manageNestedProcesses') }}
         </el-button>
-        <el-button v-if="canEdit" type="primary" :icon="Edit" @click="handleEdit">
+        <el-button v-if="canEdit" type="primary" @click="handleEdit">
+          <template #icon><Edit /></template>
           {{ $t('common.edit') }}
         </el-button>
 
         <el-dropdown v-if="canOperate" @command="handleOperation">
-          <el-button type="primary" :icon="MoreFilled">
+          <el-button type="primary">
+            <template #icon><MoreFilled /></template>
             {{ $t('common.operations') }}
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
               <!-- Approvals removed in simplified mode -->
-              <el-dropdown-item v-if="canPause" command="pause" :icon="VideoPause">
+              <el-dropdown-item v-if="canPause" command="pause">
+                <el-icon><VideoPause /></el-icon>
                 {{ $t('evaluation.pause') }}
               </el-dropdown-item>
-              <el-dropdown-item v-if="canResume" command="resume" :icon="VideoPlay">
+              <el-dropdown-item v-if="canResume" command="resume">
+                <el-icon><VideoPlay /></el-icon>
                 {{ $t('evaluation.resume') }}
               </el-dropdown-item>
-              <el-dropdown-item v-if="canCancel" command="cancel" :icon="Close" divided>
+              <el-dropdown-item v-if="canCancel" command="cancel" divided>
+                <el-icon><Close /></el-icon>
                 {{ $t('evaluation.cancel') }}
               </el-dropdown-item>
             </el-dropdown-menu>
@@ -51,21 +57,23 @@
                   <span>{{ $t('evaluation.basicInformation') }}</span>
                   <div class="header-actions">
                     <template v-if="!editing && canEdit">
-                      <el-button size="small" type="primary" :icon="Edit" @click="startEdit">
+                      <el-button size="small" type="primary" @click="startEdit">
+                        <template #icon><Edit /></template>
                         {{ $t('common.edit') }}
                       </el-button>
                     </template>
                     <template v-else-if="editing">
-                      <el-button size="small" :icon="Close" @click="cancelEdit">
+                      <el-button size="small" @click="cancelEdit">
+                        <template #icon><Close /></template>
                         {{ $t('common.cancel') }}
                       </el-button>
                       <el-button
                         size="small"
                         type="primary"
                         :loading="saving"
-                        :icon="Check"
                         @click="saveEdit"
                       >
+                        <template #icon><Check /></template>
                         {{ $t('common.save') }}
                       </el-button>
                     </template>
@@ -229,7 +237,8 @@
               <template #header>
                 <div class="card-header">
                   <span>{{ $t('evaluation.relatedFiles') }}</span>
-                  <el-button v-if="canEdit" size="small" :icon="Plus" @click="handleUploadFile">
+                  <el-button v-if="canEdit" size="small" @click="handleUploadFile">
+                    <template #icon><Plus /></template>
                     {{ $t('evaluation.upload') }}
                   </el-button>
                 </div>
@@ -244,7 +253,14 @@
                       {{ formatDate(file.created_at) }}
                     </div>
                   </div>
-                  <el-button size="small" :icon="Download" @click="handleDownloadFile(file)" />
+                  <el-button
+                    size="small"
+                    @click="handleDownloadFile(file)"
+                    aria-label="Download file"
+                    title="Download file"
+                  >
+                    <template #icon><Download /></template>
+                  </el-button>
                 </div>
                 <div v-if="!evaluation.files || evaluation.files.length === 0" class="empty-files">
                   {{ $t('evaluation.noRelatedFiles') }}
@@ -273,21 +289,23 @@
                   <span>{{ $t('evaluation.technicalSpecifications') }}</span>
                   <div class="header-actions">
                     <template v-if="!editing && canEdit">
-                      <el-button size="small" type="primary" :icon="Edit" @click="startEdit">
+                      <el-button size="small" type="primary" @click="startEdit">
+                        <template #icon><Edit /></template>
                         {{ $t('common.edit') }}
                       </el-button>
                     </template>
                     <template v-else-if="editing">
-                      <el-button size="small" :icon="Close" @click="cancelEdit">
+                      <el-button size="small" @click="cancelEdit">
+                        <template #icon><Close /></template>
                         {{ $t('common.cancel') }}
                       </el-button>
                       <el-button
                         size="small"
                         type="primary"
                         :loading="saving"
-                        :icon="Check"
                         @click="saveEdit"
                       >
+                        <template #icon><Check /></template>
                         {{ $t('common.save') }}
                       </el-button>
                     </template>
@@ -324,54 +342,60 @@
                     v-if="canEdit"
                     size="small"
                     type="primary"
-                    :icon="Connection"
                     @click="openProcessDrawer"
                   >
+                    <template #icon><Connection /></template>
                     {{ $t('evaluation.manageNestedProcesses') }}
                   </el-button>
                 </div>
               </template>
 
-              <div v-if="builderSummaryLots.length" class="nested-lots-summary">
-                <h4>{{ $t('nested.summary.lotsHeading') }}</h4>
-                <ul>
-                  <li v-for="lot in builderSummaryLots" :key="lot.client_id">
-                    {{ lot.label }}
-                  </li>
-                </ul>
-              </div>
-
               <el-empty v-if="!builderHasStepsSummary" :description="$t('nested.summary.empty')" />
 
               <div v-else class="nested-summary">
                 <div
-                  v-for="step in builderSummarySteps"
-                  :key="step.order_index"
-                  class="nested-summary-item"
+                  v-for="process in builderSummaryProcesses"
+                  :key="process.key"
+                  class="nested-process-summary"
                 >
-                  <div class="nested-step-title">
-                    <strong>{{ step.order_index }}. {{ step.step_code }}</strong>
-                    <span v-if="step.step_label"> - {{ step.step_label }}</span>
+                  <div class="nested-process-header">
+                    <strong>{{ process.name }}</strong>
+                    <span class="nested-process-chain">
+                      {{ process.steps.map((step) => step.step_code || $t('nested.newStep')).join(' → ') }}
+                    </span>
                   </div>
-                  <div v-if="step.results_applicable !== false" class="nested-step-meta">
-                    {{
-                      $t('nested.summary.evalLine', {
-                        eval: step.eval_code || '—',
-                        total: formatUnit(step.total_units),
-                        pass: formatUnit(step.pass_units),
-                        fail: formatUnit(step.fail_units),
-                      })
-                    }}
-                  </div>
-                  <div v-else class="nested-step-meta">{{ $t('nested.summary.noResults') }}</div>
-                  <div class="nested-step-lots">
-                    {{ $t('nested.summary.appliesTo') }} {{ describeStepLots(step.lot_refs) }}
-                  </div>
+                  <ul v-if="process.lots.length" class="nested-process-lots">
+                    <li v-for="lot in process.lots" :key="lot.client_id">{{ lot.label }}</li>
+                  </ul>
                   <div
-                    v-if="Array.isArray(step.failures) && step.failures.length"
-                    class="nested-failure-count"
+                    v-for="step in process.steps"
+                    :key="`${process.key}-${step.order_index}`"
+                    class="nested-summary-item"
                   >
-                    {{ $t('nested.summary.failuresCount', { count: step.failures.length }) }}
+                    <div class="nested-step-title">
+                      <strong>{{ step.order_index }}. {{ step.step_code }}</strong>
+                      <span v-if="step.step_label"> - {{ step.step_label }}</span>
+                    </div>
+                    <div v-if="step.results_applicable !== false" class="nested-step-meta">
+                      {{
+                        $t('nested.summary.evalLine', {
+                          eval: step.eval_code || '—',
+                          total: formatUnit(step.total_units),
+                          pass: formatUnit(step.pass_units),
+                          fail: formatUnit(step.fail_units),
+                        })
+                      }}
+                    </div>
+                    <div v-else class="nested-step-meta">{{ $t('nested.summary.noResults') }}</div>
+                    <div class="nested-step-lots">
+                      {{ $t('nested.summary.appliesTo') }} {{ describeStepLots(process, step.lot_refs) }}
+                    </div>
+                    <div
+                      v-if="Array.isArray(step.failures) && step.failures.length"
+                      class="nested-failure-count"
+                    >
+                      {{ $t('nested.summary.failuresCount', { count: step.failures.length }) }}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -416,9 +440,11 @@
                   <el-timeline-item
                     v-for="log in filteredLogs"
                     :key="log.id || log.created_at"
-                    :icon="getOperationIcon(log.operation_type)"
                     :color="getOperationColor(log.operation_type)"
                   >
+                    <template #dot>
+                      <el-icon><component :is="getOperationIconName(log.operation_type)" /></el-icon>
+                    </template>
                     <div class="log-content">
                       <div class="log-time">{{ formatDateTime(log.created_at) }}</div>
                       <div class="log-user">
@@ -490,21 +516,23 @@
                 <span>{{ $t('evaluation.basicInformation') }}</span>
                 <div class="header-actions">
                   <template v-if="!editing && canEdit">
-                    <el-button size="small" type="primary" :icon="Edit" @click="startEdit">
+                    <el-button size="small" type="primary" @click="startEdit">
+                      <template #icon><Edit /></template>
                       {{ $t('common.edit') }}
                     </el-button>
                   </template>
                   <template v-else-if="editing">
-                    <el-button size="small" :icon="Close" @click="cancelEdit">
+                    <el-button size="small" @click="cancelEdit">
+                      <template #icon><Close /></template>
                       {{ $t('common.cancel') }}
                     </el-button>
                     <el-button
                       size="small"
                       type="primary"
                       :loading="saving"
-                      :icon="Check"
                       @click="saveEdit"
                     >
+                      <template #icon><Check /></template>
                       {{ $t('common.save') }}
                     </el-button>
                   </template>
@@ -695,54 +723,60 @@
                   v-if="canEdit"
                   type="primary"
                   plain
-                  :icon="Connection"
                   @click="openProcessDrawer"
                 >
+                  <template #icon><Connection /></template>
                   {{ $t('evaluation.manageNestedProcesses') }}
                 </el-button>
               </div>
             </template>
 
-            <div v-if="builderSummaryLots.length" class="nested-lots-summary">
-              <h4>{{ $t('nested.summary.lotsHeading') }}</h4>
-              <ul>
-                <li v-for="lot in builderSummaryLots" :key="lot.client_id">
-                  {{ lot.label }}
-                </li>
-              </ul>
-            </div>
-
             <el-empty v-if="!builderHasStepsSummary" :description="$t('nested.summary.empty')" />
 
             <div v-else class="nested-summary">
               <div
-                v-for="step in builderSummarySteps"
-                :key="step.order_index"
-                class="nested-summary-item"
+                v-for="process in builderSummaryProcesses"
+                :key="process.key"
+                class="nested-process-summary"
               >
-                <div class="nested-step-title">
-                  <strong>{{ step.order_index }}. {{ step.step_code }}</strong>
-                  <span v-if="step.step_label"> - {{ step.step_label }}</span>
+                <div class="nested-process-header">
+                  <strong>{{ process.name }}</strong>
+                  <span class="nested-process-chain">
+                    {{ process.steps.map((step) => step.step_code || $t('nested.newStep')).join(' → ') }}
+                  </span>
                 </div>
-                <div v-if="step.results_applicable !== false" class="nested-step-meta">
-                  {{
-                    $t('nested.summary.evalLine', {
-                      eval: step.eval_code || '—',
-                      total: formatUnit(step.total_units),
-                      pass: formatUnit(step.pass_units),
-                      fail: formatUnit(step.fail_units),
-                    })
-                  }}
-                </div>
-                <div v-else class="nested-step-meta">{{ $t('nested.summary.noResults') }}</div>
-                <div class="nested-step-lots">
-                  {{ $t('nested.summary.appliesTo') }} {{ describeStepLots(step.lot_refs) }}
-                </div>
+                <ul v-if="process.lots.length" class="nested-process-lots">
+                  <li v-for="lot in process.lots" :key="lot.client_id">{{ lot.label }}</li>
+                </ul>
                 <div
-                  v-if="Array.isArray(step.failures) && step.failures.length"
-                  class="nested-failure-count"
+                  v-for="step in process.steps"
+                  :key="`${process.key}-${step.order_index}`"
+                  class="nested-summary-item"
                 >
-                  {{ $t('nested.summary.failuresCount', { count: step.failures.length }) }}
+                  <div class="nested-step-title">
+                    <strong>{{ step.order_index }}. {{ step.step_code }}</strong>
+                    <span v-if="step.step_label"> - {{ step.step_label }}</span>
+                  </div>
+                  <div v-if="step.results_applicable !== false" class="nested-step-meta">
+                    {{
+                      $t('nested.summary.evalLine', {
+                        eval: step.eval_code || '—',
+                        total: formatUnit(step.total_units),
+                        pass: formatUnit(step.pass_units),
+                        fail: formatUnit(step.fail_units),
+                      })
+                    }}
+                  </div>
+                  <div v-else class="nested-step-meta">{{ $t('nested.summary.noResults') }}</div>
+                  <div class="nested-step-lots">
+                    {{ $t('nested.summary.appliesTo') }} {{ describeStepLots(process, step.lot_refs) }}
+                  </div>
+                  <div
+                    v-if="Array.isArray(step.failures) && step.failures.length"
+                    class="nested-failure-count"
+                  >
+                    {{ $t('nested.summary.failuresCount', { count: step.failures.length }) }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -835,7 +869,8 @@
             <template #header>
               <div class="card-header">
                 <span>{{ $t('evaluation.relatedFiles') }}</span>
-                <el-button v-if="canEdit" size="small" :icon="Plus" @click="handleUploadFile">
+                <el-button v-if="canEdit" size="small" @click="handleUploadFile">
+                  <template #icon><Plus /></template>
                   {{ $t('evaluation.upload') }}
                 </el-button>
               </div>
@@ -850,7 +885,14 @@
                     {{ formatDate(file.created_at) }}
                   </div>
                 </div>
-                <el-button size="small" :icon="Download" @click="handleDownloadFile(file)" />
+                <el-button
+                  size="small"
+                  @click="handleDownloadFile(file)"
+                  aria-label="Download file"
+                  title="Download file"
+                >
+                  <template #icon><Download /></template>
+                </el-button>
               </div>
               <div v-if="!evaluation.files || evaluation.files.length === 0" class="empty-files">
                 {{ $t('evaluation.noRelatedFiles') }}
@@ -871,9 +913,11 @@
                 <el-timeline-item
                   v-for="log in filteredLogs"
                   :key="log.id"
-                  :icon="getOperationIcon(log.operation_type)"
                   :color="getOperationColor(log.operation_type)"
                 >
+                  <template #dot>
+                    <el-icon><component :is="getOperationIconName(log.operation_type)" /></el-icon>
+                  </template>
                   <div class="log-content">
                     <div class="log-time">
                       {{ formatDateTime(log.created_at) }}
@@ -934,26 +978,6 @@ const props = defineProps({
 // No emits used currently (inline editing in same view)
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  Edit,
-  MoreFilled,
-  Check,
-  Close,
-  VideoPause,
-  VideoPlay,
-  Plus,
-  Document,
-  Download,
-  View,
-  EditPen,
-  Delete,
-  CirclePlus,
-  CircleCheck,
-  CircleClose,
-  User,
-  Download as DownloadIcon,
-  Connection,
-} from '@element-plus/icons-vue'
 import api from '../utils/api'
 import ProcessBuilder from '../components/ProcessBuilder.vue'
 import {
@@ -1000,41 +1024,43 @@ const processBuilderWarnings = ref([])
 const processBuilderDirty = ref(false)
 const nestedSaveWarnings = ref([])
 const nestedSaveError = ref(null)
-const builderSummaryLots = computed(() => {
-  const lots = Array.isArray(builderPayload.value.lots) ? builderPayload.value.lots : []
-  return lots
-    .filter((lot) => (lot.lot_number || '').trim())
-    .map((lot, index) => {
+const builderSummaryProcesses = computed(() => {
+  const processes = Array.isArray(builderPayload.value.processes)
+    ? builderPayload.value.processes
+    : []
+
+  return processes.map((process, processIndex) => {
+    const lots = Array.isArray(process.lots) ? process.lots : []
+    const lotLabels = lots.map((lot, lotIndex) => {
       const quantity = Number(lot.quantity) || 0
-      const lotNumber = lot.lot_number || `Lot ${index + 1}`
+      const lotNumber = lot.lot_number || t('nested.summary.lotFallback', { index: lotIndex + 1 })
+      const label = quantity ? `${lotNumber} (${quantity})` : lotNumber
       return {
-        client_id: lot.client_id || lot.temp_id || `lot-${index + 1}`,
-        lot_number: lotNumber,
-        quantity,
-        label: quantity ? `${lotNumber} (${quantity})` : lotNumber,
+        client_id: lot.client_id || lot.temp_id || `${process.key || 'proc'}-lot-${lotIndex}`,
+        label,
       }
     })
-})
+    const lotLabelMap = new Map(lotLabels.map((lot) => [String(lot.client_id), lot.label]))
 
-const builderLotLabelMap = computed(() => {
-  const map = new Map()
-  builderSummaryLots.value.forEach((lot) => {
-    map.set(String(lot.client_id), lot.label)
+    return {
+      key: process.key || `proc_${processIndex + 1}`,
+      name: process.name || t('nested.defaultProcessName', { index: processIndex + 1 }),
+      order_index: process.order_index || processIndex + 1,
+      lots: lotLabels,
+      lotLabelMap,
+      steps: Array.isArray(process.steps) ? process.steps : [],
+    }
   })
-  return map
 })
 
-const builderSummarySteps = computed(() =>
-  Array.isArray(builderPayload.value.steps) ? builderPayload.value.steps : [],
-)
 const builderHasStepsSummary = computed(() => hasBuilderSteps(builderPayload.value))
 
-const describeStepLots = (lotRefs) => {
+const describeStepLots = (process, lotRefs) => {
   if (!Array.isArray(lotRefs) || !lotRefs.length) {
     return t('nested.summary.allLots')
   }
   const labels = lotRefs
-    .map((ref) => builderLotLabelMap.value.get(String(ref)) || builderLotLabelMap.value.get(ref))
+    .map((ref) => process.lotLabelMap.get(String(ref)) || process.lotLabelMap.get(ref))
     .filter(Boolean)
   if (!labels.length) {
     return t('nested.summary.allLots')
@@ -1144,7 +1170,7 @@ function clearNestedError() {
 
 async function commitBuilderChanges() {
   if (!processBuilderRef.value || !evaluation.value) return
-  builderPayload.value = processBuilderRef.value.getPayload()
+  builderPayload.value = normalizeBuilderPayload(processBuilderRef.value.getPayload())
   processBuilderWarnings.value = []
   processBuilderRef.value.markPristine()
   processBuilderDirty.value = false
@@ -1442,19 +1468,19 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
-const getOperationIcon = (operationType) => {
+const getOperationIconName = (operationType) => {
   const iconMap = {
-    create: CirclePlus,
-    update: EditPen,
-    delete: Delete,
-    approve: CircleCheck,
-    reject: CircleClose,
-    view: View,
-    login: User,
-    logout: User,
-    export: DownloadIcon,
+    create: 'CirclePlus',
+    update: 'EditPen',
+    delete: 'Delete',
+    approve: 'CircleCheck',
+    reject: 'CircleClose',
+    view: 'View',
+    login: 'User',
+    logout: 'User',
+    export: 'Download',
   }
-  return iconMap[operationType] || EditPen
+  return iconMap[operationType] || 'EditPen'
 }
 
 const getOperationColor = (operationType) => {
@@ -1848,6 +1874,37 @@ const activeTab = ref('details')
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.nested-process-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fdfdff;
+}
+
+.nested-process-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.nested-process-chain {
+  font-size: 13px;
+  color: #909399;
+}
+
+.nested-process-lots {
+  margin: 0;
+  padding-left: 18px;
+  color: #606266;
+  font-size: 13px;
 }
 
 .nested-lots-summary {

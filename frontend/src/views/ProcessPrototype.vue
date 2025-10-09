@@ -16,11 +16,16 @@
     </el-alert>
 
     <div class="toolbar">
-      <el-button :icon="Refresh" @click="reloadSample">Reload sample data</el-button>
-      <el-button :icon="DocumentDelete" type="warning" plain @click="loadEmpty">
+      <el-button @click="reloadSample">
+        <template #icon><Refresh /></template>
+        Reload sample data
+      </el-button>
+      <el-button type="warning" plain @click="loadEmpty">
+        <template #icon><DocumentDelete /></template>
         Start empty
       </el-button>
-      <el-button v-if="savedPayload" :icon="Delete" type="danger" plain @click="clearSaved">
+      <el-button v-if="savedPayload" type="danger" plain @click="clearSaved">
+        <template #icon><Delete /></template>
         Clear saved payload
       </el-button>
       <el-tag v-if="builderDirty" type="warning">Unsaved changes</el-tag>
@@ -57,7 +62,6 @@
 import { computed, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Delete, DocumentDelete, Refresh } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import ProcessBuilder from '../components/ProcessBuilder.vue'
 import { createEmptyBuilderPayload, normalizeBuilderPayload } from '../utils/processMapper'

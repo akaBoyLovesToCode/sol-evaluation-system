@@ -180,52 +180,56 @@
           <template #header>
             <div class="card-header">
               <span>{{ $t('evaluation.evaluationProcesses') }}</span>
-              <el-button type="primary" plain :icon="Connection" @click="openProcessDrawer">
+              <el-button type="primary" plain @click="openProcessDrawer">
+                <template #icon><Connection /></template>
                 {{ $t('evaluation.manageNestedProcesses') }}
               </el-button>
             </div>
           </template>
 
-          <div v-if="builderSummaryLots.length" class="nested-lots-summary">
-            <h4>{{ $t('nested.summary.lotsHeading') }}</h4>
-            <ul>
-              <li v-for="lot in builderSummaryLots" :key="lot.client_id">
-                {{ lot.label }}
-              </li>
-            </ul>
-          </div>
-
           <el-empty v-if="!builderHasStepsSummary" :description="$t('nested.summary.empty')" />
 
           <div v-else class="nested-summary">
             <div
-              v-for="step in builderSummarySteps"
-              :key="step.order_index"
-              class="nested-summary-item"
+              v-for="process in builderSummaryProcesses"
+              :key="process.key"
+              class="nested-process-summary"
             >
-              <div class="nested-step-title">
-                <strong>{{ step.order_index }}. {{ step.step_code }}</strong>
-                <span v-if="step.step_label"> - {{ step.step_label }}</span>
-              </div>
-              <div v-if="step.results_applicable !== false" class="nested-step-meta">
-                {{
-                  $t('nested.summary.evalLine', {
-                    eval: step.eval_code || '—',
-                    total: formatUnit(step.total_units),
-                    pass: formatUnit(step.pass_units),
-                    fail: formatUnit(step.fail_units),
-                  })
-                }}
-              </div>
-              <div v-else class="nested-step-meta">{{ $t('nested.summary.noResults') }}</div>
-              <div class="nested-step-lots">
-                {{ $t('nested.summary.appliesTo') }} {{ describeStepLots(step.lot_refs) }}
+              <div class="nested-process-header">
+                <strong>{{ process.name }}</strong>
+                <span class="nested-process-chain">
+                  {{ process.steps.map((step) => step.step_code || $t('nested.newStep')).join(' → ') }}
+                </span>
               </div>
               <div
-                v-if="Array.isArray(step.failures) && step.failures.length"
-                class="nested-failure-count"
+                v-for="step in process.steps"
+                :key="`${process.key}-${step.order_index}`"
+                class="nested-summary-item"
               >
-                {{ $t('nested.summary.failuresCount', { count: step.failures.length }) }}
+                <div class="nested-step-title">
+                  <strong>{{ step.order_index }}. {{ step.step_code }}</strong>
+                  <span v-if="step.step_label"> - {{ step.step_label }}</span>
+                </div>
+                <div v-if="step.results_applicable !== false" class="nested-step-meta">
+                  {{
+                    $t('nested.summary.evalLine', {
+                      eval: step.eval_code || '—',
+                      total: formatUnit(step.total_units),
+                      pass: formatUnit(step.pass_units),
+                      fail: formatUnit(step.fail_units),
+                    })
+                  }}
+                </div>
+                <div v-else class="nested-step-meta">{{ $t('nested.summary.noResults') }}</div>
+                <div class="nested-step-lots">
+                  {{ $t('nested.summary.appliesTo') }} {{ describeStepLots(process, step.lot_refs) }}
+                </div>
+                <div
+                  v-if="Array.isArray(step.failures) && step.failures.length"
+                  class="nested-failure-count"
+                >
+                  {{ $t('nested.summary.failuresCount', { count: step.failures.length }) }}
+                </div>
               </div>
             </div>
           </div>
@@ -426,41 +430,43 @@ const processBuilderDirty = ref(false)
 const nestedSaveWarnings = ref([])
 const nestedSaveError = ref(null)
 
-const builderSummaryLots = computed(() => {
-  const lots = Array.isArray(builderPayload.value.lots) ? builderPayload.value.lots : []
-  return lots
-    .filter((lot) => (lot.lot_number || '').trim())
-    .map((lot, index) => {
+const builderSummaryProcesses = computed(() => {
+  const processes = Array.isArray(builderPayload.value.processes)
+    ? builderPayload.value.processes
+    : []
+
+  return processes.map((process, processIndex) => {
+    const lots = Array.isArray(process.lots) ? process.lots : []
+    const lotLabels = lots.map((lot, lotIndex) => {
       const quantity = Number(lot.quantity) || 0
-      const lotNumber = lot.lot_number || `Lot ${index + 1}`
+      const lotNumber = lot.lot_number || t('nested.summary.lotFallback', { index: lotIndex + 1 })
+      const label = quantity ? `${lotNumber} (${quantity})` : lotNumber
       return {
-        client_id: lot.client_id || lot.temp_id || `lot-${index + 1}`,
-        lot_number: lotNumber,
-        quantity,
-        label: quantity ? `${lotNumber} (${quantity})` : lotNumber,
+        client_id: lot.client_id || lot.temp_id || `${process.key || 'proc'}-lot-${lotIndex}`,
+        label,
       }
     })
-})
+    const lotLabelMap = new Map(lotLabels.map((lot) => [String(lot.client_id), lot.label]))
 
-const builderLotLabelMap = computed(() => {
-  const map = new Map()
-  builderSummaryLots.value.forEach((lot) => {
-    map.set(String(lot.client_id), lot.label)
+    return {
+      key: process.key || `proc_${processIndex + 1}`,
+      name: process.name || t('nested.defaultProcessName', { index: processIndex + 1 }),
+      order_index: process.order_index || processIndex + 1,
+      lots: lotLabels,
+      lotLabelMap,
+      steps: Array.isArray(process.steps) ? process.steps : [],
+    }
   })
-  return map
 })
 
-const builderSummarySteps = computed(() =>
-  Array.isArray(builderPayload.value.steps) ? builderPayload.value.steps : [],
-)
 const builderHasStepsSummary = computed(() => hasBuilderSteps(builderPayload.value))
 
-const describeStepLots = (lotRefs) => {
+const describeStepLots = (process, lotRefs) => {
   if (!Array.isArray(lotRefs) || !lotRefs.length) {
     return t('nested.summary.allLots')
   }
   const labels = lotRefs
-    .map((ref) => builderLotLabelMap.value.get(String(ref)) || builderLotLabelMap.value.get(ref))
+    .map((ref) => process.lotLabelMap.get(String(ref)) || process.lotLabelMap.get(ref))
     .filter(Boolean)
   if (!labels.length) {
     return t('nested.summary.allLots')
@@ -557,7 +563,7 @@ function handleDrawerCancel() {
 
 function commitBuilderChanges() {
   if (!processBuilderRef.value) return
-  builderPayload.value = processBuilderRef.value.getPayload()
+  builderPayload.value = normalizeBuilderPayload(processBuilderRef.value.getPayload())
   processBuilderWarnings.value = []
   processBuilderRef.value.markPristine()
   processBuilderDirty.value = false
@@ -1044,6 +1050,37 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.nested-process-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fdfdff;
+}
+
+.nested-process-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.nested-process-chain {
+  font-size: 13px;
+  color: #909399;
+}
+
+.nested-process-lots {
+  margin: 0;
+  padding-left: 18px;
+  color: #606266;
+  font-size: 13px;
 }
 
 .nested-lots-summary {

@@ -3,7 +3,9 @@
     <div id="app" class="app-root">
       <header class="topbar">
         <div class="left">
-          <el-button class="back-btn" text :icon="ArrowLeft" @click="goBack" />
+          <el-button class="back-btn" text @click="goBack">
+            <template #icon><ArrowLeft /></template>
+          </el-button>
         </div>
         <div class="right">
           <el-dropdown class="lang-dropdown" @command="changeLanguage">
@@ -31,7 +33,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ArrowLeft, Setting } from '@element-plus/icons-vue'
+// Icon components are globally registered via Element Plus
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import enLocale from 'element-plus/es/locale/lang/en'
 import koLocale from 'element-plus/es/locale/lang/ko'

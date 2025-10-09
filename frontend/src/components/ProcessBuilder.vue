@@ -1,365 +1,130 @@
 <template>
   <div class="process-builder">
-    <el-card class="form-section">
-      <template #header>
-        <div class="card-header">
-          <span>{{ $t('nested.processLots') }}</span>
-          <div class="header-actions">
-            <slot name="actions">
-              <el-button v-if="showSaveButton" type="primary" :icon="Check" @click="emitSave">
-                {{ $t('common.save') }}
-              </el-button>
-            </slot>
-            <el-button v-if="!readonly" size="small" :icon="DocumentCopy" @click="openPasteLots">
-              {{ $t('nested.pasteList') }}
+    <div class="process-summary" v-if="processSummary">
+      <span class="summary-label">{{ $t('nested.processSummary') }}</span>
+      <span class="summary-content">{{ processSummary }}</span>
+    </div>
+
+    <div class="builder-actions">
+      <slot name="actions">
+        <el-button v-if="showSaveButton" type="primary" @click="emitSave">
+          <template #icon><Check /></template>
+          {{ t('common.save') }}
+        </el-button>
+      </slot>
+    </div>
+
+    <div class="process-toolbar" v-if="!readonly">
+      <el-button type="primary" @click="addProcess">
+        <template #icon><Plus /></template>
+        {{ $t('nested.addProcess') }}
+      </el-button>
+      <el-button
+        :disabled="!currentProcess"
+        @click="duplicateProcess(activeProcessIndex)"
+      >
+        <template #icon><DocumentCopy /></template>
+        {{ $t('nested.duplicateProcess') }}
+      </el-button>
+    </div>
+
+    <div class="process-list">
+      <div
+        v-for="(process, pIndex) in processForm.processes"
+        :key="process.key"
+        class="process-panel"
+        :class="{ active: pIndex === activeProcessIndex }"
+        draggable="!readonly"
+        @dragstart="onProcessDragStart(pIndex)"
+        @dragover.prevent
+        @drop="onProcessDrop(pIndex)"
+        @click="setActiveProcess(pIndex)"
+      >
+        <div class="process-header">
+          <div class="process-title">
+            <el-tag size="small" type="info">{{ $t('nested.processTag') }} {{ pIndex + 1 }}</el-tag>
+            <el-input
+              v-model="process.name"
+              class="process-name-input"
+              :placeholder="$t('nested.processNamePlaceholder')"
+              :readonly="readonly"
+            />
+          </div>
+          <div v-if="!readonly" class="process-actions">
+            <el-button text @click.stop="toggleCollapse(pIndex)">
+              <template #icon>
+                <component :is="isCollapsed(pIndex) ? 'ArrowDown' : 'ArrowUp'" />
+              </template>
+              {{ isCollapsed(pIndex) ? $t('nested.expand') : $t('nested.collapse') }}
             </el-button>
-            <el-button v-if="!readonly" type="primary" size="small" :icon="Plus" @click="addLot">
-              {{ $t('nested.addLot') }}
+            <el-button text @click.stop="duplicateProcess(pIndex)">
+              <template #icon><DocumentCopy /></template>
+              {{ $t('nested.duplicateProcess') }}
+            </el-button>
+            <el-button text type="danger" @click.stop="removeProcess(pIndex)">
+              <template #icon><Delete /></template>
+              {{ $t('nested.deleteProcess') }}
             </el-button>
           </div>
         </div>
-      </template>
-      <el-table
-        v-if="processForm.lots.length"
-        :data="processForm.lots"
-        border
-        size="small"
-        class="lots-table"
-      >
-        <el-table-column label="#" width="60">
-          <template #default="{ $index }">{{ $index + 1 }}</template>
-        </el-table-column>
-        <el-table-column :label="$t('nested.lotNumber')">
-          <template #default="{ row }">
-            <el-input
-              v-model="row.lot_number"
-              :placeholder="$t('nested.lotNumberPlaceholder')"
+
+        <transition name="fade">
+          <div v-show="!collapsedProcesses.has(process.key)" class="process-body">
+            <process-lots
+              :process-index="pIndex"
+              :process="process"
               :readonly="readonly"
+              :t="t"
+              @add-lot="addLot"
+              @duplicate-lot="duplicateLot"
+              @remove-lot="removeLot"
+              @paste-lots="openPasteLots"
             />
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('nested.quantity')" width="180">
-          <template #default="{ row }">
-            <el-input-number
-              v-model="row.quantity"
-              :min="0"
-              :step="1"
-              controls-position="right"
-              :disabled="readonly"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column v-if="!readonly" :label="$t('nested.actions')" width="160" align="right">
-          <template #default="{ $index }">
-            <div class="lots-actions">
-              <el-button size="small" :icon="DocumentCopy" @click="duplicateLot($index)">
-                {{ $t('nested.duplicate') }}
-              </el-button>
-              <el-button size="small" type="danger" :icon="Delete" @click="removeLot($index)" />
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
-      <el-empty v-else :description="$t('nested.emptyLotsDescription')" />
-    </el-card>
 
-    <div class="steps-container">
-      <el-card
-        v-for="(step, index) in processForm.steps"
-        :key="`${step.order_index}-${index}`"
-        class="form-section step-card"
-      >
-        <template #header>
-          <div class="step-header">
-            <div class="step-title">
-              <el-tag type="info">{{ $t('nested.stepTag') }} {{ index + 1 }}</el-tag>
-              <span>{{ step.step_code || $t('nested.newStep') }}</span>
-              <span v-if="step.step_label" class="step-label">{{ step.step_label }}</span>
-            </div>
-            <div v-if="!readonly" class="step-actions">
-              <el-button size="small" :icon="Plus" @click="addStepAfter(index)">
-                {{ $t('nested.addAfter') }}
-              </el-button>
-              <el-button size="small" :icon="DocumentCopy" @click="duplicateStep(index)">
-                {{ $t('nested.duplicate') }}
-              </el-button>
-              <el-button size="small" :icon="Delete" type="danger" @click="removeStep(index)" />
-            </div>
-          </div>
-        </template>
-
-        <el-form label-position="top" class="step-form">
-          <div class="step-header-row">
-            <el-form-item :label="$t('nested.stepCode')" required class="header-item code-item">
-              <el-select
-                v-model="step.step_code"
-                :placeholder="$t('nested.stepCode')"
-                :disabled="readonly"
-                @change="(value) => handleStepCodeChange(index, value)"
-              >
-                <el-option
-                  v-for="option in STEP_CODE_OPTIONS"
-                  :key="option.value"
-                  :label="option.label"
-                  :value="option.value"
-                />
-              </el-select>
-            </el-form-item>
-            <el-form-item :label="$t('nested.stepLabel')" class="header-item label-item">
-              <el-input
-                v-model="step.step_label"
-                :placeholder="$t('nested.stepLabelPlaceholder')"
+            <div class="steps-container">
+              <step-card
+                v-for="(step, sIndex) in process.steps"
+                :key="step.__uid"
+                :process-index="pIndex"
+                :step-index="sIndex"
+                :process="process"
+                :step="step"
                 :readonly="readonly"
+                :dictionary-entries="dictionaryEntries.value"
+                :label-suggestions="STEP_LABEL_SUGGESTIONS"
+                :step-code-options="STEP_CODE_OPTIONS"
+                :lot-options="lotOptions(process)"
+                :t="t"
+                @add-step="addStepAfter"
+                @duplicate-step="duplicateStep"
+                @remove-step="removeStep"
+                @add-failure="addFailureRow"
+                @remove-failure="removeFailureRow"
+                @assign-fail-code="assignFailCode"
+                @normalize-fail-code="normalizeFailCode"
+                @total-input="handleTotalUnitsInput"
+                @lot-change="handleLotRefsChange"
+                @code-change="handleStepCodeChange"
+                @results-change="handleResultsApplicabilityChange"
+                @fail-units-change="syncPassUnits"
+                @apply-suggestion="applyLabelSuggestion"
               />
-              <el-link
-                v-if="labelSuggestionAvailable(step)"
+
+              <el-button
+                v-if="!readonly"
                 type="primary"
-                class="suggestion-link"
-                :underline="false"
-                @click="applyLabelSuggestion(index)"
+                plain
+                class="add-step-button"
+                @click="addStepAfter(pIndex, process.steps.length - 1)"
               >
-                {{ $t('nested.applySuggestion', { suggestion: getStepLabelSuggestion(step) }) }}
-              </el-link>
-            </el-form-item>
-            <el-form-item :label="$t('nested.evalCode')" class="header-item eval-item">
-              <el-input
-                v-model="step.eval_code"
-                :placeholder="$t('nested.evalCodePlaceholder')"
-                :readonly="readonly"
-              />
-            </el-form-item>
-            <el-form-item :label="$t('nested.noTestResults')" class="header-item toggle-item">
-              <el-switch
-                v-model="step.results_applicable"
-                :active-value="false"
-                :inactive-value="true"
-                :disabled="readonly"
-                @change="(value) => handleResultsApplicabilityChange(index, value, true)"
-              />
-            </el-form-item>
+                <template #icon><Plus /></template>
+                {{ $t('nested.addStep') }}
+              </el-button>
+            </div>
           </div>
-
-          <div class="step-header-row second-row">
-            <el-form-item
-              :label="$t('nested.appliesToLots')"
-              required
-              class="header-item lots-item"
-            >
-              <el-select
-                v-model="step.lot_refs"
-                multiple
-                collapse-tags
-                collapse-tags-tooltip
-                :disabled="readonly || !processForm.lots.length"
-                :placeholder="$t('nested.selectLots')"
-                @change="(value) => handleLotRefsChange(index, value)"
-              >
-                <el-option
-                  v-for="lotOption in lotOptions"
-                  :key="lotOption.value"
-                  :label="lotOption.label"
-                  :value="lotOption.value"
-                />
-              </el-select>
-            </el-form-item>
-
-            <template v-if="step.results_applicable">
-              <el-form-item
-                :label="$t('nested.totalUnits')"
-                class="header-item number-item total-item"
-              >
-                <div class="total-field">
-                  <el-input-number
-                    v-model="step.total_units"
-                    :min="0"
-                    :step="1"
-                    controls-position="right"
-                    :disabled="readonly"
-                    @change="() => handleTotalUnitsInput(index)"
-                  />
-                  <div class="total-hint-row">
-                    <span class="total-hint">{{ totalHintText(step) }}</span>
-                    <template v-if="showTotalDelta(step)">
-                      <el-tag size="small" type="info" class="delta-tag">{{
-                        formatTotalDelta(step)
-                      }}</el-tag>
-                      <el-link
-                        v-if="!readonly"
-                        type="primary"
-                        :underline="false"
-                        class="reset-link"
-                        @click="resetTotalToComputed(index)"
-                      >
-                        {{ $t('nested.resetToComputed') }}
-                      </el-link>
-                    </template>
-                  </div>
-                </div>
-              </el-form-item>
-
-              <el-form-item :label="$t('nested.passUnits')" class="header-item number-item">
-                <el-input-number
-                  v-model="step.pass_units"
-                  :min="0"
-                  :step="1"
-                  controls-position="right"
-                  disabled
-                />
-              </el-form-item>
-
-              <el-form-item :label="$t('nested.failUnits')" class="header-item number-item">
-                <div class="fail-field">
-                  <el-input-number
-                    v-model="step.fail_units"
-                    :min="0"
-                    :step="1"
-                    controls-position="right"
-                    :disabled="readonly"
-                    @change="() => syncPassUnits(index)"
-                  />
-                </div>
-                <div v-if="resultsMismatch(step)" class="field-hint warning-hint">
-                  {{ $t('nested.rowsLabel', { count: step.failures.length }) }}
-                </div>
-                <el-button
-                  v-if="showAddFailurePrompt(step)"
-                  class="add-failure-link"
-                  link
-                  size="small"
-                  type="primary"
-                  @click="addFailureRow(index)"
-                >
-                  {{ $t('nested.addFailure') }}
-                </el-button>
-              </el-form-item>
-            </template>
-          </div>
-
-          <el-row :gutter="12" class="step-inputs">
-            <el-col :span="24">
-              <el-form-item :label="$t('nested.notes')">
-                <el-input
-                  v-model="step.notes"
-                  :placeholder="$t('nested.notesPlaceholder')"
-                  :readonly="readonly"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </el-form>
-
-        <el-alert
-          v-if="step.results_applicable && stepMismatch(index)"
-          type="warning"
-          class="compact-alert"
-          show-icon
-          :closable="false"
-          :title="
-            $t('nested.inlineMismatch', {
-              pass: step.pass_units ?? 0,
-              fail: step.fail_units ?? 0,
-              total: step.total_units ?? 0,
-            })
-          "
-        />
-
-        <template v-if="step.results_applicable && shouldShowFailureDetails(step)">
-          <div class="failure-header">
-            <h4>{{ $t('nested.failureTitle') }}</h4>
-            <el-button v-if="!readonly" size="small" :icon="Plus" @click="addFailureRow(index)">
-              {{ $t('nested.addFailure') }}
-            </el-button>
-          </div>
-
-          <el-table
-            :data="step.failures"
-            border
-            size="small"
-            class="failure-table"
-            :empty-text="$t('nested.emptyFailures')"
-          >
-            <el-table-column label="#" width="50">
-              <template #default="{ row }">
-                <span>{{ row.sequence }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column :label="$t('nested.serialNumber')" min-width="160">
-              <template #default="{ row }">
-                <el-input
-                  v-model="row.serial_number"
-                  :placeholder="$t('nested.serialNumberPlaceholder')"
-                  :readonly="readonly"
-                />
-              </template>
-            </el-table-column>
-            <el-table-column :label="$t('nested.failCode')" min-width="120">
-              <template #default="{ row, $index }">
-                <el-autocomplete
-                  v-model="row.fail_code_text"
-                  class="code-input"
-                  :fetch-suggestions="(query, cb) => queryFailCodes(query, cb)"
-                  :trigger-on-focus="false"
-                  :placeholder="$t('nested.failCodePlaceholder')"
-                  :disabled="readonly"
-                  @select="(item) => assignFailCode(index, $index, item)"
-                  @blur="() => normalizeFailCode(index, $index)"
-                >
-                  <template #suffix>
-                    <el-tooltip
-                      v-if="!row.fail_code_id && row.fail_code_text"
-                      :content="$t('nested.notInDictionary')"
-                      placement="top"
-                    >
-                      <el-icon class="code-hint-icon"><WarningFilled /></el-icon>
-                    </el-tooltip>
-                  </template>
-                </el-autocomplete>
-              </template>
-            </el-table-column>
-            <el-table-column :label="$t('nested.failName')" min-width="160">
-              <template #default="{ row }">
-                <el-input
-                  v-model="row.fail_code_name_snapshot"
-                  :placeholder="$t('nested.failNamePlaceholder')"
-                  :readonly="readonly"
-                />
-              </template>
-            </el-table-column>
-            <el-table-column :label="$t('nested.analysisResult')" min-width="260">
-              <template #default="{ row }">
-                <el-input
-                  v-model="row.analysis_result"
-                  type="textarea"
-                  :rows="2"
-                  :placeholder="$t('nested.analysisPlaceholder')"
-                  :readonly="readonly"
-                />
-              </template>
-            </el-table-column>
-            <el-table-column v-if="!readonly" width="70" fixed="right">
-              <template #default="{ $index }">
-                <el-button
-                  type="danger"
-                  :icon="Delete"
-                  size="small"
-                  circle
-                  @click="removeFailureRow(index, $index)"
-                />
-              </template>
-            </el-table-column>
-          </el-table>
-        </template>
-      </el-card>
-
-      <el-button
-        v-if="!readonly"
-        type="primary"
-        plain
-        :icon="Plus"
-        @click="addStepAfter(processForm.steps.length - 1)"
-      >
-        {{ $t('nested.addStep') }}
-      </el-button>
+        </transition>
+      </div>
+      <el-empty v-if="!processForm.processes.length" :description="$t('nested.noProcess')" />
     </div>
 
     <div v-if="validationMessages.length" class="validation-block">
@@ -382,9 +147,10 @@
       <template #header>
         <div class="payload-header">
           <span>{{ $t('nested.debugPayload') }}</span>
-          <el-button size="small" :icon="DocumentCopy" @click="copyPayload">{{
-            $t('nested.copyPayload')
-          }}</el-button>
+          <el-button size="small" @click="copyPayload">
+            <template #icon><DocumentCopy /></template>
+            {{ $t('nested.copyPayload') }}
+          </el-button>
         </div>
       </template>
       <el-alert
@@ -401,10 +167,11 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch, onMounted } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Delete, DocumentCopy, Plus, Check, WarningFilled } from '@element-plus/icons-vue'
+import ProcessLots from './ProcessLots.vue'
+import StepCard from './StepCard.vue'
 
 const { t } = useI18n()
 
@@ -430,23 +197,10 @@ const STEP_LABEL_SUGGESTIONS = {
 
 const RESULT_OPTIONAL_CODES = new Set(['M010', 'M033', 'M100'])
 
-const toCanonicalStepCode = (code) => {
-  const upper = (code || '').toString().toUpperCase()
-  const option = STEP_CODE_OPTIONS.find((item) => item.value.toUpperCase() === upper)
-  return option ? option.value : upper
-}
-
-const isResultOptionalCode = (code) => RESULT_OPTIONAL_CODES.has((code || '').toUpperCase())
-
 const props = defineProps({
   initialPayload: {
     type: Object,
-    default: () => ({
-      lots: [],
-      steps: [],
-      legacy_lot_number: null,
-      legacy_quantity: null,
-    }),
+    default: () => ({ processes: [] }),
   },
   serverWarnings: {
     type: Array,
@@ -472,46 +226,70 @@ const dictionaryEntries = ref([
 ])
 
 const processForm = reactive({
-  lots: [],
-  steps: [],
+  processes: [],
   legacy_lot_number: null,
   legacy_quantity: null,
 })
+
+const collapsedProcesses = reactive(new Set())
+const activeProcessIndex = ref(0)
+const draggingProcess = ref(null)
+
 const warningsFromServer = ref([])
 const dirty = ref(false)
 const initialSnapshot = ref('')
 let initializing = false
+let processCounter = 0
 let lotUid = 0
+let stepUid = 0
 
-const generateLotKey = () => {
-  lotUid += 1
-  return `lot-${Date.now()}-${lotUid}`
+const draggingData = {
+  index: -1,
 }
 
-const createLot = (overrides = {}) => ({
-  id: overrides.id ?? null,
-  temp_id: overrides.temp_id ?? null,
-  client_id: overrides.client_id ?? generateLotKey(),
-  lot_number: overrides.lot_number ?? '',
-  quantity: overrides.quantity ?? 0,
-})
+function generateProcessKey() {
+  processCounter += 1
+  return `proc_${Date.now()}_${processCounter}`
+}
 
-const normalizeFailure = (failure, index = 0) => ({
-  sequence: failure.sequence ?? index + 1,
-  serial_number: failure.serial_number ?? '',
-  fail_code_id: failure.fail_code_id ?? null,
-  fail_code_text: (failure.fail_code_text || '').trim().toUpperCase(),
-  fail_code_name_snapshot: failure.fail_code_name_snapshot ?? '',
-  analysis_result: failure.analysis_result ?? '',
-})
+function generateLotClientId(processKey) {
+  lotUid += 1
+  return `${processKey || 'proc'}_lot_${Date.now()}_${lotUid}`
+}
 
-const createStep = (overrides = {}) => {
-  const defaultRefs = processForm.lots.map((lot) => lot.client_id)
-  const lotRefs =
-    Array.isArray(overrides.lot_refs) && overrides.lot_refs.length
-      ? [...new Set(overrides.lot_refs)]
-      : [...defaultRefs]
+function createLot(overrides = {}, processKey) {
+  const clientId = overrides.client_id || generateLotClientId(processKey)
+  return {
+    id: overrides.id ?? null,
+    temp_id: overrides.temp_id ?? clientId,
+    client_id: clientId,
+    lot_number: overrides.lot_number ?? '',
+    quantity: Number(overrides.quantity ?? 0),
+  }
+}
 
+function normalizeFailure(failure, index = 0) {
+  return {
+    sequence: failure.sequence ?? index + 1,
+    serial_number: failure.serial_number ?? '',
+    fail_code_id: failure.fail_code_id ?? null,
+    fail_code_text: (failure.fail_code_text || '').trim().toUpperCase(),
+    fail_code_name_snapshot: failure.fail_code_name_snapshot ?? '',
+    analysis_result: failure.analysis_result ?? '',
+  }
+}
+
+function toCanonicalStepCode(code) {
+  const upper = (code || '').toString().toUpperCase()
+  const option = STEP_CODE_OPTIONS.find((item) => item.value.toUpperCase() === upper)
+  return option ? option.value : upper
+}
+
+function isResultOptionalCode(code) {
+  return RESULT_OPTIONAL_CODES.has((code || '').toUpperCase())
+}
+
+function createStep(process, overrides = {}) {
   const normalizedCode = toCanonicalStepCode(overrides.step_code ?? '')
   const suggestion = STEP_LABEL_SUGGESTIONS[normalizedCode] || null
   const resultsProvided =
@@ -519,12 +297,17 @@ const createStep = (overrides = {}) => {
       ? !isResultOptionalCode(normalizedCode)
       : Boolean(overrides.results_applicable)
 
+  const lotClientIds = process.lots.map((lot) => lot.client_id)
+  const providedRefs = Array.isArray(overrides.lot_refs) ? overrides.lot_refs.filter(Boolean) : []
+  const uniqueRefs = providedRefs.length ? [...new Set(providedRefs)] : [...lotClientIds]
+
   const step = {
-    order_index: overrides.order_index ?? 1,
+    __uid: overrides.__uid || `step-${Date.now()}-${stepUid++}`,
+    order_index: overrides.order_index ?? process.steps.length + 1,
     step_code: normalizedCode,
     step_label: overrides.step_label ?? '',
     eval_code: overrides.eval_code ?? '',
-    lot_refs: lotRefs,
+    lot_refs: uniqueRefs,
     results_applicable: resultsProvided,
     total_units_manual: Boolean(overrides.total_units_manual),
     total_units:
@@ -542,13 +325,9 @@ const createStep = (overrides = {}) => {
     notes: overrides.notes ?? '',
     failures: (overrides.failures || []).map((failure, idx) => normalizeFailure(failure, idx)),
     __labelSuggestion: suggestion,
-    __lastAppliedSuggestion: null,
-    __resultsManualOverride: false,
-    __userTotalTouched: Boolean(overrides.total_units_manual),
-  }
-
-  if (!step.lot_refs.length) {
-    step.lot_refs = [...defaultRefs]
+    __lastAppliedSuggestion: overrides.__lastAppliedSuggestion ?? null,
+    __resultsManualOverride: Boolean(overrides.__resultsManualOverride),
+    __userTotalTouched: Boolean(overrides.__userTotalTouched),
   }
 
   if (!step.step_label && suggestion) {
@@ -560,329 +339,132 @@ const createStep = (overrides = {}) => {
     step.total_units = null
     step.pass_units = null
     step.fail_units = 0
-    step.total_units_manual = false
-    step.__userTotalTouched = false
-    step.failures = []
   } else {
     if (step.fail_units === null) {
       step.fail_units = step.failures.length
     }
-    if (step.pass_units === null && step.total_units !== null && step.fail_units !== null) {
-      step.pass_units = Math.max(Number(step.total_units) - Number(step.fail_units), 0)
+    if (step.total_units === null) {
+      step.total_units = autoTotalForStep(process, step)
+      step.__userTotalTouched = false
+    }
+    if (step.pass_units === null) {
+      const total = Number(step.total_units ?? 0)
+      const fail = Number(step.fail_units ?? 0)
+      step.pass_units = Math.max(total - fail, 0)
     }
   }
 
   return step
 }
 
-const clonePayload = (payload) => JSON.parse(JSON.stringify(payload || {}))
-
-function applyPayload(payload) {
-  const cloned = clonePayload(payload)
-
-  processForm.legacy_lot_number = cloned.legacy_lot_number ?? null
-  processForm.legacy_quantity = cloned.legacy_quantity ?? null
-
-  processForm.lots.splice(0, processForm.lots.length)
-  const incomingLots = Array.isArray(cloned.lots) ? cloned.lots : []
-  if (incomingLots.length) {
-    incomingLots.forEach((lot) => {
-      const client_id = String(lot.client_id || lot.temp_id || lot.id || generateLotKey())
-      processForm.lots.push(
-        createLot({
-          id: lot.id ?? null,
-          temp_id: lot.temp_id ?? client_id,
-          client_id,
-          lot_number: lot.lot_number || '',
-          quantity: Number(lot.quantity) || 0,
-        }),
-      )
-    })
-  }
-  if (!processForm.lots.length) {
-    processForm.lots.push(createLot({}))
+function createProcess(overrides = {}) {
+  const key = overrides.key || generateProcessKey()
+  const process = {
+    key,
+    name: overrides.name || overrides.process_name || t('nested.defaultProcessName', { index: processCounter }),
+    order_index: overrides.order_index ?? processForm.processes.length + 1,
+    lots: [],
+    steps: [],
   }
 
-  const lotRefMap = new Map()
-  processForm.lots.forEach((lot) => {
-    lotRefMap.set(String(lot.client_id), lot.client_id)
-    if (lot.temp_id) {
-      lotRefMap.set(String(lot.temp_id), lot.client_id)
-    }
-    if (lot.id !== null && lot.id !== undefined) {
-      lotRefMap.set(String(lot.id), lot.client_id)
-    }
+  const lots = Array.isArray(overrides.lots) ? overrides.lots : []
+  lots.forEach((lot) => {
+    process.lots.push(createLot(lot, key))
   })
-
-  processForm.steps.splice(0, processForm.steps.length)
-  const incomingSteps = Array.isArray(cloned.steps) ? cloned.steps : []
-  if (incomingSteps.length) {
-    incomingSteps.forEach((step, index) => {
-      const mappedRefs = Array.isArray(step.lot_refs)
-        ? step.lot_refs.map((ref) => lotRefMap.get(String(ref)) || null).filter(Boolean)
-        : []
-      const createdStep = createStep({
-        ...step,
-        lot_refs: mappedRefs,
-        order_index: step.order_index ?? index + 1,
-      })
-      processForm.steps.push(createdStep)
-      handleStepCodeChange(processForm.steps.length - 1, createdStep.step_code, { initial: true })
-    })
-  } else {
-    const createdStep = createStep({ order_index: 1 })
-    processForm.steps.push(createdStep)
-    handleStepCodeChange(0, createdStep.step_code, { initial: true })
+  if (!process.lots.length) {
+    process.lots.push(createLot({}, key))
   }
 
-  ensureStepLotRefs()
-  reindexSteps()
-  refreshAllStepTotals()
-}
-
-function setPayload(payload, { markClean = false } = {}) {
-  initializing = true
-  applyPayload(payload)
-  warningsFromServer.value = []
-  const normalized = normalizeCurrentState()
-  if (markClean) {
-    markPristine(normalized)
-  } else {
-    dirty.value = false
-    emit('dirty-change', dirty.value)
-  }
-  initializing = false
-}
-
-onMounted(() => {
-  setPayload(props.initialPayload, { markClean: true })
-})
-
-watch(
-  () => props.initialPayload,
-  (newPayload) => {
-    setPayload(newPayload, { markClean: true })
-  },
-  { deep: true },
-)
-
-watch(
-  () => props.serverWarnings,
-  (warnings) => {
-    warningsFromServer.value = Array.isArray(warnings) ? [...warnings] : []
-  },
-  { deep: true, immediate: true },
-)
-
-const dictionaryIndex = computed(() => {
-  const index = new Map()
-  dictionaryEntries.value.forEach((entry) => {
-    index.set(entry.code.toUpperCase(), entry)
+  const steps = Array.isArray(overrides.steps) ? overrides.steps : []
+  steps.forEach((step) => {
+    process.steps.push(createStep(process, step))
   })
-  return index
-})
-
-const stepMismatch = (index) => {
-  const step = processForm.steps[index]
-  if (!step || !step.results_applicable) return false
-  if (step.total_units === null || step.pass_units === null || step.fail_units === null) {
-    return false
+  if (!process.steps.length) {
+    process.steps.push(createStep(process, {}))
   }
-  const total = Number(step.total_units) || 0
-  const passUnits = Number(step.pass_units) || 0
-  const failUnits = Number(step.fail_units) || 0
-  return total !== passUnits + failUnits
+
+  reindexProcess(process)
+  return process
 }
 
-function ensureStepLotRefs() {
-  const availableIds = processForm.lots.map((lot) => lot.client_id)
-  if (!availableIds.length) {
-    processForm.steps.forEach((step, idx) => {
-      step.lot_refs = []
-      refreshTotalsForStep(idx)
+function reindexProcess(process) {
+  process.order_index = Math.max(process.order_index || 0, 1)
+  process.steps.forEach((step, idx) => {
+    step.order_index = idx + 1
+    step.failures.forEach((failure, failureIdx) => {
+      failure.sequence = failureIdx + 1
     })
-    return
-  }
-  processForm.steps.forEach((step, idx) => {
+  })
+}
+
+function getProcess(index) {
+  return processForm.processes[index]
+}
+
+function ensureProcessLotRefs(process) {
+  const lotIds = process.lots.map((lot) => lot.client_id)
+  process.steps.forEach((step) => {
     if (!Array.isArray(step.lot_refs)) {
-      step.lot_refs = []
+      step.lot_refs = [...lotIds]
+    } else {
+      step.lot_refs = step.lot_refs.filter((ref) => lotIds.includes(ref))
+      if (!step.lot_refs.length) {
+        step.lot_refs = [...lotIds]
+      }
     }
-    step.lot_refs = step.lot_refs.filter((ref) => availableIds.includes(ref))
-    if (!step.lot_refs.length) {
-      step.lot_refs = [...availableIds]
-    }
-    refreshTotalsForStep(idx)
   })
 }
 
-watch(
-  () => processForm.lots.map((lot) => lot.client_id),
-  (newIds, oldIds) => {
-    if (!oldIds || newIds.length < oldIds.length) {
-      ensureStepLotRefs()
-    }
-    refreshAllStepTotals()
-  },
-)
-
-watch(
-  () => processForm.lots.map((lot) => `${lot.client_id}:${Number(lot.quantity) || 0}`),
-  () => {
-    refreshAllStepTotals()
-  },
-  { deep: true },
-)
-
-const lotOptions = computed(() =>
-  processForm.lots.map((lot) => ({
+function lotOptions(process) {
+  return process.lots.map((lot) => ({
     value: lot.client_id,
     label: lot.lot_number
       ? `${lot.lot_number}${lot.quantity ? ` (${lot.quantity})` : ''}`
       : t('nested.unnamedLot'),
-  })),
-)
-
-const lotQuantityMap = computed(() => {
-  const map = new Map()
-  processForm.lots.forEach((lot) => {
-    map.set(lot.client_id, Number(lot.quantity) || 0)
-  })
-  return map
-})
-
-function lotQuantitiesForStep(step) {
-  if (!step || !Array.isArray(step.lot_refs)) {
-    return []
-  }
-  return step.lot_refs.map((ref) => Number(lotQuantityMap.value.get(ref)) || 0)
+  }))
 }
 
-function autoTotalForStep(step) {
-  const quantities = lotQuantitiesForStep(step)
-  return quantities.reduce((sum, value) => sum + value, 0)
+function lotQuantity(process, clientId) {
+  const lot = process.lots.find((entry) => entry.client_id === clientId)
+  return Number(lot?.quantity ?? 0)
 }
 
-function getTotalDelta(step) {
-  if (!step || !step.results_applicable || step.total_units === null) {
-    return 0
-  }
-  const total = Number(step.total_units ?? 0)
-  const auto = autoTotalForStep(step)
-  return total - auto
+function autoTotalForStep(process, step) {
+  if (!step || !Array.isArray(step.lot_refs)) return 0
+  return step.lot_refs.reduce((sum, ref) => sum + lotQuantity(process, ref), 0)
 }
 
-function totalHintText(step) {
+function totalHintText(process, step) {
   if (!step || !step.results_applicable) {
     return t('nested.fromLotsNone')
   }
-  const values = lotQuantitiesForStep(step)
+  const values = step.lot_refs.map((ref) => lotQuantity(process, ref))
   if (!values.length) {
     return t('nested.fromLotsNone')
   }
-  const total = values.reduce((sum, val) => sum + val, 0)
-  if (values.length > 1) {
-    return t('nested.fromLotsFormula', { formula: values.join(' + '), total })
-  }
-  return t('nested.fromLotsSingle', { total })
+  const total = values.reduce((sum, value) => sum + value, 0)
+  const formula = values.join(' + ')
+  return t('nested.autoTotalHint', { total, formula })
 }
 
-function showTotalDelta(step) {
-  return step && step.results_applicable && step.total_units !== null && getTotalDelta(step) !== 0
-}
-
-function formatTotalDelta(step) {
-  const delta = getTotalDelta(step)
-  if (!delta) return t('nested.deltaTag', { delta: '+0' })
-  const prefix = delta > 0 ? '+' : ''
-  return t('nested.deltaTag', { delta: `${prefix}${delta}` })
-}
-
-function refreshTotalsForStep(index) {
-  const step = processForm.steps[index]
-  if (!step) return
-  if (!step.results_applicable) {
-    step.total_units = null
-    step.pass_units = null
-    step.fail_units = 0
-    step.total_units_manual = false
-    step.__userTotalTouched = false
-    return
-  }
-
-  const autoTotal = autoTotalForStep(step)
-  if (step.total_units === null || step.total_units === undefined) {
-    step.total_units = autoTotal
-    step.__userTotalTouched = false
-  } else if (!step.__userTotalTouched && Number(step.total_units) !== autoTotal) {
-    step.total_units = autoTotal
-  } else if (step.__userTotalTouched && Number(step.total_units) === autoTotal) {
-    step.__userTotalTouched = false
-  }
-
-  if (step.fail_units === null || Number.isNaN(Number(step.fail_units))) {
-    step.fail_units = step.failures.length
-  }
-
-  const total = Number(step.total_units ?? 0)
-  const fail = Number(step.fail_units ?? 0)
-  step.pass_units = Math.max(total - fail, 0)
-  updateManualState(index, autoTotal)
-}
-
-function refreshAllStepTotals() {
-  processForm.steps.forEach((_, idx) => refreshTotalsForStep(idx))
-}
-
-function syncPassUnits(index) {
-  const step = processForm.steps[index]
-  if (!step || !step.results_applicable) return
-  if (step.fail_units === null) {
-    step.fail_units = step.failures.length
-  }
-  const total = Number(step.total_units ?? 0)
-  const fail = Number(step.fail_units ?? 0)
-  step.pass_units = Math.max(total - fail, 0)
-  updateManualState(index)
-}
-
-function updateManualState(index, providedAutoTotal) {
-  const step = processForm.steps[index]
-  if (!step) return
-  if (!step.results_applicable) {
-    step.total_units_manual = false
-    step.__userTotalTouched = false
-    return
-  }
-  const auto = providedAutoTotal ?? autoTotalForStep(step)
-  if (step.total_units === null || step.total_units === undefined) {
-    step.total_units_manual = false
-    step.__userTotalTouched = false
-    return
-  }
-  const manual = Number(step.total_units ?? 0) !== auto
-  step.total_units_manual = manual
-  if (!manual) {
-    step.__userTotalTouched = false
-  }
-}
-
-function handleTotalUnitsInput(index) {
-  const step = processForm.steps[index]
+function handleTotalUnitsInput(processIndex, stepIndex) {
+  const process = getProcess(processIndex)
+  const step = process?.steps[stepIndex]
   if (!step || !step.results_applicable) return
   step.__userTotalTouched = true
   if (step.total_units === null || step.total_units === undefined) {
     step.total_units = 0
   }
-  syncPassUnits(index)
+  syncPassUnits(processIndex, stepIndex)
 }
 
-function resetTotalToComputed(index) {
-  const step = processForm.steps[index]
+function syncPassUnits(processIndex, stepIndex) {
+  const process = getProcess(processIndex)
+  const step = process?.steps[stepIndex]
   if (!step || !step.results_applicable) return
-  const auto = autoTotalForStep(step)
-  step.total_units = auto
-  step.__userTotalTouched = false
-  syncPassUnits(index)
+  const total = Number(step.total_units ?? 0)
+  const fail = Number(step.fail_units ?? 0)
+  step.pass_units = Math.max(total - fail, 0)
 }
 
 function resultsMismatch(step) {
@@ -890,18 +472,6 @@ function resultsMismatch(step) {
   const failCount = step.failures.length
   const failUnits = Number(step.fail_units ?? 0)
   return failUnits !== failCount
-}
-
-function showAddFailurePrompt(step) {
-  if (!step || !step.results_applicable || props.readonly) return false
-  const failUnits = Number(step.fail_units ?? 0)
-  return failUnits <= 0 && !step.failures.length
-}
-
-function shouldShowFailureDetails(step) {
-  if (!step || !step.results_applicable) return false
-  const failUnits = Number(step.fail_units ?? 0)
-  return failUnits > 0 || step.failures.length > 0
 }
 
 function getStepLabelSuggestion(step) {
@@ -916,8 +486,9 @@ function labelSuggestionAvailable(step) {
   return current !== suggestion
 }
 
-function applyLabelSuggestion(index) {
-  const step = processForm.steps[index]
+function applyLabelSuggestion(processIndex, stepIndex) {
+  const process = getProcess(processIndex)
+  const step = process?.steps[stepIndex]
   if (!step) return
   const suggestion = getStepLabelSuggestion(step)
   if (!suggestion) return
@@ -925,28 +496,30 @@ function applyLabelSuggestion(index) {
   step.__lastAppliedSuggestion = suggestion
 }
 
-function handleLotRefsChange(index) {
-  const step = processForm.steps[index]
+function handleLotRefsChange(processIndex, stepIndex) {
+  const process = getProcess(processIndex)
+  const step = process?.steps[stepIndex]
   if (!step) return
   if (!Array.isArray(step.lot_refs) || !step.lot_refs.length) {
-    step.total_units = 0
+    step.total_units = autoTotalForStep(process, step)
     step.__userTotalTouched = false
   }
-  refreshTotalsForStep(index)
+  syncPassUnits(processIndex, stepIndex)
 }
 
-function setResultsApplicability(index, isApplicable, options = {}) {
-  const step = processForm.steps[index]
+function setResultsApplicability(processIndex, stepIndex, value, options = {}) {
+  const process = getProcess(processIndex)
+  const step = process?.steps[stepIndex]
   if (!step) return
-  const value = Boolean(isApplicable)
-  step.results_applicable = value
+  const boolValue = Boolean(value)
+  step.results_applicable = boolValue
   if (options.manual) {
     step.__resultsManualOverride = true
   } else if (options.resetManual) {
     step.__resultsManualOverride = false
   }
 
-  if (!value) {
+  if (!boolValue) {
     step.total_units = null
     step.pass_units = null
     step.fail_units = 0
@@ -955,24 +528,23 @@ function setResultsApplicability(index, isApplicable, options = {}) {
     step.failures = []
   } else {
     if (step.total_units === null || step.total_units === undefined || !step.__userTotalTouched) {
-      step.total_units = autoTotalForStep(step)
+      step.total_units = autoTotalForStep(process, step)
       step.__userTotalTouched = false
     }
     if (step.fail_units === null) {
       step.fail_units = step.failures.length
     }
   }
-
-  refreshTotalsForStep(index)
+  syncPassUnits(processIndex, stepIndex)
 }
 
-function handleResultsApplicabilityChange(index, value, manualChange = false) {
-  setResultsApplicability(index, value, { manual: manualChange })
-  refreshTotalsForStep(index)
+function handleResultsApplicabilityChange(processIndex, stepIndex, value, manualChange = false) {
+  setResultsApplicability(processIndex, stepIndex, value, { manual: manualChange })
 }
 
-function handleStepCodeChange(index, value, options = {}) {
-  const step = processForm.steps[index]
+function handleStepCodeChange(processIndex, stepIndex, value, options = {}) {
+  const process = getProcess(processIndex)
+  const step = process?.steps[stepIndex]
   if (!step) return
   const canonical = toCanonicalStepCode(value)
   step.step_code = canonical
@@ -989,170 +561,134 @@ function handleStepCodeChange(index, value, options = {}) {
     step.__lastAppliedSuggestion = suggestion
   }
 
-  if (
-    !suggestion &&
-    step.__lastAppliedSuggestion &&
-    currentLabel === step.__lastAppliedSuggestion
-  ) {
-    step.__lastAppliedSuggestion = null
-  }
-
   if (!options.initial) {
     if (!step.__resultsManualOverride) {
       if (isResultOptionalCode(canonical)) {
-        setResultsApplicability(index, false, { resetManual: true })
+        setResultsApplicability(processIndex, stepIndex, false, { resetManual: true })
       } else {
-        setResultsApplicability(index, true, { resetManual: true })
+        setResultsApplicability(processIndex, stepIndex, true, { resetManual: true })
       }
     } else if (!isResultOptionalCode(canonical) && !step.results_applicable) {
-      setResultsApplicability(index, true)
+      setResultsApplicability(processIndex, stepIndex, true)
     } else {
-      refreshTotalsForStep(index)
+      syncPassUnits(processIndex, stepIndex)
     }
   } else {
-    refreshTotalsForStep(index)
+    syncPassUnits(processIndex, stepIndex)
   }
 }
 
-const addStepAfter = (index) => {
-  const insertIndex = Number.isInteger(index) && index >= 0 ? index + 1 : processForm.steps.length
-  const newStep = createStep({ order_index: insertIndex + 1 })
-  processForm.steps.splice(insertIndex, 0, newStep)
-  reindexSteps()
-  ensureStepLotRefs()
-  handleStepCodeChange(insertIndex, newStep.step_code, { initial: true })
-  refreshTotalsForStep(insertIndex)
+const currentProcess = computed(() => getProcess(activeProcessIndex.value))
+
+function addProcess() {
+  const process = createProcess({ name: t('nested.defaultProcessName', { index: processForm.processes.length + 1 }) })
+  processForm.processes.push(process)
+  activeProcessIndex.value = processForm.processes.length - 1
 }
 
-const duplicateStep = (index) => {
-  const source = processForm.steps[index]
-  const duplicatePayload = clonePayload({
-    order_index: source.order_index,
-    step_code: source.step_code,
-    step_label: source.step_label,
-    eval_code: source.eval_code,
-    lot_refs: source.lot_refs,
-    results_applicable: source.results_applicable,
-    total_units: source.total_units,
-    pass_units: source.pass_units,
-    fail_units: source.fail_units,
-    notes: source.notes,
-    failures: source.failures,
+function duplicateProcess(index) {
+  const source = getProcess(index)
+  if (!source) return
+  const duplicated = createProcess({
+    key: generateProcessKey(),
+    name: `${source.name} ${t('nested.copySuffix')}`,
+    order_index: processForm.processes.length + 1,
+    lots: source.lots,
+    steps: source.steps,
   })
-  const duplicate = createStep(duplicatePayload)
-  processForm.steps.splice(index + 1, 0, duplicate)
-  reindexSteps()
-  ensureStepLotRefs()
-  handleStepCodeChange(index + 1, duplicate.step_code, { initial: true })
-  refreshTotalsForStep(index + 1)
+  processForm.processes.splice(index + 1, 0, duplicated)
+  reindexAllProcesses()
+  activeProcessIndex.value = index + 1
 }
 
-const removeStep = (index) => {
-  if (processForm.steps.length === 1) {
-    ElMessage.warning(t('nested.stepRequiredMessage'))
+function removeProcess(index) {
+  if (processForm.processes.length <= 1) {
+    ElMessage.warning(t('nested.processRequiredMessage'))
     return
   }
-  processForm.steps.splice(index, 1)
-  reindexSteps()
-  ensureStepLotRefs()
-  refreshAllStepTotals()
+  processForm.processes.splice(index, 1)
+  if (activeProcessIndex.value >= processForm.processes.length) {
+    activeProcessIndex.value = processForm.processes.length - 1
+  }
+  reindexAllProcesses()
 }
 
-const addFailureRow = (stepIndex) => {
-  const step = processForm.steps[stepIndex]
-  if (!step) return
-  step.failures.push({
-    sequence: step.failures.length + 1,
-    serial_number: '',
-    fail_code_id: null,
-    fail_code_text: '',
-    fail_code_name_snapshot: '',
-    analysis_result: '',
+function reindexAllProcesses() {
+  processForm.processes.forEach((process, idx) => {
+    process.order_index = idx + 1
+    reindexProcess(process)
   })
-  step.fail_units = step.failures.length
-  reindexSteps()
-  syncPassUnits(stepIndex)
 }
 
-const removeFailureRow = (stepIndex, failureIndex) => {
-  const step = processForm.steps[stepIndex]
-  if (!step) return
-  step.failures.splice(failureIndex, 1)
-  reindexSteps()
-  step.fail_units = step.failures.length
-  syncPassUnits(stepIndex)
+function setActiveProcess(index) {
+  activeProcessIndex.value = index
 }
 
-const queryFailCodes = (queryString, cb) => {
-  const normalized = (queryString || '').trim().toUpperCase()
-  let results = dictionaryEntries.value
-  if (normalized) {
-    results = results.filter(
-      (entry) => entry.code.includes(normalized) || entry.name?.toUpperCase().includes(normalized),
-    )
-  }
-  cb(results.map((entry) => ({ value: entry.code, ...entry })))
-}
-
-const assignFailCode = (stepIndex, failureIndex, item) => {
-  const step = processForm.steps[stepIndex]
-  if (!step) return
-  const failure = step.failures[failureIndex]
-  if (!failure) return
-  failure.fail_code_text = item.code
-  failure.fail_code_id = item.id
-  failure.fail_code_name_snapshot = item.name ?? ''
-}
-
-const normalizeFailCode = (stepIndex, failureIndex) => {
-  const step = processForm.steps[stepIndex]
-  if (!step) return
-  const failure = step.failures[failureIndex]
-  if (!failure) return
-  const code = failure.fail_code_text?.trim().toUpperCase()
-  if (!code) {
-    failure.fail_code_text = ''
-    failure.fail_code_id = null
-    failure.fail_code_name_snapshot = ''
-    return
-  }
-
-  failure.fail_code_text = code
-  const match = dictionaryIndex.value.get(code)
-  if (match) {
-    failure.fail_code_id = match.id
-    failure.fail_code_name_snapshot = match.name ?? ''
+function toggleCollapse(index) {
+  const process = getProcess(index)
+  if (!process) return
+  if (collapsedProcesses.has(process.key)) {
+    collapsedProcesses.delete(process.key)
   } else {
-    failure.fail_code_id = null
+    collapsedProcesses.add(process.key)
   }
 }
 
-function addLot() {
-  processForm.lots.push(createLot({}))
-  ensureStepLotRefs()
+function isCollapsed(index) {
+  const process = getProcess(index)
+  if (!process) return false
+  return collapsedProcesses.has(process.key)
 }
 
-function duplicateLot(index) {
-  const original = processForm.lots[index]
+function onProcessDragStart(index) {
+  if (props.readonly) return
+  draggingData.index = index
+}
+
+function onProcessDrop(targetIndex) {
+  if (props.readonly) return
+  const sourceIndex = draggingData.index
+  if (sourceIndex === targetIndex || sourceIndex === -1) return
+  const [moved] = processForm.processes.splice(sourceIndex, 1)
+  processForm.processes.splice(targetIndex, 0, moved)
+  draggingData.index = -1
+  reindexAllProcesses()
+  activeProcessIndex.value = targetIndex
+}
+
+function addLot(processIndex) {
+  const process = getProcess(processIndex)
+  if (!process) return
+  process.lots.push(createLot({}, process.key))
+  ensureProcessLotRefs(process)
+}
+
+function duplicateLot(processIndex, lotIndex) {
+  const process = getProcess(processIndex)
+  const original = process?.lots[lotIndex]
   if (!original) return
-  processForm.lots.splice(
-    index + 1,
+  process.lots.splice(
+    lotIndex + 1,
     0,
-    createLot({ lot_number: original.lot_number, quantity: original.quantity }),
+    createLot({ lot_number: original.lot_number, quantity: original.quantity }, process.key),
   )
-  ensureStepLotRefs()
+  ensureProcessLotRefs(process)
 }
 
-function removeLot(index) {
-  if (processForm.lots.length <= 1) {
+function removeLot(processIndex, lotIndex) {
+  const process = getProcess(processIndex)
+  if (!process) return
+  if (process.lots.length <= 1) {
     ElMessage.warning(t('nested.lotRequiredMessage'))
     return
   }
-  processForm.lots.splice(index, 1)
-  ensureStepLotRefs()
+  process.lots.splice(lotIndex, 1)
+  ensureProcessLotRefs(process)
 }
 
-async function openPasteLots() {
+async function openPasteLots(processIndex) {
+  const process = getProcess(processIndex)
+  if (!process || props.readonly) return
   try {
     const result = await ElMessageBox.prompt(
       t('nested.pasteLotsMessage'),
@@ -1181,11 +717,11 @@ async function openPasteLots() {
         lotNumber = match[1].trim()
         quantity = Number(match[2]) || 0
       }
-      return createLot({ lot_number: lotNumber, quantity })
+      return createLot({ lot_number: lotNumber, quantity }, process.key)
     })
 
-    newLots.forEach((lot) => processForm.lots.push(lot))
-    ensureStepLotRefs()
+    newLots.forEach((lot) => process.lots.push(lot))
+    ensureProcessLotRefs(process)
   } catch (error) {
     if (error === 'cancel') {
       return
@@ -1194,229 +730,369 @@ async function openPasteLots() {
   }
 }
 
-function reindexSteps() {
-  processForm.steps.forEach((step, stepIdx) => {
-    step.order_index = stepIdx + 1
-    step.failures.forEach((failure, failureIdx) => {
-      failure.sequence = failureIdx + 1
-    })
-    if (step.results_applicable && (step.fail_units === null || step.fail_units === undefined)) {
-      step.fail_units = step.failures.length
-    }
-    refreshTotalsForStep(stepIdx)
-  })
+function addStepAfter(processIndex, stepIndex) {
+  const process = getProcess(processIndex)
+  if (!process) return
+  const insertIndex = Number.isInteger(stepIndex) && stepIndex >= 0 ? stepIndex + 1 : process.steps.length
+  const newStep = createStep(process, { order_index: insertIndex + 1 })
+  process.steps.splice(insertIndex, 0, newStep)
+  reindexProcess(process)
+  handleStepCodeChange(processIndex, insertIndex, newStep.step_code, { initial: true })
 }
 
-const validationMessages = computed(() => {
-  const messages = []
+function duplicateStep(processIndex, stepIndex) {
+  const process = getProcess(processIndex)
+  const source = process?.steps[stepIndex]
+  if (!source) return
+  const duplicatePayload = JSON.parse(JSON.stringify(source))
+  duplicatePayload.__uid = undefined
+  const duplicate = createStep(process, duplicatePayload)
+  process.steps.splice(stepIndex + 1, 0, duplicate)
+  reindexProcess(process)
+  handleStepCodeChange(processIndex, stepIndex + 1, duplicate.step_code, { initial: true })
+}
 
-  if (!processForm.lots.length) {
-    messages.push(t('nested.validation.addLot'))
+function removeStep(processIndex, stepIndex) {
+  const process = getProcess(processIndex)
+  if (!process) return
+  if (process.steps.length <= 1) {
+    ElMessage.warning(t('nested.stepRequiredMessage'))
+    return
+  }
+  process.steps.splice(stepIndex, 1)
+  reindexProcess(process)
+}
+
+function addFailureRow(processIndex, stepIndex) {
+  const process = getProcess(processIndex)
+  const step = process?.steps[stepIndex]
+  if (!step) return
+  step.failures.push({
+    sequence: step.failures.length + 1,
+    serial_number: '',
+    fail_code_id: null,
+    fail_code_text: '',
+    fail_code_name_snapshot: '',
+    analysis_result: '',
+  })
+  step.fail_units = step.failures.length
+  reindexProcess(process)
+  syncPassUnits(processIndex, stepIndex)
+}
+
+function removeFailureRow(processIndex, stepIndex, failureIndex) {
+  const process = getProcess(processIndex)
+  const step = process?.steps[stepIndex]
+  if (!step) return
+  step.failures.splice(failureIndex, 1)
+  reindexProcess(process)
+  step.fail_units = step.failures.length
+  syncPassUnits(processIndex, stepIndex)
+}
+
+function assignFailCode(processIndex, stepIndex, failureIndex, item) {
+  const process = getProcess(processIndex)
+  const step = process?.steps[stepIndex]
+  const failure = step?.failures[failureIndex]
+  if (!failure) return
+  failure.fail_code_text = item.code
+  failure.fail_code_id = item.id
+  failure.fail_code_name_snapshot = item.name ?? ''
+}
+
+function normalizeFailCode(processIndex, stepIndex, failureIndex) {
+  const process = getProcess(processIndex)
+  const step = process?.steps[stepIndex]
+  const failure = step?.failures[failureIndex]
+  if (!failure) return
+  const code = failure.fail_code_text?.trim().toUpperCase()
+  if (!code) {
+    failure.fail_code_text = ''
+    failure.fail_code_id = null
+    failure.fail_code_name_snapshot = ''
+    return
   }
 
-  processForm.lots.forEach((lot, index) => {
-    const lotNumber = index + 1
-    if (!lot.lot_number?.trim()) {
-      messages.push(t('nested.validation.lotNumber', { index: lotNumber }))
-    }
-    if (Number(lot.quantity) <= 0) {
-      messages.push(t('nested.validation.lotQuantity', { index: lotNumber }))
-    }
-  })
-
-  if (!processForm.steps.length) {
-    messages.push(t('nested.validation.stepRequired'))
+  failure.fail_code_text = code
+  const match = dictionaryIndex.value.get(code)
+  if (match) {
+    failure.fail_code_id = match.id
+    failure.fail_code_name_snapshot = match.name ?? ''
+  } else {
+    failure.fail_code_id = null
   }
+}
 
-  processForm.steps.forEach((step, index) => {
-    const stepIndex = index + 1
-    if (!step.step_code?.trim()) {
-      messages.push(t('nested.validation.stepCode', { index: stepIndex }))
-    }
-    if (!Array.isArray(step.lot_refs) || !step.lot_refs.length) {
-      messages.push(t('nested.validation.stepLots', { index: stepIndex }))
-    }
-    if (step.results_applicable) {
-      if (stepMismatch(index)) {
-        messages.push(t('nested.validation.totalsMismatch', { index: stepIndex }))
-      }
-      if (
-        step.total_units !== null &&
-        Number(step.total_units ?? 0) < Number(step.fail_units ?? 0)
-      ) {
-        messages.push(t('nested.validation.totalLessThanFail', { index: stepIndex }))
-      }
-      step.failures.forEach((failure, failureIndex) => {
-        if (!failure.fail_code_text?.trim()) {
-          messages.push(
-            t('nested.validation.failCodeEmpty', {
-              index: stepIndex,
-              row: failureIndex + 1,
-            }),
-          )
-        }
-      })
-    } else {
-      if (step.failures.length) {
-        messages.push(t('nested.validation.removeFailures', { index: stepIndex }))
-      }
-    }
+const dictionaryIndex = computed(() => {
+  const index = new Map()
+  dictionaryEntries.value.forEach((entry) => {
+    index.set(entry.code.toUpperCase(), entry)
   })
-
-  return messages
+  return index
 })
 
-function normalizeCurrentState() {
-  const normalizedLots = []
-  const lotIdMap = new Map()
-  const lotQuantityLookup = new Map()
+watch(
+  () =>
+    processForm.processes.map((process) =>
+      process.lots.map((lot) => `${lot.client_id}:${Number(lot.quantity) || 0}`).join('|'),
+    ),
+  () => {
+    processForm.processes.forEach((process, pIndex) => {
+      ensureProcessLotRefs(process)
+      process.steps.forEach((_, sIndex) => syncPassUnits(pIndex, sIndex))
+    })
+  },
+  { deep: true },
+)
 
-  processForm.lots.forEach((lot) => {
-    const tempId = String(lot.temp_id || lot.client_id)
-    normalizedLots.push({
+function setPayload(payload, { markClean = false } = {}) {
+  initializing = true
+  processForm.processes.splice(0, processForm.processes.length)
+  collapsedProcesses.clear()
+  processForm.legacy_lot_number = payload?.legacy_lot_number ?? null
+  processForm.legacy_quantity = payload?.legacy_quantity ?? null
+
+  const processes = Array.isArray(payload?.processes) && payload.processes.length
+    ? payload.processes
+    : [
+        {
+          key: payload?.key || generateProcessKey(),
+          name: payload?.name || payload?.process_name || t('nested.defaultProcessName', { index: 1 }),
+          order_index: payload?.order_index || payload?.process_order_index || 1,
+          lots: payload?.lots || [],
+          steps: payload?.steps || [],
+        },
+      ]
+
+  processes
+    .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
+    .forEach((process) => {
+      processForm.processes.push(createProcess(process))
+    })
+
+  if (!processForm.processes.length) {
+    addProcess()
+  }
+
+  reindexAllProcesses()
+  activeProcessIndex.value = Math.min(activeProcessIndex.value, processForm.processes.length - 1)
+  processForm.processes.forEach((process, pIndex) => {
+    ensureProcessLotRefs(process)
+    process.steps.forEach((_, sIndex) => syncPassUnits(pIndex, sIndex))
+  })
+  if (markClean) {
+    markPristine()
+  }
+  initializing = false
+}
+
+const normalizedPayload = computed(() => normalizeCurrentState())
+const formattedPayload = computed(() => JSON.stringify(normalizedPayload.value, null, 2))
+
+function snapshotPayload() {
+  const value = normalizedPayload.value
+  return JSON.stringify(value ?? {})
+}
+
+function normalizeCurrentState() {
+  const normalizedProcesses = processForm.processes.map((process, processIndex) => {
+    const normalizedLots = process.lots.map((lot) => ({
       id: lot.id ?? undefined,
-      temp_id: tempId,
+      temp_id: lot.temp_id || lot.client_id,
       client_id: lot.client_id,
       lot_number: lot.lot_number?.trim() || '',
       quantity: Number(lot.quantity) || 0,
+    }))
+
+    const lotIdMap = new Map(normalizedLots.map((lot) => [lot.client_id, lot.client_id]))
+
+    const normalizedSteps = process.steps.map((step, stepIndex) => {
+      const normalizedLotRefs = Array.isArray(step.lot_refs)
+        ? step.lot_refs
+            .map((ref) => lotIdMap.get(ref) || null)
+            .filter(Boolean)
+        : []
+
+      const resultsApplicable = step.results_applicable !== false
+      const autoTotal = resultsApplicable
+        ? normalizedLotRefs.reduce((sum, ref) => {
+            const lot = normalizedLots.find((entry) => entry.client_id === ref)
+            return sum + (Number(lot?.quantity) || 0)
+          }, 0)
+        : 0
+      const normalizedTotal = resultsApplicable
+        ? step.total_units === null || step.total_units === undefined
+          ? null
+          : Number(step.total_units)
+        : null
+      let normalizedFail = null
+      if (resultsApplicable) {
+        if (step.fail_units === null || step.fail_units === undefined) {
+          normalizedFail = step.failures.length
+        } else {
+          normalizedFail = Number(step.fail_units)
+        }
+      }
+
+      let normalizedPass = null
+      if (resultsApplicable) {
+        if (normalizedTotal !== null && normalizedFail !== null) {
+          normalizedPass = Math.max(Number(normalizedTotal) - Number(normalizedFail), 0)
+        } else if (step.pass_units !== null && step.pass_units !== undefined) {
+          normalizedPass = Number(step.pass_units)
+        }
+      }
+
+      const normalizedEval = step.eval_code?.trim()
+
+      return {
+        order_index: step.order_index ?? stepIndex + 1,
+        step_code: step.step_code?.trim().toUpperCase() ?? '',
+        step_label: step.step_label?.trim() || '',
+        eval_code: normalizedEval ? normalizedEval : null,
+        lot_refs: normalizedLotRefs,
+        results_applicable: resultsApplicable,
+        total_units: normalizedTotal,
+        total_units_manual:
+          resultsApplicable && normalizedTotal !== null ? normalizedTotal !== autoTotal : false,
+        pass_units: normalizedPass,
+        fail_units: normalizedFail,
+        notes: step.notes?.trim() || undefined,
+        failures: resultsApplicable
+          ? step.failures.map((failure) => ({
+              sequence: failure.sequence,
+              serial_number: failure.serial_number?.trim() || undefined,
+              fail_code_id: failure.fail_code_id ?? undefined,
+              fail_code_text: failure.fail_code_text?.trim().toUpperCase() ?? '',
+              fail_code_name_snapshot: failure.fail_code_name_snapshot?.trim() || undefined,
+              analysis_result: failure.analysis_result?.trim() || undefined,
+            }))
+          : [],
+      }
     })
-    lotIdMap.set(lot.client_id, tempId)
-    lotQuantityLookup.set(tempId, Number(lot.quantity) || 0)
-  })
-
-  const normalizedSteps = processForm.steps.map((step, index) => {
-    const normalizedLotRefs = Array.isArray(step.lot_refs)
-      ? step.lot_refs
-          .map((ref) => lotIdMap.get(ref) || lotIdMap.get(String(ref)) || null)
-          .filter(Boolean)
-      : []
-
-    const resultsApplicable = step.results_applicable !== false
-    const autoTotal = resultsApplicable
-      ? normalizedLotRefs.reduce((sum, ref) => sum + (lotQuantityLookup.get(ref) || 0), 0)
-      : 0
-    const normalizedTotal = resultsApplicable
-      ? step.total_units === null || step.total_units === undefined
-        ? null
-        : Number(step.total_units)
-      : null
-    let normalizedFail = null
-    if (resultsApplicable) {
-      if (step.fail_units === null || step.fail_units === undefined) {
-        normalizedFail = step.failures.length
-      } else {
-        normalizedFail = Number(step.fail_units)
-      }
-    }
-
-    let normalizedPass = null
-    if (resultsApplicable) {
-      if (normalizedTotal !== null && normalizedFail !== null) {
-        normalizedPass = Math.max(Number(normalizedTotal) - Number(normalizedFail), 0)
-      } else if (step.pass_units !== null && step.pass_units !== undefined) {
-        normalizedPass = Number(step.pass_units)
-      }
-    }
-
-    const normalizedEval = step.eval_code?.trim()
 
     return {
-      order_index: step.order_index ?? index + 1,
-      step_code: step.step_code?.trim().toUpperCase() ?? '',
-      step_label: step.step_label?.trim() || '',
-      eval_code: normalizedEval ? normalizedEval : null,
-      lot_refs: normalizedLotRefs,
-      results_applicable: resultsApplicable,
-      total_units: normalizedTotal,
-      total_units_manual:
-        resultsApplicable && normalizedTotal !== null ? normalizedTotal !== autoTotal : false,
-      pass_units: normalizedPass,
-      fail_units: normalizedFail,
-      notes: step.notes?.trim() || undefined,
-      failures: resultsApplicable
-        ? step.failures.map((failure) => ({
-            sequence: failure.sequence,
-            serial_number: failure.serial_number?.trim() || undefined,
-            fail_code_id: failure.fail_code_id ?? undefined,
-            fail_code_text: failure.fail_code_text?.trim().toUpperCase() ?? '',
-            fail_code_name_snapshot: failure.fail_code_name_snapshot?.trim() || undefined,
-            analysis_result: failure.analysis_result?.trim() || undefined,
-          }))
-        : [],
+      key: process.key,
+      name: process.name?.trim() || t('nested.defaultProcessName', { index: processIndex + 1 }),
+      order_index: process.order_index ?? processIndex + 1,
+      lots: normalizedLots,
+      steps: normalizedSteps,
     }
   })
 
   return {
-    lots: normalizedLots,
-    steps: normalizedSteps,
+    processes: normalizedProcesses,
     legacy_lot_number: processForm.legacy_lot_number ?? null,
     legacy_quantity: processForm.legacy_quantity ?? null,
   }
 }
 
-const normalizedPayload = computed(() => normalizeCurrentState())
-
-const lotTotalsWarnings = computed(() => {
-  const warnings = []
-  processForm.steps.forEach((step, index) => {
-    if (!step.results_applicable) {
-      return
-    }
-    if (!Array.isArray(step.lot_refs) || !step.lot_refs.length) {
-      return
-    }
-    const delta = getTotalDelta(step)
-    if (delta !== 0 && step.total_units !== null) {
-      const autoValue = autoTotalForStep(step)
-      const totalUnits = Number(step.total_units ?? 0)
-      warnings.push(
-        t('nested.warnings.lotTotalMismatch', {
-          index: index + 1,
-          total: totalUnits,
-          auto: autoValue,
-        }),
-      )
-    }
-  })
-  return warnings
-})
-
-const combinedWarnings = computed(() => [...warningsFromServer.value, ...lotTotalsWarnings.value])
-
-watch(
-  () => JSON.stringify(normalizedPayload.value),
-  (newVal) => {
-    if (initializing) {
-      return
-    }
-    const snapshot = initialSnapshot.value
-    dirty.value = snapshot !== newVal
-    emit('dirty-change', dirty.value)
-  },
-)
-
-const formattedPayload = computed(() => JSON.stringify(normalizedPayload.value, null, 2))
-
-const copyPayload = async () => {
-  try {
-    await navigator.clipboard.writeText(formattedPayload.value)
-    ElMessage.success(t('nested.copySuccess'))
-  } catch (error) {
-    ElMessage.error(t('nested.copyError'))
-    console.error(error)
-  }
-}
-
 function markPristine(snapshot) {
-  const source = snapshot ?? normalizeCurrentState()
-  initialSnapshot.value = JSON.stringify(source)
+  let snapshotValue = snapshot ?? snapshotPayload()
+  if (snapshot && typeof snapshot !== 'string') {
+    snapshotValue = JSON.stringify(snapshot)
+  }
+  initialSnapshot.value = snapshotValue
   dirty.value = false
   emit('dirty-change', false)
 }
 
-const emitSave = () => {
-  emit('save', normalizedPayload.value)
-}
+watch(
+  normalizedPayload,
+  (newVal) => {
+    if (initializing) return
+    if (!newVal) return
+    const currentSnapshot = snapshotPayload()
+    const snapshot = initialSnapshot.value
+    dirty.value = snapshot !== currentSnapshot
+    emit('dirty-change', dirty.value)
+  },
+  { deep: true },
+)
+
+watch(
+  () => props.initialPayload,
+  (newPayload) => {
+    setPayload(newPayload, { markClean: true })
+  },
+  { deep: true, immediate: true },
+)
+
+watch(
+  () => props.serverWarnings,
+  (warnings) => {
+    warningsFromServer.value = Array.isArray(warnings) ? [...warnings] : []
+  },
+  { deep: true, immediate: true },
+)
+
+const processSummary = computed(() => {
+  if (!processForm.processes.length) return ''
+  return processForm.processes
+    .map((process) => {
+      const codes = process.steps.map((step) => step.step_code || t('nested.newStep'))
+      return `${process.name || t('nested.defaultProcessName', { index: process.order_index })}: ${codes.join(' → ')}`
+    })
+    .join(' | ')
+})
+
+const validationMessages = computed(() => {
+  const messages = []
+  if (!processForm.processes.length) {
+    messages.push(t('nested.validation.processRequired'))
+  }
+  processForm.processes.forEach((process, pIndex) => {
+    if (!process.name?.trim()) {
+      messages.push(t('nested.validation.processName', { index: pIndex + 1 }))
+    }
+    if (!process.lots.length) {
+      messages.push(t('nested.validation.processLotRequired', { index: pIndex + 1 }))
+    }
+    process.lots.forEach((lot, lotIndex) => {
+      if (!lot.lot_number?.trim()) {
+        messages.push(t('nested.validation.lotNumber', { process: pIndex + 1, index: lotIndex + 1 }))
+      }
+      if (Number(lot.quantity) < 0) {
+        messages.push(t('nested.validation.lotQuantity', { process: pIndex + 1, index: lotIndex + 1 }))
+      }
+    })
+    if (!process.steps.length) {
+      messages.push(t('nested.validation.stepRequiredProcess', { index: pIndex + 1 }))
+    }
+    process.steps.forEach((step, stepIndex) => {
+      if (!step.step_code?.trim()) {
+        messages.push(t('nested.validation.stepCodeProcess', { process: pIndex + 1, index: stepIndex + 1 }))
+      }
+      if (!Array.isArray(step.lot_refs) || !step.lot_refs.length) {
+        messages.push(t('nested.validation.stepLots', { index: stepIndex + 1, process: pIndex + 1 }))
+      }
+      if (step.results_applicable) {
+        if (
+          step.total_units !== null &&
+          Number(step.total_units ?? 0) < Number(step.fail_units ?? 0)
+        ) {
+          messages.push(t('nested.validation.totalLessThanFailProcess', { process: pIndex + 1, index: stepIndex + 1 }))
+        }
+        step.failures.forEach((failure, failureIndex) => {
+          if (!failure.fail_code_text?.trim()) {
+            messages.push(
+              t('nested.validation.failCodeEmptyProcess', {
+                process: pIndex + 1,
+                index: stepIndex + 1,
+                row: failureIndex + 1,
+              }),
+            )
+          }
+        })
+      } else if (step.failures.length) {
+        messages.push(t('nested.validation.removeFailuresProcess', { process: pIndex + 1, index: stepIndex + 1 }))
+      }
+    })
+  })
+  return messages
+})
+
+const combinedWarnings = computed(() => [...warningsFromServer.value])
 
 const showDebug = computed(() => {
   if (import.meta.env.VITE_BUILDER_DEBUG === '1') return true
@@ -1431,15 +1107,48 @@ const showDebug = computed(() => {
   return false
 })
 
-defineExpose({
+function emitSave() {
+  emit('save', normalizedPayload.value)
+}
+
+async function copyPayload() {
+  try {
+    await navigator.clipboard.writeText(formattedPayload.value)
+    ElMessage.success(t('nested.copySuccess'))
+  } catch (error) {
+    ElMessage.error(t('nested.copyError'))
+    console.error(error)
+  }
+}
+
+const queryFailCodes = (queryString, cb) => {
+  const normalized = (queryString || '').trim().toUpperCase()
+  let results = dictionaryEntries.value
+  if (normalized) {
+    results = results.filter(
+      (entry) => entry.code.includes(normalized) || entry.name?.toUpperCase().includes(normalized),
+    )
+  }
+  cb(results.map((entry) => ({ value: entry.code, ...entry })))
+}
+
+const exposeSteps = {
   getPayload: () => normalizedPayload.value,
   setPayload,
   markPristine,
   isDirty: () => dirty.value,
-  hasSteps: () => processForm.steps.length > 0,
+  hasSteps: () => processForm.processes.some((process) => process.steps.length > 0),
   setWarnings: (warnings) => {
     warningsFromServer.value = Array.isArray(warnings) ? [...warnings] : []
   },
+}
+
+defineExpose(exposeSteps)
+
+nextTick(() => {
+  if (!processForm.processes.length) {
+    addProcess()
+  }
 })
 </script>
 
@@ -1450,175 +1159,81 @@ defineExpose({
   gap: 16px;
 }
 
-.form-section {
-  border-radius: 8px;
-}
-
-.card-header {
+.process-summary {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #606266;
 }
 
-.header-actions {
+.summary-label {
+  font-weight: 600;
+}
+
+.process-toolbar {
   display: flex;
   gap: 8px;
 }
 
-.summary-form,
-.step-form {
-  width: 100%;
+.builder-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
-.summary-form :deep(.el-form-item),
-.step-form :deep(.el-form-item) {
-  margin-bottom: 16px;
+.process-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.process-panel {
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+  cursor: grab;
+}
+
+.process-panel.active {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.process-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.process-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.process-name-input :deep(.el-input__inner) {
+  font-weight: 600;
+}
+
+.process-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.process-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .steps-container {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.step-card {
-  border-left: 4px solid #409eff;
-}
-
-.step-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.step-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 600;
-}
-
-.step-label {
-  color: #909399;
-  font-size: 13px;
-}
-
-.step-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.step-header-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.step-header-row .header-item {
-  flex: 1 1 200px;
-}
-
-.step-header-row.second-row .number-item {
-  flex: 1 1 160px;
-}
-
-.total-item {
-  flex: 1 1 200px;
-}
-
-.step-header-row.second-row .lots-item {
-  flex: 2 1 320px;
-}
-
-.step-header-row .toggle-item {
-  flex: 0 1 160px;
-  display: flex;
-  align-items: flex-end;
-}
-
-.label-item {
-  position: relative;
-}
-
-.suggestion-link {
-  display: inline-flex;
-  margin-top: 4px;
-  font-size: 12px;
-}
-
-.total-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.total-hint-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  font-size: 12px;
-  color: #909399;
-}
-
-.total-hint {
-  white-space: nowrap;
-}
-
-.delta-tag {
-  font-size: 11px;
-}
-
-.reset-link {
-  font-size: 12px;
-}
-
-.number-item :deep(.el-input-number),
-.lots-item :deep(.el-select),
-.eval-item :deep(.el-input) {
-  width: 100%;
-}
-
-.fail-field {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.field-hint {
-  margin-top: 4px;
-  font-size: 12px;
-  color: #909399;
-}
-
-.warning-hint {
-  color: #e6a23c;
-}
-
-.add-failure-link {
-  margin-top: 4px;
-  padding: 0;
-}
-
-.code-hint-icon {
-  color: #e6a23c;
-}
-
-.code-input {
-  width: 100%;
-}
-
-.failure-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 16px 0 8px;
-}
-
-.failure-table {
-  margin-bottom: 8px;
 }
 
 .validation-block {
@@ -1641,14 +1256,23 @@ defineExpose({
   padding: 16px;
   background: #121417;
   color: #f7f7f7;
-  border-radius: 8px;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  border-radius: 4px;
   font-size: 12px;
   line-height: 1.4;
-  overflow: auto;
+  overflow-x: auto;
 }
 
-.compact-alert {
-  margin-bottom: 12px;
+.add-step-button {
+  align-self: flex-start;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

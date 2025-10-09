@@ -389,7 +389,15 @@
       "totalLessThanFail": "Step {index}: Total Units must be greater than or equal to Fail Units",
       "failUnitsMismatch": "Step {index}: Fail Units must match the number of rows",
       "failCodeEmpty": "Step {index}, row {row}: fail code is required",
-      "removeFailures": "Step {index}: remove failure rows when no test results"
+      "removeFailures": "Step {index}: remove failure rows when no test results",
+      "processRequired": "Add at least one process before saving",
+      "processName": "Process {index}: name is required",
+      "processLotRequired": "Process {index}: add at least one lot",
+      "stepRequiredProcess": "Process {process}: add at least one step",
+      "stepCodeProcess": "Process {process}, step {index}: step code is required",
+      "totalLessThanFailProcess": "Process {process}, step {index}: Total Units must be >= Fail Units",
+      "failCodeEmptyProcess": "Process {process}, step {index}, row {row}: fail code is required",
+      "removeFailuresProcess": "Process {process}, step {index}: remove failures when no test results"
     },
     "warnings": {
       "lotTotalMismatch": "Step {index}: Total Units {total} differ from lot sum {auto}",
@@ -403,8 +411,24 @@
       "allLots": "All lots",
       "noResults": "No test results recorded",
       "failuresCount": "Failures: {count}",
-      "evalLine": "Eval: {eval} · Total {total} (Pass {pass}, Fail {fail})"
-    }
+      "evalLine": "Eval: {eval} · Total {total} (Pass {pass}, Fail {fail})",
+      "lotFallback": "Lot {index}"
+    },
+    "processSummary": "Processes:",
+    "addProcess": "Add Process",
+    "duplicateProcess": "Duplicate Process",
+    "deleteProcess": "Delete Process",
+    "processTag": "Process",
+    "processNamePlaceholder": "Enter process name",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "copySuffix": "(Copy)",
+    "processRequiredMessage": "At least one process is required",
+    "defaultProcessName": "Process {index}",
+    "autoTotalHint": "Auto: {formula} = {total}",
+    "processLotName": "Lot Name",
+    "lotId": "Client ID",
+    "noProcess": "No processes defined yet"
   },
   "status": {
     "draft": "Draft",

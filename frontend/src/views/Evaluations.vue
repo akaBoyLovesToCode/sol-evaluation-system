@@ -7,7 +7,8 @@
         <p class="page-description">{{ $t('evaluation.description') }}</p>
       </div>
       <div class="header-right">
-        <el-button type="primary" :icon="Plus" @click="openNew()">
+        <el-button type="primary" @click="openNew()">
+          <template #icon><Plus /></template>
           {{ $t('evaluation.new.title') }}
         </el-button>
       </div>
@@ -95,10 +96,12 @@
           </el-form-item>
 
           <el-form-item>
-            <el-button type="primary" :icon="Search" @click="handleSearch">
+            <el-button type="primary" @click="handleSearch">
+              <template #icon><Search /></template>
               {{ $t('evaluation.search') }}
             </el-button>
-            <el-button :icon="Refresh" @click="handleReset">
+            <el-button @click="handleReset">
+              <template #icon><Refresh /></template>
               {{ $t('evaluation.reset') }}
             </el-button>
           </el-form-item>
@@ -113,7 +116,8 @@
           <div class="table-header">
             <span>{{ $t('evaluation.list') }}</span>
             <div class="table-actions">
-              <el-button :icon="Download" :loading="exportLoading" @click="handleExport">
+              <el-button :loading="exportLoading" @click="handleExport">
+                <template #icon><Download /></template>
                 {{ $t('evaluation.export') }}
               </el-button>
             </div>
@@ -296,7 +300,6 @@
 import { ref, reactive, onMounted, computed, defineAsyncComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { Plus, Search, Refresh, Download } from '@element-plus/icons-vue'
 import api from '../utils/api'
 import AnimatedContainer from '../components/AnimatedContainer.vue'
 const EvaluationDetail = defineAsyncComponent(() => import('./EvaluationDetail.vue'))

@@ -41,7 +41,6 @@
     "fetchListFailed": "获取列表失败",
     "fetchDataFailed": "获取数据失败"
   },
-
   "login": {
     "title": "产品评价管理系统",
     "subtitle": "请登录您的账户",
@@ -80,7 +79,6 @@
       "processFlow": "请输入工艺流程描述"
     }
   },
-
   "evaluation": {
     "title": "评价管理",
     "description": "管理和查看所有产品评价",
@@ -355,7 +353,15 @@
       "totalLessThanFail": "Step {index}：Total Units 不能小于 不良 数量",
       "failUnitsMismatch": "Step {index}：不良 数量必须与行数一致",
       "failCodeEmpty": "Step {index} 第 {row} 行：不良 Code 不能为空",
-      "removeFailures": "Step {index}：无测试结果时请移除不良记录"
+      "removeFailures": "Step {index}：无测试结果时请移除不良记录",
+      "processRequired": "请至少添加一个 Process",
+      "processName": "Process {index}: 需要名称",
+      "processLotRequired": "Process {index}: 至少需要一个 Lot",
+      "stepRequiredProcess": "Process {process}: 至少需要一个 Step",
+      "stepCodeProcess": "Process {process}，Step {index}: 需要 Step Code",
+      "totalLessThanFailProcess": "Process {process}，Step {index}: Test Units 必须大于或等于 Fail Units",
+      "failCodeEmptyProcess": "Process {process}，Step {index}，Row {row}: 需要 Fail Code",
+      "removeFailuresProcess": "Process {process}，Step {index}: 无测试结果时请移除不良记录"
     },
     "warnings": {
       "lotTotalMismatch": "Step {index}：Total Units {total} 与 Lot 数量合计 {auto} 不一致",
@@ -369,8 +375,24 @@
       "allLots": "全部 Lot",
       "noResults": "无测试结果",
       "failuresCount": "不良：{count}",
-      "evalLine": "Eval: {eval} · 总数 {total} (Pass {pass}, 不良 {fail})"
-    }
+      "evalLine": "Eval: {eval} · 总数 {total} (Pass {pass}, 不良 {fail})",
+      "lotFallback": "Lot {index}"
+    },
+    "processSummary": "Process 汇总：",
+    "addProcess": "新增 Process",
+    "duplicateProcess": "复制 Process",
+    "deleteProcess": "删除 Process",
+    "processTag": "Process",
+    "processNamePlaceholder": "填写 Process 名称",
+    "expand": "展开",
+    "collapse": "收起",
+    "copySuffix": "(复制)",
+    "processRequiredMessage": "至少需要一个 Process",
+    "defaultProcessName": "Process {index}",
+    "autoTotalHint": "Auto: {formula} = {total}",
+    "processLotName": "Lot 名称",
+    "lotId": "Client ID",
+    "noProcess": "尚未添加 Process"
   },
   "status": {
     "draft": "草稿",

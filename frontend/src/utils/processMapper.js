@@ -25,52 +25,10 @@ const STEP_CODE_CANONICAL = new Map([
 const RESULT_OPTIONAL_CODES = new Set(['M010', 'M033', 'M100'])
 
 export const createEmptyBuilderPayload = () => ({
-  lots: [],
-  steps: [],
+  processes: [],
   legacy_lot_number: null,
   legacy_quantity: null,
 })
-
-const combineNotes = (...parts) =>
-  parts
-    .map((part) => (part || '').trim())
-    .filter(Boolean)
-    .join('\n\n')
-
-const normalizeLots = (lots = []) => {
-  if (!Array.isArray(lots)) return []
-  return lots
-    .map((lot, index) => {
-      const lotNumber = (lot?.lot_number || '').trim()
-      const quantity = safeInt(lot?.quantity, 0)
-      const id = lot?.id ?? null
-      const tempId = String(
-        lot?.temp_id || lot?.client_id || lot?.id || createClientId('lot', index),
-      )
-      const clientId = String(lot?.client_id || tempId)
-      return {
-        id,
-        temp_id: tempId,
-        client_id: clientId,
-        lot_number: lotNumber,
-        quantity,
-      }
-    })
-    .filter((lot) => lot.lot_number)
-}
-
-const ensureLotDefaults = (lots) => {
-  if (lots.length) return lots
-  return [
-    {
-      id: null,
-      temp_id: createClientId('lot', 0),
-      client_id: createClientId('lot', 0),
-      lot_number: '',
-      quantity: 0,
-    },
-  ]
-}
 
 const normalizeFailures = (failures = []) => {
   if (!Array.isArray(failures)) return []
@@ -84,88 +42,162 @@ const normalizeFailures = (failures = []) => {
   }))
 }
 
-const normalizeSteps = (steps = [], lotMap, defaultLotIds, quantityMap) => {
-  if (!Array.isArray(steps)) return []
-  return steps
-    .map((step, index) => {
-      const rawRefs = Array.isArray(step?.lot_refs) ? step.lot_refs : []
-      const lotRefs = rawRefs.map((ref) => lotMap.get(String(ref)) || null).filter(Boolean)
-      const effectiveRefs = lotRefs.length ? [...new Set(lotRefs)] : [...defaultLotIds]
+const canonicalStepCode = (value) => {
+  const candidate = (value || '').toString().trim().toUpperCase()
+  return STEP_CODE_CANONICAL.get(candidate) || candidate
+}
 
-      const rawCode = (step?.step_code || '').trim()
-      const canonicalCode = STEP_CODE_CANONICAL.get(rawCode.toUpperCase()) || rawCode.toUpperCase()
-      const canonicalUpper = canonicalCode.toUpperCase()
-      const defaultResultsApplicable = !RESULT_OPTIONAL_CODES.has(canonicalUpper)
-      const resultsApplicable =
-        step?.results_applicable === undefined || step?.results_applicable === null
-          ? defaultResultsApplicable
-          : Boolean(step.results_applicable)
+const isResultsApplicableDefault = (code) => !RESULT_OPTIONAL_CODES.has((code || '').toUpperCase())
 
-      const totalUnitsValue = step?.total_units
-      const failUnitsValue = step?.fail_units
-      const passUnitsValue = step?.pass_units
-      const autoSum = resultsApplicable
-        ? effectiveRefs.reduce((sum, ref) => sum + (quantityMap.get(ref) || 0), 0)
-        : 0
-      const normalizedFailures = resultsApplicable ? normalizeFailures(step?.failures) : []
+const normalizeProcessLots = (lots = [], processIndex = 0, processKey = 'proc') => {
+  if (!Array.isArray(lots)) lots = []
+  const normalized = lots.map((lot, index) => {
+    const lotNumber = (lot?.lot_number || '').trim()
+    const quantity = safeInt(lot?.quantity, 0)
+    const baseId = lot?.client_id || lot?.temp_id || lot?.id || createClientId(`${processKey}-lot`, index)
+    const clientId = String(baseId)
+    return {
+      id: lot?.id ?? null,
+      temp_id: lot?.temp_id || clientId,
+      client_id: clientId,
+      lot_number: lotNumber,
+      quantity,
+    }
+  })
 
-      let normalizedTotal = null
-      let normalizedFail = null
-      let normalizedPass = null
-
-      if (resultsApplicable) {
-        if (totalUnitsValue !== undefined && totalUnitsValue !== null) {
-          normalizedTotal = safeInt(totalUnitsValue, 0)
-        }
-        if (failUnitsValue !== undefined && failUnitsValue !== null) {
-          normalizedFail = safeInt(failUnitsValue, normalizedFailures.length)
-        } else {
-          normalizedFail = normalizedFailures.length
-        }
-
-        if (normalizedTotal !== null && normalizedFail !== null) {
-          normalizedPass = Math.max(normalizedTotal - normalizedFail, 0)
-        } else if (passUnitsValue !== undefined && passUnitsValue !== null) {
-          normalizedPass = safeInt(passUnitsValue, 0)
-        }
-      }
-
-      return {
-        order_index: safeInt(step?.order_index, index + 1),
-        step_code: canonicalCode,
-        step_label: (step?.step_label || '').trim(),
-        eval_code: (step?.eval_code || '').trim(),
-        lot_refs: effectiveRefs,
-        results_applicable: resultsApplicable,
-        total_units: resultsApplicable ? normalizedTotal : null,
-        total_units_manual:
-          resultsApplicable && normalizedTotal !== null ? normalizedTotal !== autoSum : false,
-        pass_units: resultsApplicable ? normalizedPass : null,
-        fail_units: resultsApplicable ? normalizedFail : null,
-        notes: (step?.notes || '').trim(),
-        failures: resultsApplicable ? normalizedFailures : [],
-      }
+  if (!normalized.length) {
+    normalized.push({
+      id: null,
+      temp_id: createClientId(`${processKey}-lot`, 0),
+      client_id: createClientId(`${processKey}-lot`, 0),
+      lot_number: '',
+      quantity: 0,
     })
-    .filter((step) => step.step_code || step.step_label || step.failures.length)
+  }
+
+  const lotAliasMap = new Map()
+  normalized.forEach((lot) => {
+    lotAliasMap.set(String(lot.client_id), lot.client_id)
+    lotAliasMap.set(String(lot.temp_id), lot.client_id)
+    if (lot.id !== null && lot.id !== undefined) {
+      lotAliasMap.set(String(lot.id), lot.client_id)
+    }
+  })
+
+  return { lots: normalized, lotAliasMap }
+}
+
+const normalizeProcessSteps = (steps = [], lotAliasMap, quantityMap, processIndex = 0) => {
+  if (!Array.isArray(steps)) steps = []
+  return steps.map((step, index) => {
+    const rawRefs = Array.isArray(step?.lot_refs) ? step.lot_refs : []
+    const mappedRefs = rawRefs
+      .map((ref) => lotAliasMap.get(String(ref)) || null)
+      .filter(Boolean)
+    const lotRefs = mappedRefs.length ? [...new Set(mappedRefs)] : Array.from(lotAliasMap.values())
+
+    const stepCode = canonicalStepCode(step?.step_code)
+    const defaultApplicable = isResultsApplicableDefault(stepCode)
+    const resultsApplicable =
+      step?.results_applicable === undefined || step?.results_applicable === null
+        ? defaultApplicable
+        : Boolean(step.results_applicable)
+
+    const normalizedFailures = resultsApplicable ? normalizeFailures(step?.failures) : []
+    const rawTotalUnits = step?.total_units
+    const rawFailUnits = step?.fail_units
+    let totalUnits = null
+    let failUnits = null
+    let passUnits = null
+
+    if (resultsApplicable) {
+      if (rawTotalUnits !== undefined && rawTotalUnits !== null) {
+        totalUnits = safeInt(rawTotalUnits, 0)
+      }
+      if (rawFailUnits !== undefined && rawFailUnits !== null) {
+        failUnits = safeInt(rawFailUnits, normalizedFailures.length)
+      } else {
+        failUnits = normalizedFailures.length
+      }
+      if (totalUnits !== null && failUnits !== null) {
+        passUnits = Math.max(totalUnits - failUnits, 0)
+      } else if (step?.pass_units !== undefined && step?.pass_units !== null) {
+        passUnits = safeInt(step.pass_units, 0)
+      }
+    }
+
+    const autoSum = resultsApplicable
+      ? lotRefs.reduce((sum, ref) => sum + (quantityMap.get(ref) || 0), 0)
+      : 0
+
+    return {
+      order_index: safeInt(step?.order_index, index + 1),
+      step_code: stepCode,
+      step_label: (step?.step_label || '').trim(),
+      eval_code: (step?.eval_code || '').trim(),
+      lot_refs: lotRefs,
+      results_applicable: resultsApplicable,
+      total_units: resultsApplicable ? totalUnits : null,
+      total_units_manual:
+        resultsApplicable && totalUnits !== null ? totalUnits !== autoSum : false,
+      pass_units: resultsApplicable ? passUnits : null,
+      fail_units: resultsApplicable ? failUnits : null,
+      notes: (step?.notes || '').trim(),
+      failures: normalizedFailures,
+    }
+  })
+}
+
+const normalizeProcesses = (payload) => {
+  const incomingProcesses = Array.isArray(payload?.processes) ? payload.processes : []
+  const legacyLots = Array.isArray(payload?.lots) ? payload.lots : []
+  const legacySteps = Array.isArray(payload?.steps) ? payload.steps : []
+
+  let sourceProcesses = incomingProcesses
+  if (!sourceProcesses.length) {
+    sourceProcesses = [
+      {
+        key: payload?.key,
+        name: payload?.name,
+        order_index: payload?.order_index,
+        lots: legacyLots,
+        steps: legacySteps,
+      },
+    ].filter(Boolean)
+  }
+
+  return sourceProcesses.map((process, index) => {
+    const key = (process?.key || `proc_${index + 1}`).toString()
+    const name = (process?.name || process?.process_name || `Process ${index + 1}`).toString()
+    const orderIndex = safeInt(process?.order_index ?? process?.process_order_index, index + 1)
+
+    const { lots, lotAliasMap } = normalizeProcessLots(process?.lots, index, key)
+    const quantityMap = new Map(lots.map((lot) => [lot.client_id, Number(lot.quantity) || 0]))
+    const steps = normalizeProcessSteps(process?.steps, lotAliasMap, quantityMap, index)
+
+    return {
+      key,
+      name,
+      order_index: orderIndex,
+      lots,
+      steps,
+    }
+  })
 }
 
 const legacyLotsFromFields = (rawLotNumber, rawQuantity) => {
-  const lotField = (rawLotNumber || '').trim()
-  if (!lotField) {
-    return []
-  }
-  const entries = lotField
+  const tokens = (rawLotNumber || '')
     .split(/\r?\n|,|;/)
     .map((entry) => entry.trim())
     .filter(Boolean)
 
-  if (!entries.length) return []
+  if (!tokens.length) return []
 
   const totalQuantity = safeInt(rawQuantity, 0)
-  const perLot = entries.length ? Math.floor(totalQuantity / entries.length) : 0
-  let remainder = totalQuantity - perLot * entries.length
+  const perLot = tokens.length ? Math.floor(totalQuantity / tokens.length) : 0
+  let remainder = totalQuantity - perLot * tokens.length
 
-  return entries.map((lotNumber, index) => {
+  return tokens.map((lotNumber, index) => {
     const quantity = totalQuantity > 0 ? perLot + (remainder-- > 0 ? 1 : 0) : 0
     const clientId = createClientId('legacy', index)
     return {
@@ -178,33 +210,33 @@ const legacyLotsFromFields = (rawLotNumber, rawQuantity) => {
   })
 }
 
+const ensureProcesses = (payload) => {
+  if (Array.isArray(payload?.processes) && payload.processes.length) {
+    return payload.processes
+  }
+  const lots = Array.isArray(payload?.lots) ? payload.lots : []
+  const steps = Array.isArray(payload?.steps) ? payload.steps : []
+  return [
+    {
+      key: payload?.key,
+      name: payload?.name,
+      order_index: payload?.order_index,
+      lots,
+      steps,
+    },
+  ]
+}
+
 const normalizeIncomingPayload = (incoming) => {
   const base = createEmptyBuilderPayload()
   if (!incoming || typeof incoming !== 'object') {
-    base.lots = ensureLotDefaults([])
-    base.steps = []
     return base
   }
 
-  const normalizedLots = ensureLotDefaults(normalizeLots(incoming.lots))
-  const lotAliasMap = new Map()
-  const defaultLotIds = []
-  const lotQuantityMap = new Map()
-  normalizedLots.forEach((lot) => {
-    lotAliasMap.set(String(lot.client_id), lot.client_id)
-    lotAliasMap.set(String(lot.temp_id), lot.client_id)
-    if (lot.id !== null && lot.id !== undefined) {
-      lotAliasMap.set(String(lot.id), lot.client_id)
-    }
-    defaultLotIds.push(lot.client_id)
-    lotQuantityMap.set(lot.client_id, Number(lot.quantity) || 0)
-  })
-
-  const normalizedSteps = normalizeSteps(incoming.steps, lotAliasMap, defaultLotIds, lotQuantityMap)
+  const processes = normalizeProcesses(incoming)
 
   return {
-    lots: normalizedLots,
-    steps: normalizedSteps,
+    processes,
     legacy_lot_number: incoming.legacy_lot_number ?? null,
     legacy_quantity: incoming.legacy_quantity ?? null,
   }
@@ -215,121 +247,113 @@ export const cloneBuilderPayload = (payload) => clone(payload ?? createEmptyBuil
 export const builderPayloadToNestedRequest = (payload) => {
   const normalized = normalizeIncomingPayload(payload)
 
-  const lotRefMap = new Map()
-  const lotQuantityMap = new Map()
-  const lots = normalized.lots.map((lot, index) => {
-    const tempId = lot.temp_id || lot.client_id || createClientId('lot', index)
-    const serialized = {
-      temp_id: tempId,
-      lot_number: lot.lot_number,
-      quantity: safeInt(lot.quantity, 0),
-    }
-    if (lot.id !== null && lot.id !== undefined) {
-      serialized.id = lot.id
-    }
-    lotRefMap.set(String(lot.client_id), serialized.id ?? serialized.temp_id)
-    lotRefMap.set(String(tempId), serialized.id ?? serialized.temp_id)
-    if (serialized.id !== undefined) {
-      lotRefMap.set(String(serialized.id), serialized.id)
-    }
-    lotQuantityMap.set(lot.client_id, safeInt(lot.quantity, 0))
-    return serialized
-  })
-
-  const steps = normalized.steps.map((step, index) => {
-    const refs =
-      Array.isArray(step.lot_refs) && step.lot_refs.length
-        ? [...new Set(step.lot_refs)]
-        : lots.map((lot) => lotRefMap.get(String(lot.id ?? lot.temp_id)))
-    const mappedRefs = refs.map((ref) => lotRefMap.get(String(ref)) || null).filter(Boolean)
-
-    const canonicalCode =
-      STEP_CODE_CANONICAL.get((step.step_code || '').trim().toUpperCase()) ||
-      (step.step_code || '').trim()
-    const canonicalUpper = (canonicalCode || '').toString().toUpperCase()
-    const defaultResultsApplicable = !RESULT_OPTIONAL_CODES.has(canonicalUpper)
-    const rawApplicable = step.results_applicable
-    const resultsApplicable =
-      rawApplicable === undefined || rawApplicable === null
-        ? defaultResultsApplicable
-        : rawApplicable !== false
-
-    const autoTotal = Array.isArray(step.lot_refs)
-      ? step.lot_refs.reduce((sum, ref) => sum + (lotQuantityMap.get(ref) || 0), 0)
-      : 0
-
-    let totalUnits = null
-    if (resultsApplicable) {
-      if (step.total_units === null || step.total_units === undefined) {
-        totalUnits = autoTotal
-      } else {
-        totalUnits = Number(step.total_units)
+  const processes = normalized.processes.map((process, index) => {
+    const lots = process.lots.map((lot, lotIndex) => {
+      const clientId = lot.client_id || createClientId(`proc${index + 1}-lot`, lotIndex)
+      return {
+        client_id: clientId,
+        temp_id: lot.temp_id || clientId,
+        lot_number: lot.lot_number,
+        quantity: safeInt(lot.quantity, 0),
+        ...(lot.id !== undefined && lot.id !== null ? { id: lot.id } : {}),
       }
-    }
+    })
 
-    const normalizedFailures = resultsApplicable ? normalizeFailures(step.failures) : []
-    const failUnits = resultsApplicable
-      ? step.fail_units === undefined || step.fail_units === null
-        ? normalizedFailures.length
-        : safeInt(step.fail_units, normalizedFailures.length)
-      : null
-    const passUnits =
-      resultsApplicable && totalUnits !== null && failUnits !== null
-        ? Math.max(totalUnits - failUnits, 0)
+    const lotIdMap = new Map(lots.map((lot) => [lot.client_id, lot.client_id]))
+    const quantityMap = new Map(lots.map((lot) => [lot.client_id, safeInt(lot.quantity, 0)]))
+
+    const steps = process.steps.map((step, stepIndex) => {
+      const lotRefs = Array.isArray(step.lot_refs)
+        ? step.lot_refs
+            .map((ref) => lotIdMap.get(String(ref)) || null)
+            .filter(Boolean)
+        : []
+
+      const canonical = canonicalStepCode(step.step_code)
+      const resultsApplicable =
+        step.results_applicable === undefined || step.results_applicable === null
+          ? isResultsApplicableDefault(canonical)
+          : step.results_applicable !== false
+
+      const normalizedFailures = resultsApplicable ? normalizeFailures(step.failures) : []
+      const failUnits = resultsApplicable
+        ? step.fail_units === undefined || step.fail_units === null
+          ? normalizedFailures.length
+          : safeInt(step.fail_units, normalizedFailures.length)
         : null
 
-    const evalCode = (step.eval_code || '').trim()
-    const notes = (step.notes || '').trim()
+      let totalUnits = null
+      if (resultsApplicable) {
+        if (step.total_units === undefined || step.total_units === null) {
+          totalUnits = lotRefs.reduce((sum, ref) => sum + (quantityMap.get(ref) || 0), 0)
+        } else {
+          totalUnits = safeInt(step.total_units, 0)
+        }
+      }
+
+      const passUnits =
+        resultsApplicable && totalUnits !== null && failUnits !== null
+          ? Math.max(totalUnits - failUnits, 0)
+          : null
+
+      return {
+        order_index: safeInt(step.order_index, stepIndex + 1),
+        step_code: canonical,
+        step_label: (step.step_label || '').trim() || undefined,
+        eval_code: (step.eval_code || '').trim() || null,
+        lot_refs: lotRefs,
+        results_applicable: resultsApplicable,
+        total_units: resultsApplicable ? totalUnits : null,
+        total_units_manual:
+          resultsApplicable && totalUnits !== null
+            ? totalUnits !== lotRefs.reduce((sum, ref) => sum + (quantityMap.get(ref) || 0), 0)
+            : false,
+        pass_units: resultsApplicable ? passUnits : null,
+        fail_units: resultsApplicable ? failUnits : null,
+        notes: (step.notes || '').trim() || undefined,
+        failures: normalizedFailures,
+      }
+    })
 
     return {
-      order_index: safeInt(step.order_index, index + 1),
-      step_code: canonicalCode,
-      step_label: (step.step_label || '').trim() || undefined,
-      eval_code: evalCode ? evalCode : null,
-      lot_refs: mappedRefs,
-      results_applicable: resultsApplicable,
-      total_units: resultsApplicable ? totalUnits : null,
-      total_units_manual:
-        resultsApplicable && totalUnits !== null ? totalUnits !== autoTotal : false,
-      pass_units: resultsApplicable ? passUnits : null,
-      fail_units: resultsApplicable ? failUnits : null,
-      notes: notes || undefined,
-      failures: normalizedFailures,
+      key: process.key || `proc_${index + 1}`,
+      name: process.name || `Process ${index + 1}`,
+      order_index: safeInt(process.order_index, index + 1),
+      lots,
+      steps,
     }
   })
 
   return {
-    lots,
-    steps,
+    processes,
     legacy_lot_number: normalized.legacy_lot_number,
     legacy_quantity: normalized.legacy_quantity,
   }
 }
 
+export const normalizeBuilderPayload = (payload) => clone(normalizeIncomingPayload(payload))
+
 export const hasBuilderSteps = (payload) => {
-  if (!payload || !Array.isArray(payload.steps)) return false
-  return payload.steps.some((step) => {
-    if (!step) return false
-    const hasPrimary = Boolean((step.step_code || '').trim() || (step.step_label || '').trim())
-    const hasEval = Boolean((step.eval_code || '').trim())
-    const hasNotes = Boolean((step.notes || '').trim())
-    const hasFailures =
-      Array.isArray(step.failures) && step.failures.some((failure) => failure?.fail_code_text)
-    return hasPrimary || hasEval || hasNotes || hasFailures
+  if (!payload || !Array.isArray(payload.processes)) return false
+  return payload.processes.some((process) => {
+    if (!process || !Array.isArray(process.steps)) return false
+    return process.steps.some((step) => {
+      if (!step) return false
+      const hasPrimary = Boolean((step.step_code || '').trim() || (step.step_label || '').trim())
+      const hasEval = Boolean((step.eval_code || '').trim())
+      const hasNotes = Boolean((step.notes || '').trim())
+      const hasFailures =
+        Array.isArray(step.failures) && step.failures.some((failure) => failure?.fail_code_text)
+      return hasPrimary || hasEval || hasNotes || hasFailures
+    })
   })
 }
 
 export const evaluationToBuilderPayload = (evaluation) => {
   const empty = createEmptyBuilderPayload()
-  if (!evaluation) return { ...empty, lots: ensureLotDefaults([]) }
+  if (!evaluation) return clone(empty)
 
-  const nestedCandidates = [
-    evaluation.nested_process,
-    evaluation.nested_process_payload,
-    evaluation.process_builder_payload,
-    evaluation.nested_payload,
-  ]
-  const nested = nestedCandidates.find((candidate) => candidate && typeof candidate === 'object')
+  const nested = evaluation.nested_process_payload || evaluation.nested_process || evaluation.process_builder_payload
   if (nested) {
     return normalizeIncomingPayload(nested)
   }
@@ -341,68 +365,77 @@ export const evaluationToBuilderPayload = (evaluation) => {
 
   const legacyProcesses = Array.isArray(evaluation.processes) ? evaluation.processes : []
 
-  const lots = lotsFromLegacy.length ? lotsFromLegacy : ensureLotDefaults([])
-  const lotIds = lots.map((lot) => lot.client_id)
+  if (!legacyProcesses.length) {
+    return {
+      processes: [
+        {
+          key: 'proc_1',
+          name: 'Process 1',
+          order_index: 1,
+          lots: lotsFromLegacy.length ? lotsFromLegacy : [{
+            id: null,
+            temp_id: createClientId('lot', 0),
+            client_id: createClientId('lot', 0),
+            lot_number: '',
+            quantity: 0,
+          }],
+          steps: [],
+        },
+      ],
+      legacy_lot_number: evaluation.legacy_lot_number || evaluation.lot_number || null,
+      legacy_quantity: evaluation.legacy_quantity || evaluation.quantity || null,
+    }
+  }
+
+  const lots = lotsFromLegacy.length ? lotsFromLegacy : [{
+    id: null,
+    temp_id: createClientId('lot', 0),
+    client_id: createClientId('lot', 0),
+    lot_number: '',
+    quantity: 0,
+  }]
+
+  const lotMap = new Map(lots.map((lot) => [lot.client_id, lot.client_id]))
+  const quantityMap = new Map(lots.map((lot) => [lot.client_id, lot.quantity]))
+
   const steps = legacyProcesses.map((process, index) => {
-    const lotNumber = (process?.lot_number || '').trim()
-    const lotMatch = lots.find((lot) => lot.lot_number === lotNumber)
-    const lotRef = lotMatch ? [lotMatch.client_id] : [...lotIds]
     const candidateCode = (process?.process_step || process?.eval_code || '').trim()
     const canonicalCode = STEP_CODE_CANONICAL.get(candidateCode.toUpperCase()) || 'Basic'
-    const evalCode = (process?.eval_code || '').trim()
     const totalUnits = safeInt(process?.quantity, 0)
     return {
       order_index: index + 1,
       step_code: canonicalCode,
       step_label: (process?.title || '').trim(),
-      eval_code: evalCode || null,
+      eval_code: (process?.eval_code || '').trim() || null,
       results_applicable: true,
       total_units: totalUnits,
       total_units_manual: false,
       pass_units: totalUnits,
       fail_units: 0,
-      notes: combineNotes(
-        process?.process_description,
-        process?.manufacturing_test_results,
-        process?.defect_analysis_results,
-        process?.aql_result,
-      ),
-      lot_refs: lotRef,
+      notes: (process?.process_description || '').trim(),
+      lot_refs: [...lotMap.values()],
       failures: [],
     }
   })
 
-  if (!steps.length) {
-    const legacyText = combineNotes(
-      evaluation.legacy_process_text,
-      evaluation.process_description,
-      evaluation.process_step,
-      evaluation.remarks,
-    )
-    if (legacyText) {
-      steps.push({
-        order_index: 1,
-        step_code: 'Basic',
-        step_label: 'Legacy',
-        eval_code: null,
-        results_applicable: true,
-        total_units: 0,
-        total_units_manual: false,
-        pass_units: 0,
-        fail_units: 0,
-        notes: legacyText,
-        lot_refs: [...lotIds],
-        failures: [],
-      })
-    }
-  }
-
   return {
-    lots,
-    steps,
+    processes: [
+      {
+        key: 'proc_1',
+        name: evaluation.process_name || 'Process 1',
+        order_index: 1,
+        lots,
+        steps,
+      },
+    ],
     legacy_lot_number: evaluation.legacy_lot_number || evaluation.lot_number || null,
     legacy_quantity: evaluation.legacy_quantity || evaluation.quantity || null,
   }
+}
+
+export const cloneBuilderPayloadWithDefaults = (payload) => {
+  const normalized = normalizeIncomingPayload(payload)
+  return clone(normalized)
 }
 
 export const extractLegacyProcessNotes = (evaluation) => {
@@ -410,20 +443,9 @@ export const extractLegacyProcessNotes = (evaluation) => {
   if (!processes.length) return []
 
   return processes
-    .map((process, index) => {
-      const content = combineNotes(
-        process?.process_description,
-        process?.manufacturing_test_results,
-        process?.defect_analysis_results,
-        process?.aql_result,
-      )
-      if (!content) return null
-      return {
-        title: process?.title || process?.eval_code || `Legacy ${index + 1}`,
-        content,
-      }
-    })
-    .filter(Boolean)
+    .map((process) => ({
+      lot_number: process?.lot_number,
+      description: (process?.process_description || '').trim(),
+    }))
+    .filter((entry) => entry.description)
 }
-
-export const normalizeBuilderPayload = (payload) => normalizeIncomingPayload(payload)
