@@ -302,7 +302,7 @@
     "noTestResults": "无测试结果",
     "appliesToLots": "评价 Lot",
     "selectLots": "选择 Lot",
-    "totalUnits": "总数量",
+    "totalUnits": "测试数量",
     "fromLotsNone": "计算自 Lot：—",
     "fromLotsFormula": "计算自 Lot：{formula} = {total}",
     "fromLotsSingle": "计算自 Lot：{total}",

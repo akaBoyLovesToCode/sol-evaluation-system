@@ -309,7 +309,7 @@
     "noTestResults": "시험 결과 없음",
     "appliesToLots": "평가 Lot",
     "selectLots": "Lot 선택",
-    "totalUnits": "총 수량",
+    "totalUnits": "시험 수량",
     "fromLotsNone": "Lot 기준: —",
     "fromLotsFormula": "Lot 기준: {formula} = {total}",
     "fromLotsSingle": "Lot 기준: {total}",

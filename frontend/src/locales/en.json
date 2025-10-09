@@ -336,7 +336,7 @@
     "noTestResults": "No test results",
     "appliesToLots": "Applies to lots",
     "selectLots": "Select lots",
-    "totalUnits": "Total Units",
+    "totalUnits": "Test Units",
     "fromLotsNone": "from lots: —",
     "fromLotsFormula": "from lots: {formula} = {total}",
     "fromLotsSingle": "from lots: {total}",

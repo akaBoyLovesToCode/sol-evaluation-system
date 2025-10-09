@@ -64,6 +64,7 @@ def _dedupe_preserve_order(values: List[str]) -> List[str]:
 
 
 STEP_CODE_CANONICAL = {
+    "M010": "M010",
     "M031": "M031",
     "M033": "M033",
     "M100": "M100",
@@ -72,6 +73,8 @@ STEP_CODE_CANONICAL = {
     "AQL": "AQL",
     "BASIC": "Basic",
 }
+
+RESULT_OPTIONAL_CODES = {"M010", "M033", "M100"}
 
 
 def _canonical_step_code(value: str) -> str:
@@ -203,8 +206,6 @@ def _normalize_nested_payload(
     for idx, raw_step in enumerate(steps_input, start=1):
         canonical_code = _canonical_step_code(raw_step.get("step_code"))
         step_label_value = (raw_step.get("step_label") or "").strip()
-        if not step_label_value:
-            raise ValueError(f"Step {idx} must include step_label")
 
         eval_code_raw = (raw_step.get("eval_code") or "").strip()
         eval_code = eval_code_raw.upper() if eval_code_raw else None
@@ -214,7 +215,7 @@ def _normalize_nested_payload(
 
         results_applicable = raw_step.get("results_applicable")
         if results_applicable is None:
-            results_applicable = canonical_code not in {"M033", "M100"}
+            results_applicable = canonical_code not in RESULT_OPTIONAL_CODES
         else:
             results_applicable = bool(results_applicable)
 
@@ -284,54 +285,44 @@ def _normalize_nested_payload(
                 )
             normalized_failures = []
 
+        declared_total_units = raw_step.get("total_units")
+        declared_fail_units = raw_step.get("fail_units")
+
         if results_applicable:
-            declared_fail_units = raw_step.get("fail_units")
-            normalized_fail_units = len(normalized_failures)
-            if (
-                declared_fail_units is not None
-                and _safe_int(declared_fail_units, default=normalized_fail_units)
-                != normalized_fail_units
-            ):
+            if declared_fail_units is None:
+                normalized_fail_units = len(normalized_failures)
+            else:
+                normalized_fail_units = _safe_int(
+                    declared_fail_units, default=len(normalized_failures)
+                )
+            if normalized_fail_units < 0:
+                raise ValueError(f"Step {idx} fail_units must be non-negative")
+
+            if normalized_fail_units != len(normalized_failures):
                 warnings.append(
-                    f"Step {idx} fail units adjusted to match failure rows ({normalized_fail_units})"
+                    f"Step {idx} fail units ({normalized_fail_units}) differ from failure rows ({len(normalized_failures)})"
                 )
 
-            declared_total_units = raw_step.get("total_units")
             if declared_total_units is None:
-                total_units_value = None
-            else:
-                total_units_value = _safe_int(declared_total_units, default=None)
-
-            if not total_units_manual or total_units_value is None:
                 total_units_value = lot_quantity_sum
-            elif total_units_value != lot_quantity_sum:
-                warnings.append(
-                    f"Step {idx} manual total {total_units_value} differs from lot sum {lot_quantity_sum}"
+                total_units_manual = False
+            else:
+                total_units_value = _safe_int(declared_total_units, default=0)
+                if total_units_value < 0:
+                    raise ValueError(f"Step {idx} total_units must be non-negative")
+                if not total_units_manual and total_units_value != lot_quantity_sum:
+                    total_units_manual = True
+                if total_units_value != lot_quantity_sum:
+                    warnings.append(
+                        f"Step {idx} manual total {total_units_value} differs from lot sum {lot_quantity_sum}"
+                    )
+
+            if total_units_value < normalized_fail_units:
+                raise ValueError(
+                    f"Step {idx} fail_units ({normalized_fail_units}) exceed test units ({total_units_value})"
                 )
 
-            declared_pass_units = raw_step.get("pass_units")
-            if declared_pass_units is None:
-                pass_units_value = None
-            else:
-                pass_units_value = _safe_int(declared_pass_units, default=None)
-
-            if total_units_value is not None:
-                if total_units_value < normalized_fail_units:
-                    warnings.append(
-                        f"Step {idx} total units increased to match failure count ({normalized_fail_units})"
-                    )
-                    total_units_value = normalized_fail_units
-
-                if pass_units_value is None:
-                    pass_units_value = max(total_units_value - normalized_fail_units, 0)
-
-                if total_units_value != (pass_units_value or 0) + normalized_fail_units:
-                    warnings.append(
-                        f"Step {idx} totals mismatch: total={total_units_value}, pass={pass_units_value}, fail={normalized_fail_units}"
-                    )
-            else:
-                pass_units_value = None
-
+            pass_units_value = max(total_units_value - normalized_fail_units, 0)
         else:
             total_units_manual = False
             total_units_value = None
@@ -342,7 +333,7 @@ def _normalize_nested_payload(
             {
                 "order_index": order_index,
                 "step_code": canonical_code,
-                "step_label": step_label_value,
+                "step_label": step_label_value or None,
                 "eval_code": eval_code,
                 "notes": notes_value,
                 "lot_aliases": mapped_aliases,
@@ -376,7 +367,7 @@ def _normalize_nested_payload(
             {
                 "order_index": step["order_index"],
                 "step_code": step["step_code"],
-                "step_label": step["step_label"],
+                "step_label": step["step_label"] or None,
                 "eval_code": step["eval_code"],
                 "results_applicable": step["results_applicable"],
                 "total_units": step["total_units"],

@@ -12,6 +12,7 @@ const safeInt = (value, fallback = 0) => {
 const clone = (payload) => JSON.parse(JSON.stringify(payload ?? null))
 
 const STEP_CODE_CANONICAL = new Map([
+  ['M010', 'M010'],
   ['M031', 'M031'],
   ['M033', 'M033'],
   ['M100', 'M100'],
@@ -21,7 +22,7 @@ const STEP_CODE_CANONICAL = new Map([
   ['BASIC', 'Basic'],
 ])
 
-const RESULT_OPTIONAL_CODES = new Set(['M033', 'M100'])
+const RESULT_OPTIONAL_CODES = new Set(['M010', 'M033', 'M100'])
 
 export const createEmptyBuilderPayload = () => ({
   lots: [],
@@ -106,6 +107,28 @@ const normalizeSteps = (steps = [], lotMap, defaultLotIds, quantityMap) => {
       const autoSum = resultsApplicable
         ? effectiveRefs.reduce((sum, ref) => sum + (quantityMap.get(ref) || 0), 0)
         : 0
+      const normalizedFailures = resultsApplicable ? normalizeFailures(step?.failures) : []
+
+      let normalizedTotal = null
+      let normalizedFail = null
+      let normalizedPass = null
+
+      if (resultsApplicable) {
+        if (totalUnitsValue !== undefined && totalUnitsValue !== null) {
+          normalizedTotal = safeInt(totalUnitsValue, 0)
+        }
+        if (failUnitsValue !== undefined && failUnitsValue !== null) {
+          normalizedFail = safeInt(failUnitsValue, normalizedFailures.length)
+        } else {
+          normalizedFail = normalizedFailures.length
+        }
+
+        if (normalizedTotal !== null && normalizedFail !== null) {
+          normalizedPass = Math.max(normalizedTotal - normalizedFail, 0)
+        } else if (passUnitsValue !== undefined && passUnitsValue !== null) {
+          normalizedPass = safeInt(passUnitsValue, 0)
+        }
+      }
 
       return {
         order_index: safeInt(step?.order_index, index + 1),
@@ -114,24 +137,13 @@ const normalizeSteps = (steps = [], lotMap, defaultLotIds, quantityMap) => {
         eval_code: (step?.eval_code || '').trim(),
         lot_refs: effectiveRefs,
         results_applicable: resultsApplicable,
-        total_units:
-          resultsApplicable && totalUnitsValue !== undefined && totalUnitsValue !== null
-            ? Number(totalUnitsValue)
-            : null,
+        total_units: resultsApplicable ? normalizedTotal : null,
         total_units_manual:
-          resultsApplicable && totalUnitsValue !== undefined && totalUnitsValue !== null
-            ? Number(totalUnitsValue) !== autoSum
-            : false,
-        pass_units:
-          resultsApplicable && passUnitsValue !== undefined && passUnitsValue !== null
-            ? Number(passUnitsValue)
-            : null,
-        fail_units:
-          resultsApplicable && failUnitsValue !== undefined && failUnitsValue !== null
-            ? Number(failUnitsValue)
-            : null,
+          resultsApplicable && normalizedTotal !== null ? normalizedTotal !== autoSum : false,
+        pass_units: resultsApplicable ? normalizedPass : null,
+        fail_units: resultsApplicable ? normalizedFail : null,
         notes: (step?.notes || '').trim(),
-        failures: resultsApplicable ? normalizeFailures(step?.failures) : [],
+        failures: resultsApplicable ? normalizedFailures : [],
       }
     })
     .filter((step) => step.step_code || step.step_label || step.failures.length)
@@ -188,12 +200,7 @@ const normalizeIncomingPayload = (incoming) => {
     lotQuantityMap.set(lot.client_id, Number(lot.quantity) || 0)
   })
 
-  const normalizedSteps = normalizeSteps(
-    incoming.steps,
-    lotAliasMap,
-    defaultLotIds,
-    lotQuantityMap,
-  )
+  const normalizedSteps = normalizeSteps(incoming.steps, lotAliasMap, defaultLotIds, lotQuantityMap)
 
   return {
     lots: normalizedLots,
@@ -261,7 +268,11 @@ export const builderPayloadToNestedRequest = (payload) => {
     }
 
     const normalizedFailures = resultsApplicable ? normalizeFailures(step.failures) : []
-    const failUnits = resultsApplicable ? normalizedFailures.length : null
+    const failUnits = resultsApplicable
+      ? step.fail_units === undefined || step.fail_units === null
+        ? normalizedFailures.length
+        : safeInt(step.fail_units, normalizedFailures.length)
+      : null
     const passUnits =
       resultsApplicable && totalUnits !== null && failUnits !== null
         ? Math.max(totalUnits - failUnits, 0)
