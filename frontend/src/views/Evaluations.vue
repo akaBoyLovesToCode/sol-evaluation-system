@@ -316,7 +316,7 @@ const isEditing = computed(() => !!selectedId.value)
 const newEvalRef = ref(null)
 const tableData = ref([])
 const selectedRows = ref([])
-const processStepOptions = ['iARTS', 'Aging', 'LI', 'Repair']
+const processStepOptions = ['iARTs', 'Aging', 'LI', 'Repair']
 
 const searchForm = reactive({
   evaluation_number: '',
