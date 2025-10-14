@@ -8,6 +8,11 @@ import App from './App.vue'
 import router from './router/index.js'
 
 // Styles
+import '@fontsource/inter/300.css'
+import '@fontsource/inter/400.css'
+import '@fontsource/inter/500.css'
+import '@fontsource/inter/600.css'
+import '@fontsource/inter/700.css'
 import 'element-plus/dist/index.css'
 import './style.css'
 import './styles/global.css'
