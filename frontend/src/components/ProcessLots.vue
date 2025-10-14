@@ -87,7 +87,7 @@
 </template>
 
 <script setup>
-const props = defineProps({
+const { processIndex, process, readonly, t } = defineProps({
   processIndex: {
     type: Number,
     required: true,

@@ -1,6 +1,6 @@
 <template>
   <div class="process-builder">
-    <div class="process-summary" v-if="processSummary">
+    <div v-if="processSummary" class="process-summary">
       <span class="summary-label">{{ $t('nested.processSummary') }}</span>
       <span class="summary-content">{{ processSummary }}</span>
     </div>
@@ -14,15 +14,12 @@
       </slot>
     </div>
 
-    <div class="process-toolbar" v-if="!readonly">
+    <div v-if="!readonly" class="process-toolbar">
       <el-button type="primary" @click="addProcess">
         <template #icon><Plus /></template>
         {{ $t('nested.addProcess') }}
       </el-button>
-      <el-button
-        :disabled="!currentProcess"
-        @click="duplicateProcess(activeProcessIndex)"
-      >
+      <el-button :disabled="!currentProcess" @click="duplicateProcess(activeProcessIndex)">
         <template #icon><DocumentCopy /></template>
         {{ $t('nested.duplicateProcess') }}
       </el-button>
@@ -233,7 +230,6 @@ const processForm = reactive({
 
 const collapsedProcesses = reactive(new Set())
 const activeProcessIndex = ref(0)
-const draggingProcess = ref(null)
 
 const warningsFromServer = ref([])
 const dirty = ref(false)
@@ -361,7 +357,10 @@ function createProcess(overrides = {}) {
   const key = overrides.key || generateProcessKey()
   const process = {
     key,
-    name: overrides.name || overrides.process_name || t('nested.defaultProcessName', { index: processCounter }),
+    name:
+      overrides.name ||
+      overrides.process_name ||
+      t('nested.defaultProcessName', { index: processCounter }),
     order_index: overrides.order_index ?? processForm.processes.length + 1,
     lots: [],
     steps: [],
@@ -434,19 +433,6 @@ function autoTotalForStep(process, step) {
   return step.lot_refs.reduce((sum, ref) => sum + lotQuantity(process, ref), 0)
 }
 
-function totalHintText(process, step) {
-  if (!step || !step.results_applicable) {
-    return t('nested.fromLotsNone')
-  }
-  const values = step.lot_refs.map((ref) => lotQuantity(process, ref))
-  if (!values.length) {
-    return t('nested.fromLotsNone')
-  }
-  const total = values.reduce((sum, value) => sum + value, 0)
-  const formula = values.join(' + ')
-  return t('nested.autoTotalHint', { total, formula })
-}
-
 function handleTotalUnitsInput(processIndex, stepIndex) {
   const process = getProcess(processIndex)
   const step = process?.steps[stepIndex]
@@ -467,23 +453,9 @@ function syncPassUnits(processIndex, stepIndex) {
   step.pass_units = Math.max(total - fail, 0)
 }
 
-function resultsMismatch(step) {
-  if (!step || !step.results_applicable) return false
-  const failCount = step.failures.length
-  const failUnits = Number(step.fail_units ?? 0)
-  return failUnits !== failCount
-}
-
 function getStepLabelSuggestion(step) {
   if (!step) return null
   return STEP_LABEL_SUGGESTIONS[step.step_code] || null
-}
-
-function labelSuggestionAvailable(step) {
-  const suggestion = getStepLabelSuggestion(step)
-  if (!suggestion) return false
-  const current = (step.step_label || '').trim()
-  return current !== suggestion
 }
 
 function applyLabelSuggestion(processIndex, stepIndex) {
@@ -581,7 +553,9 @@ function handleStepCodeChange(processIndex, stepIndex, value, options = {}) {
 const currentProcess = computed(() => getProcess(activeProcessIndex.value))
 
 function addProcess() {
-  const process = createProcess({ name: t('nested.defaultProcessName', { index: processForm.processes.length + 1 }) })
+  const process = createProcess({
+    name: t('nested.defaultProcessName', { index: processForm.processes.length + 1 }),
+  })
   processForm.processes.push(process)
   activeProcessIndex.value = processForm.processes.length - 1
 }
@@ -733,7 +707,8 @@ async function openPasteLots(processIndex) {
 function addStepAfter(processIndex, stepIndex) {
   const process = getProcess(processIndex)
   if (!process) return
-  const insertIndex = Number.isInteger(stepIndex) && stepIndex >= 0 ? stepIndex + 1 : process.steps.length
+  const insertIndex =
+    Number.isInteger(stepIndex) && stepIndex >= 0 ? stepIndex + 1 : process.steps.length
   const newStep = createStep(process, { order_index: insertIndex + 1 })
   process.steps.splice(insertIndex, 0, newStep)
   reindexProcess(process)
@@ -852,17 +827,21 @@ function setPayload(payload, { markClean = false } = {}) {
   processForm.legacy_lot_number = payload?.legacy_lot_number ?? null
   processForm.legacy_quantity = payload?.legacy_quantity ?? null
 
-  const processes = Array.isArray(payload?.processes) && payload.processes.length
-    ? payload.processes
-    : [
-        {
-          key: payload?.key || generateProcessKey(),
-          name: payload?.name || payload?.process_name || t('nested.defaultProcessName', { index: 1 }),
-          order_index: payload?.order_index || payload?.process_order_index || 1,
-          lots: payload?.lots || [],
-          steps: payload?.steps || [],
-        },
-      ]
+  const processes =
+    Array.isArray(payload?.processes) && payload.processes.length
+      ? payload.processes
+      : [
+          {
+            key: payload?.key || generateProcessKey(),
+            name:
+              payload?.name ||
+              payload?.process_name ||
+              t('nested.defaultProcessName', { index: 1 }),
+            order_index: payload?.order_index || payload?.process_order_index || 1,
+            lots: payload?.lots || [],
+            steps: payload?.steps || [],
+          },
+        ]
 
   processes
     .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
@@ -908,9 +887,7 @@ function normalizeCurrentState() {
 
     const normalizedSteps = process.steps.map((step, stepIndex) => {
       const normalizedLotRefs = Array.isArray(step.lot_refs)
-        ? step.lot_refs
-            .map((ref) => lotIdMap.get(ref) || null)
-            .filter(Boolean)
+        ? step.lot_refs.map((ref) => lotIdMap.get(ref) || null).filter(Boolean)
         : []
 
       const resultsApplicable = step.results_applicable !== false
@@ -1050,10 +1027,14 @@ const validationMessages = computed(() => {
     }
     process.lots.forEach((lot, lotIndex) => {
       if (!lot.lot_number?.trim()) {
-        messages.push(t('nested.validation.lotNumber', { process: pIndex + 1, index: lotIndex + 1 }))
+        messages.push(
+          t('nested.validation.lotNumber', { process: pIndex + 1, index: lotIndex + 1 }),
+        )
       }
       if (Number(lot.quantity) < 0) {
-        messages.push(t('nested.validation.lotQuantity', { process: pIndex + 1, index: lotIndex + 1 }))
+        messages.push(
+          t('nested.validation.lotQuantity', { process: pIndex + 1, index: lotIndex + 1 }),
+        )
       }
     })
     if (!process.steps.length) {
@@ -1061,17 +1042,26 @@ const validationMessages = computed(() => {
     }
     process.steps.forEach((step, stepIndex) => {
       if (!step.step_code?.trim()) {
-        messages.push(t('nested.validation.stepCodeProcess', { process: pIndex + 1, index: stepIndex + 1 }))
+        messages.push(
+          t('nested.validation.stepCodeProcess', { process: pIndex + 1, index: stepIndex + 1 }),
+        )
       }
       if (!Array.isArray(step.lot_refs) || !step.lot_refs.length) {
-        messages.push(t('nested.validation.stepLots', { index: stepIndex + 1, process: pIndex + 1 }))
+        messages.push(
+          t('nested.validation.stepLots', { index: stepIndex + 1, process: pIndex + 1 }),
+        )
       }
       if (step.results_applicable) {
         if (
           step.total_units !== null &&
           Number(step.total_units ?? 0) < Number(step.fail_units ?? 0)
         ) {
-          messages.push(t('nested.validation.totalLessThanFailProcess', { process: pIndex + 1, index: stepIndex + 1 }))
+          messages.push(
+            t('nested.validation.totalLessThanFailProcess', {
+              process: pIndex + 1,
+              index: stepIndex + 1,
+            }),
+          )
         }
         step.failures.forEach((failure, failureIndex) => {
           if (!failure.fail_code_text?.trim()) {
@@ -1085,7 +1075,12 @@ const validationMessages = computed(() => {
           }
         })
       } else if (step.failures.length) {
-        messages.push(t('nested.validation.removeFailuresProcess', { process: pIndex + 1, index: stepIndex + 1 }))
+        messages.push(
+          t('nested.validation.removeFailuresProcess', {
+            process: pIndex + 1,
+            index: stepIndex + 1,
+          }),
+        )
       }
     })
   })
@@ -1119,17 +1114,6 @@ async function copyPayload() {
     ElMessage.error(t('nested.copyError'))
     console.error(error)
   }
-}
-
-const queryFailCodes = (queryString, cb) => {
-  const normalized = (queryString || '').trim().toUpperCase()
-  let results = dictionaryEntries.value
-  if (normalized) {
-    results = results.filter(
-      (entry) => entry.code.includes(normalized) || entry.name?.toUpperCase().includes(normalized),
-    )
-  }
-  cb(results.map((entry) => ({ value: entry.code, ...entry })))
 }
 
 const exposeSteps = {

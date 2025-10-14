@@ -49,12 +49,13 @@ const canonicalStepCode = (value) => {
 
 const isResultsApplicableDefault = (code) => !RESULT_OPTIONAL_CODES.has((code || '').toUpperCase())
 
-const normalizeProcessLots = (lots = [], processIndex = 0, processKey = 'proc') => {
+const normalizeProcessLots = (lots = [], processKey = 'proc') => {
   if (!Array.isArray(lots)) lots = []
   const normalized = lots.map((lot, index) => {
     const lotNumber = (lot?.lot_number || '').trim()
     const quantity = safeInt(lot?.quantity, 0)
-    const baseId = lot?.client_id || lot?.temp_id || lot?.id || createClientId(`${processKey}-lot`, index)
+    const baseId =
+      lot?.client_id || lot?.temp_id || lot?.id || createClientId(`${processKey}-lot`, index)
     const clientId = String(baseId)
     return {
       id: lot?.id ?? null,
@@ -87,13 +88,11 @@ const normalizeProcessLots = (lots = [], processIndex = 0, processKey = 'proc') 
   return { lots: normalized, lotAliasMap }
 }
 
-const normalizeProcessSteps = (steps = [], lotAliasMap, quantityMap, processIndex = 0) => {
+const normalizeProcessSteps = (steps = [], lotAliasMap, quantityMap) => {
   if (!Array.isArray(steps)) steps = []
   return steps.map((step, index) => {
     const rawRefs = Array.isArray(step?.lot_refs) ? step.lot_refs : []
-    const mappedRefs = rawRefs
-      .map((ref) => lotAliasMap.get(String(ref)) || null)
-      .filter(Boolean)
+    const mappedRefs = rawRefs.map((ref) => lotAliasMap.get(String(ref)) || null).filter(Boolean)
     const lotRefs = mappedRefs.length ? [...new Set(mappedRefs)] : Array.from(lotAliasMap.values())
 
     const stepCode = canonicalStepCode(step?.step_code)
@@ -138,8 +137,7 @@ const normalizeProcessSteps = (steps = [], lotAliasMap, quantityMap, processInde
       lot_refs: lotRefs,
       results_applicable: resultsApplicable,
       total_units: resultsApplicable ? totalUnits : null,
-      total_units_manual:
-        resultsApplicable && totalUnits !== null ? totalUnits !== autoSum : false,
+      total_units_manual: resultsApplicable && totalUnits !== null ? totalUnits !== autoSum : false,
       pass_units: resultsApplicable ? passUnits : null,
       fail_units: resultsApplicable ? failUnits : null,
       notes: (step?.notes || '').trim(),
@@ -171,9 +169,9 @@ const normalizeProcesses = (payload) => {
     const name = (process?.name || process?.process_name || `Process ${index + 1}`).toString()
     const orderIndex = safeInt(process?.order_index ?? process?.process_order_index, index + 1)
 
-    const { lots, lotAliasMap } = normalizeProcessLots(process?.lots, index, key)
+    const { lots, lotAliasMap } = normalizeProcessLots(process?.lots, key)
     const quantityMap = new Map(lots.map((lot) => [lot.client_id, Number(lot.quantity) || 0]))
-    const steps = normalizeProcessSteps(process?.steps, lotAliasMap, quantityMap, index)
+    const steps = normalizeProcessSteps(process?.steps, lotAliasMap, quantityMap)
 
     return {
       key,
@@ -208,23 +206,6 @@ const legacyLotsFromFields = (rawLotNumber, rawQuantity) => {
       quantity,
     }
   })
-}
-
-const ensureProcesses = (payload) => {
-  if (Array.isArray(payload?.processes) && payload.processes.length) {
-    return payload.processes
-  }
-  const lots = Array.isArray(payload?.lots) ? payload.lots : []
-  const steps = Array.isArray(payload?.steps) ? payload.steps : []
-  return [
-    {
-      key: payload?.key,
-      name: payload?.name,
-      order_index: payload?.order_index,
-      lots,
-      steps,
-    },
-  ]
 }
 
 const normalizeIncomingPayload = (incoming) => {
@@ -264,9 +245,7 @@ export const builderPayloadToNestedRequest = (payload) => {
 
     const steps = process.steps.map((step, stepIndex) => {
       const lotRefs = Array.isArray(step.lot_refs)
-        ? step.lot_refs
-            .map((ref) => lotIdMap.get(String(ref)) || null)
-            .filter(Boolean)
+        ? step.lot_refs.map((ref) => lotIdMap.get(String(ref)) || null).filter(Boolean)
         : []
 
       const canonical = canonicalStepCode(step.step_code)
@@ -353,7 +332,10 @@ export const evaluationToBuilderPayload = (evaluation) => {
   const empty = createEmptyBuilderPayload()
   if (!evaluation) return clone(empty)
 
-  const nested = evaluation.nested_process_payload || evaluation.nested_process || evaluation.process_builder_payload
+  const nested =
+    evaluation.nested_process_payload ||
+    evaluation.nested_process ||
+    evaluation.process_builder_payload
   if (nested) {
     return normalizeIncomingPayload(nested)
   }
@@ -372,13 +354,17 @@ export const evaluationToBuilderPayload = (evaluation) => {
           key: 'proc_1',
           name: 'Process 1',
           order_index: 1,
-          lots: lotsFromLegacy.length ? lotsFromLegacy : [{
-            id: null,
-            temp_id: createClientId('lot', 0),
-            client_id: createClientId('lot', 0),
-            lot_number: '',
-            quantity: 0,
-          }],
+          lots: lotsFromLegacy.length
+            ? lotsFromLegacy
+            : [
+                {
+                  id: null,
+                  temp_id: createClientId('lot', 0),
+                  client_id: createClientId('lot', 0),
+                  lot_number: '',
+                  quantity: 0,
+                },
+              ],
           steps: [],
         },
       ],
@@ -387,16 +373,19 @@ export const evaluationToBuilderPayload = (evaluation) => {
     }
   }
 
-  const lots = lotsFromLegacy.length ? lotsFromLegacy : [{
-    id: null,
-    temp_id: createClientId('lot', 0),
-    client_id: createClientId('lot', 0),
-    lot_number: '',
-    quantity: 0,
-  }]
+  const lots = lotsFromLegacy.length
+    ? lotsFromLegacy
+    : [
+        {
+          id: null,
+          temp_id: createClientId('lot', 0),
+          client_id: createClientId('lot', 0),
+          lot_number: '',
+          quantity: 0,
+        },
+      ]
 
   const lotMap = new Map(lots.map((lot) => [lot.client_id, lot.client_id]))
-  const quantityMap = new Map(lots.map((lot) => [lot.client_id, lot.quantity]))
 
   const steps = legacyProcesses.map((process, index) => {
     const candidateCode = (process?.process_step || process?.eval_code || '').trim()

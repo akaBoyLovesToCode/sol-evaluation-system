@@ -67,12 +67,7 @@
                         <template #icon><Close /></template>
                         {{ $t('common.cancel') }}
                       </el-button>
-                      <el-button
-                        size="small"
-                        type="primary"
-                        :loading="saving"
-                        @click="saveEdit"
-                      >
+                      <el-button size="small" type="primary" :loading="saving" @click="saveEdit">
                         <template #icon><Check /></template>
                         {{ $t('common.save') }}
                       </el-button>
@@ -255,9 +250,9 @@
                   </div>
                   <el-button
                     size="small"
-                    @click="handleDownloadFile(file)"
                     aria-label="Download file"
                     title="Download file"
+                    @click="handleDownloadFile(file)"
                   >
                     <template #icon><Download /></template>
                   </el-button>
@@ -299,12 +294,7 @@
                         <template #icon><Close /></template>
                         {{ $t('common.cancel') }}
                       </el-button>
-                      <el-button
-                        size="small"
-                        type="primary"
-                        :loading="saving"
-                        @click="saveEdit"
-                      >
+                      <el-button size="small" type="primary" :loading="saving" @click="saveEdit">
                         <template #icon><Check /></template>
                         {{ $t('common.save') }}
                       </el-button>
@@ -338,12 +328,7 @@
               <template #header>
                 <div class="card-header">
                   <span>{{ $t('evaluation.evaluationProcesses') }}</span>
-                  <el-button
-                    v-if="canEdit"
-                    size="small"
-                    type="primary"
-                    @click="openProcessDrawer"
-                  >
+                  <el-button v-if="canEdit" size="small" type="primary" @click="openProcessDrawer">
                     <template #icon><Connection /></template>
                     {{ $t('evaluation.manageNestedProcesses') }}
                   </el-button>
@@ -361,7 +346,11 @@
                   <div class="nested-process-header">
                     <strong>{{ process.name }}</strong>
                     <span class="nested-process-chain">
-                      {{ process.steps.map((step) => step.step_code || $t('nested.newStep')).join(' → ') }}
+                      {{
+                        process.steps
+                          .map((step) => step.step_code || $t('nested.newStep'))
+                          .join(' → ')
+                      }}
                     </span>
                   </div>
                   <ul v-if="process.lots.length" class="nested-process-lots">
@@ -388,7 +377,8 @@
                     </div>
                     <div v-else class="nested-step-meta">{{ $t('nested.summary.noResults') }}</div>
                     <div class="nested-step-lots">
-                      {{ $t('nested.summary.appliesTo') }} {{ describeStepLots(process, step.lot_refs) }}
+                      {{ $t('nested.summary.appliesTo') }}
+                      {{ describeStepLots(process, step.lot_refs) }}
                     </div>
                     <div
                       v-if="Array.isArray(step.failures) && step.failures.length"
@@ -443,7 +433,9 @@
                     :color="getOperationColor(log.operation_type)"
                   >
                     <template #dot>
-                      <el-icon><component :is="getOperationIconName(log.operation_type)" /></el-icon>
+                      <el-icon
+                        ><component :is="getOperationIconName(log.operation_type)"
+                      /></el-icon>
                     </template>
                     <div class="log-content">
                       <div class="log-time">{{ formatDateTime(log.created_at) }}</div>
@@ -526,12 +518,7 @@
                       <template #icon><Close /></template>
                       {{ $t('common.cancel') }}
                     </el-button>
-                    <el-button
-                      size="small"
-                      type="primary"
-                      :loading="saving"
-                      @click="saveEdit"
-                    >
+                    <el-button size="small" type="primary" :loading="saving" @click="saveEdit">
                       <template #icon><Check /></template>
                       {{ $t('common.save') }}
                     </el-button>
@@ -719,12 +706,7 @@
             <template #header>
               <div class="card-header">
                 <span>{{ $t('evaluation.evaluationProcesses') }}</span>
-                <el-button
-                  v-if="canEdit"
-                  type="primary"
-                  plain
-                  @click="openProcessDrawer"
-                >
+                <el-button v-if="canEdit" type="primary" plain @click="openProcessDrawer">
                   <template #icon><Connection /></template>
                   {{ $t('evaluation.manageNestedProcesses') }}
                 </el-button>
@@ -742,7 +724,11 @@
                 <div class="nested-process-header">
                   <strong>{{ process.name }}</strong>
                   <span class="nested-process-chain">
-                    {{ process.steps.map((step) => step.step_code || $t('nested.newStep')).join(' → ') }}
+                    {{
+                      process.steps
+                        .map((step) => step.step_code || $t('nested.newStep'))
+                        .join(' → ')
+                    }}
                   </span>
                 </div>
                 <ul v-if="process.lots.length" class="nested-process-lots">
@@ -769,7 +755,8 @@
                   </div>
                   <div v-else class="nested-step-meta">{{ $t('nested.summary.noResults') }}</div>
                   <div class="nested-step-lots">
-                    {{ $t('nested.summary.appliesTo') }} {{ describeStepLots(process, step.lot_refs) }}
+                    {{ $t('nested.summary.appliesTo') }}
+                    {{ describeStepLots(process, step.lot_refs) }}
                   </div>
                   <div
                     v-if="Array.isArray(step.failures) && step.failures.length"
@@ -887,9 +874,9 @@
                 </div>
                 <el-button
                   size="small"
-                  @click="handleDownloadFile(file)"
                   aria-label="Download file"
                   title="Download file"
+                  @click="handleDownloadFile(file)"
                 >
                   <template #icon><Download /></template>
                 </el-button>

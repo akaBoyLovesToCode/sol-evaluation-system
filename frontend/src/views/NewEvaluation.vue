@@ -198,7 +198,9 @@
               <div class="nested-process-header">
                 <strong>{{ process.name }}</strong>
                 <span class="nested-process-chain">
-                  {{ process.steps.map((step) => step.step_code || $t('nested.newStep')).join(' → ') }}
+                  {{
+                    process.steps.map((step) => step.step_code || $t('nested.newStep')).join(' → ')
+                  }}
                 </span>
               </div>
               <div
@@ -222,7 +224,8 @@
                 </div>
                 <div v-else class="nested-step-meta">{{ $t('nested.summary.noResults') }}</div>
                 <div class="nested-step-lots">
-                  {{ $t('nested.summary.appliesTo') }} {{ describeStepLots(process, step.lot_refs) }}
+                  {{ $t('nested.summary.appliesTo') }}
+                  {{ describeStepLots(process, step.lot_refs) }}
                 </div>
                 <div
                   v-if="Array.isArray(step.failures) && step.failures.length"

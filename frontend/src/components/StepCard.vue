@@ -116,7 +116,13 @@
           </el-form-item>
 
           <el-form-item :label="t('nested.passUnits')" class="header-item number-item">
-            <el-input-number v-model="localStep.pass_units" :min="0" :step="1" controls-position="right" disabled />
+            <el-input-number
+              v-model="localStep.pass_units"
+              :min="0"
+              :step="1"
+              controls-position="right"
+              disabled
+            />
           </el-form-item>
 
           <el-form-item :label="t('nested.failUnits')" class="header-item number-item">
@@ -165,11 +171,13 @@
       class="compact-alert"
       show-icon
       :closable="false"
-      :title="t('nested.inlineMismatch', {
-        pass: localStep.pass_units ?? 0,
-        fail: localStep.fail_units ?? 0,
-        total: localStep.total_units ?? 0,
-      })"
+      :title="
+        t('nested.inlineMismatch', {
+          pass: localStep.pass_units ?? 0,
+          fail: localStep.fail_units ?? 0,
+          total: localStep.total_units ?? 0,
+        })
+      "
     />
 
     <div v-if="localStep.results_applicable && showFailureDetails" class="failure-block">
