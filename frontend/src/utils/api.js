@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
 
 // Helper function to get translations - will be dynamically imported
 let getTranslation = null

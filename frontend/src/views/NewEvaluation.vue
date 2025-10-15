@@ -328,8 +328,6 @@ const props = defineProps({
 })
 const emit = defineEmits(['saved'])
 import { useI18n } from 'vue-i18n'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Connection } from '@element-plus/icons-vue'
 import api from '../utils/api'
 import ProcessBuilder from '../components/ProcessBuilder.vue'
 import {

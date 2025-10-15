@@ -964,7 +964,6 @@ const props = defineProps({
 })
 // No emits used currently (inline editing in same view)
 import { useI18n } from 'vue-i18n'
-import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '../utils/api'
 import ProcessBuilder from '../components/ProcessBuilder.vue'
 import {

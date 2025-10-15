@@ -61,7 +61,6 @@
 <script setup>
 import { computed, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import ProcessBuilder from '../components/ProcessBuilder.vue'
 import { createEmptyBuilderPayload, normalizeBuilderPayload } from '../utils/processMapper'

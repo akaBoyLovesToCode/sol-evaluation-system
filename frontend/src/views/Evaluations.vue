@@ -299,7 +299,6 @@
 <script setup>
 import { ref, reactive, onMounted, computed, defineAsyncComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage } from 'element-plus'
 import api from '../utils/api'
 import AnimatedContainer from '../components/AnimatedContainer.vue'
 const EvaluationDetail = defineAsyncComponent(() => import('./EvaluationDetail.vue'))

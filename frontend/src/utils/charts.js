@@ -1,4 +1,17 @@
-import * as echarts from 'echarts'
+import { use, init } from 'echarts/core'
+import { PieChart, LineChart, BarChart } from 'echarts/charts'
+import { TooltipComponent, LegendComponent, GridComponent } from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+
+use([
+  PieChart,
+  LineChart,
+  BarChart,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent,
+  CanvasRenderer,
+])
 
 /**
  * Chart utilities for ECharts integration
@@ -57,7 +70,7 @@ export const createPieChart = (element, data, options = {}) => {
     return null
   }
 
-  const chart = echarts.init(element)
+  const chart = init(element)
 
   const defaultOptions = {
     tooltip: {
@@ -111,7 +124,7 @@ export const createLineChart = (element, data, options = {}) => {
     return null
   }
 
-  const chart = echarts.init(element)
+  const chart = init(element)
 
   const defaultOptions = {
     tooltip: {
@@ -199,7 +212,7 @@ export const createBarChart = (element, data, options = {}) => {
     return null
   }
 
-  const chart = echarts.init(element)
+  const chart = init(element)
 
   const defaultOptions = {
     tooltip: {

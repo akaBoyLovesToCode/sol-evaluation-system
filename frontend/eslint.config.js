@@ -24,6 +24,8 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.node,
+        ElMessage: 'readonly',
+        ElMessageBox: 'readonly',
       },
     },
     rules: {

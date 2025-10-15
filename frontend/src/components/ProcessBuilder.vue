@@ -166,7 +166,6 @@
 <script setup>
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage, ElMessageBox } from 'element-plus'
 import ProcessLots from './ProcessLots.vue'
 import StepCard from './StepCard.vue'
 

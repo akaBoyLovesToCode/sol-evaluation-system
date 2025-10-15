@@ -33,7 +33,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-// Icon components are globally registered via Element Plus
+// Element Plus locales for config provider
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import enLocale from 'element-plus/es/locale/lang/en'
 import koLocale from 'element-plus/es/locale/lang/ko'
