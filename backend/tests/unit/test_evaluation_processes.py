@@ -1,6 +1,8 @@
 """Unit tests for the EvaluationProcess model."""
 
 import pytest
+from sqlalchemy.exc import IntegrityError
+
 from app.models.evaluation import EvaluationProcess
 from tests.helpers import create_test_evaluation
 
@@ -56,7 +58,7 @@ def test_evaluation_process_required_fields(session):
     evaluation = create_test_evaluation(session)
 
     # Test missing eval_code
-    with pytest.raises(Exception):
+    with pytest.raises(IntegrityError):
         process = EvaluationProcess(
             evaluation_id=evaluation.id,
             title="Test Process",
@@ -71,7 +73,7 @@ def test_evaluation_process_required_fields(session):
     session.rollback()
 
     # Test missing lot_number
-    with pytest.raises(Exception):
+    with pytest.raises(IntegrityError):
         process = EvaluationProcess(
             evaluation_id=evaluation.id,
             title="Test Process",
@@ -86,7 +88,7 @@ def test_evaluation_process_required_fields(session):
     session.rollback()
 
     # Test missing quantity
-    with pytest.raises(Exception):
+    with pytest.raises(IntegrityError):
         process = EvaluationProcess(
             evaluation_id=evaluation.id,
             title="Test Process",
@@ -101,7 +103,7 @@ def test_evaluation_process_required_fields(session):
     session.rollback()
 
     # Test missing process_description
-    with pytest.raises(Exception):
+    with pytest.raises(IntegrityError):
         process = EvaluationProcess(
             evaluation_id=evaluation.id,
             title="Test Process",
@@ -112,6 +114,8 @@ def test_evaluation_process_required_fields(session):
         )
         session.add(process)
         session.commit()
+
+    session.rollback()
 
 
 def test_evaluation_process_status_validation(session):

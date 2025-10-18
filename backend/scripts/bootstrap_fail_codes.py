@@ -15,10 +15,10 @@ import json
 import os
 import re
 from collections import defaultdict
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Dict, Iterable, Iterator, List, Tuple
 
 import click
 import yaml
@@ -150,8 +150,7 @@ def iter_csv_rows(
             reader = csv.DictReader(handle, dialect=dialect)
         else:
             reader = csv.DictReader(handle, delimiter=delimiter)
-        for idx, row in enumerate(reader, start=2):
-            yield idx, row
+        yield from enumerate(reader, start=2)
 
 
 def iter_xlsx_rows(path: Path) -> Iterator[tuple[int, dict[str, object]]]:
@@ -302,7 +301,7 @@ def run_table_mode(
     conflicts: dict[str, set[str]] = defaultdict(set)
     extraction_errors: list[dict[str, object]] = []
 
-    with app_context():
+    with AppContext():
         for path in inputs:
             file_stats = FileStats(path=path)
             stats.append(file_stats)
@@ -472,7 +471,7 @@ def write_structured_reports(
 
     ingestion_log_path = output_dir / "ingestion_log.json"
     with ingestion_log_path.open("w", encoding="utf-8") as handle:
-        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
         json.dump(
             {
                 "generated_at": timestamp,
@@ -500,10 +499,10 @@ def write_structured_reports(
 
 def run_text_mode(
     inputs: tuple[Path, ...],
-    text_columns: Tuple[str, ...],
+    text_columns: tuple[str, ...],
     config: dict[str, object],
     stopwords_file: Path | None,
-    deny_regex_options: Tuple[str, ...],
+    deny_regex_options: tuple[str, ...],
     delimiter: str | None,
     encoding: str,
     output_dir: Path,
@@ -527,17 +526,17 @@ def run_text_mode(
     compiled_deny_patterns = compile_patterns(deny_patterns) if deny_patterns else []
 
     raw_tokens: list[RawToken] = []
-    aggregates: Dict[str, TokenAggregate] = {}
-    alias_map: Dict[str, str] = {}
-    alias_upper_map: Dict[str, str] = {}
-    code_to_names: Dict[str, set[str]] = defaultdict(set)
+    aggregates: dict[str, TokenAggregate] = {}
+    alias_map: dict[str, str] = {}
+    alias_upper_map: dict[str, str] = {}
+    code_to_names: dict[str, set[str]] = defaultdict(set)
     alias_conflicts: set[tuple[str, str, str]] = set()
     stats: list[FileStats] = []
 
     created_total = 0
     updated_total = 0
 
-    with app_context():
+    with AppContext():
         for path in inputs:
             file_stats = FileStats(path=path)
             stats.append(file_stats)
@@ -711,14 +710,14 @@ def extract_tokens_from_text(
 def write_text_reports(
     output_dir: Path,
     raw_tokens: list[RawToken],
-    aggregates: Dict[tuple[str, str], TokenAggregate],
-    alias_map: Dict[str, str],
-    code_to_names: Dict[str, set[str]],
+    aggregates: dict[tuple[str, str], TokenAggregate],
+    alias_map: dict[str, str],
+    code_to_names: dict[str, set[str]],
     alias_conflicts: list[tuple[str, str, str]],
     stats: list[FileStats],
     created_total: int,
     updated_total: int,
-    text_columns: Tuple[str, ...],
+    text_columns: tuple[str, ...],
     code_patterns: Iterable[str],
     deny_patterns: Iterable[str],
     stopwords: Iterable[str],
@@ -828,7 +827,7 @@ def write_text_reports(
     )
 
     ingestion_log_path = output_dir / "ingestion_log.json"
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     with ingestion_log_path.open("w", encoding="utf-8") as handle:
         json.dump(
             {
@@ -857,7 +856,7 @@ def write_text_reports(
 # -----------------------------------------------------------------------------
 
 
-class app_context:
+class AppContext:
     def __init__(self) -> None:
         self.app = create_app(os.getenv("FLASK_ENV", "development"))
 
@@ -930,12 +929,12 @@ def main(
     code_column: str,
     name_column: str | None,
     description_column: str | None,
-    text_columns: Tuple[str, ...],
+    text_columns: tuple[str, ...],
     delimiter: str | None,
     encoding: str,
     config: Path | None,
     stopwords_file: Path | None,
-    deny_regexes: Tuple[str, ...],
+    deny_regexes: tuple[str, ...],
     out_dir: Path,
     legacy_output_dir: Path | None,
     use_description: bool,

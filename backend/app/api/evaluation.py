@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from flask import Blueprint, Response, current_app, jsonify, request
 
@@ -35,10 +35,10 @@ def _safe_int(value: object, default: int = 0) -> int:
         return default
 
 
-def _split_legacy_lot_numbers(value: str) -> List[str]:
+def _split_legacy_lot_numbers(value: str) -> list[str]:
     if not value:
         return []
-    tokens: List[str] = []
+    tokens: list[str] = []
     for chunk in re.split(r"[\r\n,;]+", value):
         chunk = chunk.strip()
         if not chunk:
@@ -53,9 +53,9 @@ def _split_legacy_lot_numbers(value: str) -> List[str]:
     return tokens
 
 
-def _dedupe_preserve_order(values: List[str]) -> List[str]:
+def _dedupe_preserve_order(values: list[str]) -> list[str]:
     seen = set()
-    result: List[str] = []
+    result: list[str] = []
     for value in values:
         if value not in seen:
             seen.add(value)
@@ -86,11 +86,11 @@ def _canonical_step_code(value: str) -> str:
 
 
 def _ensure_fail_code_record(
-    code_text: Optional[str],
-    provided_id: Optional[int],
-    snapshot: Optional[str],
-    warnings: List[str],
-) -> Optional[FailCode]:
+    code_text: str | None,
+    provided_id: int | None,
+    snapshot: str | None,
+    warnings: list[str],
+) -> FailCode | None:
     normalized = (code_text or "").strip().upper()
     if not normalized and not provided_id:
         return None
@@ -125,7 +125,7 @@ def _ensure_fail_code_record(
     return fail_code
 
 
-def _normalize_process_key(raw_key: Optional[str], index: int, seen: set[str]) -> str:
+def _normalize_process_key(raw_key: str | None, index: int, seen: set[str]) -> str:
     candidate = (raw_key or "").strip()
     if not candidate:
         candidate = f"proc_{index:02d}"
@@ -140,24 +140,24 @@ def _normalize_process_key(raw_key: Optional[str], index: int, seen: set[str]) -
 
 
 def _normalize_process_lots(
-    lots_input: Optional[List[Dict[str, Any]]],
-    legacy_lot_number_raw: Optional[str],
-    legacy_quantity_raw: Optional[object],
+    lots_input: list[dict[str, Any]] | None,
+    legacy_lot_number_raw: str | None,
+    legacy_quantity_raw: object | None,
     process_key: str,
     process_name: str,
     process_index: int,
 ) -> tuple[
-    List[Dict[str, Any]],
-    Dict[str, Dict[str, Any]],
-    Dict[str, Dict[str, Any]],
-    List[Dict[str, Any]],
+    list[dict[str, Any]],
+    dict[str, dict[str, Any]],
+    dict[str, dict[str, Any]],
+    list[dict[str, Any]],
 ]:
-    normalized_lots: List[Dict[str, Any]] = []
-    alias_map: Dict[str, Dict[str, Any]] = {}
-    primary_alias_map: Dict[str, Dict[str, Any]] = {}
-    payload_lots: List[Dict[str, Any]] = []
+    normalized_lots: list[dict[str, Any]] = []
+    alias_map: dict[str, dict[str, Any]] = {}
+    primary_alias_map: dict[str, dict[str, Any]] = {}
+    payload_lots: list[dict[str, Any]] = []
 
-    seen_client_ids: Set[str] = set()
+    seen_client_ids: set[str] = set()
 
     if isinstance(lots_input, list) and lots_input:
         for idx, raw_lot in enumerate(lots_input, start=1):
@@ -176,8 +176,13 @@ def _normalize_process_lots(
             )
             raw_client_id = str(raw_lot.get("client_id") or "").strip()
             if not raw_client_id:
-                raw_client_id = f"{process_key or f'proc_{process_index:02d}'}-lot-{idx:02d}"
-            client_id = raw_client_id[:64] or f"{process_key or f'proc_{process_index:02d}'}-lot-{idx:02d}"
+                raw_client_id = (
+                    f"{process_key or f'proc_{process_index:02d}'}-lot-{idx:02d}"
+                )
+            client_id = (
+                raw_client_id[:64]
+                or f"{process_key or f'proc_{process_index:02d}'}-lot-{idx:02d}"
+            )
             base_client_id = client_id
             suffix = 1
             while client_id in seen_client_ids:
@@ -254,22 +259,28 @@ def _normalize_process_lots(
 
 
 def _normalize_process_steps(
-    steps_input: List[Dict[str, Any]],
-    normalized_lots: List[Dict[str, Any]],
-    alias_map: Dict[str, Dict[str, Any]],
-    primary_alias_map: Dict[str, Dict[str, Any]],
+    steps_input: list[dict[str, Any]],
+    normalized_lots: list[dict[str, Any]],
+    alias_map: dict[str, dict[str, Any]],
+    primary_alias_map: dict[str, dict[str, Any]],
     process_name: str,
     process_index: int,
-    warnings: List[str],
-) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    warnings: list[str],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if not isinstance(steps_input, list) or not steps_input:
         raise ValueError(f"Process {process_name}: steps array is required")
 
     all_aliases = [entry["alias"] for entry in normalized_lots]
-    client_by_alias = {entry["alias"]: entry.get("client_id") for entry in normalized_lots}
-    alias_by_client = {entry.get("client_id"): entry["alias"] for entry in normalized_lots if entry.get("client_id")}
-    normalized_steps: List[Dict[str, Any]] = []
-    payload_steps: List[Dict[str, Any]] = []
+    client_by_alias = {
+        entry["alias"]: entry.get("client_id") for entry in normalized_lots
+    }
+    alias_by_client = {
+        entry.get("client_id"): entry["alias"]
+        for entry in normalized_lots
+        if entry.get("client_id")
+    }
+    normalized_steps: list[dict[str, Any]] = []
+    payload_steps: list[dict[str, Any]] = []
 
     for idx, raw_step in enumerate(steps_input, start=1):
         context = f"Process {process_name} Step {idx}"
@@ -291,14 +302,16 @@ def _normalize_process_steps(
         total_units_manual = bool(raw_step.get("total_units_manual", False))
 
         lot_refs_raw = raw_step.get("lot_refs")
-        mapped_aliases: List[str] = []
+        mapped_aliases: list[str] = []
         if isinstance(lot_refs_raw, list) and lot_refs_raw:
             for ref in lot_refs_raw:
                 ref_str = str(ref)
                 entry = alias_map.get(ref_str)
                 if not entry:
                     alias_from_client = alias_by_client.get(ref_str)
-                    entry = alias_map.get(alias_from_client) if alias_from_client else None
+                    entry = (
+                        alias_map.get(alias_from_client) if alias_from_client else None
+                    )
                 if not entry:
                     warnings.append(
                         f"{context}: lot reference '{ref}' not found in process, ignoring"
@@ -310,7 +323,9 @@ def _normalize_process_steps(
 
         mapped_aliases = _dedupe_preserve_order(mapped_aliases)
         if not mapped_aliases:
-            warnings.append(f"{context}: no valid lot references; defaulting to all process lots")
+            warnings.append(
+                f"{context}: no valid lot references; defaulting to all process lots"
+            )
             mapped_aliases = all_aliases.copy()
 
         lot_quantity_sum = sum(
@@ -324,7 +339,7 @@ def _normalize_process_steps(
             warnings.append(f"{context}: failures data ignored (expected list)")
             failures_input = []
 
-        normalized_failures: List[Dict[str, Any]] = []
+        normalized_failures: list[dict[str, Any]] = []
         if results_applicable:
             for failure_idx, raw_failure in enumerate(failures_input, start=1):
                 fail_code_text = str(raw_failure.get("fail_code_text") or "").strip()
@@ -416,7 +431,9 @@ def _normalize_process_steps(
                 "lot_aliases": mapped_aliases,
                 "lot_quantity_sum": lot_quantity_sum,
                 "results_applicable": results_applicable,
-                "total_units_manual": total_units_manual if results_applicable else False,
+                "total_units_manual": total_units_manual
+                if results_applicable
+                else False,
                 "total_units": total_units_value if results_applicable else None,
                 "pass_units": pass_units_value if results_applicable else None,
                 "fail_units": normalized_fail_units if results_applicable else None,
@@ -432,11 +449,15 @@ def _normalize_process_steps(
                 "eval_code": eval_code,
                 "results_applicable": results_applicable,
                 "total_units": total_units_value if results_applicable else None,
-                "total_units_manual": total_units_manual if results_applicable else False,
+                "total_units_manual": total_units_manual
+                if results_applicable
+                else False,
                 "pass_units": pass_units_value if results_applicable else None,
                 "fail_units": normalized_fail_units if results_applicable else None,
                 "notes": notes_value,
-                "lot_refs": [client_by_alias.get(alias) or alias for alias in mapped_aliases],
+                "lot_refs": [
+                    client_by_alias.get(alias) or alias for alias in mapped_aliases
+                ],
                 "failures": [dict(failure) for failure in normalized_failures],
             }
         )
@@ -445,9 +466,9 @@ def _normalize_process_steps(
 
 
 def _normalize_nested_payload(
-    payload: Dict[str, Any],
-    warnings: List[str],
-) -> Dict[str, Any]:
+    payload: dict[str, Any],
+    warnings: list[str],
+) -> dict[str, Any]:
     legacy_lot_number_raw = str(
         payload.get("legacy_lot_number") or payload.get("lot_number") or ""
     ).strip()
@@ -474,20 +495,18 @@ def _normalize_nested_payload(
         if not processes_input:
             raise ValueError("processes array is required")
 
-    normalized_processes: List[Dict[str, Any]] = []
-    combined_lots: List[Dict[str, Any]] = []
-    combined_steps: List[Dict[str, Any]] = []
-    payload_processes: List[Dict[str, Any]] = []
-    root_lots_payload: List[Dict[str, Any]] = []
-    root_steps_payload: List[Dict[str, Any]] = []
+    normalized_processes: list[dict[str, Any]] = []
+    combined_lots: list[dict[str, Any]] = []
+    combined_steps: list[dict[str, Any]] = []
+    payload_processes: list[dict[str, Any]] = []
+    root_lots_payload: list[dict[str, Any]] = []
+    root_steps_payload: list[dict[str, Any]] = []
 
-    seen_keys: Set[str] = set()
+    seen_keys: set[str] = set()
 
     for process_index, raw_process in enumerate(processes_input, start=1):
         process_name_raw = (
-            raw_process.get("name")
-            or raw_process.get("process_name")
-            or ""
+            raw_process.get("name") or raw_process.get("process_name") or ""
         )
         process_name = str(process_name_raw).strip() or f"Process {process_index}"
         order_value = raw_process.get("order_index")
@@ -512,13 +531,15 @@ def _normalize_nested_payload(
         elif lots_input is None:
             raise ValueError(f"Process {process_name}: lots array is required")
 
-        normalized_lots, alias_map, primary_alias_map, payload_lots = _normalize_process_lots(
-            lots_input,
-            legacy_lots,
-            legacy_qty,
-            process_key,
-            process_name,
-            process_index,
+        normalized_lots, alias_map, primary_alias_map, payload_lots = (
+            _normalize_process_lots(
+                lots_input,
+                legacy_lots,
+                legacy_qty,
+                process_key,
+                process_name,
+                process_index,
+            )
         )
 
         for entry in normalized_lots:
@@ -583,7 +604,7 @@ def _normalize_nested_payload(
     legacy_lot_number_value = legacy_lot_number_raw or None
     legacy_quantity_value = _safe_int(legacy_quantity_raw, default=None)
 
-    payload_for_storage: Dict[str, Any] = {
+    payload_for_storage: dict[str, Any] = {
         "processes": payload_processes,
         "legacy_lot_number": legacy_lot_number_value,
         "legacy_quantity": legacy_quantity_value,
@@ -1397,7 +1418,7 @@ def save_nested_process(evaluation_id: int) -> tuple[Response, int]:
         return jsonify({"success": False, "message": "Evaluation not found"}), 404
 
     payload = request.get_json(silent=True) or {}
-    warnings: List[str] = []
+    warnings: list[str] = []
 
     try:
         normalized = _normalize_nested_payload(payload, warnings)
@@ -1422,7 +1443,7 @@ def save_nested_process(evaluation_id: int) -> tuple[Response, int]:
 
         db.session.flush()
 
-        lot_records: Dict[str, EvaluationProcessLot] = {}
+        lot_records: dict[str, EvaluationProcessLot] = {}
         for process in normalized_processes:
             for entry in process["lots"]:
                 lot_record = EvaluationProcessLot(
@@ -1446,7 +1467,7 @@ def save_nested_process(evaluation_id: int) -> tuple[Response, int]:
 
         for process in normalized_processes:
             for step_data in process["steps"]:
-                mapped_records: List[EvaluationProcessLot] = []
+                mapped_records: list[EvaluationProcessLot] = []
                 for alias in step_data["lot_aliases"]:
                     record = lot_records.get(alias)
                     if not record:
@@ -1465,7 +1486,9 @@ def save_nested_process(evaluation_id: int) -> tuple[Response, int]:
 
                 lot_quantity_sum = sum(record.quantity for record in mapped_records)
                 lot_number_value = (
-                    mapped_records[0].lot_number if len(mapped_records) == 1 else "MULTI"
+                    mapped_records[0].lot_number
+                    if len(mapped_records) == 1
+                    else "MULTI"
                 )
 
                 results_applicable = step_data["results_applicable"]
@@ -1476,7 +1499,11 @@ def save_nested_process(evaluation_id: int) -> tuple[Response, int]:
                     step_data["fail_units"] if results_applicable else None
                 )
                 pass_units_value = None
-                if results_applicable and total_units_value is not None and fail_units_value is not None:
+                if (
+                    results_applicable
+                    and total_units_value is not None
+                    and fail_units_value is not None
+                ):
                     pass_units_value = max(total_units_value - fail_units_value, 0)
 
                 step_record = EvaluationProcessStep(
@@ -1599,20 +1626,22 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
         .all()
     )
 
-    process_groups: Dict[str, Dict[str, Any]] = {}
-    used_output_keys: Set[str] = set()
+    process_groups: dict[str, dict[str, Any]] = {}
+    used_output_keys: set[str] = set()
     fallback_counter = 1
 
     def resolve_group(
-        raw_key: Optional[str],
-        raw_name: Optional[str],
-        raw_order: Optional[int],
-    ) -> Dict[str, Any]:
+        raw_key: str | None,
+        raw_name: str | None,
+        raw_order: int | None,
+    ) -> dict[str, Any]:
         nonlocal fallback_counter
         trimmed_key = (raw_key or "").strip()
         trimmed_name = (raw_name or "").strip()
         identifier = (
-            f"key::{trimmed_key}" if trimmed_key else f"default::{raw_order or 0}::{trimmed_name}"
+            f"key::{trimmed_key}"
+            if trimmed_key
+            else f"default::{raw_order or 0}::{trimmed_name}"
         )
         group = process_groups.get(identifier)
         if group:
@@ -1627,7 +1656,9 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
         candidate = base_key or f"proc_{order_index:02d}"
         suffix = 1
         while candidate in used_output_keys:
-            candidate = f"{base_key}_{suffix}"[:64] or f"proc_{order_index:02d}_{suffix}"
+            candidate = (
+                f"{base_key}_{suffix}"[:64] or f"proc_{order_index:02d}_{suffix}"
+            )
             suffix += 1
         used_output_keys.add(candidate)
 
@@ -1643,12 +1674,14 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
         fallback_counter += 1
         return group
 
-    lot_id_to_client: Dict[int, str] = {}
-    lot_id_to_record: Dict[int, EvaluationProcessLot] = {}
+    lot_id_to_client: dict[int, str] = {}
+    lot_id_to_record: dict[int, EvaluationProcessLot] = {}
 
     for lot in lots:
-        group = resolve_group(lot.process_key, lot.process_name, lot.process_order_index)
-        client_id = (lot.client_id or f"{group['key']}-lot-{len(group['lots']) + 1}")
+        group = resolve_group(
+            lot.process_key, lot.process_name, lot.process_order_index
+        )
+        client_id = lot.client_id or f"{group['key']}-lot-{len(group['lots']) + 1}"
         lot_payload = {
             "id": lot.id,
             "temp_id": client_id,
@@ -1661,14 +1694,14 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
             lot_id_to_client[lot.id] = client_id
             lot_id_to_record[lot.id] = lot
 
-    warnings: List[str] = []
+    warnings: list[str] = []
 
     for step in steps:
         group = resolve_group(
             step.process_key, step.process_name, step.process_order_index
         )
 
-        lot_refs: List[str] = []
+        lot_refs: list[str] = []
         if step.lot_assignments:
             lot_refs = _dedupe_preserve_order(
                 [
@@ -1729,11 +1762,15 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
                 if lot_payload["client_id"] in lot_refs:
                     lot_sum += lot_payload.get("quantity") or 0
 
-        if results_applicable and total_units is not None and fail_units is not None:
-            if total_units != (pass_units or 0) + fail_units:
-                warnings.append(
-                    f"Process {group['name']} Step {step.order_index} totals mismatch: total={total_units}, pass={pass_units}, fail={fail_units}"
-                )
+        if (
+            results_applicable
+            and total_units is not None
+            and fail_units is not None
+            and total_units != (pass_units or 0) + fail_units
+        ):
+            warnings.append(
+                f"Process {group['name']} Step {step.order_index} totals mismatch: total={total_units}, pass={pass_units}, fail={fail_units}"
+            )
         if (
             results_applicable
             and total_units is not None
@@ -1803,7 +1840,7 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
         legacy_lot_number = latest_raw.payload.get("legacy_lot_number")
         legacy_quantity = latest_raw.payload.get("legacy_quantity")
 
-    response_payload: Dict[str, Any] = {
+    response_payload: dict[str, Any] = {
         "processes": processes_payload,
         "legacy_lot_number": legacy_lot_number,
         "legacy_quantity": legacy_quantity,

@@ -8,8 +8,8 @@ from .evaluation import (
     EvaluationProcess,
     EvaluationProcessRaw,
     EvaluationProcessStep,
-    EvaluationStepFailure,
     EvaluationResult,
+    EvaluationStepFailure,
     FailCode,
 )
 from .operation_log import OperationLog

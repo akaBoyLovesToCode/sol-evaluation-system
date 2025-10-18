@@ -11,7 +11,6 @@ from flask import Request
 
 from app.models import SystemConfig
 
-
 # Authentication removed: user identity is no longer tracked.
 
 
