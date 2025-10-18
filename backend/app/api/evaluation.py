@@ -642,11 +642,14 @@ def get_evaluations() -> tuple[Response, int]:
     Query Parameters:
         page (int, optional): Page number for pagination. Defaults to 1.
         per_page (int, optional): Number of items per page. Defaults to 10.
+        evaluation_number (str, optional): Filter by evaluation number (partial match).
         status (str, optional): Filter by evaluation status.
         evaluation_type (str, optional): Filter by evaluation type.
-        product_name (str, optional): Filter by product name (partial match).
+        product (str, optional): Filter by product name (partial match). Alias: product_name.
         scs_charger_name (str, optional): Filter by SCS Charger name.
         head_office_charger_name (str, optional): Filter by Head Office Charger name.
+        start_date_from (str, optional): Filter evaluations starting on or after this date (YYYY-MM-DD).
+        start_date_to (str, optional): Filter evaluations starting on or before this date (YYYY-MM-DD).
 
     Returns:
         Tuple[Response, int]: JSON response with evaluation list and HTTP status code.
@@ -671,6 +674,11 @@ def get_evaluations() -> tuple[Response, int]:
           type: integer
           default: 10
         description: Number of items per page
+      - name: evaluation_number
+        in: query
+        schema:
+          type: string
+        description: Filter by evaluation number (partial match)
       - name: status
         in: query
         schema:
@@ -683,11 +691,11 @@ def get_evaluations() -> tuple[Response, int]:
           type: string
           enum: [new_product, mass_production]
         description: Filter by evaluation type
-      - name: product_name
+      - name: product
         in: query
         schema:
           type: string
-        description: Filter by product name (partial match)
+        description: Filter by product name (partial match). Alias: product_name.
       - name: scs_charger_name
         in: query
         schema:
@@ -698,6 +706,18 @@ def get_evaluations() -> tuple[Response, int]:
         schema:
           type: string
         description: Filter by Head Office Charger name (partial match)
+      - name: start_date_from
+        in: query
+        schema:
+          type: string
+          format: date
+        description: Filter evaluations starting on or after this date
+      - name: start_date_to
+        in: query
+        schema:
+          type: string
+          format: date
+        description: Filter evaluations starting on or before this date
     responses:
       200:
         description: List of evaluations
@@ -758,16 +778,25 @@ def get_evaluations() -> tuple[Response, int]:
         # Get query parameters
         page = request.args.get("page", 1, type=int)
         per_page = request.args.get("per_page", 10, type=int)
+        evaluation_number = request.args.get("evaluation_number")
         status = request.args.get("status")
         evaluation_type = request.args.get("evaluation_type")
         product_name = request.args.get("product_name")
+        if not product_name:
+            product_name = request.args.get("product")
         scs_charger_name = request.args.get("scs_charger_name")
         head_office_charger_name = request.args.get("head_office_charger_name")
+        start_date_from = request.args.get("start_date_from")
+        start_date_to = request.args.get("start_date_to")
 
         # Build query
         query = Evaluation.query
 
         # Apply filters
+        if evaluation_number:
+            query = query.filter(
+                Evaluation.evaluation_number.ilike(f"%{evaluation_number}%")
+            )
         if status:
             query = query.filter(Evaluation.status == status)
         if evaluation_type:
@@ -784,6 +813,26 @@ def get_evaluations() -> tuple[Response, int]:
                     f"%{head_office_charger_name}%"
                 )
             )
+        if start_date_from:
+            try:
+                start_date_from_value = datetime.strptime(
+                    start_date_from, "%Y-%m-%d"
+                ).date()
+                query = query.filter(Evaluation.start_date >= start_date_from_value)
+            except ValueError:
+                current_app.logger.warning(
+                    "Invalid start_date_from parameter: %s", start_date_from
+                )
+        if start_date_to:
+            try:
+                start_date_to_value = datetime.strptime(
+                    start_date_to, "%Y-%m-%d"
+                ).date()
+                query = query.filter(Evaluation.start_date <= start_date_to_value)
+            except ValueError:
+                current_app.logger.warning(
+                    "Invalid start_date_to parameter: %s", start_date_to
+                )
 
         # Sorting
         sort_by = request.args.get("sort_by")
