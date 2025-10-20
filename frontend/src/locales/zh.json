@@ -1,5 +1,6 @@
 {
   "common": {
+    "id": "ID",
     "confirm": "确认",
     "cancel": "取消",
     "save": "保存",
@@ -119,6 +120,7 @@
     "evaluationNumber": "评价编号",
     "typeLabel": "评价类型",
     "evaluationType": "评价类型",
+    "evaluationTypeLabel": "评价类型（显示）",
     "edit": {
       "title": "编辑评价",
       "description": "修改评价信息"
@@ -128,6 +130,7 @@
     "startDate": "开始日期",
     "actualEndDate": "实际结束日期",
     "reason": "评价原因",
+    "reasonLabel": "评价原因（显示）",
     "descriptionLabel": "评价描述",
     "evaluationDescription": "评价描述",
     "pgmVersion": "PGM版本",
@@ -142,6 +145,7 @@
     "export": "导出",
     "exportSuccess": "导出成功",
     "exportError": "导出失败",
+    "exportDetailWarning": "部分评价详情未能加载（{count}项）。导出的数据可能不完整。",
     "search": "搜索",
     "reset": "重置",
     "approve": "审批通过",
@@ -150,6 +154,7 @@
     "resume": "恢复",
     "cancel": "取消",
     "currentStatus": "当前状态",
+    "statusLabel": "状态（显示）",
     "createdAt": "创建时间",
     "updatedAt": "更新时间",
     "approvedBy": "审批人",
@@ -249,6 +254,14 @@
       "production_test": "生产测试",
       "aql": "AQL (Acceptable Quality Level)"
     },
+    "resultStatus": {
+      "pass": "通过",
+      "fail": "失败",
+      "pending": "待处理"
+    },
+    "testDate": "测试日期",
+    "resultNotesLabel": "备注",
+    "resultDataLabel": "数据",
     "noOperationLogs": "暂无操作日志",
     "operations": {
       "created": "创建了评价",
@@ -264,6 +277,8 @@
       "unknown": "未知操作"
     },
     "processStep": "评价工程",
+    "processSummary": "流程摘要",
+    "resultSummary": "结果摘要",
     "scsCharger": "SCS担当",
     "headOfficeCharger": "本社担当",
     "complete": "完成",

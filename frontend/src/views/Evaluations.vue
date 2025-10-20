@@ -172,6 +172,31 @@
               {{ row.evaluation_reason ? $t(`evaluation.reasons.${row.evaluation_reason}`) : '-' }}
             </template>
           </el-table-column>
+          <el-table-column
+            prop="remarks"
+            :label="$t('evaluation.descriptionLabel')"
+            min-width="220"
+          >
+            <template #default="{ row }">
+              <template v-if="row.remarks">
+                <el-tooltip
+                  v-if="isDescriptionTruncated(row.remarks)"
+                  :content="row.remarks"
+                  placement="top"
+                  effect="dark"
+                  popper-class="evaluation-description-tooltip"
+                >
+                  <span class="evaluation-description-cell">
+                    {{ truncateDescription(row.remarks) }}
+                  </span>
+                </el-tooltip>
+                <span v-else class="evaluation-description-cell">
+                  {{ truncateDescription(row.remarks) }}
+                </span>
+              </template>
+              <span v-else class="evaluation-description-cell">-</span>
+            </template>
+          </el-table-column>
 
           <el-table-column
             prop="scs_charger_name"
@@ -316,6 +341,7 @@ const newEvalRef = ref(null)
 const tableData = ref([])
 const selectedRows = ref([])
 const processStepOptions = ['iARTS', 'Aging', 'LI', 'Repair']
+const DESCRIPTION_WORD_LIMIT = 16
 
 const searchForm = reactive({
   evaluation_number: '',
@@ -347,6 +373,306 @@ const statusOptions = computed(() => [
   { label: t('status.cancelled'), value: 'cancelled' },
   { label: t('status.rejected'), value: 'rejected' },
 ])
+
+const translateOrFallback = (key, fallback, params = {}) => {
+  const translated = t(key, params)
+  return translated === key ? fallback : translated
+}
+
+const truncateDescription = (text) => {
+  if (!text) {
+    return ''
+  }
+  const trimmed = text.trim()
+  if (!trimmed) {
+    return ''
+  }
+  const words = trimmed.split(/\s+/)
+  if (words.length <= DESCRIPTION_WORD_LIMIT) {
+    return trimmed
+  }
+  return `${words.slice(0, DESCRIPTION_WORD_LIMIT).join(' ')}…`
+}
+
+const isDescriptionTruncated = (text) => {
+  if (!text) {
+    return false
+  }
+  return text.trim().split(/\s+/).length > DESCRIPTION_WORD_LIMIT
+}
+
+const buildProcessSummary = (processes) => {
+  if (!Array.isArray(processes) || processes.length === 0) {
+    return ''
+  }
+
+  return processes
+    .map((process, index) => {
+      const parts = []
+      const titleOrDescription = process.title || process.process_description
+      if (titleOrDescription) {
+        parts.push(titleOrDescription)
+      }
+      if (process.eval_code) {
+        parts.push(`${t('evaluation.evalCode')}: ${process.eval_code}`)
+      }
+      if (process.lot_number) {
+        parts.push(`${t('evaluation.lotNumber')}: ${process.lot_number}`)
+      }
+      if (process.quantity !== undefined && process.quantity !== null) {
+        parts.push(`${t('evaluation.quantity')}: ${process.quantity}`)
+      }
+      if (process.status) {
+        const statusLabel = t(`evaluation.processStatus.${process.status}`) || process.status
+        parts.push(`${t('common.status')}: ${statusLabel}`)
+      }
+      if (process.manufacturing_test_results) {
+        parts.push(
+          `${t('evaluation.manufacturingTestResults')}: ${process.manufacturing_test_results}`,
+        )
+      }
+      if (process.defect_analysis_results) {
+        parts.push(`${t('evaluation.defectAnalysisResults')}: ${process.defect_analysis_results}`)
+      }
+      if (process.aql_result) {
+        parts.push(`${t('evaluation.aqlResult')}: ${process.aql_result}`)
+      }
+      return `${index + 1}. ${parts.filter(Boolean).join(' | ')}`
+    })
+    .join(' ; ')
+}
+
+const buildResultSummary = (results) => {
+  if (!Array.isArray(results) || results.length === 0) {
+    return ''
+  }
+
+  return results
+    .map((result, index) => {
+      const parts = []
+      const typeLabel = result.result_type
+        ? t(`evaluation.processes.${result.result_type}`) || result.result_type
+        : ''
+      if (typeLabel) {
+        parts.push(typeLabel)
+      }
+      if (result.result_status) {
+        const statusLabel =
+          t(`evaluation.resultStatus.${result.result_status}`) || result.result_status
+        parts.push(`${t('common.status')}: ${statusLabel}`)
+      }
+      const testDate = formatDateForExport(result.test_date)
+      if (testDate) {
+        parts.push(`${t('evaluation.testDate')}: ${testDate}`)
+      }
+      if (result.comments) {
+        parts.push(`${t('evaluation.resultNotesLabel')}: ${result.comments}`)
+      }
+      if (result.result_data) {
+        let dataString = ''
+        if (typeof result.result_data === 'string') {
+          dataString = result.result_data
+        } else {
+          try {
+            dataString = JSON.stringify(result.result_data)
+          } catch {
+            dataString = String(result.result_data)
+          }
+        }
+        parts.push(`${t('evaluation.resultDataLabel')}: ${dataString}`)
+      }
+      return `${index + 1}. ${parts.filter(Boolean).join(' | ')}`
+    })
+    .join(' ; ')
+}
+
+const fetchDetailedEvaluations = async (rows) => {
+  const ids = Array.from(
+    new Set(rows.map((row) => row.id).filter((id) => id !== undefined && id !== null)),
+  )
+
+  if (ids.length === 0) {
+    return { detailMap: new Map(), failedIds: [] }
+  }
+
+  const detailMap = new Map()
+  const failedIds = []
+
+  await Promise.all(
+    ids.map(async (id) => {
+      try {
+        const response = await api.get(`/evaluations/${id}`)
+        const evaluation = response.data?.data?.evaluation
+        if (evaluation) {
+          detailMap.set(id, evaluation)
+        } else {
+          failedIds.push(id)
+        }
+      } catch (error) {
+        console.error(`Failed to fetch evaluation ${id} for export`, error)
+        failedIds.push(id)
+      }
+    }),
+  )
+
+  return { detailMap, failedIds }
+}
+
+const fetchNestedProcesses = async (rows) => {
+  const ids = Array.from(
+    new Set(rows.map((row) => row.id).filter((id) => id !== undefined && id !== null)),
+  )
+
+  if (ids.length === 0) {
+    return { nestedMap: new Map(), nestedWarnings: new Map() }
+  }
+
+  const nestedMap = new Map()
+  const nestedWarnings = new Map()
+
+  await Promise.all(
+    ids.map(async (id) => {
+      try {
+        const response = await api.get(`/evaluations/${id}/processes/nested`)
+        const responseData = response.data?.data
+        const payload = responseData?.payload
+        if (payload) {
+          nestedMap.set(id, payload.processes || [])
+        }
+        if (Array.isArray(responseData?.warnings) && responseData.warnings.length > 0) {
+          nestedWarnings.set(id, responseData.warnings)
+        }
+      } catch (nestedError) {
+        console.error(`Failed to fetch nested processes for evaluation ${id}`, nestedError)
+      }
+    }),
+  )
+
+  return { nestedMap, nestedWarnings }
+}
+
+const buildNestedProcessSummary = (processes) => {
+  if (!Array.isArray(processes) || processes.length === 0) {
+    return ''
+  }
+
+  return processes
+    .map((process, index) => {
+      const parts = []
+      const name =
+        process?.name ||
+        translateOrFallback('evaluation.defaultProcessName', `Process ${index + 1}`, {
+          index: index + 1,
+        })
+      const order = process?.order_index || index + 1
+      parts.push(`${order}. ${name}`)
+
+      if (Array.isArray(process?.lots) && process.lots.length > 0) {
+        const lotLabel = translateOrFallback('nested.summary.lotsHeading', 'Lots')
+        const lotSummary = process.lots
+          .map((lot) => {
+            const lotNumber = lot.lot_number || lot.client_id || '-'
+            const quantity =
+              lot.quantity !== undefined && lot.quantity !== null ? `(${lot.quantity})` : ''
+            return `${lotNumber}${quantity}`
+          })
+          .join(', ')
+        if (lotSummary) {
+          parts.push(`${lotLabel}: ${lotSummary}`)
+        }
+      }
+
+      if (Array.isArray(process?.steps) && process.steps.length > 0) {
+        const stepLabel = translateOrFallback('nested.stepTag', 'Step')
+        const stepSummary = process.steps
+          .map((step) => {
+            const tokens = []
+            tokens.push(`${step.order_index || ''}`.trim())
+            if (step.step_code) {
+              tokens.push(step.step_code)
+            }
+            if (step.step_label) {
+              tokens.push(`(${step.step_label})`)
+            }
+            if (step.eval_code) {
+              const evalLabel = translateOrFallback('evaluation.evalCode', 'Eval Code')
+              tokens.push(`[${evalLabel}: ${step.eval_code}]`)
+            }
+            return tokens.filter(Boolean).join(' ')
+          })
+          .filter(Boolean)
+          .join(' → ')
+        if (stepSummary) {
+          parts.push(`${stepLabel}s: ${stepSummary}`)
+        }
+      }
+
+      return parts.filter(Boolean).join(' | ')
+    })
+    .filter(Boolean)
+    .join(' ; ')
+}
+
+const buildNestedResultSummary = (processes, warnings = []) => {
+  const segments = []
+
+  if (Array.isArray(processes)) {
+    processes.forEach((process, processIndex) => {
+      const processName =
+        process?.name ||
+        translateOrFallback('evaluation.defaultProcessName', `Process ${processIndex + 1}`, {
+          index: processIndex + 1,
+        })
+      if (!Array.isArray(process?.steps)) {
+        return
+      }
+      process.steps.forEach((step) => {
+        const stepWord = translateOrFallback('nested.stepTag', 'Step')
+        const prefix = `${processName} ${stepWord} ${step.order_index || ''}`.trim()
+        if (step.results_applicable === false) {
+          segments.push(
+            `${prefix}: ${translateOrFallback(
+              'nested.summary.noResults',
+              'No test results recorded',
+            )}`,
+          )
+          return
+        }
+        const metrics = []
+        if (step.total_units !== undefined && step.total_units !== null) {
+          metrics.push(
+            `${translateOrFallback('nested.totalUnitsLabel', 'Total')} ${step.total_units}`,
+          )
+        }
+        if (step.pass_units !== undefined && step.pass_units !== null) {
+          metrics.push(`${translateOrFallback('nested.passUnitsLabel', 'Pass')} ${step.pass_units}`)
+        }
+        if (step.fail_units !== undefined && step.fail_units !== null) {
+          metrics.push(`${translateOrFallback('nested.failUnitsLabel', 'Fail')} ${step.fail_units}`)
+        }
+        if (Array.isArray(step.failures) && step.failures.length > 0) {
+          const failureText = t('nested.summary.failuresCount', { count: step.failures.length })
+          metrics.push(
+            failureText !== 'nested.summary.failuresCount'
+              ? failureText
+              : `Failures: ${step.failures.length}`,
+          )
+        }
+        if (metrics.length > 0) {
+          segments.push(`${prefix}: ${metrics.join(', ')}`)
+        }
+      })
+    })
+  }
+
+  if (Array.isArray(warnings) && warnings.length > 0) {
+    warnings.forEach((warning) => {
+      segments.push(`${translateOrFallback('nested.warningsLabel', 'Warning')}: ${warning}`)
+    })
+  }
+
+  return segments.join(' ; ')
+}
 
 const fetchEvaluations = async () => {
   try {
@@ -470,6 +796,16 @@ const handleExport = async () => {
       return
     }
 
+    const { detailMap, failedIds } = await fetchDetailedEvaluations(dataToExport)
+    const { nestedMap, nestedWarnings } = await fetchNestedProcesses(dataToExport)
+    if (failedIds.length > 0) {
+      ElMessage.warning(
+        t('evaluation.exportDetailWarning', {
+          count: failedIds.length,
+        }),
+      )
+    }
+
     // Show message about what's being exported
     const exportMessage =
       selectedRows.value.length > 0
@@ -478,37 +814,145 @@ const handleExport = async () => {
     console.log(exportMessage)
 
     // Prepare CSV data
+    const sanitizeCell = (value) => {
+      if (value === null || value === undefined) {
+        return '""'
+      }
+      const text = typeof value === 'string' ? value : String(value)
+      return `"${text.replace(/"/g, '""')}"`
+    }
+
+    const resolveEvaluationType = (value) => {
+      if (!value) return ''
+      const key = `evaluation.type.${value}`
+      const translated = t(key)
+      return translated !== key ? translated : value
+    }
+
+    const resolveStatus = (value) => {
+      if (!value) return ''
+      const key = `status.${value}`
+      const translated = t(key)
+      return translated !== key ? translated : value
+    }
+
+    const resolveReason = (value) => {
+      if (!value) return ''
+      const key = `evaluation.reasons.${value}`
+      const translated = t(key)
+      return translated !== key ? translated : value
+    }
+
+    const baseExportFields = [
+      {
+        header: t('common.id'),
+        value: (source) => source.id ?? '',
+      },
+      {
+        header: t('evaluation.evaluationNumber'),
+        value: (source) => source.evaluation_number || '',
+      },
+      {
+        header: t('evaluation.evaluationType'),
+        value: (source) => source.evaluation_type || '',
+      },
+      {
+        header: t('evaluation.evaluationTypeLabel'),
+        value: (source) => resolveEvaluationType(source.evaluation_type),
+      },
+      {
+        header: t('evaluation.product'),
+        value: (source) => source.product_name || '',
+      },
+      {
+        header: t('evaluation.partNumber'),
+        value: (source) => source.part_number || '',
+      },
+      {
+        header: t('evaluation.reason'),
+        value: (source) => source.evaluation_reason || '',
+      },
+      {
+        header: t('evaluation.reasonLabel'),
+        value: (source) => resolveReason(source.evaluation_reason),
+      },
+      {
+        header: t('evaluation.descriptionLabel'),
+        value: (source) => source.remarks || '',
+      },
+      {
+        header: t('evaluation.processStep'),
+        value: (source) => source.process_step || '',
+      },
+      {
+        header: t('evaluation.pgmVersion'),
+        value: (source) => source.pgm_version || '',
+      },
+      {
+        header: t('evaluation.scsCharger'),
+        value: (source) => source.scs_charger_name || '',
+      },
+      {
+        header: t('evaluation.headOfficeCharger'),
+        value: (source) => source.head_office_charger_name || '',
+      },
+      {
+        header: t('common.status'),
+        value: (source) => source.status || '',
+      },
+      {
+        header: t('evaluation.statusLabel'),
+        value: (source) => resolveStatus(source.status),
+      },
+      {
+        header: t('evaluation.startDate'),
+        value: (source) => formatDateForExport(source.start_date),
+      },
+      {
+        header: t('evaluation.endDate'),
+        value: (source) => formatDateForExport(source.actual_end_date),
+      },
+      {
+        header: t('evaluation.tat'),
+        value: (source) => formatTat(source) || '',
+      },
+      {
+        header: t('evaluation.createdAt'),
+        value: (source) => formatDateForExport(source.created_at),
+      },
+      {
+        header: t('evaluation.updatedAt'),
+        value: (source) => formatDateForExport(source.updated_at),
+      },
+    ]
+
     const headers = [
-      t('evaluation.evaluationNumber'),
-      t('evaluation.evaluationType'),
-      t('evaluation.product'),
-      t('evaluation.partNumber'),
-      t('evaluation.reason'),
-      t('evaluation.scsCharger'),
-      t('evaluation.headOfficeCharger'),
-      t('common.status'),
-      t('evaluation.startDate'),
-      t('evaluation.endDate'),
-      t('evaluation.tat'),
+      ...baseExportFields.map((field) => sanitizeCell(field.header)),
+      sanitizeCell(t('evaluation.processSummary')),
+      sanitizeCell(t('evaluation.resultSummary')),
     ].join(',')
 
-    const rows = dataToExport.map((row) =>
-      [
-        row.evaluation_number || '',
-        t(`evaluation.type.${row.evaluation_type}`) || '',
-        row.product_name || '',
-        row.part_number || '',
-        row.evaluation_reason ? t(`evaluation.reasons.${row.evaluation_reason}`) : '',
-        row.scs_charger_name || '',
-        row.head_office_charger_name || '',
-        t(`status.${row.status}`) || '',
-        formatDate(row.start_date) || '',
-        formatDate(row.actual_end_date) || '',
-        formatTat(row) || '',
-      ]
-        .map((cell) => `"${cell}"`)
-        .join(','),
-    )
+    const rows = dataToExport.map((row) => {
+      const detailed = detailMap.get(row.id)
+      const nestedProcesses = nestedMap.get(row.id) || []
+      const nestedProcessWarnings = nestedWarnings.get(row.id) || []
+      const exportSource = detailed ? { ...row, ...detailed } : row
+      const legacyProcessSummary = buildProcessSummary(detailed?.processes ?? [])
+      const nestedProcessSummary = buildNestedProcessSummary(nestedProcesses)
+      const processSummary = [legacyProcessSummary, nestedProcessSummary]
+        .filter(Boolean)
+        .join(' || ')
+
+      const legacyResultSummary = buildResultSummary(detailed?.results ?? [])
+      const nestedResultSummary = buildNestedResultSummary(nestedProcesses, nestedProcessWarnings)
+      const resultSummary = [legacyResultSummary, nestedResultSummary].filter(Boolean).join(' || ')
+
+      const baseValues = baseExportFields.map((field) => sanitizeCell(field.value(exportSource)))
+      baseValues.push(sanitizeCell(processSummary))
+      baseValues.push(sanitizeCell(resultSummary))
+
+      return baseValues.join(',')
+    })
 
     const csvContent = [headers, ...rows].join('\n')
 
@@ -589,6 +1033,17 @@ const formatTat = (row) => {
   return `${diffDays}d`
 }
 
+const formatDateForExport = (value) => {
+  if (value === null || value === undefined) {
+    return ''
+  }
+  if (value instanceof Date) {
+    const iso = value.toISOString()
+    return iso
+  }
+  return String(value)
+}
+
 onMounted(() => {
   fetchEvaluations()
 })
@@ -599,6 +1054,19 @@ onMounted(() => {
   padding: 0;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: 100vh;
+}
+
+.evaluation-description-cell {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.evaluation-description-tooltip) {
+  max-width: 360px;
+  line-height: 1.4;
 }
 
 .page-header {

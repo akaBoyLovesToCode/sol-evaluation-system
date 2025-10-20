@@ -1,5 +1,6 @@
 {
   "common": {
+    "id": "ID",
     "confirm": "확인",
     "cancel": "취소",
     "save": "저장",
@@ -74,6 +75,8 @@
       "description": "평가 정보 수정"
     },
     "processStep": "Step",
+    "processSummary": "공정 요약",
+    "resultSummary": "결과 요약",
     "evaluationProcesses": "평가 과정",
     "processTitle": "프로세스 제목",
     "evalCode": "평가 코드",
@@ -110,11 +113,13 @@
     "evaluationNumber": "평가 번호",
     "typeLabel": "평가 유형",
     "evaluationType": "평가 유형",
+    "evaluationTypeLabel": "평가 유형(표시)",
     "productName": "제품명",
     "partNumber": "P/N",
     "startDate": "시작 날짜",
     "actualEndDate": "실제 종료일",
     "reason": "평가 이유",
+    "reasonLabel": "평가 이유(표시)",
     "descriptionLabel": "평가 설명",
     "evaluationDescription": "평가 설명",
     "pgmVersion": "PGM 버전",
@@ -129,6 +134,7 @@
     "export": "내보내기",
     "exportSuccess": "내보내기 성공",
     "exportError": "내보내기 실패",
+    "exportDetailWarning": "일부 평가 상세 정보를 불러오지 못했습니다({count}). 내보낸 데이터가 완전하지 않을 수 있습니다.",
     "search": "검색",
     "reset": "재설정",
     "approve": "승인",
@@ -137,6 +143,7 @@
     "resume": "재개",
     "cancel": "취소",
     "currentStatus": "현재 상태",
+    "statusLabel": "상태(표시)",
     "createdAt": "생성일",
     "updatedAt": "수정일",
     "approvedBy": "승인자",
@@ -236,6 +243,14 @@
       "production_test": "생산 테스트",
       "aql": "AQL (허용품질한계)"
     },
+    "resultStatus": {
+      "pass": "합격",
+      "fail": "불합격",
+      "pending": "대기중"
+    },
+    "testDate": "테스트 날짜",
+    "resultNotesLabel": "비고",
+    "resultDataLabel": "데이터",
     "noOperationLogs": "작업 로그가 없습니다",
     "operations": {
       "created": "평가를 생성",
