@@ -199,7 +199,9 @@
                 <strong>{{ process.name }}</strong>
                 <span class="nested-process-chain">
                   {{
-                    process.steps.map((step) => step.step_code || $t('nested.newStep')).join(' → ')
+                    process.steps
+                      .map((step) => stepLabelForPath(step, $t('nested.newStep')))
+                      .join(' → ')
                   }}
                 </span>
               </div>
@@ -212,17 +214,24 @@
                   <strong>{{ step.order_index }}. {{ step.step_code }}</strong>
                   <span v-if="step.step_label"> - {{ step.step_label }}</span>
                 </div>
-                <div v-if="step.results_applicable !== false" class="nested-step-meta">
-                  {{
-                    $t('nested.summary.evalLine', {
-                      eval: step.eval_code || '—',
-                      total: formatUnit(step.total_units),
-                      pass: formatUnit(step.pass_units),
-                      fail: formatUnit(step.fail_units),
-                    })
-                  }}
+                <div class="nested-step-meta">
+                  <template v-if="step.results_applicable === false">
+                    {{ $t('nested.summary.noResults') }}
+                  </template>
+                  <template v-else-if="reliabilitySummaryFor(step)">
+                    {{ reliabilitySummaryFor(step) }}
+                  </template>
+                  <template v-else>
+                    {{
+                      $t('nested.summary.evalLine', {
+                        eval: step.eval_code || '—',
+                        total: formatUnit(step.total_units),
+                        pass: formatUnit(step.pass_units),
+                        fail: formatUnit(step.fail_units),
+                      })
+                    }}
+                  </template>
                 </div>
-                <div v-else class="nested-step-meta">{{ $t('nested.summary.noResults') }}</div>
                 <div class="nested-step-lots">
                   {{ $t('nested.summary.appliesTo') }}
                   {{ describeStepLots(process, step.lot_refs) }}
@@ -330,6 +339,7 @@ const emit = defineEmits(['saved'])
 import { useI18n } from 'vue-i18n'
 import api from '../utils/api'
 import ProcessBuilder from '../components/ProcessBuilder.vue'
+import { buildReliabilitySummary, stepLabelForPath } from '../utils/reliability'
 import {
   builderPayloadToNestedRequest,
   createEmptyBuilderPayload,
@@ -477,6 +487,8 @@ const describeStepLots = (process, lotRefs) => {
 
 const formatUnit = (value) =>
   value === null || value === undefined || Number.isNaN(value) ? '—' : value
+
+const reliabilitySummaryFor = (step) => buildReliabilitySummary(step, t)
 
 async function refreshNestedPayload(targetId, evaluationContext = null, options = {}) {
   const { preserveWarnings = false } = options

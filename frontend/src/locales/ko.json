@@ -402,6 +402,12 @@
       "evalLine": "Eval: {eval} · 총 수량 {total} (Pass {pass}, 불량 {fail})",
       "lotFallback": "Lot {index}"
     },
+    "reliability": {
+      "ppm": "{ppm}ppm({fail} 불량/{total})",
+      "r": ", r{r}",
+      "ci": ", [{low}, {high}]",
+      "conf": "{conf}% 신뢰수준"
+    },
     "processSummary": "Process 요약:",
     "addProcess": "Process 추가",
     "duplicateProcess": "Process 복제",

@@ -6,6 +6,9 @@
           <el-tag type="info">{{ t('nested.stepTag') }} {{ stepIndex + 1 }}</el-tag>
           <span>{{ step.step_code || t('nested.newStep') }}</span>
           <span v-if="step.step_label" class="step-label">{{ step.step_label }}</span>
+          <p v-if="reliabilitySummary" class="reliability-summary">
+            {{ reliabilitySummary }}
+          </p>
         </div>
         <div v-if="!readonly" class="step-actions">
           <el-button size="small" @click.stop="emit('add-step', processIndex, stepIndex)">
@@ -277,6 +280,7 @@
 
 <script setup>
 import { computed, toRefs } from 'vue'
+import { buildReliabilitySummary } from '../utils/reliability'
 
 const props = defineProps({
   processIndex: {
@@ -401,6 +405,10 @@ const showFailureDetails = computed(() => {
 
 const localStep = step
 
+const reliabilitySummary = computed(() =>
+  buildReliabilitySummary(props.step, props.t),
+)
+
 const queryFailCodes = (queryString, cb) => {
   const normalized = (queryString || '').trim().toUpperCase()
   let results = props.dictionaryEntries
@@ -416,6 +424,13 @@ const queryFailCodes = (queryString, cb) => {
 <style scoped>
 .step-card {
   border-radius: 8px;
+}
+
+.reliability-summary {
+  margin: 4px 0 0;
+  color: var(--el-color-info);
+  font-size: 13px;
+  flex: 1 0 100%;
 }
 
 .step-header {

@@ -142,6 +142,7 @@ const normalizeProcessSteps = (steps = [], lotAliasMap, quantityMap) => {
       fail_units: resultsApplicable ? failUnits : null,
       notes: (step?.notes || '').trim(),
       failures: normalizedFailures,
+      metrics: step?.metrics ? clone(step.metrics) : undefined,
     }
   })
 }
@@ -291,6 +292,7 @@ export const builderPayloadToNestedRequest = (payload) => {
         fail_units: resultsApplicable ? failUnits : null,
         notes: (step.notes || '').trim() || undefined,
         failures: normalizedFailures,
+        ...(step.metrics ? { metrics: clone(step.metrics) } : {}),
       }
     })
 

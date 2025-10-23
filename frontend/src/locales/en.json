@@ -429,6 +429,12 @@
       "evalLine": "Eval: {eval} · Total {total} (Pass {pass}, Fail {fail})",
       "lotFallback": "Lot {index}"
     },
+    "reliability": {
+      "ppm": "{ppm}ppm ({fail} Fail / {total})",
+      "r": ", r{r}",
+      "ci": ", [{low}, {high}]",
+      "conf": "{conf}% confidence"
+    },
     "processSummary": "Processes:",
     "addProcess": "Add Process",
     "duplicateProcess": "Duplicate Process",

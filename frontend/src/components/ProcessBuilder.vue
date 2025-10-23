@@ -168,6 +168,7 @@ import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ProcessLots from './ProcessLots.vue'
 import StepCard from './StepCard.vue'
+import { stepLabelForPath } from '../utils/reliability'
 
 const { t } = useI18n()
 
@@ -1004,10 +1005,16 @@ watch(
 
 const processSummary = computed(() => {
   if (!processForm.processes.length) return ''
+  const newStepLabel = t('nested.newStep')
   return processForm.processes
-    .map((process) => {
-      const codes = process.steps.map((step) => step.step_code || t('nested.newStep'))
-      return `${process.name || t('nested.defaultProcessName', { index: process.order_index })}: ${codes.join(' → ')}`
+    .map((process, index) => {
+      const codes = process.steps.map((step) => stepLabelForPath(step, newStepLabel))
+      const name =
+        process.name ||
+        t('nested.defaultProcessName', {
+          index: process.order_index || index + 1,
+        })
+      return `${name}: ${codes.join(' → ')}`
     })
     .join(' | ')
 })

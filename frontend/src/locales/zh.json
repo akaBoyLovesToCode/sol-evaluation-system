@@ -393,6 +393,12 @@
       "evalLine": "Eval: {eval} · 总数 {total} (Pass {pass}, 不良 {fail})",
       "lotFallback": "Lot {index}"
     },
+    "reliability": {
+      "ppm": "{ppm}ppm（{fail} 不良/{total}）",
+      "r": "，r{r}",
+      "ci": "，[{low}，{high}]",
+      "conf": "{conf}% 置信水平"
+    },
     "processSummary": "Process 汇总：",
     "addProcess": "新增 Process",
     "duplicateProcess": "复制 Process",
