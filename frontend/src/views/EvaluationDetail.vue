@@ -994,18 +994,6 @@ import {
 const route = useRoute()
 
 const { t } = useI18n()
-console.debug(
-  'i18n ppm demo:',
-  t('nested.reliability.ppm', { ppm: 123, fail: 4, total: 200 }),
-)
-console.debug(
-  'i18n conf demo:',
-  t('nested.reliability.conf', { conf: 90 }),
-)
-console.debug(
-  'i18n ci demo:',
-  t('nested.reliability.ci', { low: 0, high: 968 }),
-)
 // Auth removed
 
 const loading = ref(false)

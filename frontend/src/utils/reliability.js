@@ -105,19 +105,7 @@ export const buildReliabilitySummary = (step, translate) => {
     )
   }
 
-  let confSuffix = translate('nested.reliability.conf', { conf })
-  if (/\{\s*conf\s*\}/.test(confSuffix)) {
-    confSuffix = confSuffix.replace(/\{\s*conf\s*\}/g, String(conf))
-    const isDev = typeof process !== 'undefined' && process.env.NODE_ENV !== 'production'
-    if (typeof window !== 'undefined' && isDev) {
-      window.__reliabilityConfFallbackCount =
-        (window.__reliabilityConfFallbackCount || 0) + 1
-      console.warn('[reliability] conf placeholder survived after t(); applied manual replace.', {
-        locale: translate?.locale || 'unknown',
-        conf,
-      })
-    }
-  }
+  const confSuffix = translate('nested.reliability.conf', { conf })
   parts.push(` @ ${confSuffix}`)
 
   return parts.join('')
