@@ -399,7 +399,7 @@
       "allLots": "모든 Lot",
       "noResults": "시험 결과 없음",
       "failuresCount": "불량: {count}",
-      "evalLine": "Eval: {eval} · 총 수량 {total} (Pass {pass}, 불량 {fail})",
+      "totals": "총 수량 {total} (Pass {pass}, 불량 {fail})",
       "lotFallback": "Lot {index}"
     },
     "reliability": {

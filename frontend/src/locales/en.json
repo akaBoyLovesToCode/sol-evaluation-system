@@ -426,7 +426,7 @@
       "allLots": "All lots",
       "noResults": "No test results recorded",
       "failuresCount": "Failures: {count}",
-      "evalLine": "Eval: {eval} · Total {total} (Pass {pass}, Fail {fail})",
+      "totals": "Total {total} (Pass {pass}, Fail {fail})",
       "lotFallback": "Lot {index}"
     },
     "reliability": {

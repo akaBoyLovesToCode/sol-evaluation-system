@@ -218,18 +218,11 @@
                   <template v-if="step.results_applicable === false">
                     {{ $t('nested.summary.noResults') }}
                   </template>
-                  <template v-else-if="reliabilitySummaryFor(step)">
-                    {{ reliabilitySummaryFor(step) }}
+                  <template v-else-if="isReliabilityStepCode(step.step_code)">
+                    {{ reliabilitySummaryFor(step) || totalsSummaryFor(step) }}
                   </template>
                   <template v-else>
-                    {{
-                      $t('nested.summary.evalLine', {
-                        eval: step.eval_code || '—',
-                        total: formatUnit(step.total_units),
-                        pass: formatUnit(step.pass_units),
-                        fail: formatUnit(step.fail_units),
-                      })
-                    }}
+                    {{ totalsSummaryFor(step) }}
                   </template>
                 </div>
                 <div class="nested-step-lots">
@@ -339,7 +332,12 @@ const emit = defineEmits(['saved'])
 import { useI18n } from 'vue-i18n'
 import api from '../utils/api'
 import ProcessBuilder from '../components/ProcessBuilder.vue'
-import { buildReliabilitySummary, stepLabelForPath } from '../utils/reliability'
+import {
+  buildReliabilitySummary,
+  buildTotalsSummary,
+  stepLabelForPath,
+  isReliabilityStep,
+} from '../utils/reliability'
 import {
   builderPayloadToNestedRequest,
   createEmptyBuilderPayload,
@@ -485,10 +483,9 @@ const describeStepLots = (process, lotRefs) => {
   return labels.join(', ')
 }
 
-const formatUnit = (value) =>
-  value === null || value === undefined || Number.isNaN(value) ? '—' : value
-
 const reliabilitySummaryFor = (step) => buildReliabilitySummary(step, t)
+const totalsSummaryFor = (step) => buildTotalsSummary(step, t)
+const isReliabilityStepCode = (code) => isReliabilityStep(code)
 
 async function refreshNestedPayload(targetId, evaluationContext = null, options = {}) {
   const { preserveWarnings = false } = options

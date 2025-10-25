@@ -111,6 +111,22 @@ export const buildReliabilitySummary = (step, translate) => {
   return parts.join('')
 }
 
+export const buildTotalsSummary = (step, translate) => {
+  const total =
+    toNumber(
+      pickDefined(step?.total_units, step?.test_units, step?.metrics?.test_units),
+      0,
+    ) ?? 0
+  const pass = toNumber(step?.pass_units, 0) ?? 0
+  const fail = toNumber(step?.fail_units, 0) ?? 0
+
+  return translate('nested.summary.totals', {
+    total,
+    pass,
+    fail,
+  })
+}
+
 export const stepLabelForPath = (step, newStepLabel = '') => {
   const code = step?.step_code
   const label = code || newStepLabel
@@ -131,5 +147,6 @@ export const stepLabelForPath = (step, newStepLabel = '') => {
 export default {
   isReliabilityStep,
   buildReliabilitySummary,
+  buildTotalsSummary,
   stepLabelForPath,
 }

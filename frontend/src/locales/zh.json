@@ -390,7 +390,7 @@
       "allLots": "全部 Lot",
       "noResults": "无测试结果",
       "failuresCount": "不良：{count}",
-      "evalLine": "Eval: {eval} · 总数 {total} (Pass {pass}, 不良 {fail})",
+      "totals": "总数 {total} (Pass {pass}, 不良 {fail})",
       "lotFallback": "Lot {index}"
     },
     "reliability": {
