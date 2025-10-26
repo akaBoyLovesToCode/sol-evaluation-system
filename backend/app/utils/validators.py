@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import re
 
-from app.models import SystemConfig
-
 
 def validate_email(email: str | None) -> dict[str, any]:
     """Validate email address format.
@@ -43,6 +41,9 @@ def validate_password(password: str | None) -> dict[str, any]:
     Returns:
         Validation result with 'valid' boolean and 'message' string.
     """
+    # Avoid circular import at module load time.
+    from app.models.system_config import SystemConfig
+
     if not password:
         return {"valid": False, "message": "Password is required"}
 

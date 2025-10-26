@@ -22,6 +22,7 @@ from app.models.evaluation import (
     FailCode,
 )
 from app.models.operation_log import OperationLog, OperationType
+from app.utils.timezone import resolve_timezone_from_request, timezone_label, utcnow
 
 evaluation_bp = Blueprint("evaluation", __name__)
 
@@ -810,6 +811,8 @@ def get_evaluations() -> tuple[Response, int]:
         start_date_from = request.args.get("start_date_from")
         start_date_to = request.args.get("start_date_to")
 
+        tz = resolve_timezone_from_request(request.args)
+
         # Build query
         query = Evaluation.query
 
@@ -887,7 +890,7 @@ def get_evaluations() -> tuple[Response, int]:
         # Format response
         evaluations = []
         for evaluation in paginated_evaluations.items:
-            evaluation_data = evaluation.to_dict()
+            evaluation_data = evaluation.to_dict(tz=tz)
             evaluations.append(evaluation_data)
 
         # Log operation
@@ -910,7 +913,7 @@ def get_evaluations() -> tuple[Response, int]:
         db.session.add(log)
         db.session.commit()
 
-        return jsonify(
+        response = jsonify(
             {
                 "success": True,
                 "data": {
@@ -922,6 +925,8 @@ def get_evaluations() -> tuple[Response, int]:
                 },
             }
         )
+        response.headers["X-Server-Timezone"] = timezone_label(tz)
+        return response
     except Exception as e:
         current_app.logger.error(f"Error getting evaluations: {str(e)}")
         return jsonify(
@@ -1007,18 +1012,24 @@ def get_evaluation(evaluation_id: int) -> tuple[Response, int]:
 
     """
     try:
+        tz = resolve_timezone_from_request(request.args)
+
+        tz = resolve_timezone_from_request(request.args)
+
+        tz = resolve_timezone_from_request(request.args)
+
         evaluation = Evaluation.query.get(evaluation_id)
 
         if not evaluation:
             return jsonify({"success": False, "message": "Evaluation not found"}), 404
 
         # Get evaluation data with related entities
-        evaluation_data = evaluation.to_dict(include_details=True)
+        evaluation_data = evaluation.to_dict(include_details=True, tz=tz)
 
         # Get operation logs
         logs = []
         for log in evaluation.operation_logs:
-            logs.append(log.to_dict())
+            logs.append(log.to_dict(tz=tz))
 
         evaluation_data["logs"] = logs
 
@@ -1042,7 +1053,9 @@ def get_evaluation(evaluation_id: int) -> tuple[Response, int]:
         db.session.add(log)
         db.session.commit()
 
-        return jsonify({"success": True, "data": {"evaluation": evaluation_data}})
+        response = jsonify({"success": True, "data": {"evaluation": evaluation_data}})
+        response.headers["X-Server-Timezone"] = timezone_label(tz)
+        return response
     except Exception as e:
         current_app.logger.error(f"Error getting evaluation: {str(e)}")
         return jsonify(
@@ -1138,6 +1151,7 @@ def create_evaluation() -> tuple[Response, int]:
 
     """
     try:
+        tz = resolve_timezone_from_request(request.args)
         data = request.json
 
         # Validate required fields (evaluation_number is now optional)
@@ -1160,6 +1174,8 @@ def create_evaluation() -> tuple[Response, int]:
             evaluation_number = generate_evaluation_number()
 
         # Create evaluation
+        tz = resolve_timezone_from_request(request.args)
+
         evaluation = Evaluation(
             evaluation_number=evaluation_number,
             evaluation_type=data["evaluation_type"],
@@ -1188,7 +1204,7 @@ def create_evaluation() -> tuple[Response, int]:
             target_id=evaluation.id,
             target_description=f"Created evaluation {evaluation.evaluation_number}",
             operation_description="User created a new evaluation",
-            new_data=json.dumps(evaluation.to_dict()),
+            new_data=json.dumps(evaluation.to_dict(tz=tz)),
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
             request_method=request.method,
@@ -1202,13 +1218,15 @@ def create_evaluation() -> tuple[Response, int]:
         db.session.add(log)
         db.session.commit()
 
-        return jsonify(
+        response = jsonify(
             {
                 "success": True,
                 "message": "Evaluation created successfully",
-                "data": {"evaluation": evaluation.to_dict()},
+                "data": {"evaluation": evaluation.to_dict(tz=tz)},
             }
-        ), 201
+        )
+        response.headers["X-Server-Timezone"] = timezone_label(tz)
+        return response, 201
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error creating evaluation: {str(e)}")
@@ -1300,6 +1318,7 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
 
     """
     try:
+        tz = resolve_timezone_from_request(request.args)
         data = request.json
 
         evaluation = Evaluation.query.get(evaluation_id)
@@ -1322,7 +1341,7 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
             ), 400
 
         # Store old data for logging
-        old_data = evaluation.to_dict()
+        old_data = evaluation.to_dict(tz=tz)
 
         # Update fields
         if "product_name" in data:
@@ -1376,7 +1395,7 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
             target_description=f"Updated evaluation {evaluation.evaluation_number}",
             operation_description="User updated evaluation details",
             old_data=json.dumps(old_data),
-            new_data=json.dumps(evaluation.to_dict()),
+            new_data=json.dumps(evaluation.to_dict(tz=tz)),
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
             request_method=request.method,
@@ -1390,13 +1409,15 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
         db.session.add(log)
         db.session.commit()
 
-        return jsonify(
+        response = jsonify(
             {
                 "success": True,
                 "message": "Evaluation updated successfully",
-                "data": {"evaluation": evaluation.to_dict()},
+                "data": {"evaluation": evaluation.to_dict(tz=tz)},
             }
         )
+        response.headers["X-Server-Timezone"] = timezone_label(tz)
+        return response
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error updating evaluation: {str(e)}")
@@ -1412,6 +1433,8 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
 @evaluation_bp.route("/<int:evaluation_id>/processes/nested", methods=["POST"])
 def save_nested_process(evaluation_id: int) -> tuple[Response, int]:
     """Persist nested process data submitted from the new UI."""
+
+    tz = resolve_timezone_from_request(request.args)
 
     evaluation = Evaluation.query.get(evaluation_id)
     if not evaluation:
@@ -1582,7 +1605,9 @@ def save_nested_process(evaluation_id: int) -> tuple[Response, int]:
 
         db.session.commit()
 
-        return jsonify({"success": True, "data": {"warnings": warnings}})
+        response = jsonify({"success": True, "data": {"warnings": warnings}})
+        response.headers["X-Server-Timezone"] = timezone_label(tz)
+        return response
     except ValueError as exc:  # type: ignore[union-attr]
         db.session.rollback()
         return jsonify({"success": False, "message": str(exc)}), 400
@@ -1608,6 +1633,8 @@ def save_nested_process(evaluation_id: int) -> tuple[Response, int]:
 @evaluation_bp.route("/<int:evaluation_id>/processes/nested", methods=["GET"])
 def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
     """Return the nested process payload for an evaluation."""
+
+    tz = resolve_timezone_from_request(request.args)
 
     evaluation = Evaluation.query.get(evaluation_id)
     if not evaluation:
@@ -1853,9 +1880,11 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
         response_payload["lots"] = []
         response_payload["steps"] = []
 
-    return jsonify(
+    response = jsonify(
         {"success": True, "data": {"payload": response_payload, "warnings": warnings}}
     )
+    response.headers["X-Server-Timezone"] = timezone_label(tz)
+    return response
 
 
 @evaluation_bp.route("/<int:evaluation_id>/processes", methods=["POST"])
@@ -1934,6 +1963,10 @@ def create_evaluation_process(evaluation_id: int) -> tuple[Response, int]:
     try:
         data = request.json
 
+        tz = resolve_timezone_from_request(request.args)
+
+        tz = resolve_timezone_from_request(request.args)
+
         # Check if evaluation exists
         evaluation = Evaluation.query.get(evaluation_id)
         if not evaluation:
@@ -1970,7 +2003,7 @@ def create_evaluation_process(evaluation_id: int) -> tuple[Response, int]:
             target_id=process.id,
             target_description=f"Created process {process.eval_code} for evaluation {evaluation.evaluation_number}",
             operation_description="User created a new evaluation process",
-            new_data=json.dumps(process.to_dict()),
+            new_data=json.dumps(process.to_dict(tz=tz)),
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
             request_method=request.method,
@@ -1984,13 +2017,15 @@ def create_evaluation_process(evaluation_id: int) -> tuple[Response, int]:
         db.session.add(log)
         db.session.commit()
 
-        return jsonify(
+        response = jsonify(
             {
                 "success": True,
                 "message": "Evaluation process created successfully",
-                "data": {"process": process.to_dict()},
+                "data": {"process": process.to_dict(tz=tz)},
             }
-        ), 201
+        )
+        response.headers["X-Server-Timezone"] = timezone_label(tz)
+        return response, 201
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error creating evaluation process: {str(e)}")
@@ -2078,6 +2113,8 @@ def get_evaluation_processes(evaluation_id: int) -> tuple[Response, int]:
 
     """
     try:
+        tz = resolve_timezone_from_request(request.args)
+
         # Check if evaluation exists
         evaluation = Evaluation.query.get(evaluation_id)
         if not evaluation:
@@ -2105,14 +2142,16 @@ def get_evaluation_processes(evaluation_id: int) -> tuple[Response, int]:
         db.session.add(log)
         db.session.commit()
 
-        return jsonify(
+        response = jsonify(
             {
                 "success": True,
                 "data": {
-                    "processes": [process.to_dict() for process in processes],
+                    "processes": [process.to_dict(tz=tz) for process in processes],
                 },
             }
         )
+        response.headers["X-Server-Timezone"] = timezone_label(tz)
+        return response
     except Exception as e:
         current_app.logger.error(f"Error getting evaluation processes: {str(e)}")
         return jsonify(
@@ -2235,12 +2274,14 @@ def get_evaluation_process(evaluation_id: int, process_id: int) -> tuple[Respons
         db.session.add(log)
         db.session.commit()
 
-        return jsonify(
+        response = jsonify(
             {
                 "success": True,
-                "data": {"process": process.to_dict()},
+                "data": {"process": process.to_dict(tz=tz)},
             }
         )
+        response.headers["X-Server-Timezone"] = timezone_label(tz)
+        return response
     except Exception as e:
         current_app.logger.error(f"Error getting evaluation process: {str(e)}")
         return jsonify(
@@ -2338,6 +2379,7 @@ def update_evaluation_process(
 
     """
     try:
+        tz = resolve_timezone_from_request(request.args)
         data = request.json
 
         # Check if evaluation exists
@@ -2353,7 +2395,7 @@ def update_evaluation_process(
             return jsonify({"success": False, "message": "Process not found"}), 404
 
         # Update process fields
-        old_data = process.to_dict()
+        old_data = process.to_dict(tz=tz)
         update_fields = [
             "title",
             "eval_code",
@@ -2380,7 +2422,7 @@ def update_evaluation_process(
             target_description=f"Updated process {process.eval_code} for evaluation {evaluation.evaluation_number}",
             operation_description="User updated an evaluation process",
             old_data=json.dumps(old_data),
-            new_data=json.dumps(process.to_dict()),
+            new_data=json.dumps(process.to_dict(tz=tz)),
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string,
             request_method=request.method,
@@ -2394,13 +2436,15 @@ def update_evaluation_process(
         db.session.add(log)
         db.session.commit()
 
-        return jsonify(
+        response = jsonify(
             {
                 "success": True,
                 "message": "Evaluation process updated successfully",
-                "data": {"process": process.to_dict()},
+                "data": {"process": process.to_dict(tz=tz)},
             }
         )
+        response.headers["X-Server-Timezone"] = timezone_label(tz)
+        return response
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error updating evaluation process: {str(e)}")
@@ -2472,7 +2516,7 @@ def delete_evaluation_process(
             return jsonify({"success": False, "message": "Process not found"}), 404
 
         # Store process data for logging before deletion
-        process_data = process.to_dict()
+        process_data = process.to_dict(tz=tz)
 
         # Delete the process
         db.session.delete(process)
@@ -2499,12 +2543,14 @@ def delete_evaluation_process(
         db.session.add(log)
         db.session.commit()
 
-        return jsonify(
+        response = jsonify(
             {
                 "success": True,
                 "message": "Evaluation process deleted successfully",
             }
         )
+        response.headers["X-Server-Timezone"] = timezone_label(tz)
+        return response
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error deleting evaluation process: {str(e)}")
@@ -2587,7 +2633,7 @@ def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
         # Auth removed
 
         # Store old data for logging
-        old_data = evaluation.to_dict()
+        old_data = evaluation.to_dict(tz=tz)
 
         # Update status
         new_status = data["status"]
@@ -2595,7 +2641,7 @@ def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
 
         # Set actual end date if status is completed
         if new_status == EvaluationStatus.COMPLETED.value:
-            evaluation.actual_end_date = datetime.now().date()
+            evaluation.actual_end_date = utcnow().date()
 
         db.session.commit()
 
@@ -2621,13 +2667,15 @@ def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
         db.session.add(log)
         db.session.commit()
 
-        return jsonify(
+        response = jsonify(
             {
                 "success": True,
                 "message": "Evaluation status updated successfully",
-                "data": {"evaluation": evaluation.to_dict()},
+                "data": {"evaluation": evaluation.to_dict(tz=tz)},
             }
         )
+        response.headers["X-Server-Timezone"] = timezone_label(tz)
+        return response
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error updating evaluation status: {str(e)}")
@@ -2683,6 +2731,8 @@ def get_evaluation_logs(evaluation_id: int) -> tuple[Response, int]:
         if not evaluation:
             return jsonify({"success": False, "message": "Evaluation not found"}), 404
 
+        tz = resolve_timezone_from_request(request.args)
+
         # Collect related process IDs
         process_ids = [
             p.id
@@ -2699,7 +2749,7 @@ def get_evaluation_logs(evaluation_id: int) -> tuple[Response, int]:
         # Compose logs across evaluation, status, and processes
         logs = []
         logs += [
-            log.to_dict()
+            log.to_dict(tz=tz)
             for log in OperationLog.query.filter_by(
                 target_type="evaluation", target_id=evaluation_id
             )
@@ -2707,7 +2757,7 @@ def get_evaluation_logs(evaluation_id: int) -> tuple[Response, int]:
             .all()
         ]
         logs += [
-            log.to_dict()
+            log.to_dict(tz=tz)
             for log in OperationLog.query.filter_by(
                 target_type="evaluation_status", target_id=evaluation_id
             )
@@ -2716,7 +2766,7 @@ def get_evaluation_logs(evaluation_id: int) -> tuple[Response, int]:
         ]
         if process_ids:
             logs += [
-                log.to_dict()
+                log.to_dict(tz=tz)
                 for log in OperationLog.query.filter(
                     OperationLog.target_type == "evaluation_process",
                     OperationLog.target_id.in_(process_ids),
@@ -2728,7 +2778,9 @@ def get_evaluation_logs(evaluation_id: int) -> tuple[Response, int]:
         # Sort logs by created_at descending
         logs.sort(key=lambda x: x.get("created_at", ""), reverse=True)
 
-        return jsonify({"success": True, "data": {"logs": logs}})
+        response = jsonify({"success": True, "data": {"logs": logs}})
+        response.headers["X-Server-Timezone"] = timezone_label(tz)
+        return response
     except Exception as e:
         current_app.logger.error(f"Error getting evaluation logs: {str(e)}")
         return jsonify(
