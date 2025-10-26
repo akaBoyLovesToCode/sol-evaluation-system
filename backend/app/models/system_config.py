@@ -1,7 +1,9 @@
 import json
-from datetime import datetime
+
+from sqlalchemy import func
 
 from app import db
+from app.utils.timezone import iso_local, utcnow
 
 
 class SystemConfig(db.Model):
@@ -38,9 +40,18 @@ class SystemConfig(db.Model):
     )  # Whether config can be read by non-admin users
 
     # Timestamps
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
     )
 
     def __init__(self, config_key, config_value, config_type="string", **kwargs):
@@ -354,8 +365,8 @@ class SystemConfig(db.Model):
             "description": self.description,
             "category": self.category,
             "is_public": self.is_public,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "created_at": iso_local(self.created_at),
+            "updated_at": iso_local(self.updated_at),
         }
 
         if include_value:

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 from enum import Enum
 from typing import Any
 
 from app import db
+from sqlalchemy import func
+
+from app.utils.timezone import iso_date, iso_local, utcnow
 
 
 class EvaluationStatus(Enum):
@@ -96,9 +99,18 @@ class Evaluation(db.Model):
     # User relationships removed (auth-less mode)
 
     # Timestamps
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
     )
 
     # Relationships
@@ -216,7 +228,7 @@ class Evaluation(db.Model):
     def complete(self) -> None:
         """Mark evaluation as completed (for mass production)."""
         self.status = "completed"
-        self.actual_end_date = datetime.utcnow().date()
+        self.actual_end_date = utcnow().date()
 
     def pause(self) -> None:
         """Pause the evaluation."""
@@ -250,7 +262,7 @@ class Evaluation(db.Model):
 
         return None
 
-    def to_dict(self, include_details: bool = False) -> dict[str, Any]:
+    def to_dict(self, include_details: bool = False, tz=None) -> dict[str, Any]:
         """Convert evaluation to dictionary.
 
         Args:
@@ -269,10 +281,8 @@ class Evaluation(db.Model):
             "evaluation_reason": self.evaluation_reason,
             "remarks": self.remarks,
             "status": self.status,
-            "start_date": self.start_date.isoformat() if self.start_date else None,
-            "actual_end_date": self.actual_end_date.isoformat()
-            if self.actual_end_date
-            else None,
+            "start_date": iso_date(self.start_date, tz),
+            "actual_end_date": iso_date(self.actual_end_date, tz),
             "process_step": self.process_step,
             "pgm_version": self.pgm_version,
             "capacity": self.capacity,
@@ -280,14 +290,14 @@ class Evaluation(db.Model):
             "form_factor": self.form_factor,
             "scs_charger_name": self.scs_charger_name,
             "head_office_charger_name": self.head_office_charger_name,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "created_at": iso_local(self.created_at, tz),
+            "updated_at": iso_local(self.updated_at, tz),
         }
 
         if include_details:
-            data["details"] = [detail.to_dict() for detail in self.details]
-            data["results"] = [result.to_dict() for result in self.results]
-            data["processes"] = [process.to_dict() for process in self.processes]
+            data["details"] = [detail.to_dict(tz=tz) for detail in self.details]
+            data["results"] = [result.to_dict(tz=tz) for result in self.results]
+            data["processes"] = [process.to_dict(tz=tz) for process in self.processes]
 
         return data
 
@@ -326,12 +336,21 @@ class EvaluationDetail(db.Model):
     equipment_number = db.Column(db.String(50))
 
     # Timestamps
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
     )
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, tz=None) -> dict[str, Any]:
         """Convert detail to dictionary.
 
         Returns:
@@ -348,8 +367,8 @@ class EvaluationDetail(db.Model):
             "material_number": self.material_number,
             "equipment_name": self.equipment_name,
             "equipment_number": self.equipment_number,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "created_at": iso_local(self.created_at, tz),
+            "updated_at": iso_local(self.updated_at, tz),
         }
 
     def __repr__(self) -> str:
@@ -388,12 +407,21 @@ class EvaluationResult(db.Model):
     comments = db.Column(db.Text)
 
     # Timestamps
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
     )
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, tz=None) -> dict[str, Any]:
         """Convert result to dictionary.
 
         Returns:
@@ -406,10 +434,10 @@ class EvaluationResult(db.Model):
             "result_type": self.result_type,
             "result_status": self.result_status,
             "result_data": self.result_data,
-            "test_date": self.test_date.isoformat() if self.test_date else None,
+            "test_date": iso_date(self.test_date, tz),
             "comments": self.comments,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "created_at": iso_local(self.created_at, tz),
+            "updated_at": iso_local(self.updated_at, tz),
         }
 
     def __repr__(self) -> str:
@@ -456,12 +484,21 @@ class EvaluationProcess(db.Model):
     )
 
     # Timestamps
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
     )
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, tz=None) -> dict[str, Any]:
         """Convert process to dictionary.
 
         Returns:
@@ -480,8 +517,8 @@ class EvaluationProcess(db.Model):
             "defect_analysis_results": self.defect_analysis_results,
             "aql_result": self.aql_result,
             "status": self.status,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "created_at": iso_local(self.created_at, tz),
+            "updated_at": iso_local(self.updated_at, tz),
         }
 
     def __repr__(self) -> str:
@@ -502,9 +539,18 @@ class EvaluationProcessRaw(db.Model):
     payload = db.Column(db.JSON, nullable=False)
     source = db.Column(db.String(32), nullable=False, default="rc0")
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
     )
 
     def __repr__(self) -> str:
@@ -527,9 +573,18 @@ class EvaluationProcessLot(db.Model):
     process_name = db.Column(db.String(255))
     process_order_index = db.Column(db.Integer)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
     )
 
     lot_assignments = db.relationship(
@@ -568,9 +623,18 @@ class EvaluationProcessStep(db.Model):
     process_name = db.Column(db.String(255))
     process_order_index = db.Column(db.Integer)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
     )
 
     failures = db.relationship(
@@ -613,9 +677,18 @@ class EvaluationStepLot(db.Model):
     )
     quantity_override = db.Column(db.Integer)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
     )
 
     def __repr__(self) -> str:
@@ -639,9 +712,18 @@ class EvaluationStepFailure(db.Model):
     fail_code_name_snapshot = db.Column(db.String(255))
     analysis_result = db.Column(db.Text)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
     )
 
     def __repr__(self) -> str:
@@ -660,9 +742,18 @@ class FailCode(db.Model):
     is_provisional = db.Column(db.Boolean, nullable=False, default=False)
     source = db.Column(db.String(64))
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
     )
 
     def __repr__(self) -> str:

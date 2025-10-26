@@ -1,7 +1,9 @@
-from datetime import datetime
 from enum import Enum
 
+from sqlalchemy import func
+
 from app import db
+from app.utils.timezone import iso_local, utcnow
 
 
 class OperationType(Enum):
@@ -79,7 +81,11 @@ class OperationLog(db.Model):
 
     # Timestamp
     created_at = db.Column(
-        db.DateTime, default=datetime.utcnow, nullable=False, index=True
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+        index=True,
     )
 
     def __init__(self, operation_type, target_type, **kwargs):
@@ -271,7 +277,7 @@ class OperationLog(db.Model):
         db.session.commit()
         return log
 
-    def to_dict(self):
+    def to_dict(self, tz=None):
         """Convert operation log to dictionary
 
         Returns:
@@ -295,7 +301,7 @@ class OperationLog(db.Model):
             "status_code": self.status_code,
             "success": self.success,
             "error_message": self.error_message,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "created_at": iso_local(self.created_at, tz),
         }
 
     def __repr__(self):

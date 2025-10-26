@@ -9,7 +9,7 @@ from typing import Any
 
 from flask import Request
 
-from app.models import SystemConfig
+from app.utils.timezone import iso_local, utcnow
 
 # Authentication removed: user identity is no longer tracked.
 
@@ -54,6 +54,8 @@ def generate_evaluation_number() -> str:
 
     """
     # Get prefix from system config
+    from app.models import SystemConfig
+
     prefix = SystemConfig.get_config("evaluation_number_prefix", "EVAL")
 
     # Get current date
@@ -170,6 +172,8 @@ def calculate_pagination(page: int, per_page: int, total_count: int) -> dict[str
         page = 1
 
     if per_page < 1:
+        from app.models import SystemConfig
+
         per_page = SystemConfig.get_config("items_per_page", 20)
 
     total_pages = (total_count + per_page - 1) // per_page
@@ -283,7 +287,7 @@ def create_response(
         response["errors"] = errors
 
     response["success"] = status_code < 400
-    response["timestamp"] = datetime.utcnow().isoformat()
+    response["timestamp"] = iso_local(utcnow())
 
     return response, status_code
 
