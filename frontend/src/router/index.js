@@ -38,6 +38,12 @@ const routes = [
     name: 'ProcessPrototype',
     component: () => import('../views/ProcessPrototype.vue'),
   },
+  {
+    path: '/demo/timeline',
+    name: 'TimelineMatrixDemo',
+    component: () => import('../pages/demo/TimelineMatrixDemo.vue'),
+    meta: { demo: true },
+  },
 ]
 
 const router = createRouter({
