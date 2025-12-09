@@ -191,11 +191,15 @@
             <template #default="{ row }">
               <template v-if="row.remarks">
                 <el-tooltip
-                  :content="row.remarks"
                   placement="top"
                   effect="dark"
                   popper-class="evaluation-description-tooltip"
                 >
+                  <template #content>
+                    <div class="evaluation-description-tooltip-content">
+                      {{ row.remarks }}
+                    </div>
+                  </template>
                   <span class="evaluation-description-cell">
                     {{ truncateDescription(row.remarks) }}
                   </span>
@@ -403,16 +407,6 @@ const truncateDescription = (text) => {
     return `${trimmed.slice(0, DESCRIPTION_CHAR_LIMIT)}…`
   }
   return trimmed
-}
-
-const isDescriptionTruncated = (text) => {
-  if (!text) {
-    return false
-  }
-  const trimmed = text.trim()
-  return (
-    trimmed.split(/\s+/).length > DESCRIPTION_WORD_LIMIT || trimmed.length > DESCRIPTION_CHAR_LIMIT
-  )
 }
 
 const buildProcessSummary = (processes) => {
@@ -1079,10 +1073,28 @@ onMounted(() => {
 }
 
 :deep(.evaluation-description-tooltip) {
-  max-width: 360px;
+  max-width: 420px;
   line-height: 1.4;
+  white-space: normal;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+:deep(.evaluation-description-tooltip .el-tooltip__content) {
+  max-width: 420px;
+  white-space: normal;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.evaluation-description-tooltip-content {
+  max-width: 420px;
   white-space: pre-wrap;
   word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+  text-align: left;
 }
 
 .page-header {
