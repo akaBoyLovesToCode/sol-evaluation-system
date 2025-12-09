@@ -121,6 +121,7 @@
     "reason": "평가 이유",
     "reasonLabel": "평가 이유(표시)",
     "descriptionLabel": "평가 설명",
+    "pgmVersionColumn": "PGM 버전",
     "evaluationDescription": "평가 설명",
     "pgmVersion": "PGM 버전",
     "testTime": "테스트 시간",

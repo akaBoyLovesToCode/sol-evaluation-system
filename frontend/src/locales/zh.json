@@ -132,6 +132,7 @@
     "reason": "评价原因",
     "reasonLabel": "评价原因（显示）",
     "descriptionLabel": "评价描述",
+    "pgmVersionColumn": "PGM版本",
     "evaluationDescription": "评价描述",
     "pgmVersion": "PGM版本",
     "testTime": "测试时间",

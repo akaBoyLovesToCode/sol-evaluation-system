@@ -165,6 +165,17 @@
             sortable="custom"
           />
 
+          <el-table-column
+            prop="pgm_version"
+            :label="$t('evaluation.pgmVersionColumn')"
+            width="140"
+            sortable="custom"
+          >
+            <template #default="{ row }">
+              {{ row.pgm_version || '-' }}
+            </template>
+          </el-table-column>
+
           <el-table-column prop="part_number" :label="$t('evaluation.partNumber')" width="220" />
 
           <el-table-column prop="evaluation_reason" :label="$t('evaluation.reason')" width="140">
