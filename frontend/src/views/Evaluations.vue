@@ -191,7 +191,6 @@
             <template #default="{ row }">
               <template v-if="row.remarks">
                 <el-tooltip
-                  v-if="isDescriptionTruncated(row.remarks)"
                   :content="row.remarks"
                   placement="top"
                   effect="dark"
@@ -201,9 +200,6 @@
                     {{ truncateDescription(row.remarks) }}
                   </span>
                 </el-tooltip>
-                <span v-else class="evaluation-description-cell">
-                  {{ truncateDescription(row.remarks) }}
-                </span>
               </template>
               <span v-else class="evaluation-description-cell">-</span>
             </template>
@@ -353,6 +349,7 @@ const tableData = ref([])
 const selectedRows = ref([])
 const processStepOptions = ['iARTS', 'Aging', 'LI', 'Repair']
 const DESCRIPTION_WORD_LIMIT = 16
+const DESCRIPTION_CHAR_LIMIT = 80
 
 const searchForm = reactive({
   evaluation_number: '',
@@ -399,17 +396,23 @@ const truncateDescription = (text) => {
     return ''
   }
   const words = trimmed.split(/\s+/)
-  if (words.length <= DESCRIPTION_WORD_LIMIT) {
-    return trimmed
+  if (words.length > DESCRIPTION_WORD_LIMIT) {
+    return `${words.slice(0, DESCRIPTION_WORD_LIMIT).join(' ')}…`
   }
-  return `${words.slice(0, DESCRIPTION_WORD_LIMIT).join(' ')}…`
+  if (trimmed.length > DESCRIPTION_CHAR_LIMIT) {
+    return `${trimmed.slice(0, DESCRIPTION_CHAR_LIMIT)}…`
+  }
+  return trimmed
 }
 
 const isDescriptionTruncated = (text) => {
   if (!text) {
     return false
   }
-  return text.trim().split(/\s+/).length > DESCRIPTION_WORD_LIMIT
+  const trimmed = text.trim()
+  return (
+    trimmed.split(/\s+/).length > DESCRIPTION_WORD_LIMIT || trimmed.length > DESCRIPTION_CHAR_LIMIT
+  )
 }
 
 const buildProcessSummary = (processes) => {
@@ -1078,6 +1081,8 @@ onMounted(() => {
 :deep(.evaluation-description-tooltip) {
   max-width: 360px;
   line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .page-header {
