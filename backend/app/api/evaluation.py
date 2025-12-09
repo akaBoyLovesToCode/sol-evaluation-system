@@ -2244,6 +2244,8 @@ def get_evaluation_process(evaluation_id: int, process_id: int) -> tuple[Respons
 
     """
     try:
+        tz = resolve_timezone_from_request(request.args)
+
         # Check if evaluation exists
         evaluation = Evaluation.query.get(evaluation_id)
         if not evaluation:
@@ -2504,6 +2506,8 @@ def delete_evaluation_process(
 
     """
     try:
+        tz = resolve_timezone_from_request(request.args)
+
         # Check if evaluation exists
         evaluation = Evaluation.query.get(evaluation_id)
         if not evaluation:
@@ -2621,6 +2625,7 @@ def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
 
     """
     try:
+        tz = resolve_timezone_from_request(request.args)
         data = request.json
 
         if "status" not in data:

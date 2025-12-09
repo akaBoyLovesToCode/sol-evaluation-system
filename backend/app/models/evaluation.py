@@ -4,9 +4,9 @@ from datetime import date
 from enum import Enum
 from typing import Any
 
-from app import db
 from sqlalchemy import func
 
+from app import db
 from app.utils.timezone import iso_date, iso_local, utcnow
 
 

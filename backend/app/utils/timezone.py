@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timedelta, timezone
-from typing import Optional
-
+from datetime import UTC, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 DEFAULT_TZ_NAME = os.getenv("APP_DEFAULT_TZ", "Asia/Shanghai")
@@ -18,18 +16,20 @@ except ZoneInfoNotFoundError:
 def utcnow() -> datetime:
     """Return the current time in UTC as an aware datetime."""
 
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _ensure_aware(dt: datetime | None) -> datetime | None:
     if dt is None:
         return None
     if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
+        return dt.replace(tzinfo=UTC)
     return dt
 
 
-def resolve_timezone(tz_name: Optional[str] = None, tz_offset: Optional[str] = None) -> timezone:
+def resolve_timezone(
+    tz_name: str | None = None, tz_offset: str | None = None
+) -> timezone:
     """Resolve the desired timezone from a name or offset string."""
 
     if tz_name:
@@ -60,7 +60,7 @@ def resolve_timezone_from_request(args) -> timezone:
     return resolve_timezone(tz_name, tz_offset)
 
 
-def to_local(dt: datetime | None, tz: Optional[timezone] = None) -> datetime | None:
+def to_local(dt: datetime | None, tz: timezone | None = None) -> datetime | None:
     """Convert a datetime to the requested timezone (default UTC+8)."""
 
     aware = _ensure_aware(dt)
@@ -70,14 +70,14 @@ def to_local(dt: datetime | None, tz: Optional[timezone] = None) -> datetime | N
     return aware.astimezone(target_tz)
 
 
-def iso_local(dt: datetime | None, tz: Optional[timezone] = None) -> Optional[str]:
+def iso_local(dt: datetime | None, tz: timezone | None = None) -> str | None:
     """Return an ISO-formatted string (seconds precision) in the desired timezone."""
 
     local_dt = to_local(dt, tz=tz)
     return local_dt.isoformat(timespec="seconds") if local_dt else None
 
 
-def iso_date(dt: datetime | None, tz: Optional[timezone] = None) -> Optional[str]:
+def iso_date(dt: datetime | None, tz: timezone | None = None) -> str | None:
     """Return a date-only ISO string from a datetime or date."""
 
     if dt is None:
