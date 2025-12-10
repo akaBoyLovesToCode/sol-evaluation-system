@@ -87,6 +87,8 @@
                 <el-select
                   v-model="form.reason"
                   :placeholder="$t('evaluation.placeholders.reason')"
+                  multiple
+                  collapse-tags
                   style="width: 100%"
                 >
                   <el-option
@@ -364,6 +366,17 @@ const serializeProcessSteps = (steps) => {
   if (!Array.isArray(steps)) return steps ? String(steps) : ''
   return steps.filter(Boolean).join('|')
 }
+
+const normalizeReasons = (value) => {
+  if (Array.isArray(value)) return value.filter(Boolean)
+  if (!value) return []
+  return String(value)
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+const serializeReasons = (value) => normalizeReasons(value).join(',')
 const formRef = ref()
 const saving = ref(false)
 const submitting = ref(false)
@@ -422,7 +435,7 @@ const form = reactive({
   part_number: '',
   start_date: '',
   end_date: '',
-  reason: '',
+  reason: [],
   process_step: [],
   description: '',
   pgm_version: '',
@@ -652,8 +665,14 @@ const rules = computed(() => ({
   ],
   reason: [
     {
-      required: true,
-      message: t('validation.requiredField.reason'),
+      validator: (_, value, callback) => {
+        const reasons = normalizeReasons(value)
+        if (reasons.length === 0) {
+          callback(new Error(t('validation.requiredField.reason')))
+        } else {
+          callback()
+        }
+      },
       trigger: 'change',
     },
   ],
@@ -694,7 +713,7 @@ const rules = computed(() => ({
 }))
 
 const handleTypeChange = () => {
-  form.reason = '' // Reset reason when type changes
+  form.reason = [] // Reset reason when type changes
 }
 
 const handleCancel = async () => {
@@ -717,9 +736,9 @@ const buildPayload = () => ({
   part_number: form.part_number,
   start_date: form.start_date,
   end_date: form.end_date || null,
-  reason: form.reason,
+  reason: serializeReasons(form.reason),
   process_step: serializeProcessSteps(form.process_step),
-  evaluation_reason: form.reason, // Map reason to evaluation_reason for backend compatibility
+  evaluation_reason: serializeReasons(form.reason), // Map reason to evaluation_reason for backend compatibility
   description: form.description,
   remarks: form.description, // Map description to remarks for backend compatibility
   pgm_version: form.pgm_version,
@@ -863,7 +882,7 @@ const fetchEvaluation = async () => {
       part_number: evaluation.part_number || '',
       start_date: evaluation.start_date || '',
       end_date: evaluation.end_date || '',
-      reason: evaluation.evaluation_reason || evaluation.reason || '',
+      reason: normalizeReasons(evaluation.evaluation_reason || evaluation.reason || ''),
       process_step: parseProcessSteps(evaluation.process_step),
       description: evaluation.remarks || evaluation.description || '',
       pgm_version: evaluation.pgm_version || '',

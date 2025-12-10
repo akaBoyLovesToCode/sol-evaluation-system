@@ -180,7 +180,7 @@
 
           <el-table-column prop="evaluation_reason" :label="$t('evaluation.reason')" width="140">
             <template #default="{ row }">
-              {{ row.evaluation_reason ? $t(`evaluation.reasons.${row.evaluation_reason}`) : '-' }}
+              {{ formatReasons(row.evaluation_reason || row.reason) }}
             </template>
           </el-table-column>
           <el-table-column
@@ -389,6 +389,26 @@ const statusOptions = computed(() => [
 const translateOrFallback = (key, fallback, params = {}) => {
   const translated = t(key, params)
   return translated === key ? fallback : translated
+}
+
+const normalizeReasons = (value) => {
+  if (Array.isArray(value)) return value.filter(Boolean)
+  if (!value) return []
+  return String(value)
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+const formatReasons = (value) => {
+  const reasons = normalizeReasons(value)
+  if (reasons.length === 0) return '-'
+  const labels = reasons.map((reason) => {
+    const key = `evaluation.reasons.${reason}`
+    const translated = t(key)
+    return translated === key ? reason : translated
+  })
+  return labels.join(', ')
 }
 
 const truncateDescription = (text) => {

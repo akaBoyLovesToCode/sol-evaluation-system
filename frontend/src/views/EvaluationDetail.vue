@@ -1434,11 +1434,24 @@ const getStatusTagType = (status) => {
   return typeMap[status] || 'info'
 }
 
+const normalizeReasons = (reason) => {
+  if (Array.isArray(reason)) return reason.filter(Boolean)
+  if (!reason) return []
+  return String(reason)
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
 const getReasonText = (reason) => {
-  if (reason && t(`evaluation.reasons.${reason}`)) {
-    return t(`evaluation.reasons.${reason}`)
-  }
-  return reason || '-'
+  const reasons = normalizeReasons(reason)
+  if (reasons.length === 0) return '-'
+  const labels = reasons.map((r) => {
+    const key = `evaluation.reasons.${r}`
+    const translated = t(key)
+    return translated === key ? r : translated
+  })
+  return labels.join(', ')
 }
 
 // helpers for old timeline removed
