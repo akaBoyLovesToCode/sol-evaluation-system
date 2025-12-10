@@ -70,10 +70,7 @@ describe('buildReliabilitySummary', () => {
 
   it('returns empty string when total <= 0', () => {
     const t = fakeTranslator(enMessages)
-    const result = buildReliabilitySummary(
-      { step_code: 'M031', fail_units: 0, total_units: 0 },
-      t,
-    )
+    const result = buildReliabilitySummary({ step_code: 'M031', fail_units: 0, total_units: 0 }, t)
     expect(result).toBe('')
   })
 

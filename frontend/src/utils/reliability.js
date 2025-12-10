@@ -28,11 +28,9 @@ export const buildReliabilitySummary = (step, translate) => {
     return ''
   }
 
-  const reliabilityMetrics =
-    step?.metrics?.reliability ?? step?.reliability ?? step?.metrics ?? {}
+  const reliabilityMetrics = step?.metrics?.reliability ?? step?.reliability ?? step?.metrics ?? {}
 
-  const fail =
-    toNumber(pickDefined(step?.fail_units, reliabilityMetrics.fail), 0) ?? 0
+  const fail = toNumber(pickDefined(step?.fail_units, reliabilityMetrics.fail), 0) ?? 0
 
   const total =
     toNumber(
@@ -113,10 +111,7 @@ export const buildReliabilitySummary = (step, translate) => {
 
 export const buildTotalsSummary = (step, translate) => {
   const total =
-    toNumber(
-      pickDefined(step?.total_units, step?.test_units, step?.metrics?.test_units),
-      0,
-    ) ?? 0
+    toNumber(pickDefined(step?.total_units, step?.test_units, step?.metrics?.test_units), 0) ?? 0
   const pass = toNumber(step?.pass_units, 0) ?? 0
   const fail = toNumber(step?.fail_units, 0) ?? 0
 
@@ -134,8 +129,7 @@ export const stepLabelForPath = (step, newStepLabel = '') => {
     return ''
   }
 
-  const evalCode =
-    step?.eval_code ?? step?.eval ?? step?.metadata?.eval ?? step?.metrics?.eval_code
+  const evalCode = step?.eval_code ?? step?.eval ?? step?.metadata?.eval ?? step?.metrics?.eval_code
 
   if (evalCode) {
     return `${label}(${evalCode})`
