@@ -168,7 +168,12 @@
                 </el-descriptions-item>
                 <el-descriptions-item :label="$t('evaluation.reason')">
                   <template v-if="editing">
-                    <el-select v-model="editForm.evaluation_reason" style="width: 100%">
+                    <el-select
+                      v-model="editForm.evaluation_reason"
+                      multiple
+                      collapse-tags
+                      style="width: 100%"
+                    >
                       <el-option
                         v-for="opt in reasonOptions"
                         :key="opt.value"
@@ -620,7 +625,12 @@
               </el-descriptions-item>
               <el-descriptions-item :label="$t('evaluation.reason')">
                 <template v-if="editing">
-                  <el-select v-model="editForm.evaluation_reason" style="width: 100%">
+                  <el-select
+                    v-model="editForm.evaluation_reason"
+                    multiple
+                    collapse-tags
+                    style="width: 100%"
+                  >
                     <el-option
                       v-for="opt in reasonOptions"
                       :key="opt.value"
@@ -1004,6 +1014,17 @@ const serializeProcessSteps = (steps) => {
   return steps.filter(Boolean).join('|')
 }
 
+const normalizeReasons = (reason) => {
+  if (Array.isArray(reason)) return reason.filter(Boolean)
+  if (!reason) return []
+  return String(reason)
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+const serializeReasons = (reasons) => normalizeReasons(reasons).join(',')
+
 const formatProcessSteps = (value) => {
   const steps = parseProcessSteps(value)
   return steps.length > 0 ? steps.join(' / ') : '-'
@@ -1176,7 +1197,7 @@ async function commitBuilderChanges() {
 const editForm = reactive({
   product_name: '',
   part_number: '',
-  evaluation_reason: '',
+  evaluation_reason: [],
   process_step: [],
   scs_charger_name: '',
   head_office_charger_name: '',
@@ -1223,7 +1244,7 @@ const syncEditForm = () => {
   Object.assign(editForm, {
     product_name: evaluation.value.product_name || '',
     part_number: evaluation.value.part_number || '',
-    evaluation_reason: evaluation.value.evaluation_reason || '',
+    evaluation_reason: normalizeReasons(evaluation.value.evaluation_reason),
     process_step: parseProcessSteps(evaluation.value.process_step),
     scs_charger_name: evaluation.value.scs_charger_name || '',
     head_office_charger_name: evaluation.value.head_office_charger_name || '',
@@ -1252,7 +1273,7 @@ const saveEdit = async () => {
     const payload = {
       product_name: editForm.product_name,
       part_number: editForm.part_number,
-      evaluation_reason: editForm.evaluation_reason,
+      evaluation_reason: serializeReasons(editForm.evaluation_reason),
       process_step: serializeProcessSteps(editForm.process_step),
       scs_charger_name: editForm.scs_charger_name,
       head_office_charger_name: editForm.head_office_charger_name,
@@ -1432,15 +1453,6 @@ const getStatusTagType = (status) => {
     rejected: 'danger',
   }
   return typeMap[status] || 'info'
-}
-
-const normalizeReasons = (reason) => {
-  if (Array.isArray(reason)) return reason.filter(Boolean)
-  if (!reason) return []
-  return String(reason)
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean)
 }
 
 const getReasonText = (reason) => {
