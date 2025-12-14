@@ -2645,6 +2645,12 @@ def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
         new_status = data["status"]
         evaluation.status = new_status
 
+        cancel_reason = data.get("cancel_reason")
+        if new_status == EvaluationStatus.CANCELLED.value:
+            evaluation.cancel_reason = cancel_reason
+        else:
+            evaluation.cancel_reason = None
+
         # Set actual end date if status is completed
         if new_status == EvaluationStatus.COMPLETED.value:
             evaluation.actual_end_date = utcnow().date()
@@ -2659,7 +2665,7 @@ def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
             target_description=f"Updated status of evaluation {evaluation.evaluation_number}",
             operation_description=f"User changed evaluation status from {old_data['status']} to {new_status}",
             old_data=json.dumps({"status": old_data["status"]}),
-            new_data=json.dumps({"status": new_status}),
+            new_data=json.dumps({"status": new_status, "cancel_reason": cancel_reason}),
             ip_address=get_client_ip(request),
             user_agent=request.user_agent.string,
             request_method=request.method,

@@ -58,6 +58,7 @@ class Evaluation(db.Model):
 
     # Evaluation details
     evaluation_reason = db.Column(db.Text)
+    cancel_reason = db.Column(db.Text)
     remarks = db.Column(db.Text)
 
     # Status and workflow
@@ -279,6 +280,7 @@ class Evaluation(db.Model):
             "product_name": self.product_name,
             "part_number": self.part_number,
             "evaluation_reason": self.evaluation_reason,
+            "cancel_reason": self.cancel_reason,
             "remarks": self.remarks,
             "status": self.status,
             "start_date": iso_date(self.start_date, tz),

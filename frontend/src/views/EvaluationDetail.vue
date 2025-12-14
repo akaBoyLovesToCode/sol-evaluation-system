@@ -950,7 +950,15 @@
         />
         <template #footer>
           <div class="drawer-footer">
-            <el-button @click="handleDrawerCancel">{{ $t('common.cancel') }}</el-button>
+            <el-button @click="handleDrawerCancel">{{ $t('common.close') }}</el-button>
+            <el-button
+              v-if="canCancel"
+              type="danger"
+              data-test-id="cancel-evaluation"
+              @click="promptCancelEvaluation"
+            >
+              {{ $t('evaluation.cancel') }}
+            </el-button>
             <el-button type="primary" @click="commitBuilderChanges">{{
               $t('common.save')
             }}</el-button>
@@ -1323,6 +1331,36 @@ const canCancel = computed(() => {
   return ['in_progress', 'paused', 'pending_approval'].includes(evaluation.value.status)
 })
 
+const promptCancelEvaluation = async () => {
+  if (!evaluation.value) return
+
+  try {
+    const { value } = await ElMessageBox.prompt(
+      t('evaluation.cancelReasonPrompt'),
+      t('evaluation.cancel'),
+      {
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
+        inputPlaceholder: t('evaluation.cancelReasonPlaceholder'),
+        inputType: 'textarea',
+      },
+    )
+
+    await api.put(`/evaluations/${evaluation.value.id}/status`, {
+      status: 'cancelled',
+      cancel_reason: value || '',
+    })
+
+    ElMessage.success(t('evaluation.operationSuccess'))
+    fetchEvaluation()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(t('evaluation.operationFailed'))
+      console.error('Cancel operation failed:', error)
+    }
+  }
+}
+
 // timeline steps removed; process list is source of truth
 
 const filteredLogs = computed(() => {
@@ -1396,9 +1434,8 @@ const handleOperation = async (command) => {
         confirmText = t('evaluation.resume')
         break
       case 'cancel':
-        message = t('evaluation.confirmCancel')
-        confirmText = t('evaluation.cancel')
-        break
+        await promptCancelEvaluation()
+        return
     }
 
     await ElMessageBox.confirm(message, t('common.confirmAction'), {
@@ -1415,10 +1452,6 @@ const handleOperation = async (command) => {
     } else if (command === 'resume') {
       await api.put(`/evaluations/${evaluation.value.id}/status`, {
         status: 'in_progress',
-      })
-    } else if (command === 'cancel') {
-      await api.put(`/evaluations/${evaluation.value.id}/status`, {
-        status: 'cancelled',
       })
     }
 
