@@ -281,13 +281,17 @@
     >
       <component
         :is="EvaluationDetail"
+        ref="detailRef"
         :evaluation-id="selectedId"
         :in-dialog="true"
         :process-step-options="processStepOptions"
         @edit="onEdit"
       />
       <template #footer>
-        <el-button @click="showDetail = false">{{ $t('common.cancel') }}</el-button>
+        <el-button @click="showDetail = false">{{ $t('common.close') }}</el-button>
+        <el-button type="danger" @click="detailRef?.promptCancelEvaluation?.()">
+          {{ $t('evaluation.cancel') }}
+        </el-button>
       </template>
     </el-dialog>
     <el-dialog
@@ -348,6 +352,7 @@ const showDetail = ref(false)
 const showNew = ref(false)
 const selectedId = ref(null)
 const isEditing = computed(() => !!selectedId.value)
+const detailRef = ref(null)
 const newEvalRef = ref(null)
 const tableData = ref([])
 const selectedRows = ref([])

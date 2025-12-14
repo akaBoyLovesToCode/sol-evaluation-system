@@ -199,6 +199,7 @@
     "confirmPause": "Are you sure you want to pause this evaluation?",
     "confirmResume": "Are you sure you want to resume this evaluation?",
     "confirmCancel": "Are you sure you want to cancel this evaluation? This action cannot be undone.",
+    "cancelNotAllowed": "This evaluation cannot be cancelled in its current status.",
     "cancelReasonPrompt": "Provide a reason for cancelling this evaluation (optional).",
     "cancelReasonPlaceholder": "Add a cancellation reason (optional)",
     "getEvaluationDetailsFailed": "Failed to get evaluation details",

@@ -970,7 +970,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick, defineExpose } from 'vue'
 import { useRoute } from 'vue-router'
 const props = defineProps({
   inDialog: { type: Boolean, default: false },
@@ -1328,11 +1328,15 @@ const canResume = computed(() => {
 
 const canCancel = computed(() => {
   if (!evaluation.value) return false
-  return ['in_progress', 'paused', 'pending_approval'].includes(evaluation.value.status)
+  return !['completed', 'cancelled', 'rejected'].includes(evaluation.value.status)
 })
 
 const promptCancelEvaluation = async () => {
   if (!evaluation.value) return
+  if (!canCancel.value) {
+    ElMessage.warning(t('evaluation.cancelNotAllowed'))
+    return
+  }
 
   try {
     const { value } = await ElMessageBox.prompt(
@@ -1340,7 +1344,7 @@ const promptCancelEvaluation = async () => {
       t('evaluation.cancel'),
       {
         confirmButtonText: t('common.confirm'),
-        cancelButtonText: t('common.cancel'),
+        cancelButtonText: t('common.close'),
         inputPlaceholder: t('evaluation.cancelReasonPlaceholder'),
         inputType: 'textarea',
       },
@@ -1360,6 +1364,10 @@ const promptCancelEvaluation = async () => {
     }
   }
 }
+defineExpose({
+  promptCancelEvaluation,
+  canCancel,
+})
 
 // timeline steps removed; process list is source of truth
 
