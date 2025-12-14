@@ -16,8 +16,6 @@ branch_labels = None
 depends_on = None
 
 
-INDEX_NAME = op.f("ix_evaluation_process_lots_eval_proc_client")
-
 
 def _existing_columns(inspector, table_name):
     return {col["name"] for col in inspector.get_columns(table_name)}
@@ -26,6 +24,7 @@ def _existing_columns(inspector, table_name):
 def upgrade():
     bind = op.get_bind()
     inspector = sa.inspect(bind)
+    index_name = op.f("ix_evaluation_process_lots_eval_proc_client")
 
     if "evaluation_process_lots" in inspector.get_table_names():
         existing = _existing_columns(inspector, "evaluation_process_lots")
@@ -37,9 +36,9 @@ def upgrade():
         existing_indexes = {
             idx["name"] for idx in inspector.get_indexes("evaluation_process_lots")
         }
-        if INDEX_NAME not in existing_indexes:
+        if index_name not in existing_indexes:
             op.create_index(
-                INDEX_NAME,
+                index_name,
                 "evaluation_process_lots",
                 ["evaluation_id", "process_key", "client_id"],
                 unique=False,
@@ -49,13 +48,14 @@ def upgrade():
 def downgrade():
     bind = op.get_bind()
     inspector = sa.inspect(bind)
+    index_name = op.f("ix_evaluation_process_lots_eval_proc_client")
 
     if "evaluation_process_lots" in inspector.get_table_names():
         existing_indexes = {
             idx["name"] for idx in inspector.get_indexes("evaluation_process_lots")
         }
-        if INDEX_NAME in existing_indexes:
-            op.drop_index(INDEX_NAME, table_name="evaluation_process_lots")
+        if index_name in existing_indexes:
+            op.drop_index(index_name, table_name="evaluation_process_lots")
         existing = _existing_columns(inspector, "evaluation_process_lots")
         with op.batch_alter_table("evaluation_process_lots") as batch:
             if "client_id" in existing:
