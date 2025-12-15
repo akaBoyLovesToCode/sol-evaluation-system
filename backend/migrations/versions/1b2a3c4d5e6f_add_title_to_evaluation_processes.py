@@ -17,12 +17,6 @@ depends_on = None
 
 
 def upgrade():
-    # Add the missing 'title' column to evaluation_processes
-    with op.batch_alter_table("evaluation_processes", schema=None) as batch_op:
-        batch_op.add_column(
-            sa.Column("title", sa.String(length=100), nullable=False, server_default="")
-        )
-
     # Optionally drop the server default after backfilling existing rows
     with op.batch_alter_table("evaluation_processes", schema=None) as batch_op:
         batch_op.alter_column("title", server_default=None)
