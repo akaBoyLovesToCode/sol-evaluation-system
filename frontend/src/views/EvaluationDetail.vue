@@ -328,6 +328,117 @@
             </el-card>
           </el-tab-pane>
 
+          <el-tab-pane :label="$t('evaluation.processSection')" name="process-meta">
+            <el-card class="info-card">
+              <template #header>
+                <div class="card-header">
+                  <span>{{ $t('evaluation.processSection') }}</span>
+                  <div class="header-actions">
+                    <template v-if="!editing && canEdit">
+                      <el-button size="small" type="primary" @click="startEdit">
+                        <template #icon><Edit /></template>
+                        {{ $t('common.edit') }}
+                      </el-button>
+                    </template>
+                    <template v-else-if="editing">
+                      <el-button size="small" @click="cancelEdit">
+                        <template #icon><Close /></template>
+                        {{ $t('common.cancel') }}
+                      </el-button>
+                      <el-button size="small" type="primary" :loading="saving" @click="saveEdit">
+                        <template #icon><Check /></template>
+                        {{ $t('common.save') }}
+                      </el-button>
+                    </template>
+                  </div>
+                </div>
+              </template>
+
+              <el-row :gutter="20" class="process-fields">
+                <el-col :span="12">
+                  <div class="process-field">
+                    <label class="process-label">{{ $t('evaluation.testProcess') }}</label>
+                    <template v-if="editing">
+                      <el-input
+                        v-model="editForm.test_process"
+                        type="textarea"
+                        :rows="3"
+                        :placeholder="$t('evaluation.placeholders.testProcess')"
+                      />
+                    </template>
+                    <template v-else>
+                      <div class="process-text">
+                        {{ evaluation.test_process || '-' }}
+                      </div>
+                    </template>
+                  </div>
+                </el-col>
+                <el-col :span="12">
+                  <div class="process-field">
+                    <label class="process-label">{{ $t('evaluation.vProcess') }}</label>
+                    <template v-if="editing">
+                      <el-input
+                        v-model="editForm.v_process"
+                        type="textarea"
+                        :rows="3"
+                        :placeholder="$t('evaluation.placeholders.vProcess')"
+                      />
+                    </template>
+                    <template v-else>
+                      <div class="process-text">
+                        {{ evaluation.v_process || '-' }}
+                      </div>
+                    </template>
+                  </div>
+                </el-col>
+              </el-row>
+
+              <div class="process-field">
+                <label class="process-label">{{ $t('evaluation.pgmLogin') }}</label>
+                <template v-if="editing">
+                  <div class="pgm-login-block" @paste="handlePgmPaste($event, editForm)">
+                    <el-input
+                      v-model="editForm.pgm_login_text"
+                      type="textarea"
+                      :rows="3"
+                      :placeholder="$t('evaluation.placeholders.pgmLoginText')"
+                    />
+                    <div class="pgm-upload-row">
+                      <el-upload
+                        :show-file-list="false"
+                        :auto-upload="false"
+                        accept="image/*"
+                        :before-upload="(file) => handlePgmImageUpload(file, editForm)"
+                      >
+                        <el-button>{{ $t('evaluation.upload') }}</el-button>
+                      </el-upload>
+                      <span class="pgm-paste-hint">{{ $t('evaluation.pgmLoginPasteHint') }}</span>
+                      <el-button
+                        v-if="editForm.pgm_login_image"
+                        text
+                        type="danger"
+                        @click="clearPgmImage(editForm)"
+                      >
+                        {{ $t('common.delete') }}
+                      </el-button>
+                    </div>
+                    <div v-if="editForm.pgm_login_image" class="pgm-image-preview">
+                      <el-image :src="editForm.pgm_login_image" fit="contain" />
+                    </div>
+                  </div>
+                </template>
+                <template v-else>
+                  <div class="process-text">
+                    {{ evaluation.pgm_login_text || '-' }}
+                  </div>
+                  <div v-if="evaluation.pgm_login_image" class="pgm-image-preview">
+                    <el-image :src="evaluation.pgm_login_image" fit="contain" />
+                  </div>
+                </template>
+              </div>
+            </el-card>
+          </el-tab-pane>
+
           <el-tab-pane :label="$t('evaluation.evaluationProcesses')" name="processes">
             <el-card class="info-card">
               <template #header>
@@ -681,6 +792,94 @@
             </el-descriptions>
           </el-card>
 
+          <el-card class="info-card">
+            <template #header>
+              <span>{{ $t('evaluation.processSection') }}</span>
+            </template>
+            <el-row :gutter="20" class="process-fields">
+              <el-col :span="12">
+                <div class="process-field">
+                  <label class="process-label">{{ $t('evaluation.testProcess') }}</label>
+                  <template v-if="editing">
+                    <el-input
+                      v-model="editForm.test_process"
+                      type="textarea"
+                      :rows="3"
+                      :placeholder="$t('evaluation.placeholders.testProcess')"
+                    />
+                  </template>
+                  <template v-else>
+                    <div class="process-text">
+                      {{ evaluation.test_process || '-' }}
+                    </div>
+                  </template>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="process-field">
+                  <label class="process-label">{{ $t('evaluation.vProcess') }}</label>
+                  <template v-if="editing">
+                    <el-input
+                      v-model="editForm.v_process"
+                      type="textarea"
+                      :rows="3"
+                      :placeholder="$t('evaluation.placeholders.vProcess')"
+                    />
+                  </template>
+                  <template v-else>
+                    <div class="process-text">
+                      {{ evaluation.v_process || '-' }}
+                    </div>
+                  </template>
+                </div>
+              </el-col>
+            </el-row>
+
+            <div class="process-field">
+              <label class="process-label">{{ $t('evaluation.pgmLogin') }}</label>
+              <template v-if="editing">
+                <div class="pgm-login-block" @paste="handlePgmPaste($event, editForm)">
+                  <el-input
+                    v-model="editForm.pgm_login_text"
+                    type="textarea"
+                    :rows="3"
+                    :placeholder="$t('evaluation.placeholders.pgmLoginText')"
+                  />
+                  <div class="pgm-upload-row">
+                    <el-upload
+                      :show-file-list="false"
+                      :auto-upload="false"
+                      accept="image/*"
+                      :before-upload="(file) => handlePgmImageUpload(file, editForm)"
+                    >
+                      <el-button>{{ $t('evaluation.upload') }}</el-button>
+                    </el-upload>
+                    <span class="pgm-paste-hint">{{ $t('evaluation.pgmLoginPasteHint') }}</span>
+                    <el-button
+                      v-if="editForm.pgm_login_image"
+                      text
+                      type="danger"
+                      @click="clearPgmImage(editForm)"
+                    >
+                      {{ $t('common.delete') }}
+                    </el-button>
+                  </div>
+                  <div v-if="editForm.pgm_login_image" class="pgm-image-preview">
+                    <el-image :src="editForm.pgm_login_image" fit="contain" />
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <div class="process-text">
+                  {{ evaluation.pgm_login_text || '-' }}
+                </div>
+                <div v-if="evaluation.pgm_login_image" class="pgm-image-preview">
+                  <el-image :src="evaluation.pgm_login_image" fit="contain" />
+                </div>
+              </template>
+            </div>
+          </el-card>
+
           <!-- Timeline view removed for clarity; list below is the source of truth -->
 
           <!-- {{ $t('evaluation.evaluationResults') }} -->
@@ -1022,6 +1221,14 @@ const serializeProcessSteps = (steps) => {
   return steps.filter(Boolean).join('|')
 }
 
+const fileToDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+
 const normalizeReasons = (reason) => {
   if (Array.isArray(reason)) return reason.filter(Boolean)
   if (!reason) return []
@@ -1032,6 +1239,41 @@ const normalizeReasons = (reason) => {
 }
 
 const serializeReasons = (reasons) => normalizeReasons(reasons).join(',')
+
+const handlePgmPaste = async (event, target = editForm) => {
+  const items = event.clipboardData?.items
+  if (!items || !items.length) return
+  for (const item of items) {
+    if (item.type && item.type.startsWith('image/')) {
+      const file = item.getAsFile()
+      if (!file) continue
+      try {
+        target.pgm_login_image = await fileToDataUrl(file)
+        ElMessage.success(t('evaluation.operationSuccess'))
+      } catch (error) {
+        console.error('Paste image failed', error)
+        ElMessage.error(t('evaluation.operationFailed'))
+      }
+      event.preventDefault()
+      break
+    }
+  }
+}
+
+const handlePgmImageUpload = async (file, target = editForm) => {
+  try {
+    target.pgm_login_image = await fileToDataUrl(file)
+    ElMessage.success(t('evaluation.operationSuccess'))
+  } catch (error) {
+    console.error('Upload image failed', error)
+    ElMessage.error(t('evaluation.operationFailed'))
+  }
+  return false
+}
+
+const clearPgmImage = (target = editForm) => {
+  target.pgm_login_image = ''
+}
 
 const formatProcessSteps = (value) => {
   const steps = parseProcessSteps(value)
@@ -1213,6 +1455,10 @@ const editForm = reactive({
   start_date: '',
   end_date: '',
   remarks: '',
+  test_process: '',
+  v_process: '',
+  pgm_login_text: '',
+  pgm_login_image: '',
   pgm_version: '',
   pgm_test_time: '',
 })
@@ -1260,6 +1506,10 @@ const syncEditForm = () => {
     start_date: evaluation.value.start_date || '',
     end_date: evaluation.value.actual_end_date || '',
     remarks: evaluation.value.remarks || evaluation.value.description || '',
+    test_process: evaluation.value.test_process || '',
+    v_process: evaluation.value.v_process || '',
+    pgm_login_text: evaluation.value.pgm_login_text || '',
+    pgm_login_image: evaluation.value.pgm_login_image || '',
     pgm_version: evaluation.value.pgm_version || '',
     pgm_test_time: evaluation.value.pgm_test_time || '',
   })
@@ -1288,6 +1538,10 @@ const saveEdit = async () => {
       start_date: editForm.start_date || null,
       end_date: editForm.end_date || null,
       remarks: editForm.remarks,
+      test_process: editForm.test_process,
+      v_process: editForm.v_process,
+      pgm_login_text: editForm.pgm_login_text,
+      pgm_login_image: editForm.pgm_login_image,
       pgm_version: editForm.pgm_version,
       pgm_test_time: editForm.pgm_test_time,
     }
@@ -1745,6 +1999,66 @@ const activeTab = ref('details')
   color: #606266;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.process-fields {
+  margin-top: 8px;
+}
+
+.process-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.process-label {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.process-text {
+  min-height: 56px;
+  padding: 10px 12px;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  background: #fafafa;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.pgm-login-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pgm-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.pgm-paste-hint {
+  color: #909399;
+  font-size: 13px;
+}
+
+.pgm-image-preview {
+  margin-top: 8px;
+  border: 1px dashed #dcdfe6;
+  border-radius: 8px;
+  padding: 8px;
+  background: #fafafa;
+  max-width: 360px;
+}
+
+.pgm-image-preview :deep(img) {
+  max-height: 220px;
+  width: auto;
+  display: block;
 }
 
 .process-timeline {

@@ -16,7 +16,6 @@ branch_labels = None
 depends_on = None
 
 
-
 def _existing_columns(inspector, table_name):
     return {col["name"] for col in inspector.get_columns(table_name)}
 

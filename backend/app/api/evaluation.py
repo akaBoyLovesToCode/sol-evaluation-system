@@ -1193,6 +1193,10 @@ def create_evaluation() -> tuple[Response, int]:
             capacity=data.get("capacity"),
             interface_type=data.get("interface_type"),
             form_factor=data.get("form_factor"),
+            test_process=data.get("test_process"),
+            v_process=data.get("v_process"),
+            pgm_login_text=data.get("pgm_login_text"),
+            pgm_login_image=data.get("pgm_login_image"),
         )
 
         db.session.add(evaluation)
@@ -1353,6 +1357,14 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
             evaluation.evaluation_reason = data["evaluation_reason"]
         if "description" in data or "remarks" in data:
             evaluation.remarks = data.get("remarks", data.get("description", ""))
+        if "test_process" in data:
+            evaluation.test_process = data.get("test_process")
+        if "v_process" in data:
+            evaluation.v_process = data.get("v_process")
+        if "pgm_login_text" in data:
+            evaluation.pgm_login_text = data.get("pgm_login_text")
+        if "pgm_login_image" in data:
+            evaluation.pgm_login_image = data.get("pgm_login_image")
 
         # Dates
         if "start_date" in data and data["start_date"]:

@@ -60,6 +60,10 @@ class Evaluation(db.Model):
     evaluation_reason = db.Column(db.Text)
     cancel_reason = db.Column(db.Text)
     remarks = db.Column(db.Text)
+    test_process = db.Column(db.Text)  # Test process notes
+    v_process = db.Column(db.Text)  # V process notes
+    pgm_login_text = db.Column(db.Text)  # PGM login description
+    pgm_login_image = db.Column(db.Text)  # PGM login image (base64 or data URL)
 
     # Status and workflow
     status = db.Column(
@@ -282,6 +286,10 @@ class Evaluation(db.Model):
             "evaluation_reason": self.evaluation_reason,
             "cancel_reason": self.cancel_reason,
             "remarks": self.remarks,
+            "test_process": self.test_process,
+            "v_process": self.v_process,
+            "pgm_login_text": self.pgm_login_text,
+            "pgm_login_image": self.pgm_login_image,
             "status": self.status,
             "start_date": iso_date(self.start_date, tz),
             "actual_end_date": iso_date(self.actual_end_date, tz),

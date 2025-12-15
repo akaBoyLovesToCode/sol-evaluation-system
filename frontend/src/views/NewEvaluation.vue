@@ -178,6 +178,68 @@
           </el-row>
         </el-card>
 
+        <el-card class="form-section fade-in-up" style="animation-delay: 0.4s">
+          <template #header>
+            <span>{{ $t('evaluation.processSection') }}</span>
+          </template>
+
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item :label="$t('evaluation.testProcess')" prop="test_process">
+                <el-input
+                  v-model="form.test_process"
+                  type="textarea"
+                  :rows="3"
+                  :placeholder="$t('evaluation.placeholders.testProcess')"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item :label="$t('evaluation.vProcess')" prop="v_process">
+                <el-input
+                  v-model="form.v_process"
+                  type="textarea"
+                  :rows="3"
+                  :placeholder="$t('evaluation.placeholders.vProcess')"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-form-item :label="$t('evaluation.pgmLogin')">
+            <div class="pgm-login-block" @paste="handlePgmPaste($event, form)">
+              <el-input
+                v-model="form.pgm_login_text"
+                type="textarea"
+                :rows="3"
+                :placeholder="$t('evaluation.placeholders.pgmLoginText')"
+              />
+              <div class="pgm-upload-row">
+                <el-upload
+                  :show-file-list="false"
+                  :auto-upload="false"
+                  accept="image/*"
+                  :before-upload="(file) => handlePgmImageUpload(file, form)"
+                >
+                  <el-button>{{ $t('evaluation.upload') }}</el-button>
+                </el-upload>
+                <span class="pgm-paste-hint">{{ $t('evaluation.pgmLoginPasteHint') }}</span>
+                <el-button
+                  v-if="form.pgm_login_image"
+                  text
+                  type="danger"
+                  @click="clearPgmImage(form)"
+                >
+                  {{ $t('common.delete') }}
+                </el-button>
+              </div>
+              <div v-if="form.pgm_login_image" class="pgm-image-preview">
+                <el-image :src="form.pgm_login_image" fit="contain" />
+              </div>
+            </div>
+          </el-form-item>
+        </el-card>
+
         <el-card class="form-section fade-in-up" style="animation-delay: 0.5s">
           <template #header>
             <div class="card-header">
@@ -438,6 +500,10 @@ const form = reactive({
   reason: [],
   process_step: [],
   description: '',
+  test_process: '',
+  v_process: '',
+  pgm_login_text: '',
+  pgm_login_image: '',
   pgm_version: '',
   pgm_test_time: '',
   scs_charger_name: '',
@@ -499,6 +565,49 @@ const describeStepLots = (process, lotRefs) => {
 const reliabilitySummaryFor = (step) => buildReliabilitySummary(step, t)
 const totalsSummaryFor = (step) => buildTotalsSummary(step, t)
 const isReliabilityStepCode = (code) => isReliabilityStep(code)
+
+const fileToDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+
+const handlePgmPaste = async (event, target = form) => {
+  const items = event.clipboardData?.items
+  if (!items || !items.length) return
+  for (const item of items) {
+    if (item.type && item.type.startsWith('image/')) {
+      const file = item.getAsFile()
+      if (!file) continue
+      try {
+        target.pgm_login_image = await fileToDataUrl(file)
+        ElMessage.success(t('evaluation.operationSuccess'))
+      } catch (error) {
+        console.error('Paste image failed', error)
+        ElMessage.error(t('evaluation.operationFailed'))
+      }
+      event.preventDefault()
+      break
+    }
+  }
+}
+
+const handlePgmImageUpload = async (file, target = form) => {
+  try {
+    target.pgm_login_image = await fileToDataUrl(file)
+    ElMessage.success(t('evaluation.operationSuccess'))
+  } catch (error) {
+    console.error('Upload image failed', error)
+    ElMessage.error(t('evaluation.operationFailed'))
+  }
+  return false
+}
+
+const clearPgmImage = (target = form) => {
+  target.pgm_login_image = ''
+}
 
 async function refreshNestedPayload(targetId, evaluationContext = null, options = {}) {
   const { preserveWarnings = false } = options
@@ -741,6 +850,10 @@ const buildPayload = () => ({
   evaluation_reason: serializeReasons(form.reason), // Map reason to evaluation_reason for backend compatibility
   description: form.description,
   remarks: form.description, // Map description to remarks for backend compatibility
+  test_process: form.test_process,
+  v_process: form.v_process,
+  pgm_login_text: form.pgm_login_text,
+  pgm_login_image: form.pgm_login_image,
   pgm_version: form.pgm_version,
   pgm_test_time: form.pgm_test_time,
   scs_charger_name: form.scs_charger_name || null,
@@ -885,6 +998,10 @@ const fetchEvaluation = async () => {
       reason: normalizeReasons(evaluation.evaluation_reason || evaluation.reason || ''),
       process_step: parseProcessSteps(evaluation.process_step),
       description: evaluation.remarks || evaluation.description || '',
+      test_process: evaluation.test_process || '',
+      v_process: evaluation.v_process || '',
+      pgm_login_text: evaluation.pgm_login_text || '',
+      pgm_login_image: evaluation.pgm_login_image || '',
       pgm_version: evaluation.pgm_version || '',
       pgm_test_time: evaluation.pgm_test_time || '',
       scs_charger_name: evaluation.scs_charger_name || '',
@@ -1073,6 +1190,40 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.pgm-login-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pgm-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.pgm-paste-hint {
+  color: #909399;
+  font-size: 13px;
+}
+
+.pgm-image-preview {
+  margin-top: 8px;
+  border: 1px dashed #dcdfe6;
+  border-radius: 8px;
+  padding: 8px;
+  background: #fafafa;
+  max-width: 320px;
+}
+
+.pgm-image-preview :deep(img) {
+  max-height: 200px;
+  width: auto;
+  display: block;
 }
 
 .nested-summary {
