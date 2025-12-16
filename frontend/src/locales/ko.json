@@ -419,10 +419,9 @@
       "lotFallback": "Lot {index}"
     },
     "reliability": {
-      "ppm": "{ppm}ppm({fail} 불량/{total})",
-      "r": ", r{r}",
-      "ci": ", [{low}, {high}]",
-      "conf": "{conf}% 신뢰수준"
+      "failLabel": "불량",
+      "confidenceLabel": "신뢰수준",
+      "summary": "{ppm}ppm({ratio}, r{resolution},[{low}, {high}] @{confidence}% {confidenceLabel})"
     },
     "processSummary": "Process 요약:",
     "addProcess": "Process 추가",

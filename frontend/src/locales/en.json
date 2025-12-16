@@ -445,10 +445,9 @@
       "lotFallback": "Lot {index}"
     },
     "reliability": {
-      "ppm": "{ppm}ppm ({fail} Fail / {total})",
-      "r": ", r{r}",
-      "ci": ", [{low}, {high}]",
-      "conf": "{conf}% confidence"
+      "failLabel": "Fail",
+      "confidenceLabel": "confidence level",
+      "summary": "{ppm}ppm({ratio}, r{resolution},[{low}, {high}] @{confidence}% {confidenceLabel})"
     },
     "processSummary": "Processes:",
     "addProcess": "Add Process",

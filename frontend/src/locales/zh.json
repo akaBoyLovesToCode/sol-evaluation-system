@@ -410,10 +410,9 @@
       "lotFallback": "Lot {index}"
     },
     "reliability": {
-      "ppm": "{ppm}ppm（{fail} 不良/{total}）",
-      "r": "，r{r}",
-      "ci": "，[{low}，{high}]",
-      "conf": "{conf}% 置信水平"
+      "failLabel": "不良",
+      "confidenceLabel": "置信水准",
+      "summary": "{ppm}ppm({ratio}, r{resolution},[{low}, {high}] @{confidence}% {confidenceLabel})"
     },
     "processSummary": "Process 汇总：",
     "addProcess": "新增 Process",
