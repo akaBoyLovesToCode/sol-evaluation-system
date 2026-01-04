@@ -852,7 +852,8 @@ const handleExport = async () => {
         return '""'
       }
       const text = typeof value === 'string' ? value : String(value)
-      return `"${text.replace(/"/g, '""')}"`
+      const normalized = text.replace(/\r?\n|\r/g, ' ').trim()
+      return `"${normalized.replace(/"/g, '""')}"`
     }
 
     const resolveEvaluationType = (value) => {
@@ -869,14 +870,19 @@ const handleExport = async () => {
       return translated !== key ? translated : value
     }
 
-    const resolveReason = (value) => {
-      if (!value) return ''
-      const key = `evaluation.reasons.${value}`
-      const translated = t(key)
-      return translated !== key ? translated : value
+    const formatReasonsForExport = (value) => {
+      const reasons = normalizeReasons(value)
+      if (reasons.length === 0) return ''
+      return reasons
+        .map((reason) => {
+          const key = `evaluation.reasons.${reason}`
+          const translated = t(key)
+          return translated !== key ? translated : reason
+        })
+        .join(', ')
     }
 
-    const baseExportFields = [
+    const exportFields = [
       {
         header: t('common.id'),
         value: (source) => source.id ?? '',
@@ -887,10 +893,6 @@ const handleExport = async () => {
       },
       {
         header: t('evaluation.evaluationType'),
-        value: (source) => source.evaluation_type || '',
-      },
-      {
-        header: t('evaluation.evaluationTypeLabel'),
         value: (source) => resolveEvaluationType(source.evaluation_type),
       },
       {
@@ -903,11 +905,7 @@ const handleExport = async () => {
       },
       {
         header: t('evaluation.reason'),
-        value: (source) => source.evaluation_reason || '',
-      },
-      {
-        header: t('evaluation.reasonLabel'),
-        value: (source) => resolveReason(source.evaluation_reason),
+        value: (source) => formatReasonsForExport(source.evaluation_reason || source.reason),
       },
       {
         header: t('evaluation.descriptionLabel'),
@@ -931,10 +929,6 @@ const handleExport = async () => {
       },
       {
         header: t('common.status'),
-        value: (source) => source.status || '',
-      },
-      {
-        header: t('evaluation.statusLabel'),
         value: (source) => resolveStatus(source.status),
       },
       {
@@ -957,32 +951,35 @@ const handleExport = async () => {
         header: t('evaluation.updatedAt'),
         value: (source) => formatDateForExport(source.updated_at),
       },
+      {
+        header: t('evaluation.processSummary'),
+        value: (_source, detailed, nestedProcesses) => {
+          const legacyProcessSummary = buildProcessSummary(detailed?.processes ?? [])
+          const nestedProcessSummary = buildNestedProcessSummary(nestedProcesses)
+          return [legacyProcessSummary, nestedProcessSummary].filter(Boolean).join(' || ')
+        },
+      },
+      {
+        header: t('evaluation.resultSummary'),
+        value: (_source, detailed, nestedProcesses, nestedWarnings) => {
+          const legacyResultSummary = buildResultSummary(detailed?.results ?? [])
+          const nestedResultSummary = buildNestedResultSummary(nestedProcesses, nestedWarnings)
+          return [legacyResultSummary, nestedResultSummary].filter(Boolean).join(' || ')
+        },
+      },
     ]
 
-    const headers = [
-      ...baseExportFields.map((field) => sanitizeCell(field.header)),
-      sanitizeCell(t('evaluation.processSummary')),
-      sanitizeCell(t('evaluation.resultSummary')),
-    ].join(',')
+    const headers = exportFields.map((field) => sanitizeCell(field.header)).join(',')
 
     const rows = dataToExport.map((row) => {
       const detailed = detailMap.get(row.id)
       const nestedProcesses = nestedMap.get(row.id) || []
       const nestedProcessWarnings = nestedWarnings.get(row.id) || []
       const exportSource = detailed ? { ...row, ...detailed } : row
-      const legacyProcessSummary = buildProcessSummary(detailed?.processes ?? [])
-      const nestedProcessSummary = buildNestedProcessSummary(nestedProcesses)
-      const processSummary = [legacyProcessSummary, nestedProcessSummary]
-        .filter(Boolean)
-        .join(' || ')
 
-      const legacyResultSummary = buildResultSummary(detailed?.results ?? [])
-      const nestedResultSummary = buildNestedResultSummary(nestedProcesses, nestedProcessWarnings)
-      const resultSummary = [legacyResultSummary, nestedResultSummary].filter(Boolean).join(' || ')
-
-      const baseValues = baseExportFields.map((field) => sanitizeCell(field.value(exportSource)))
-      baseValues.push(sanitizeCell(processSummary))
-      baseValues.push(sanitizeCell(resultSummary))
+      const baseValues = exportFields.map((field) =>
+        sanitizeCell(field.value(exportSource, detailed, nestedProcesses, nestedProcessWarnings)),
+      )
 
       return baseValues.join(',')
     })
@@ -1070,9 +1067,9 @@ const formatDateForExport = (value) => {
   if (value === null || value === undefined) {
     return ''
   }
-  if (value instanceof Date) {
-    const iso = value.toISOString()
-    return iso
+  const date = value instanceof Date ? value : new Date(value)
+  if (!Number.isNaN(date.getTime())) {
+    return date.toISOString().split('T')[0]
   }
   return String(value)
 }
