@@ -340,6 +340,7 @@
 import { ref, reactive, onMounted, computed, defineAsyncComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '../utils/api'
+import { buildReliabilitySummary, isReliabilityStep } from '../utils/reliability'
 import AnimatedContainer from '../components/AnimatedContainer.vue'
 const EvaluationDetail = defineAsyncComponent(() => import('./EvaluationDetail.vue'))
 const NewEvaluation = defineAsyncComponent(() => import('./NewEvaluation.vue'))
@@ -396,6 +397,15 @@ const translateOrFallback = (key, fallback, params = {}) => {
   return translated === key ? fallback : translated
 }
 
+const toNumberSafe = (value) => {
+  if (value === null || value === undefined || value === '') {
+    return null
+  }
+  const normalized = typeof value === 'string' ? value.replace(/,/g, '') : value
+  const num = Number(normalized)
+  return Number.isFinite(num) ? num : null
+}
+
 const normalizeReasons = (value) => {
   if (Array.isArray(value)) return value.filter(Boolean)
   if (!value) return []
@@ -434,50 +444,56 @@ const truncateDescription = (text) => {
   return trimmed
 }
 
-const buildProcessSummary = (processes) => {
-  if (!Array.isArray(processes) || processes.length === 0) {
-    return ''
-  }
-
-  return processes
-    .map((process, index) => {
-      const parts = []
-      const titleOrDescription = process.title || process.process_description
-      if (titleOrDescription) {
-        parts.push(titleOrDescription)
-      }
-      if (process.eval_code) {
-        parts.push(`${t('evaluation.evalCode')}: ${process.eval_code}`)
-      }
-      if (process.lot_number) {
-        parts.push(`${t('evaluation.lotNumber')}: ${process.lot_number}`)
-      }
-      if (process.quantity !== undefined && process.quantity !== null) {
-        parts.push(`${t('evaluation.quantity')}: ${process.quantity}`)
-      }
-      if (process.status) {
-        const statusLabel = t(`evaluation.processStatus.${process.status}`) || process.status
-        parts.push(`${t('common.status')}: ${statusLabel}`)
-      }
-      if (process.manufacturing_test_results) {
-        parts.push(
-          `${t('evaluation.manufacturingTestResults')}: ${process.manufacturing_test_results}`,
-        )
-      }
-      if (process.defect_analysis_results) {
-        parts.push(`${t('evaluation.defectAnalysisResults')}: ${process.defect_analysis_results}`)
-      }
-      if (process.aql_result) {
-        parts.push(`${t('evaluation.aqlResult')}: ${process.aql_result}`)
-      }
-      return `${index + 1}. ${parts.filter(Boolean).join(' | ')}`
-    })
-    .join(' ; ')
-}
-
 const buildResultSummary = (results) => {
   if (!Array.isArray(results) || results.length === 0) {
     return ''
+  }
+
+  const buildLegacyReliabilitySummary = (result) => {
+    if (!result?.result_data || typeof result.result_data !== 'object') {
+      return ''
+    }
+
+    const data = result.result_data
+    const totalUnits =
+      toNumberSafe(data.total_units) ??
+      toNumberSafe(data.test_units) ??
+      toNumberSafe(data.total) ??
+      toNumberSafe(data.sample_size)
+    const failUnits =
+      toNumberSafe(data.fail_units) ??
+      toNumberSafe(data.fail) ??
+      toNumberSafe(data.fail_count) ??
+      toNumberSafe(data.failures) ??
+      0
+    const passUnits = toNumberSafe(data.pass_units ?? data.pass)
+
+    if (!Number.isFinite(totalUnits) || totalUnits <= 0) {
+      return ''
+    }
+
+    const stepCodeCandidate = (data.step_code || result.result_type || '').toString().toUpperCase()
+    if (!isReliabilityStep(stepCodeCandidate) && result.result_type !== 'aql') {
+      return ''
+    }
+    const stepCode = isReliabilityStep(stepCodeCandidate) ? stepCodeCandidate : 'AQL'
+
+    return buildReliabilitySummary(
+      {
+        step_code: stepCode,
+        fail_units: failUnits,
+        total_units: totalUnits,
+        test_units: totalUnits,
+        pass_units: passUnits ?? undefined,
+        metrics: {
+          ...data,
+          fail: failUnits,
+          total: totalUnits,
+          test_units: totalUnits,
+        },
+      },
+      t,
+    )
   }
 
   return results
@@ -501,7 +517,11 @@ const buildResultSummary = (results) => {
       if (result.comments) {
         parts.push(`${t('evaluation.resultNotesLabel')}: ${result.comments}`)
       }
-      if (result.result_data) {
+
+      const reliabilitySummary = buildLegacyReliabilitySummary(result)
+      if (reliabilitySummary) {
+        parts.push(reliabilitySummary)
+      } else if (result.result_data) {
         let dataString = ''
         if (typeof result.result_data === 'string') {
           dataString = result.result_data
@@ -557,11 +577,10 @@ const fetchNestedProcesses = async (rows) => {
   )
 
   if (ids.length === 0) {
-    return { nestedMap: new Map(), nestedWarnings: new Map() }
+    return { nestedMap: new Map() }
   }
 
   const nestedMap = new Map()
-  const nestedWarnings = new Map()
 
   await Promise.all(
     ids.map(async (id) => {
@@ -572,81 +591,16 @@ const fetchNestedProcesses = async (rows) => {
         if (payload) {
           nestedMap.set(id, payload.processes || [])
         }
-        if (Array.isArray(responseData?.warnings) && responseData.warnings.length > 0) {
-          nestedWarnings.set(id, responseData.warnings)
-        }
       } catch (nestedError) {
         console.error(`Failed to fetch nested processes for evaluation ${id}`, nestedError)
       }
     }),
   )
 
-  return { nestedMap, nestedWarnings }
+  return { nestedMap }
 }
 
-const buildNestedProcessSummary = (processes) => {
-  if (!Array.isArray(processes) || processes.length === 0) {
-    return ''
-  }
-
-  return processes
-    .map((process, index) => {
-      const parts = []
-      const name =
-        process?.name ||
-        translateOrFallback('evaluation.defaultProcessName', `Process ${index + 1}`, {
-          index: index + 1,
-        })
-      const order = process?.order_index || index + 1
-      parts.push(`${order}. ${name}`)
-
-      if (Array.isArray(process?.lots) && process.lots.length > 0) {
-        const lotLabel = translateOrFallback('nested.summary.lotsHeading', 'Lots')
-        const lotSummary = process.lots
-          .map((lot) => {
-            const lotNumber = lot.lot_number || lot.client_id || '-'
-            const quantity =
-              lot.quantity !== undefined && lot.quantity !== null ? `(${lot.quantity})` : ''
-            return `${lotNumber}${quantity}`
-          })
-          .join(', ')
-        if (lotSummary) {
-          parts.push(`${lotLabel}: ${lotSummary}`)
-        }
-      }
-
-      if (Array.isArray(process?.steps) && process.steps.length > 0) {
-        const stepLabel = translateOrFallback('nested.stepTag', 'Step')
-        const stepSummary = process.steps
-          .map((step) => {
-            const tokens = []
-            tokens.push(`${step.order_index || ''}`.trim())
-            if (step.step_code) {
-              tokens.push(step.step_code)
-            }
-            if (step.step_label) {
-              tokens.push(`(${step.step_label})`)
-            }
-            if (step.eval_code) {
-              const evalLabel = translateOrFallback('evaluation.evalCode', 'Eval Code')
-              tokens.push(`[${evalLabel}: ${step.eval_code}]`)
-            }
-            return tokens.filter(Boolean).join(' ')
-          })
-          .filter(Boolean)
-          .join(' → ')
-        if (stepSummary) {
-          parts.push(`${stepLabel}s: ${stepSummary}`)
-        }
-      }
-
-      return parts.filter(Boolean).join(' | ')
-    })
-    .filter(Boolean)
-    .join(' ; ')
-}
-
-const buildNestedResultSummary = (processes, warnings = []) => {
+const buildNestedResultSummary = (processes) => {
   const segments = []
 
   if (Array.isArray(processes)) {
@@ -661,7 +615,9 @@ const buildNestedResultSummary = (processes, warnings = []) => {
       }
       process.steps.forEach((step) => {
         const stepWord = translateOrFallback('nested.stepTag', 'Step')
-        const prefix = `${processName} ${stepWord} ${step.order_index || ''}`.trim()
+        const stepName =
+          step.step_label || step.step_code || `${stepWord} ${step.order_index || ''}`
+        const prefix = `${processName} ${stepName}`.trim()
         if (step.results_applicable === false) {
           segments.push(
             `${prefix}: ${translateOrFallback(
@@ -671,36 +627,39 @@ const buildNestedResultSummary = (processes, warnings = []) => {
           )
           return
         }
-        const metrics = []
-        if (step.total_units !== undefined && step.total_units !== null) {
-          metrics.push(
-            `${translateOrFallback('nested.totalUnitsLabel', 'Total')} ${step.total_units}`,
-          )
-        }
-        if (step.pass_units !== undefined && step.pass_units !== null) {
-          metrics.push(`${translateOrFallback('nested.passUnitsLabel', 'Pass')} ${step.pass_units}`)
-        }
-        if (step.fail_units !== undefined && step.fail_units !== null) {
-          metrics.push(`${translateOrFallback('nested.failUnitsLabel', 'Fail')} ${step.fail_units}`)
-        }
-        if (Array.isArray(step.failures) && step.failures.length > 0) {
-          const failureText = t('nested.summary.failuresCount', { count: step.failures.length })
-          metrics.push(
-            failureText !== 'nested.summary.failuresCount'
-              ? failureText
-              : `Failures: ${step.failures.length}`,
-          )
-        }
-        if (metrics.length > 0) {
-          segments.push(`${prefix}: ${metrics.join(', ')}`)
+        const reliabilitySummary = buildReliabilitySummary(step, t)
+        if (reliabilitySummary) {
+          segments.push(`${prefix}: ${reliabilitySummary}`)
+        } else {
+          const metrics = []
+          if (step.total_units !== undefined && step.total_units !== null) {
+            metrics.push(
+              `${translateOrFallback('nested.totalUnitsLabel', 'Total')} ${step.total_units}`,
+            )
+          }
+          if (step.pass_units !== undefined && step.pass_units !== null) {
+            metrics.push(
+              `${translateOrFallback('nested.passUnitsLabel', 'Pass')} ${step.pass_units}`,
+            )
+          }
+          if (step.fail_units !== undefined && step.fail_units !== null) {
+            metrics.push(
+              `${translateOrFallback('nested.failUnitsLabel', 'Fail')} ${step.fail_units}`,
+            )
+          }
+          if (Array.isArray(step.failures) && step.failures.length > 0) {
+            const failureText = t('nested.summary.failuresCount', { count: step.failures.length })
+            metrics.push(
+              failureText !== 'nested.summary.failuresCount'
+                ? failureText
+                : `Failures: ${step.failures.length}`,
+            )
+          }
+          if (metrics.length > 0) {
+            segments.push(`${prefix}: ${metrics.join(', ')}`)
+          }
         }
       })
-    })
-  }
-
-  if (Array.isArray(warnings) && warnings.length > 0) {
-    warnings.forEach((warning) => {
-      segments.push(`${translateOrFallback('nested.warningsLabel', 'Warning')}: ${warning}`)
     })
   }
 
@@ -830,7 +789,7 @@ const handleExport = async () => {
     }
 
     const { detailMap, failedIds } = await fetchDetailedEvaluations(dataToExport)
-    const { nestedMap, nestedWarnings } = await fetchNestedProcesses(dataToExport)
+    const { nestedMap } = await fetchNestedProcesses(dataToExport)
     if (failedIds.length > 0) {
       ElMessage.warning(
         t('evaluation.exportDetailWarning', {
@@ -912,6 +871,10 @@ const handleExport = async () => {
         value: (source) => source.remarks || '',
       },
       {
+        header: t('evaluation.testProcess'),
+        value: (source, detailed) => detailed?.test_process || source.test_process || '',
+      },
+      {
         header: t('evaluation.processStep'),
         value: (source) => source.process_step || '',
       },
@@ -952,18 +915,10 @@ const handleExport = async () => {
         value: (source) => formatDateForExport(source.updated_at),
       },
       {
-        header: t('evaluation.processSummary'),
-        value: (_source, detailed, nestedProcesses) => {
-          const legacyProcessSummary = buildProcessSummary(detailed?.processes ?? [])
-          const nestedProcessSummary = buildNestedProcessSummary(nestedProcesses)
-          return [legacyProcessSummary, nestedProcessSummary].filter(Boolean).join(' || ')
-        },
-      },
-      {
         header: t('evaluation.resultSummary'),
-        value: (_source, detailed, nestedProcesses, nestedWarnings) => {
+        value: (_source, detailed, nestedProcesses) => {
           const legacyResultSummary = buildResultSummary(detailed?.results ?? [])
-          const nestedResultSummary = buildNestedResultSummary(nestedProcesses, nestedWarnings)
+          const nestedResultSummary = buildNestedResultSummary(nestedProcesses)
           return [legacyResultSummary, nestedResultSummary].filter(Boolean).join(' || ')
         },
       },
@@ -974,11 +929,10 @@ const handleExport = async () => {
     const rows = dataToExport.map((row) => {
       const detailed = detailMap.get(row.id)
       const nestedProcesses = nestedMap.get(row.id) || []
-      const nestedProcessWarnings = nestedWarnings.get(row.id) || []
       const exportSource = detailed ? { ...row, ...detailed } : row
 
       const baseValues = exportFields.map((field) =>
-        sanitizeCell(field.value(exportSource, detailed, nestedProcesses, nestedProcessWarnings)),
+        sanitizeCell(field.value(exportSource, detailed, nestedProcesses)),
       )
 
       return baseValues.join(',')
