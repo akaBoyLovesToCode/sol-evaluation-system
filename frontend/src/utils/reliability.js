@@ -24,11 +24,7 @@ export const isReliabilityStep = (code) => {
 }
 
 const LOG_GAMMA_COEFF = [
-  76.1800917295,
-  -86.5053203294,
-  24.0140982408,
-  -1.23173957245,
-  1.208650973866179e-3,
+  76.1800917295, -86.5053203294, 24.0140982408, -1.23173957245, 1.208650973866179e-3,
   -5.395239384953e-6,
 ]
 
@@ -43,7 +39,7 @@ const logGamma = (xx) => {
     y += 1
     ser += LOG_GAMMA_COEFF[j] / y
   }
-  return -tmp + Math.log(Math.sqrt(2 * Math.PI) * ser / x)
+  return -tmp + Math.log((Math.sqrt(2 * Math.PI) * ser) / x)
 }
 
 const betacf = (a, b, x) => {
@@ -84,7 +80,9 @@ const betacf = (a, b, x) => {
 const regularizedIncompleteBeta = (a, b, x) => {
   if (x <= 0) return 0
   if (x >= 1) return 1
-  const bt = Math.exp(logGamma(a + b) - logGamma(a) - logGamma(b) + a * Math.log(x) + b * Math.log(1 - x))
+  const bt = Math.exp(
+    logGamma(a + b) - logGamma(a) - logGamma(b) + a * Math.log(x) + b * Math.log(1 - x),
+  )
   const symm = x < (a + 1) / (a + b + 2)
   if (symm) {
     return (bt * betacf(a, b, x)) / a
@@ -139,7 +137,7 @@ const clopperPearsonPpm = (fail, total, confLevel = 0.9) => {
     upper = 1
   } else {
     const fUpper = fQuantile(1 - tail, 2 * (fail + 1), 2 * (total - fail))
-    upper = ((fail + 1) * fUpper) / ((total - fail) + (fail + 1) * fUpper)
+    upper = ((fail + 1) * fUpper) / (total - fail + (fail + 1) * fUpper)
   }
 
   return {
