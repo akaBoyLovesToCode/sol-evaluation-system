@@ -613,53 +613,58 @@ const buildNestedResultSummary = (processes) => {
       if (!Array.isArray(process?.steps)) {
         return
       }
+
+      const stepSegments = []
+
       process.steps.forEach((step) => {
         const stepWord = translateOrFallback('nested.stepTag', 'Step')
         const stepName =
           step.step_label || step.step_code || `${stepWord} ${step.order_index || ''}`
-        const prefix = `${processName} ${stepName}`.trim()
+
         if (step.results_applicable === false) {
-          segments.push(
-            `${prefix}: ${translateOrFallback(
+          stepSegments.push(
+            `${stepName}: ${translateOrFallback(
               'nested.summary.noResults',
               'No test results recorded',
             )}`,
           )
           return
         }
+
         const reliabilitySummary = buildReliabilitySummary(step, t)
         if (reliabilitySummary) {
-          segments.push(`${prefix}: ${reliabilitySummary}`)
-        } else {
-          const metrics = []
-          if (step.total_units !== undefined && step.total_units !== null) {
-            metrics.push(
-              `${translateOrFallback('nested.totalUnitsLabel', 'Total')} ${step.total_units}`,
-            )
-          }
-          if (step.pass_units !== undefined && step.pass_units !== null) {
-            metrics.push(
-              `${translateOrFallback('nested.passUnitsLabel', 'Pass')} ${step.pass_units}`,
-            )
-          }
-          if (step.fail_units !== undefined && step.fail_units !== null) {
-            metrics.push(
-              `${translateOrFallback('nested.failUnitsLabel', 'Fail')} ${step.fail_units}`,
-            )
-          }
-          if (Array.isArray(step.failures) && step.failures.length > 0) {
-            const failureText = t('nested.summary.failuresCount', { count: step.failures.length })
-            metrics.push(
-              failureText !== 'nested.summary.failuresCount'
-                ? failureText
-                : `Failures: ${step.failures.length}`,
-            )
-          }
-          if (metrics.length > 0) {
-            segments.push(`${prefix}: ${metrics.join(', ')}`)
-          }
+          stepSegments.push(`${stepName}: ${reliabilitySummary}`)
+          return
+        }
+
+        const metrics = []
+        if (step.total_units !== undefined && step.total_units !== null) {
+          metrics.push(
+            `${translateOrFallback('nested.totalUnitsLabel', 'Total')} ${step.total_units}`,
+          )
+        }
+        if (step.pass_units !== undefined && step.pass_units !== null) {
+          metrics.push(`${translateOrFallback('nested.passUnitsLabel', 'Pass')} ${step.pass_units}`)
+        }
+        if (step.fail_units !== undefined && step.fail_units !== null) {
+          metrics.push(`${translateOrFallback('nested.failUnitsLabel', 'Fail')} ${step.fail_units}`)
+        }
+        if (Array.isArray(step.failures) && step.failures.length > 0) {
+          const failureText = t('nested.summary.failuresCount', { count: step.failures.length })
+          metrics.push(
+            failureText !== 'nested.summary.failuresCount'
+              ? failureText
+              : `Failures: ${step.failures.length}`,
+          )
+        }
+        if (metrics.length > 0) {
+          stepSegments.push(`${stepName}: ${metrics.join(', ')}`)
         }
       })
+
+      if (stepSegments.length > 0) {
+        segments.push(`${processName}: ${stepSegments.join(' ; ')}`)
+      }
     })
   }
 
