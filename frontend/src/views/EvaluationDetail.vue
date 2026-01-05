@@ -865,7 +865,12 @@
                     </el-button>
                   </div>
                   <div v-if="editForm.pgm_login_image" class="pgm-image-preview">
-                    <el-image :src="editForm.pgm_login_image" fit="contain" />
+                    <el-image
+                      :src="editForm.pgm_login_image"
+                      fit="contain"
+                      :preview-src-list="[editForm.pgm_login_image]"
+                      style="width: 100%; height: auto"
+                    />
                   </div>
                 </div>
               </template>
@@ -874,7 +879,12 @@
                   {{ evaluation.pgm_login_text || '-' }}
                 </div>
                 <div v-if="evaluation.pgm_login_image" class="pgm-image-preview">
-                  <el-image :src="evaluation.pgm_login_image" fit="contain" />
+                  <el-image
+                    :src="evaluation.pgm_login_image"
+                    fit="contain"
+                    :preview-src-list="[evaluation.pgm_login_image]"
+                    style="width: 100%; height: auto"
+                  />
                 </div>
               </template>
             </div>
@@ -2052,12 +2062,21 @@ const activeTab = ref('details')
   border-radius: 8px;
   padding: 8px;
   background: #fafafa;
-  max-width: 360px;
+  width: 100%;
+  max-width: 100%;
 }
 
-.pgm-image-preview :deep(img) {
-  max-height: 220px;
-  width: auto;
+.pgm-image-preview :deep(.el-image) {
+  width: 100%;
+  height: auto;
+}
+
+.pgm-image-preview :deep(img),
+.pgm-image-preview :deep(.el-image__inner) {
+  max-height: 520px;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
   display: block;
 }
 
