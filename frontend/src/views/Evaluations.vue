@@ -55,32 +55,50 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item :label="$t('evaluation.product')">
-            <el-input
-              v-model="searchForm.product"
-              :placeholder="$t('evaluation.placeholders.product')"
-              clearable
-              style="width: 150px"
-            />
-          </el-form-item>
+        <el-form-item :label="$t('evaluation.product')">
+          <el-select
+            v-model="searchForm.product"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            collapse-tags
+            collapse-tags-tooltip
+            :reserve-keyword="false"
+            :placeholder="$t('evaluation.placeholders.product')"
+            style="width: 220px"
+          />
+        </el-form-item>
 
-          <el-form-item :label="$t('evaluation.scsCharger')">
-            <el-input
-              v-model="searchForm.scs_charger"
-              :placeholder="$t('evaluation.placeholders.scsCharger')"
-              clearable
-              style="width: 150px"
-            />
-          </el-form-item>
+        <el-form-item :label="$t('evaluation.scsCharger')">
+          <el-select
+            v-model="searchForm.scs_charger"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            collapse-tags
+            collapse-tags-tooltip
+            :reserve-keyword="false"
+            :placeholder="$t('evaluation.placeholders.scsCharger')"
+            style="width: 220px"
+          />
+        </el-form-item>
 
-          <el-form-item :label="$t('evaluation.headOfficeCharger')">
-            <el-input
-              v-model="searchForm.head_office_charger"
-              :placeholder="$t('evaluation.placeholders.headOfficeCharger')"
-              clearable
-              style="width: 150px"
-            />
-          </el-form-item>
+        <el-form-item :label="$t('evaluation.headOfficeCharger')">
+          <el-select
+            v-model="searchForm.head_office_charger"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            collapse-tags
+            collapse-tags-tooltip
+            :reserve-keyword="false"
+            :placeholder="$t('evaluation.placeholders.headOfficeCharger')"
+            style="width: 220px"
+          />
+        </el-form-item>
 
           <el-form-item :label="$t('evaluation.dateRange')">
             <el-date-picker
@@ -365,9 +383,9 @@ const searchForm = reactive({
   evaluation_number: '',
   evaluation_type: '',
   status: '',
-  product: '',
-  scs_charger: '',
-  head_office_charger: '',
+  product: [],
+  scs_charger: [],
+  head_office_charger: [],
   dateRange: null,
 })
 
@@ -395,6 +413,17 @@ const statusOptions = computed(() => [
 const translateOrFallback = (key, fallback, params = {}) => {
   const translated = t(key, params)
   return translated === key ? fallback : translated
+}
+
+const normalizeMultiValue = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean)
+  }
+  if (!value) return []
+  return String(value)
+    .split(/[|,]/)
+    .map((item) => item.trim())
+    .filter(Boolean)
 }
 
 const toNumberSafe = (value) => {
@@ -680,25 +709,28 @@ const fetchEvaluations = async () => {
       per_page: pagination.size,
     }
 
-    // 只添加非空的搜索参数
-    if (searchForm.evaluation_number) {
-      params.evaluation_number = searchForm.evaluation_number
-    }
-    if (searchForm.evaluation_type) {
+  // 只添加非空的搜索参数
+  if (searchForm.evaluation_number) {
+    params.evaluation_number = searchForm.evaluation_number
+  }
+  if (searchForm.evaluation_type) {
       params.evaluation_type = searchForm.evaluation_type
     }
     if (searchForm.status) {
       params.status = searchForm.status
     }
-    if (searchForm.product) {
-      params.product = searchForm.product
-    }
-    if (searchForm.scs_charger) {
-      params.scs_charger_name = searchForm.scs_charger
-    }
-    if (searchForm.head_office_charger) {
-      params.head_office_charger_name = searchForm.head_office_charger
-    }
+  const products = normalizeMultiValue(searchForm.product)
+  if (products.length > 0) {
+    params.product = products.join(',')
+  }
+  const scsChargers = normalizeMultiValue(searchForm.scs_charger)
+  if (scsChargers.length > 0) {
+    params.scs_charger_name = scsChargers.join(',')
+  }
+  const headCharger = normalizeMultiValue(searchForm.head_office_charger)
+  if (headCharger.length > 0) {
+    params.head_office_charger_name = headCharger.join(',')
+  }
 
     // 处理日期范围
     if (searchForm.dateRange && searchForm.dateRange.length === 2) {
@@ -754,7 +786,7 @@ const handleSearch = () => {
 
 const handleReset = () => {
   Object.keys(searchForm).forEach((key) => {
-    searchForm[key] = key === 'dateRange' ? null : ''
+    searchForm[key] = key === 'dateRange' ? null : []
   })
   pagination.page = 1
   fetchEvaluations()

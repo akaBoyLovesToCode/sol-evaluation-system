@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Any
 
 from flask import Blueprint, Response, current_app, jsonify, request
+from sqlalchemy import or_
 
 from app.models import db
 from app.models.evaluation import (
@@ -63,6 +64,18 @@ def _dedupe_preserve_order(values: list[str]) -> list[str]:
             seen.add(value)
             result.append(value)
     return result
+
+
+def _parse_multi_param(value: str | None, list_values: list[str]) -> list[str]:
+    """Normalize query param that might contain multiple values."""
+    tokens: list[str] = []
+    if list_values:
+        for item in list_values:
+            if item:
+                tokens.extend([part.strip() for part in re.split(r"[|,]", item) if part.strip()])
+    if value:
+        tokens.extend([part.strip() for part in re.split(r"[|,]", value) if part.strip()])
+    return _dedupe_preserve_order(tokens)
 
 
 STEP_CODE_CANONICAL = {
@@ -807,8 +820,17 @@ def get_evaluations() -> tuple[Response, int]:
         product_name = request.args.get("product_name")
         if not product_name:
             product_name = request.args.get("product")
+        product_names = _parse_multi_param(product_name, request.args.getlist("product"))
+
         scs_charger_name = request.args.get("scs_charger_name")
+        scs_charger_names = _parse_multi_param(
+            scs_charger_name, request.args.getlist("scs_charger_name")
+        )
+
         head_office_charger_name = request.args.get("head_office_charger_name")
+        head_office_charger_names = _parse_multi_param(
+            head_office_charger_name, request.args.getlist("head_office_charger_name")
+        )
         start_date_from = request.args.get("start_date_from")
         start_date_to = request.args.get("start_date_to")
 
@@ -826,16 +848,26 @@ def get_evaluations() -> tuple[Response, int]:
             query = query.filter(Evaluation.status == status)
         if evaluation_type:
             query = query.filter(Evaluation.evaluation_type == evaluation_type)
-        if product_name:
-            query = query.filter(Evaluation.product_name.ilike(f"%{product_name}%"))
-        if scs_charger_name:
+        if product_names:
             query = query.filter(
-                Evaluation.scs_charger_name.ilike(f"%{scs_charger_name}%")
+                or_(*[Evaluation.product_name.ilike(f"%{name}%") for name in product_names])
             )
-        if head_office_charger_name:
+        if scs_charger_names:
             query = query.filter(
-                Evaluation.head_office_charger_name.ilike(
-                    f"%{head_office_charger_name}%"
+                or_(
+                    *[
+                        Evaluation.scs_charger_name.ilike(f"%{name}%")
+                        for name in scs_charger_names
+                    ]
+                )
+            )
+        if head_office_charger_names:
+            query = query.filter(
+                or_(
+                    *[
+                        Evaluation.head_office_charger_name.ilike(f"%{name}%")
+                        for name in head_office_charger_names
+                    ]
                 )
             )
         if start_date_from:
