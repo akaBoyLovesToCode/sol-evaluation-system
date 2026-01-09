@@ -305,4 +305,7 @@ class OperationLog(db.Model):
         }
 
     def __repr__(self):
-        return f"<OperationLog {self.operation_type} on {self.target_type} by User {self.user_id}>"
+        return (
+            f"<OperationLog {self.operation_type} on {self.target_type}"
+            f"{f' #{self.target_id}' if self.target_id is not None else ''}>"
+        )
