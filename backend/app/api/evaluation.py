@@ -71,9 +71,13 @@ def _parse_multi_param(value: str | None, list_values: list[str]) -> list[str]:
     if list_values:
         for item in list_values:
             if item:
-                tokens.extend([part.strip() for part in re.split(r"[|,]", item) if part.strip()])
+                tokens.extend(
+                    [part.strip() for part in re.split(r"[|,]", item) if part.strip()]
+                )
     if value:
-        tokens.extend([part.strip() for part in re.split(r"[|,]", value) if part.strip()])
+        tokens.extend(
+            [part.strip() for part in re.split(r"[|,]", value) if part.strip()]
+        )
     return _dedupe_preserve_order(tokens)
 
 
@@ -819,7 +823,9 @@ def get_evaluations() -> tuple[Response, int]:
         product_name = request.args.get("product_name")
         if not product_name:
             product_name = request.args.get("product")
-        product_names = _parse_multi_param(product_name, request.args.getlist("product"))
+        product_names = _parse_multi_param(
+            product_name, request.args.getlist("product")
+        )
 
         scs_charger_name = request.args.get("scs_charger_name")
         scs_charger_names = _parse_multi_param(
@@ -849,7 +855,12 @@ def get_evaluations() -> tuple[Response, int]:
             query = query.filter(Evaluation.evaluation_type == evaluation_type)
         if product_names:
             query = query.filter(
-                or_(*[Evaluation.product_name.ilike(f"%{name}%") for name in product_names])
+                or_(
+                    *[
+                        Evaluation.product_name.ilike(f"%{name}%")
+                        for name in product_names
+                    ]
+                )
             )
         if scs_charger_names:
             query = query.filter(
@@ -1927,6 +1938,24 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
     response = jsonify(
         {"success": True, "data": {"payload": response_payload, "warnings": warnings}}
     )
+
+    log = OperationLog(
+        operation_type=OperationType.VIEW.value,
+        target_type="evaluation_nested_process",
+        target_id=evaluation_id,
+        target_description=f"Viewed nested processes for evaluation {evaluation.evaluation_number}",
+        operation_description="User viewed nested processes",
+        ip_address=get_client_ip(request),
+        user_agent=request.user_agent.string,
+        request_method=request.method,
+        request_path=request.path,
+        query_string=request.query_string.decode() if request.query_string else None,
+        status_code=200,
+        success=True,
+    )
+    db.session.add(log)
+    db.session.commit()
+
     response.headers["X-Server-Timezone"] = timezone_label(tz)
     return response
 
@@ -2815,6 +2844,14 @@ def get_evaluation_logs(evaluation_id: int) -> tuple[Response, int]:
             log.to_dict(tz=tz)
             for log in OperationLog.query.filter_by(
                 target_type="evaluation_status", target_id=evaluation_id
+            )
+            .order_by(OperationLog.created_at.desc())
+            .all()
+        ]
+        logs += [
+            log.to_dict(tz=tz)
+            for log in OperationLog.query.filter_by(
+                target_type="evaluation_nested_process", target_id=evaluation_id
             )
             .order_by(OperationLog.created_at.desc())
             .all()
