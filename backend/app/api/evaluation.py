@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import re
 from datetime import datetime
 from typing import Any
@@ -1241,7 +1240,7 @@ def create_evaluation() -> tuple[Response, int]:
             target_id=evaluation.id,
             target_description=f"Created evaluation {evaluation.evaluation_number}",
             operation_description="User created a new evaluation",
-            new_data=json.dumps(evaluation.to_dict(tz=tz)),
+            new_data=evaluation.to_dict(tz=tz),
             ip_address=get_client_ip(request),
             user_agent=request.user_agent.string,
             request_method=request.method,
@@ -1439,8 +1438,8 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
             target_id=evaluation.id,
             target_description=f"Updated evaluation {evaluation.evaluation_number}",
             operation_description="User updated evaluation details",
-            old_data=json.dumps(old_data),
-            new_data=json.dumps(evaluation.to_dict(tz=tz)),
+            old_data=old_data,
+            new_data=evaluation.to_dict(tz=tz),
             ip_address=get_client_ip(request),
             user_agent=request.user_agent.string,
             request_method=request.method,
@@ -2048,7 +2047,7 @@ def create_evaluation_process(evaluation_id: int) -> tuple[Response, int]:
             target_id=process.id,
             target_description=f"Created process {process.eval_code} for evaluation {evaluation.evaluation_number}",
             operation_description="User created a new evaluation process",
-            new_data=json.dumps(process.to_dict(tz=tz)),
+            new_data=process.to_dict(tz=tz),
             ip_address=get_client_ip(request),
             user_agent=request.user_agent.string,
             request_method=request.method,
@@ -2468,8 +2467,8 @@ def update_evaluation_process(
             target_id=process_id,
             target_description=f"Updated process {process.eval_code} for evaluation {evaluation.evaluation_number}",
             operation_description="User updated an evaluation process",
-            old_data=json.dumps(old_data),
-            new_data=json.dumps(process.to_dict(tz=tz)),
+            old_data=old_data,
+            new_data=process.to_dict(tz=tz),
             ip_address=get_client_ip(request),
             user_agent=request.user_agent.string,
             request_method=request.method,
@@ -2578,7 +2577,7 @@ def delete_evaluation_process(
             target_id=process_id,
             target_description=f"Deleted process {process_data['eval_code']} for evaluation {evaluation.evaluation_number}",
             operation_description="User deleted an evaluation process",
-            old_data=json.dumps(process_data),
+            old_data=process_data,
             ip_address=get_client_ip(request),
             user_agent=request.user_agent.string,
             request_method=request.method,
@@ -2708,8 +2707,8 @@ def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
             target_id=evaluation.id,
             target_description=f"Updated status of evaluation {evaluation.evaluation_number}",
             operation_description=f"User changed evaluation status from {old_data['status']} to {new_status}",
-            old_data=json.dumps({"status": old_data["status"]}),
-            new_data=json.dumps({"status": new_status, "cancel_reason": cancel_reason}),
+            old_data={"status": old_data["status"]},
+            new_data={"status": new_status, "cancel_reason": cancel_reason},
             ip_address=get_client_ip(request),
             user_agent=request.user_agent.string,
             request_method=request.method,
