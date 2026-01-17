@@ -44,5 +44,7 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
-// Suppress console errors during tests
-console.error = jest.fn()
+const originalConsoleError = console.error
+console.error = (...args) => {
+  originalConsoleError(...args)
+}

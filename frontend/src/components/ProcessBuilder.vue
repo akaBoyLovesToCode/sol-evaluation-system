@@ -1265,4 +1265,24 @@ nextTick(() => {
 .fade-leave-to {
   opacity: 0;
 }
+
+@media (max-width: 768px) {
+  .process-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .process-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .process-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .process-title {
+    width: 100%;
+  }
+}
 </style>

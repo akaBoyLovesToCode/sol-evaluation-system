@@ -77,7 +77,7 @@ const currentLanguage = computed(() => {
 })
 
 const goBack = () => {
-  window.location.href = 'http://109.154.11.128'
+  window.history.back()
 }
 </script>
 
