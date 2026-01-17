@@ -14,7 +14,8 @@
         ref="formRef"
         :model="form"
         :rules="rules"
-        label-width="120px"
+        label-width="auto"
+        label-position="top"
         class="evaluation-form"
       >
         <el-card class="form-section fade-in-up" style="animation-delay: 0.1s">
@@ -23,7 +24,7 @@
           </template>
 
           <el-row :gutter="20">
-            <el-col :span="12">
+            <el-col :xs="24" :sm="12">
               <el-form-item :label="$t('evaluation.typeLabel')" prop="evaluation_type">
                 <el-radio-group v-model="form.evaluation_type" @change="handleTypeChange">
                   <el-radio value="new_product">{{ $t('evaluation.type.new_product') }}</el-radio>
@@ -33,7 +34,7 @@
                 </el-radio-group>
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col :xs="24" :sm="12">
               <el-form-item :label="$t('evaluation.productName')" prop="product_name">
                 <el-input
                   v-model="form.product_name"
@@ -44,7 +45,7 @@
           </el-row>
 
           <el-row :gutter="20">
-            <el-col :span="12">
+            <el-col :xs="24" :sm="12">
               <el-form-item :label="$t('evaluation.partNumber')" prop="part_number">
                 <el-input
                   v-model="form.part_number"
@@ -52,7 +53,7 @@
                 />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col :xs="24" :sm="12">
               <el-form-item :label="$t('evaluation.startDate')" prop="start_date">
                 <el-date-picker
                   v-model="form.start_date"
@@ -67,7 +68,7 @@
           </el-row>
 
           <el-row :gutter="20">
-            <el-col v-if="isEditMode" :span="12">
+            <el-col v-if="isEditMode" :xs="24" :sm="12">
               <el-form-item :label="$t('evaluation.actualEndDate')" prop="end_date">
                 <el-date-picker
                   v-model="form.end_date"
@@ -82,7 +83,7 @@
           </el-row>
 
           <el-row :gutter="20">
-            <el-col :span="12">
+            <el-col :xs="24" :sm="12">
               <el-form-item :label="$t('evaluation.reason')" prop="reason">
                 <el-select
                   v-model="form.reason"
@@ -100,7 +101,7 @@
                 </el-select>
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col :xs="24" :sm="12">
               <el-form-item :label="$t('evaluation.processStep')" prop="process_step">
                 <el-select
                   v-model="form.process_step"
@@ -121,7 +122,7 @@
           </el-row>
 
           <el-row :gutter="20">
-            <el-col :span="12">
+            <el-col :xs="24" :sm="12">
               <el-form-item :label="$t('evaluation.scsCharger')" prop="scs_charger_name">
                 <el-input
                   v-model="form.scs_charger_name"
@@ -129,7 +130,7 @@
                 />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col :xs="24" :sm="12">
               <el-form-item
                 :label="$t('evaluation.headOfficeCharger')"
                 prop="head_office_charger_name"
@@ -158,7 +159,7 @@
           </template>
 
           <el-row :gutter="20">
-            <el-col :span="8">
+            <el-col :xs="24" :sm="8">
               <el-form-item :label="$t('evaluation.pgmVersion')" prop="pgm_version">
                 <el-input
                   v-model="form.pgm_version"
@@ -167,7 +168,7 @@
               </el-form-item>
             </el-col>
 
-            <el-col :span="8">
+            <el-col :xs="24" :sm="8">
               <el-form-item :label="$t('evaluation.testTime')" prop="pgm_test_time">
                 <el-input
                   v-model="form.pgm_test_time"
@@ -184,7 +185,7 @@
           </template>
 
           <el-row :gutter="20">
-            <el-col :span="12">
+            <el-col :xs="24" :sm="12">
               <el-form-item :label="$t('evaluation.testProcess')" prop="test_process">
                 <el-input
                   v-model="form.test_process"
@@ -194,7 +195,7 @@
                 />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col :xs="24" :sm="12">
               <el-form-item :label="$t('evaluation.vProcess')" prop="v_process">
                 <el-input
                   v-model="form.v_process"
@@ -329,7 +330,7 @@
 
         <el-drawer
           v-model="processDrawerVisible"
-          size="60%"
+          :size="drawerSize"
           :before-close="handleProcessDrawerBeforeClose"
           :title="$t('evaluation.manageNestedProcesses')"
         >
@@ -382,7 +383,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 const props = defineProps({
   inDialog: { type: Boolean, default: false },
@@ -413,6 +414,23 @@ import {
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
+
+const windowWidth = ref(window.innerWidth)
+const isMobile = computed(() => windowWidth.value < 768)
+const drawerSize = computed(() => (isMobile.value ? '100%' : '60%'))
+
+const updateWidth = () => {
+  windowWidth.value = window.innerWidth
+}
+
+onMounted(() => {
+  window.addEventListener('resize', updateWidth)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateWidth)
+})
+
 const processStepChoices = computed(() => props.processStepOptions || [])
 
 const parseProcessSteps = (value) => {
@@ -1050,7 +1068,7 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
 <style scoped>
 .new-evaluation-page {
   padding: 0;
-  background: #f5f6f8;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: 100vh;
 }
 
@@ -1065,9 +1083,9 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
   padding: 24px;
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
 }
 
 .page-title {
@@ -1094,9 +1112,10 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
 .form-section {
   margin-bottom: 24px;
   border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   overflow: hidden;
 }
@@ -1160,7 +1179,7 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
 
 .form-section :deep(.el-radio__input.is-checked .el-radio__inner) {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: #667eea;
+  border-color: transparent;
 }
 
 .form-section :deep(.el-checkbox) {
@@ -1169,7 +1188,7 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
 
 .form-section :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: #667eea;
+  border-color: transparent;
 }
 
 .process-selection {
@@ -1326,15 +1345,15 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
 
 .form-actions {
   display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 40px;
-  padding: 32px;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 32px;
+  padding: 24px;
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
 }
 
 .form-actions .el-button {
@@ -1349,11 +1368,13 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
 .form-actions .el-button--primary {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
+  color: #fff;
 }
 
 .form-actions .el-button--success {
   background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
   border: none;
+  color: #fff;
 }
 
 .form-actions .el-button:hover {
@@ -1371,8 +1392,8 @@ defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
 
 .form-actions .el-button--danger {
   background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
-  border-color: transparent;
-  color: white;
+  border: none;
+  color: #fff;
 }
 
 .form-actions .el-button--danger:hover {

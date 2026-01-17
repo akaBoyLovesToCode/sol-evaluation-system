@@ -23,7 +23,7 @@
               v-model="searchForm.evaluation_number"
               :placeholder="$t('evaluation.placeholders.evaluationNumber')"
               clearable
-              style="width: 200px"
+              class="w-[200px]"
             />
           </el-form-item>
 
@@ -32,7 +32,7 @@
               v-model="searchForm.evaluation_type"
               :placeholder="$t('evaluation.placeholders.evaluationType')"
               clearable
-              style="width: 150px"
+              class="w-[150px]"
             >
               <el-option :label="$t('evaluation.type.new_product')" value="new_product" />
               <el-option :label="$t('evaluation.type.mass_production')" value="mass_production" />
@@ -44,7 +44,7 @@
               v-model="searchForm.status"
               :placeholder="$t('evaluation.placeholders.status')"
               clearable
-              style="width: 150px"
+              class="w-[150px]"
             >
               <el-option
                 v-for="status in statusOptions"
@@ -55,50 +55,50 @@
             </el-select>
           </el-form-item>
 
-        <el-form-item :label="$t('evaluation.product')">
-          <el-select
-            v-model="searchForm.product"
-            multiple
-            filterable
-            allow-create
-            default-first-option
-            collapse-tags
-            collapse-tags-tooltip
-            :reserve-keyword="false"
-            :placeholder="$t('evaluation.placeholders.product')"
-            style="width: 220px"
-          />
-        </el-form-item>
+          <el-form-item :label="$t('evaluation.product')">
+            <el-select
+              v-model="searchForm.product"
+              multiple
+              filterable
+              allow-create
+              default-first-option
+              collapse-tags
+              collapse-tags-tooltip
+              :reserve-keyword="false"
+              :placeholder="$t('evaluation.placeholders.product')"
+              class="w-[220px]"
+            />
+          </el-form-item>
 
-        <el-form-item :label="$t('evaluation.scsCharger')">
-          <el-select
-            v-model="searchForm.scs_charger"
-            multiple
-            filterable
-            allow-create
-            default-first-option
-            collapse-tags
-            collapse-tags-tooltip
-            :reserve-keyword="false"
-            :placeholder="$t('evaluation.placeholders.scsCharger')"
-            style="width: 220px"
-          />
-        </el-form-item>
+          <el-form-item :label="$t('evaluation.scsCharger')">
+            <el-select
+              v-model="searchForm.scs_charger"
+              multiple
+              filterable
+              allow-create
+              default-first-option
+              collapse-tags
+              collapse-tags-tooltip
+              :reserve-keyword="false"
+              :placeholder="$t('evaluation.placeholders.scsCharger')"
+              class="w-[220px]"
+            />
+          </el-form-item>
 
-        <el-form-item :label="$t('evaluation.headOfficeCharger')">
-          <el-select
-            v-model="searchForm.head_office_charger"
-            multiple
-            filterable
-            allow-create
-            default-first-option
-            collapse-tags
-            collapse-tags-tooltip
-            :reserve-keyword="false"
-            :placeholder="$t('evaluation.placeholders.headOfficeCharger')"
-            style="width: 220px"
-          />
-        </el-form-item>
+          <el-form-item :label="$t('evaluation.headOfficeCharger')">
+            <el-select
+              v-model="searchForm.head_office_charger"
+              multiple
+              filterable
+              allow-create
+              default-first-option
+              collapse-tags
+              collapse-tags-tooltip
+              :reserve-keyword="false"
+              :placeholder="$t('evaluation.placeholders.headOfficeCharger')"
+              class="w-[220px]"
+            />
+          </el-form-item>
 
           <el-form-item :label="$t('evaluation.dateRange')">
             <el-date-picker
@@ -109,7 +109,7 @@
               :end-placeholder="$t('evaluation.placeholders.endDate')"
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
-              style="width: 240px"
+              class="w-[240px]"
             />
           </el-form-item>
 
@@ -142,136 +142,143 @@
           </div>
         </template>
 
-        <el-table
-          v-loading="tableLoading"
-          :data="tableData"
-          stripe
-          @selection-change="handleSelectionChange"
-          @sort-change="handleSortChange"
-        >
-          <el-table-column type="selection" width="55" />
-
-          <el-table-column
-            prop="evaluation_number"
-            :label="$t('evaluation.evaluationNumber')"
-            width="180"
-            sortable="custom"
+        <div class="table-scroll">
+          <el-table
+            v-loading="tableLoading"
+            :data="tableData"
+            stripe
+            @selection-change="handleSelectionChange"
+            @sort-change="handleSortChange"
           >
-            <template #default="{ row }">
-              <el-link type="primary" @click="openDetail(row.id)">
-                {{ row.evaluation_number }}
-              </el-link>
-            </template>
-          </el-table-column>
+            <el-table-column type="selection" width="55" />
 
-          <el-table-column
-            prop="evaluation_type"
-            :label="$t('evaluation.evaluationType')"
-            width="120"
-          >
-            <template #default="{ row }">
-              <el-tag :type="row.evaluation_type === 'new_product' ? 'primary' : 'success'">
-                {{ $t(`evaluation.type.${row.evaluation_type}`) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-
-          <el-table-column
-            prop="product_name"
-            :label="$t('evaluation.product')"
-            width="150"
-            sortable="custom"
-          />
-
-          <el-table-column
-            prop="pgm_version"
-            :label="$t('evaluation.pgmVersionColumn')"
-            width="140"
-            sortable="custom"
-          >
-            <template #default="{ row }">
-              {{ row.pgm_version || '-' }}
-            </template>
-          </el-table-column>
-
-          <el-table-column prop="part_number" :label="$t('evaluation.partNumber')" width="220" />
-
-          <el-table-column prop="evaluation_reason" :label="$t('evaluation.reason')" width="140">
-            <template #default="{ row }">
-              {{ formatReasons(row.evaluation_reason || row.reason) }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="remarks"
-            :label="$t('evaluation.descriptionLabel')"
-            min-width="220"
-          >
-            <template #default="{ row }">
-              <template v-if="row.remarks">
-                <el-tooltip
-                  placement="top"
-                  effect="dark"
-                  popper-class="evaluation-description-tooltip"
-                >
-                  <template #content>
-                    <div class="evaluation-description-tooltip-content">
-                      {{ row.remarks }}
-                    </div>
-                  </template>
-                  <span class="evaluation-description-cell">
-                    {{ truncateDescription(row.remarks) }}
-                  </span>
-                </el-tooltip>
+            <el-table-column
+              prop="evaluation_number"
+              :label="$t('evaluation.evaluationNumber')"
+              width="180"
+              sortable="custom"
+            >
+              <template #default="{ row }">
+                <el-link type="primary" @click="openDetail(row.id)">
+                  {{ row.evaluation_number }}
+                </el-link>
               </template>
-              <span v-else class="evaluation-description-cell">-</span>
-            </template>
-          </el-table-column>
+            </el-table-column>
 
-          <el-table-column
-            prop="scs_charger_name"
-            :label="$t('evaluation.scsCharger')"
-            width="120"
-            sortable="custom"
-          />
+            <el-table-column
+              prop="evaluation_type"
+              :label="$t('evaluation.evaluationType')"
+              width="120"
+            >
+              <template #default="{ row }">
+                <el-tag :type="row.evaluation_type === 'new_product' ? 'primary' : 'success'">
+                  {{ $t(`evaluation.type.${row.evaluation_type}`) }}
+                </el-tag>
+              </template>
+            </el-table-column>
 
-          <el-table-column
-            prop="head_office_charger_name"
-            :label="$t('evaluation.headOfficeCharger')"
-            width="120"
-            sortable="custom"
-          />
+            <el-table-column
+              prop="product_name"
+              :label="$t('evaluation.product')"
+              width="150"
+              sortable="custom"
+            />
 
-          <el-table-column prop="status" :label="$t('common.status')" width="140" sortable="custom">
-            <template #default="{ row }">
-              <el-tag :type="getStatusTagType(row.status)">
-                {{ $t(`status.${row.status}`) }}
-              </el-tag>
-            </template>
-          </el-table-column>
+            <el-table-column
+              prop="pgm_version"
+              :label="$t('evaluation.pgmVersionColumn')"
+              width="140"
+              sortable="custom"
+            >
+              <template #default="{ row }">
+                {{ row.pgm_version || '-' }}
+              </template>
+            </el-table-column>
 
-          <el-table-column
-            prop="start_date"
-            :label="$t('evaluation.startDate')"
-            width="130"
-            sortable="custom"
-          >
-            <template #default="{ row }">
-              {{ formatDate(row.start_date) }}
-            </template>
-          </el-table-column>
+            <el-table-column prop="part_number" :label="$t('evaluation.partNumber')" width="220" />
 
-          <el-table-column prop="actual_end_date" :label="$t('evaluation.endDate')" width="130">
-            <template #default="{ row }">
-              {{ row.actual_end_date ? formatDate(row.actual_end_date) : '-' }}
-            </template>
-          </el-table-column>
+            <el-table-column prop="evaluation_reason" :label="$t('evaluation.reason')" width="140">
+              <template #default="{ row }">
+                {{ formatReasons(row.evaluation_reason || row.reason) }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="remarks"
+              :label="$t('evaluation.descriptionLabel')"
+              min-width="220"
+            >
+              <template #default="{ row }">
+                <template v-if="row.remarks">
+                  <el-tooltip
+                    placement="top"
+                    effect="dark"
+                    popper-class="evaluation-description-tooltip"
+                  >
+                    <template #content>
+                      <div class="evaluation-description-tooltip-content">
+                        {{ row.remarks }}
+                      </div>
+                    </template>
+                    <span class="evaluation-description-cell">
+                      {{ truncateDescription(row.remarks) }}
+                    </span>
+                  </el-tooltip>
+                </template>
+                <span v-else class="evaluation-description-cell">-</span>
+              </template>
+            </el-table-column>
 
-          <el-table-column :label="$t('evaluation.tat')" width="140">
-            <template #default="{ row }">
-              {{ formatTat(row) }}
-            </template>
-          </el-table-column>
-        </el-table>
+            <el-table-column
+              prop="scs_charger_name"
+              :label="$t('evaluation.scsCharger')"
+              width="120"
+              sortable="custom"
+            />
+
+            <el-table-column
+              prop="head_office_charger_name"
+              :label="$t('evaluation.headOfficeCharger')"
+              width="120"
+              sortable="custom"
+            />
+
+            <el-table-column
+              prop="status"
+              :label="$t('common.status')"
+              width="140"
+              sortable="custom"
+            >
+              <template #default="{ row }">
+                <el-tag :type="getStatusTagType(row.status)">
+                  {{ $t(`status.${row.status}`) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+
+            <el-table-column
+              prop="start_date"
+              :label="$t('evaluation.startDate')"
+              width="130"
+              sortable="custom"
+            >
+              <template #default="{ row }">
+                {{ formatDate(row.start_date) }}
+              </template>
+            </el-table-column>
+
+            <el-table-column prop="actual_end_date" :label="$t('evaluation.endDate')" width="130">
+              <template #default="{ row }">
+                {{ row.actual_end_date ? formatDate(row.actual_end_date) : '-' }}
+              </template>
+            </el-table-column>
+
+            <el-table-column :label="$t('evaluation.tat')" width="140">
+              <template #default="{ row }">
+                {{ formatTat(row) }}
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
 
         <!-- 分页 -->
         <div class="pagination-container">
@@ -292,7 +299,8 @@
     <el-dialog
       v-model="showDetail"
       :title="$t('evaluation.title')"
-      width="80%"
+      :width="dialogWidth"
+      :fullscreen="isMobile"
       destroy-on-close
       :close-on-click-modal="false"
       :close-on-press-escape="true"
@@ -315,7 +323,8 @@
     <el-dialog
       v-model="showNew"
       :title="isEditing ? $t('evaluation.edit.title') : $t('evaluation.new.title')"
-      width="80%"
+      :width="dialogWidth"
+      :fullscreen="isMobile"
       destroy-on-close
       :close-on-click-modal="false"
       :close-on-press-escape="true"
@@ -355,7 +364,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, defineAsyncComponent } from 'vue'
+import { ref, reactive, onMounted, computed, defineAsyncComponent, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '../utils/api'
 import { buildReliabilitySummary, isReliabilityStep } from '../utils/reliability'
@@ -364,6 +373,23 @@ const EvaluationDetail = defineAsyncComponent(() => import('./EvaluationDetail.v
 const NewEvaluation = defineAsyncComponent(() => import('./NewEvaluation.vue'))
 
 const { t } = useI18n()
+
+const windowWidth = ref(window.innerWidth)
+const isMobile = computed(() => windowWidth.value < 768)
+const dialogWidth = computed(() => (isMobile.value ? '100%' : '80%'))
+
+const updateWidth = () => {
+  windowWidth.value = window.innerWidth
+}
+
+onMounted(() => {
+  window.addEventListener('resize', updateWidth)
+  fetchEvaluations()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateWidth)
+})
 
 const tableLoading = ref(false)
 const exportLoading = ref(false)
@@ -709,28 +735,28 @@ const fetchEvaluations = async () => {
       per_page: pagination.size,
     }
 
-  // 只添加非空的搜索参数
-  if (searchForm.evaluation_number) {
-    params.evaluation_number = searchForm.evaluation_number
-  }
-  if (searchForm.evaluation_type) {
+    // 只添加非空的搜索参数
+    if (searchForm.evaluation_number) {
+      params.evaluation_number = searchForm.evaluation_number
+    }
+    if (searchForm.evaluation_type) {
       params.evaluation_type = searchForm.evaluation_type
     }
     if (searchForm.status) {
       params.status = searchForm.status
     }
-  const products = normalizeMultiValue(searchForm.product)
-  if (products.length > 0) {
-    params.product = products.join(',')
-  }
-  const scsChargers = normalizeMultiValue(searchForm.scs_charger)
-  if (scsChargers.length > 0) {
-    params.scs_charger_name = scsChargers.join(',')
-  }
-  const headCharger = normalizeMultiValue(searchForm.head_office_charger)
-  if (headCharger.length > 0) {
-    params.head_office_charger_name = headCharger.join(',')
-  }
+    const products = normalizeMultiValue(searchForm.product)
+    if (products.length > 0) {
+      params.product = products.join(',')
+    }
+    const scsChargers = normalizeMultiValue(searchForm.scs_charger)
+    if (scsChargers.length > 0) {
+      params.scs_charger_name = scsChargers.join(',')
+    }
+    const headCharger = normalizeMultiValue(searchForm.head_office_charger)
+    if (headCharger.length > 0) {
+      params.head_office_charger_name = headCharger.join(',')
+    }
 
     // 处理日期范围
     if (searchForm.dateRange && searchForm.dateRange.length === 2) {
@@ -1118,9 +1144,9 @@ onMounted(() => {
   padding: 24px;
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
 }
 
 .page-title {
@@ -1148,6 +1174,7 @@ onMounted(() => {
   border-radius: 12px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
+  color: #fff;
   transition: all 0.3s ease;
 }
 
@@ -1159,9 +1186,10 @@ onMounted(() => {
 .filter-card {
   margin-bottom: 24px;
   border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
 
@@ -1204,6 +1232,7 @@ onMounted(() => {
 .search-form :deep(.el-button--primary) {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
+  color: #fff;
 }
 
 .search-form :deep(.el-button--primary:hover) {
@@ -1219,9 +1248,10 @@ onMounted(() => {
 .table-card {
   margin-bottom: 24px;
   border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
 
@@ -1348,7 +1378,17 @@ onMounted(() => {
 /* Expand table width and improve column spacing */
 .table-card :deep(.el-table) {
   width: 100%;
-  min-width: 1200px; /* Ensure minimum width to prevent wrapping */
+  /* min-width removed to allow responsive behavior */
+}
+
+/* Ensure table container scrolls on small screens */
+.table-card :deep(.el-card__body) {
+  overflow-x: auto;
+}
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
 }
 
 /* 响应式设计 */
