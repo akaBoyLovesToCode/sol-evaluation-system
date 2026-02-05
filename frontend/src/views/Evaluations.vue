@@ -134,10 +134,24 @@
           <div class="table-header">
             <span>{{ $t('evaluation.list') }}</span>
             <div class="table-actions">
-              <el-button :loading="exportLoading" @click="handleExport">
-                <template #icon><Download /></template>
+              <el-dropdown
+                split-button
+                :loading="exportLoading"
+                class="export-dropdown"
+                @click="handleExport('current')"
+                @command="handleCommand"
+              >
+                <el-icon class="mr-2"><Download /></el-icon>
                 {{ $t('evaluation.export') }}
-              </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="exportAll">
+                      <el-icon><Files /></el-icon>
+                      {{ $t('evaluation.exportAll') }}
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
             </div>
           </div>
         </template>
@@ -839,12 +853,74 @@ const handleSelectionChange = (selection) => {
   selectedRows.value = selection
 }
 
-const handleExport = async () => {
+const handleCommand = (command) => {
+  if (command === 'exportAll') {
+    ElMessageBox.confirm(
+      t('evaluation.exportAllConfirm'),
+      t('common.confirm'),
+      {
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning',
+      },
+    )
+      .then(() => {
+        handleExport('all')
+      })
+      .catch(() => {})
+  }
+}
+
+const handleExport = async (type = 'current') => {
   try {
     exportLoading.value = true
 
-    // Determine data to export: selected rows or all data
-    const dataToExport = selectedRows.value.length > 0 ? selectedRows.value : tableData.value
+    let dataToExport = []
+
+    if (type === 'all') {
+      const params = {
+        page: 1,
+        per_page: 100000,
+      }
+
+      if (searchForm.evaluation_number) {
+        params.evaluation_number = searchForm.evaluation_number
+      }
+      if (searchForm.evaluation_type) {
+        params.evaluation_type = searchForm.evaluation_type
+      }
+      if (searchForm.status) {
+        params.status = searchForm.status
+      }
+      const products = normalizeMultiValue(searchForm.product)
+      if (products.length > 0) {
+        params.product = products.join(',')
+      }
+      const scsChargers = normalizeMultiValue(searchForm.scs_charger)
+      if (scsChargers.length > 0) {
+        params.scs_charger_name = scsChargers.join(',')
+      }
+      const headCharger = normalizeMultiValue(searchForm.head_office_charger)
+      if (headCharger.length > 0) {
+        params.head_office_charger_name = headCharger.join(',')
+      }
+
+      if (searchForm.dateRange && searchForm.dateRange.length === 2) {
+        params.start_date_from = searchForm.dateRange[0]
+        params.start_date_to = searchForm.dateRange[1]
+      }
+
+      if (sortParams.prop) {
+        params.sort_by = sortParams.prop
+        params.sort_order = sortParams.order === 'ascending' ? 'asc' : 'desc'
+      }
+
+      const response = await api.get('/evaluations', { params })
+      dataToExport = response.data.data.evaluations || []
+    } else {
+      // Determine data to export: selected rows or all data
+      dataToExport = selectedRows.value.length > 0 ? selectedRows.value : tableData.value
+    }
 
     if (dataToExport.length === 0) {
       ElMessage.warning(t('ui.noDataToExport'))
@@ -1279,6 +1355,22 @@ onMounted(() => {
 .table-actions .el-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Fix split button border radius */
+.table-actions .export-dropdown :deep(.el-button-group .el-button) {
+  border-radius: 0;
+  margin-right: -1px; /* merge borders */
+}
+
+.table-actions .export-dropdown :deep(.el-button-group .el-button:first-child) {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+
+.table-actions .export-dropdown :deep(.el-button-group .el-button:last-child) {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
 }
 
 .table-card :deep(.el-table) {

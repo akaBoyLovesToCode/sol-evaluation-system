@@ -164,6 +164,8 @@
     "dateRange": "Date Range",
     "list": "Evaluation List",
     "export": "Export",
+    "exportAll": "Export All",
+    "exportAllConfirm": "Are you sure you want to export all evaluations? This might take a while.",
     "exportSuccess": "Export successful",
     "exportError": "Export failed",
     "exportDetailWarning": "Some evaluation details could not be loaded ({count}). Exported data may be incomplete.",

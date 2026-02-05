@@ -145,6 +145,8 @@
     "dateRange": "日期范围",
     "list": "评价列表",
     "export": "导出",
+    "exportAll": "导出全部",
+    "exportAllConfirm": "确定要导出所有评价吗？这可能需要一些时间。",
     "exportSuccess": "导出成功",
     "exportError": "导出失败",
     "exportDetailWarning": "部分评价详情未能加载（{count}项）。导出的数据可能不完整。",
