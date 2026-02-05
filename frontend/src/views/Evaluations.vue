@@ -199,6 +199,12 @@
             />
 
             <el-table-column
+              prop="process_step"
+              :label="$t('evaluation.processStep')"
+              width="120"
+            />
+
+            <el-table-column
               prop="pgm_version"
               :label="$t('evaluation.pgmVersionColumn')"
               width="140"
