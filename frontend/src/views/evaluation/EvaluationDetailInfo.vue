@@ -26,8 +26,22 @@
         </div>
       </template>
       <el-descriptions :column="isMobile ? 1 : 2" border>
-        <el-descriptions-item :label="$t('evaluation.evaluationNumber')">
-          {{ evaluation.evaluation_number }}
+        <el-descriptions-item :label="$t('common.status')">
+          <template v-if="editing">
+            <el-select v-model="editForm.status" style="width: 100%">
+              <el-option
+                v-for="status in statusOptions"
+                :key="status"
+                :label="$t(`status.${status}`)"
+                :value="status"
+              />
+            </el-select>
+          </template>
+          <template v-else>
+            <el-tag :type="getStatusTagType(evaluation.status)">
+              {{ $t(`status.${evaluation.status}`) }}
+            </el-tag>
+          </template>
         </el-descriptions-item>
         <el-descriptions-item :label="$t('evaluation.evaluationType')">
           <el-tag :type="evaluation.evaluation_type === 'new_product' ? 'primary' : 'success'">
@@ -312,6 +326,16 @@ const editForm = reactive({
 
 const processStepChoices = computed(() => props.processStepOptions)
 
+const statusOptions = [
+  'draft',
+  'in_progress',
+  'pending_approval',
+  'completed',
+  'paused',
+  'cancelled',
+  'rejected',
+]
+
 const reasonOptions = computed(() => {
   if (!props.evaluation) return []
   if (props.evaluation.evaluation_type === 'new_product') {
@@ -415,6 +439,19 @@ const getReasonText = (reason) => {
     return translated === key ? r : translated
   })
   return labels.join(', ')
+}
+
+const getStatusTagType = (status) => {
+  const typeMap = {
+    draft: 'info',
+    in_progress: 'primary',
+    pending_approval: 'warning',
+    completed: 'success',
+    paused: 'info',
+    cancelled: 'danger',
+    rejected: 'danger',
+  }
+  return typeMap[status] || 'info'
 }
 
 // Image handling
