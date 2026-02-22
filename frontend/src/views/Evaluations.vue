@@ -164,7 +164,7 @@
             @selection-change="handleSelectionChange"
             @sort-change="handleSortChange"
           >
-            <el-table-column type="selection" width="55" />
+            <el-table-column type="selection" width="40" />
 
             <el-table-column
               prop="evaluation_number"
@@ -182,7 +182,7 @@
             <el-table-column
               prop="evaluation_type"
               :label="$t('evaluation.evaluationType')"
-              width="120"
+              width="110"
             >
               <template #default="{ row }">
                 <el-tag :type="row.evaluation_type === 'new_product' ? 'primary' : 'success'">
@@ -194,20 +194,20 @@
             <el-table-column
               prop="product_name"
               :label="$t('evaluation.product')"
-              width="150"
+              width="130"
               sortable="custom"
             />
 
             <el-table-column
               prop="process_step"
               :label="$t('evaluation.processStep')"
-              width="120"
+              width="110"
             />
 
             <el-table-column
               prop="pgm_version"
               :label="$t('evaluation.pgmVersionColumn')"
-              width="140"
+              width="120"
               sortable="custom"
             >
               <template #default="{ row }">
@@ -225,7 +225,7 @@
             <el-table-column
               prop="remarks"
               :label="$t('evaluation.descriptionLabel')"
-              min-width="220"
+              min-width="100"
             >
               <template #default="{ row }">
                 <template v-if="row.remarks">
@@ -251,23 +251,16 @@
             <el-table-column
               prop="scs_charger_name"
               :label="$t('evaluation.scsCharger')"
-              width="120"
-              sortable="custom"
+              width="90"
             />
 
             <el-table-column
               prop="head_office_charger_name"
               :label="$t('evaluation.headOfficeCharger')"
-              width="120"
-              sortable="custom"
+              width="80"
             />
 
-            <el-table-column
-              prop="status"
-              :label="$t('common.status')"
-              width="140"
-              sortable="custom"
-            >
+            <el-table-column prop="status" :label="$t('common.status')" width="80">
               <template #default="{ row }">
                 <el-tag :type="getStatusTagType(row.status)">
                   {{ $t(`status.${row.status}`) }}
@@ -286,13 +279,13 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="actual_end_date" :label="$t('evaluation.endDate')" width="130">
+            <el-table-column prop="actual_end_date" :label="$t('evaluation.endDate')" width="110">
               <template #default="{ row }">
                 {{ row.actual_end_date ? formatDate(row.actual_end_date) : '-' }}
               </template>
             </el-table-column>
 
-            <el-table-column :label="$t('evaluation.tat')" width="140">
+            <el-table-column :label="$t('evaluation.tat')" width="60">
               <template #default="{ row }">
                 {{ formatTat(row) }}
               </template>
@@ -861,15 +854,11 @@ const handleSelectionChange = (selection) => {
 
 const handleCommand = (command) => {
   if (command === 'exportAll') {
-    ElMessageBox.confirm(
-      t('evaluation.exportAllConfirm'),
-      t('common.confirm'),
-      {
-        confirmButtonText: t('common.confirm'),
-        cancelButtonText: t('common.cancel'),
-        type: 'warning',
-      },
-    )
+    ElMessageBox.confirm(t('evaluation.exportAllConfirm'), t('common.confirm'), {
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
+      type: 'warning',
+    })
       .then(() => {
         handleExport('all')
       })
