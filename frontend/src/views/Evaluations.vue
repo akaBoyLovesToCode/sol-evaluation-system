@@ -173,7 +173,7 @@
               sortable="custom"
             >
               <template #default="{ row }">
-                <el-link type="primary" @click="openDetail(row.id)">
+                <el-link type="primary" @click="openDetail(row)">
                   {{ row.evaluation_number }}
                 </el-link>
               </template>
@@ -311,7 +311,7 @@
     <!-- Popout dialogs -->
     <el-dialog
       v-model="showDetail"
-      :title="$t('evaluation.title')"
+      :title="detailDialogTitle"
       :width="dialogWidth"
       :fullscreen="isMobile"
       destroy-on-close
@@ -409,6 +409,7 @@ const exportLoading = ref(false)
 const showDetail = ref(false)
 const showNew = ref(false)
 const selectedId = ref(null)
+const selectedEvaluationNumber = ref('')
 const isEditing = computed(() => !!selectedId.value)
 const detailRef = ref(null)
 const newEvalRef = ref(null)
@@ -448,6 +449,8 @@ const statusOptions = computed(() => [
   { label: t('status.cancelled'), value: 'cancelled' },
   { label: t('status.rejected'), value: 'rejected' },
 ])
+
+const detailDialogTitle = computed(() => selectedEvaluationNumber.value || t('evaluation.title'))
 
 const translateOrFallback = (key, fallback, params = {}) => {
   const translated = t(key, params)
@@ -797,8 +800,15 @@ const fetchEvaluations = async () => {
   }
 }
 
-const openDetail = (id) => {
+const openDetail = (rowOrId) => {
+  const id = typeof rowOrId === 'object' ? rowOrId?.id : rowOrId
   selectedId.value = id
+  if (typeof rowOrId === 'object' && rowOrId) {
+    selectedEvaluationNumber.value = rowOrId.evaluation_number || ''
+  } else {
+    const match = tableData.value.find((row) => row.id === id)
+    selectedEvaluationNumber.value = match?.evaluation_number || ''
+  }
   showDetail.value = true
 }
 
