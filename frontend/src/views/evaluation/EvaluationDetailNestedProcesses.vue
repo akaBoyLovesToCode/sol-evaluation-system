@@ -168,9 +168,6 @@
       <template #footer>
         <div class="flex justify-end gap-3">
           <el-button @click="handleDrawerCancel">{{ $t('common.close') }}</el-button>
-          <el-button v-if="canCancel" type="danger" @click="$emit('cancel-evaluation')">
-            {{ $t('evaluation.cancel') }}
-          </el-button>
           <el-button type="primary" @click="commitBuilderChanges">{{
             $t('common.save')
           }}</el-button>
