@@ -343,6 +343,13 @@ const handleUpdateEvaluation = async (formData) => {
     // Merge new data with basic payload structure
     const payload = {
       ...formData,
+      // Normalize multi-select fields to comma-separated strings for API
+      process_step: Array.isArray(formData.process_step)
+        ? formData.process_step.join(',')
+        : formData.process_step,
+      evaluation_reason: Array.isArray(formData.evaluation_reason)
+        ? formData.evaluation_reason.join(',')
+        : formData.evaluation_reason,
       // Ensure nulls for empty dates
       start_date: formData.start_date || null,
       end_date: formData.end_date || null,
