@@ -97,6 +97,7 @@ class Evaluation(db.Model):
 
     # Technical specifications
     pgm_version = db.Column(db.String(100))  # PGM version
+    pgm_test_time = db.Column(db.String(100))  # PGM test time
     capacity = db.Column(db.String(100))  # Capacity
     interface_type = db.Column(db.String(100))  # Interface type
     form_factor = db.Column(db.String(100))  # Form factor
@@ -295,6 +296,7 @@ class Evaluation(db.Model):
             "actual_end_date": iso_date(self.actual_end_date, tz),
             "process_step": self.process_step,
             "pgm_version": self.pgm_version,
+            "pgm_test_time": self.pgm_test_time,
             "capacity": self.capacity,
             "interface_type": self.interface_type,
             "form_factor": self.form_factor,

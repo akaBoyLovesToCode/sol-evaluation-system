@@ -16,8 +16,22 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column("evaluations", sa.Column("cancel_reason", sa.Text(), nullable=True))
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if "evaluations" not in inspector.get_table_names():
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns("evaluations")}
+    if "cancel_reason" not in existing_columns:
+        op.add_column("evaluations", sa.Column("cancel_reason", sa.Text(), nullable=True))
 
 
 def downgrade():
-    op.drop_column("evaluations", "cancel_reason")
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if "evaluations" not in inspector.get_table_names():
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns("evaluations")}
+    if "cancel_reason" in existing_columns:
+        op.drop_column("evaluations", "cancel_reason")

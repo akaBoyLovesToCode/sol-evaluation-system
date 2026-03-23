@@ -1232,6 +1232,7 @@ def create_evaluation() -> tuple[Response, int]:
             scs_charger_name=data.get("scs_charger_name"),
             head_office_charger_name=data.get("head_office_charger_name"),
             pgm_version=data.get("pgm_version"),
+            pgm_test_time=data.get("pgm_test_time"),
             capacity=data.get("capacity"),
             interface_type=data.get("interface_type"),
             form_factor=data.get("form_factor"),
@@ -1432,6 +1433,8 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
         # Update technical specifications
         if "pgm_version" in data:
             evaluation.pgm_version = data["pgm_version"]
+        if "pgm_test_time" in data:
+            evaluation.pgm_test_time = data["pgm_test_time"]
 
         if "capacity" in data:
             evaluation.capacity = data["capacity"]

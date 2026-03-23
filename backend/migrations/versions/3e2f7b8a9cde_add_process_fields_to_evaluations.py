@@ -16,14 +16,34 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column("evaluations", sa.Column("test_process", sa.Text(), nullable=True))
-    op.add_column("evaluations", sa.Column("v_process", sa.Text(), nullable=True))
-    op.add_column("evaluations", sa.Column("pgm_login_text", sa.Text(), nullable=True))
-    op.add_column("evaluations", sa.Column("pgm_login_image", sa.Text(), nullable=True))
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if "evaluations" not in inspector.get_table_names():
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns("evaluations")}
+    if "test_process" not in existing_columns:
+        op.add_column("evaluations", sa.Column("test_process", sa.Text(), nullable=True))
+    if "v_process" not in existing_columns:
+        op.add_column("evaluations", sa.Column("v_process", sa.Text(), nullable=True))
+    if "pgm_login_text" not in existing_columns:
+        op.add_column("evaluations", sa.Column("pgm_login_text", sa.Text(), nullable=True))
+    if "pgm_login_image" not in existing_columns:
+        op.add_column("evaluations", sa.Column("pgm_login_image", sa.Text(), nullable=True))
 
 
 def downgrade():
-    op.drop_column("evaluations", "pgm_login_image")
-    op.drop_column("evaluations", "pgm_login_text")
-    op.drop_column("evaluations", "v_process")
-    op.drop_column("evaluations", "test_process")
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if "evaluations" not in inspector.get_table_names():
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns("evaluations")}
+    if "pgm_login_image" in existing_columns:
+        op.drop_column("evaluations", "pgm_login_image")
+    if "pgm_login_text" in existing_columns:
+        op.drop_column("evaluations", "pgm_login_text")
+    if "v_process" in existing_columns:
+        op.drop_column("evaluations", "v_process")
+    if "test_process" in existing_columns:
+        op.drop_column("evaluations", "test_process")
