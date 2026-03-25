@@ -8,6 +8,7 @@
       :can-operate="canOperate"
       :can-pause="canPause"
       :can-resume="canResume"
+      :can-reopen="canReopen"
       :can-cancel="canCancel"
       @edit="handleEdit"
       @manage-nested="goToNestedEditor"
@@ -262,11 +263,17 @@ const canEdit = computed(() => {
 
 const canPause = computed(() => evaluation.value?.status === 'in_progress')
 const canResume = computed(() => evaluation.value?.status === 'paused')
+const canReopen = computed(() => {
+  if (!evaluation.value) return false
+  return ['completed', 'cancelled', 'rejected'].includes(evaluation.value.status)
+})
 const canCancel = computed(() => {
   if (!evaluation.value) return false
-  return !['completed', 'cancelled', 'rejected'].includes(evaluation.value.status)
+  return !canReopen.value
 })
-const canOperate = computed(() => canPause.value || canResume.value || canCancel.value)
+const canOperate = computed(
+  () => canPause.value || canResume.value || canReopen.value || canCancel.value,
+)
 
 // Data Fetching
 async function fetchEvaluation(options = {}) {
@@ -400,6 +407,10 @@ const handleOperation = async (command) => {
       await promptCancelEvaluation()
       return
     }
+    if (command === 'reopen') {
+      await promptReopenEvaluation()
+      return
+    }
 
     let message = ''
     let confirmText = ''
@@ -456,6 +467,26 @@ const promptCancelEvaluation = async () => {
   }
 }
 
+const promptReopenEvaluation = async () => {
+  if (!evaluation.value) return
+  try {
+    await ElMessageBox.confirm(t('evaluation.confirmReopen'), t('common.confirmAction'), {
+      confirmButtonText: t('evaluation.reopen'),
+      cancelButtonText: t('common.close'),
+      type: 'warning',
+    })
+
+    await api.put(`/evaluations/${evaluation.value.id}/status`, {
+      status: 'in_progress',
+    })
+
+    ElMessage.success(t('evaluation.operationSuccess'))
+    fetchEvaluation()
+  } catch (error) {
+    if (error !== 'cancel') console.error(error)
+  }
+}
+
 const handleUploadFile = () => {
   ElMessage.info(t('evaluation.fileUploadInDevelopment') || 'Feature in development')
 }
@@ -490,6 +521,8 @@ onMounted(() => {
 // Expose for parent dialog usage
 defineExpose({
   promptCancelEvaluation,
+  promptReopenEvaluation,
+  evaluation,
 })
 </script>
 

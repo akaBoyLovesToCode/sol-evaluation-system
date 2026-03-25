@@ -328,8 +328,8 @@
       />
       <template #footer>
         <el-button @click="showDetail = false">{{ $t('common.close') }}</el-button>
-        <el-button type="danger" @click="detailRef?.promptCancelEvaluation?.()">
-          {{ $t('evaluation.cancel') }}
+        <el-button :type="detailPrimaryActionType" @click="triggerDetailPrimaryAction">
+          {{ detailPrimaryActionLabel }}
         </el-button>
       </template>
     </el-dialog>
@@ -410,6 +410,7 @@ const showDetail = ref(false)
 const showNew = ref(false)
 const selectedId = ref(null)
 const selectedEvaluationNumber = ref('')
+const selectedEvaluationStatus = ref('')
 const isEditing = computed(() => !!selectedId.value)
 const detailRef = ref(null)
 const newEvalRef = ref(null)
@@ -451,6 +452,17 @@ const statusOptions = computed(() => [
 ])
 
 const detailDialogTitle = computed(() => selectedEvaluationNumber.value || t('evaluation.title'))
+const terminalStatuses = ['completed', 'cancelled', 'rejected']
+const detailStatus = computed(
+  () => detailRef.value?.evaluation?.status || selectedEvaluationStatus.value || '',
+)
+const detailPrimaryActionIsReopen = computed(() => terminalStatuses.includes(detailStatus.value))
+const detailPrimaryActionLabel = computed(() =>
+  detailPrimaryActionIsReopen.value ? t('evaluation.reopen') : t('evaluation.cancel'),
+)
+const detailPrimaryActionType = computed(() =>
+  detailPrimaryActionIsReopen.value ? 'primary' : 'danger',
+)
 
 const translateOrFallback = (key, fallback, params = {}) => {
   const translated = t(key, params)
@@ -805,9 +817,11 @@ const openDetail = (rowOrId) => {
   selectedId.value = id
   if (typeof rowOrId === 'object' && rowOrId) {
     selectedEvaluationNumber.value = rowOrId.evaluation_number || ''
+    selectedEvaluationStatus.value = rowOrId.status || ''
   } else {
     const match = tableData.value.find((row) => row.id === id)
     selectedEvaluationNumber.value = match?.evaluation_number || ''
+    selectedEvaluationStatus.value = match?.status || ''
   }
   showDetail.value = true
 }
@@ -826,6 +840,14 @@ const onEdit = (id) => {
 const handleSaved = () => {
   showNew.value = false
   fetchEvaluations()
+}
+
+const triggerDetailPrimaryAction = () => {
+  if (detailPrimaryActionIsReopen.value) {
+    detailRef.value?.promptReopenEvaluation?.()
+    return
+  }
+  detailRef.value?.promptCancelEvaluation?.()
 }
 
 const handleSearch = () => {

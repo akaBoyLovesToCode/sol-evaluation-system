@@ -34,6 +34,10 @@
               <el-icon><VideoPlay /></el-icon>
               {{ $t('evaluation.resume') }}
             </el-dropdown-item>
+            <el-dropdown-item v-if="canReopen" command="reopen" divided>
+              <el-icon><RefreshRight /></el-icon>
+              {{ $t('evaluation.reopen') }}
+            </el-dropdown-item>
             <el-dropdown-item v-if="canCancel" command="cancel" divided>
               <el-icon><Close /></el-icon>
               {{ $t('evaluation.cancel') }}
@@ -57,6 +61,7 @@ const props = defineProps({
   canOperate: Boolean,
   canPause: Boolean,
   canResume: Boolean,
+  canReopen: Boolean,
   canCancel: Boolean,
 })
 
