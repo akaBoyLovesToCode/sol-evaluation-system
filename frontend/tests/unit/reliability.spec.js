@@ -22,10 +22,8 @@ const fakeTranslator = (messages, locale = 'en') => {
 const enMessages = {
   nested: {
     reliability: {
-      ppm: '{ppm}ppm ({fail} Fail / {total})',
-      r: ', r{r}',
-      ci: ', [{low}, {high}]',
-      conf: '{conf}% confidence',
+      failLabel: 'Fail',
+      confidenceLabel: 'confidence level',
     },
     summary: {
       totals: 'Total {total} (Pass {pass}, Fail {fail})',
@@ -36,10 +34,8 @@ const enMessages = {
 const zhMessages = {
   nested: {
     reliability: {
-      ppm: '{ppm}ppm（{fail} 不良/{total}）',
-      r: '，r{r}',
-      ci: '，[{low}，{high}]',
-      conf: '{conf}% 置信水平',
+      failLabel: '不良',
+      confidenceLabel: '置信水准',
     },
     summary: {
       totals: '总数 {total} (Pass {pass}, 不良 {fail})',
@@ -50,10 +46,8 @@ const zhMessages = {
 const koMessages = {
   nested: {
     reliability: {
-      ppm: '{ppm}ppm({fail} 불량/{total})',
-      r: ', r{r}',
-      ci: ', [{low}, {high}]',
-      conf: '{conf}% 신뢰수준',
+      failLabel: '불량',
+      confidenceLabel: '신뢰수준',
     },
     summary: {
       totals: '총 수량 {total} (Pass {pass}, 불량 {fail})',
@@ -83,7 +77,7 @@ describe('buildReliabilitySummary', () => {
       metrics: { r: 5000, ci_low_ppm: 0, ci_high_ppm: 968, confidence: 90 },
     }
     const result = buildReliabilitySummary(step, t)
-    expect(result).toBe('10000ppm (2 Fail / 200), r5000, [0, 968] @ 90% confidence')
+    expect(result).toBe('10000ppm(2 Fail/200, r5000,[23498, 31143] @90% confidence level)')
   })
 
   it('formats chinese string with CI and confidence', () => {
@@ -95,7 +89,7 @@ describe('buildReliabilitySummary', () => {
       metrics: { r: 5000, ci_low_ppm: 0, ci_high_ppm: 968, confidence: '90%' },
     }
     const result = buildReliabilitySummary(step, t)
-    expect(result).toBe('0ppm（0 不良/58），r5000，[0，968] @ 90% 置信水平')
+    expect(result).toBe('0ppm(0/58, r17241,[0, 50339] @90% 置信水准)')
   })
 
   it('formats korean string without CI but with default confidence', () => {
@@ -107,7 +101,7 @@ describe('buildReliabilitySummary', () => {
       metrics: { r: 1234 },
     }
     const result = buildReliabilitySummary(step, t)
-    expect(result).toBe('10000ppm(1 불량/100), r1234 @ 90% 신뢰수준')
+    expect(result).toBe('10000ppm(1 불량/100, r10000,[29513, 46560] @90% 신뢰수준)')
   })
 
   it('does not include eval code in reliability summary', () => {
