@@ -956,6 +956,7 @@ const handleFinish = async () => {
 
     await api.put(`/evaluations/${evaluationId.value}/status`, {
       status: 'completed',
+      end_date: form.end_date || null,
     })
 
     ElMessage.success(t('evaluation.finishSuccess'))
@@ -1012,7 +1013,7 @@ const fetchEvaluation = async () => {
       product_name: evaluation.product_name || '',
       part_number: evaluation.part_number || '',
       start_date: evaluation.start_date || '',
-      end_date: evaluation.end_date || '',
+      end_date: evaluation.actual_end_date || evaluation.end_date || '',
       reason: normalizeReasons(evaluation.evaluation_reason || evaluation.reason || ''),
       process_step: parseProcessSteps(evaluation.process_step),
       description: evaluation.remarks || evaluation.description || '',

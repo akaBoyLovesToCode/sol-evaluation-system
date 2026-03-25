@@ -2716,6 +2716,9 @@ def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
         # Store old data for logging
         old_data = evaluation.to_dict(tz=tz)
 
+        end_date_missing = object()
+        end_value = data.get("actual_end_date", data.get("end_date", end_date_missing))
+
         # Update status
         new_status = data["status"]
         evaluation.status = new_status
@@ -2726,8 +2729,16 @@ def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
         else:
             evaluation.cancel_reason = None
 
-        # Set actual end date if status is completed
-        if new_status == EvaluationStatus.COMPLETED.value:
+        if end_value is not end_date_missing:
+            evaluation.actual_end_date = (
+                datetime.strptime(end_value, "%Y-%m-%d").date() if end_value else None
+            )
+        elif (
+            new_status == EvaluationStatus.COMPLETED.value
+            and evaluation.actual_end_date is None
+        ):
+            # Preserve a previously entered end date; only default to "today" when
+            # completion happens without any user-provided value.
             evaluation.actual_end_date = utcnow().date()
 
         db.session.commit()

@@ -1,5 +1,7 @@
 """Unit tests for evaluation API persistence."""
 
+from datetime import date
+
 from app.models.evaluation import Evaluation
 from tests.helpers import create_test_evaluation, json_response
 
@@ -52,3 +54,46 @@ def test_update_evaluation_persists_pgm_test_time(client, session):
     session.refresh(evaluation)
     assert evaluation.pgm_version == "new-version"
     assert evaluation.pgm_test_time == "120 min"
+
+
+def test_complete_status_uses_user_provided_end_date(client, session):
+    """Completing an evaluation should keep the user-provided end date."""
+    evaluation = create_test_evaluation(session, actual_end_date=None, status="in_progress")
+
+    response = client.put(
+        f"/api/evaluations/{evaluation.id}/status",
+        json={
+            "status": "completed",
+            "end_date": "2026-03-20",
+        },
+    )
+
+    body = json_response(response)
+
+    assert response.status_code == 200
+    assert body["data"]["evaluation"]["actual_end_date"] == "2026-03-20"
+
+    session.refresh(evaluation)
+    assert evaluation.actual_end_date == date(2026, 3, 20)
+
+
+def test_complete_status_preserves_existing_end_date_when_not_provided(client, session):
+    """Completing without a new end date should not overwrite the saved one."""
+    evaluation = create_test_evaluation(
+        session,
+        actual_end_date=date(2026, 3, 19),
+        status="in_progress",
+    )
+
+    response = client.put(
+        f"/api/evaluations/{evaluation.id}/status",
+        json={"status": "completed"},
+    )
+
+    body = json_response(response)
+
+    assert response.status_code == 200
+    assert body["data"]["evaluation"]["actual_end_date"] == "2026-03-19"
+
+    session.refresh(evaluation)
+    assert evaluation.actual_end_date == date(2026, 3, 19)
