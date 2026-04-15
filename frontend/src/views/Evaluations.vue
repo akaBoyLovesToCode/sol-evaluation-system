@@ -978,7 +978,8 @@ const handleExport = async (type = 'current') => {
       }
       const text = typeof value === 'string' ? value : String(value)
       const normalized = text.replace(/\r?\n|\r/g, ' ').trim()
-      return `"${normalized.replace(/"/g, '""')}"`
+      const csvValue = normalized.startsWith('-') ? `="${normalized}"` : normalized
+      return `"${csvValue.replace(/"/g, '""')}"`
     }
 
     const resolveEvaluationType = (value) => {
