@@ -132,6 +132,10 @@ pnpm-lock.yaml
 *.swo
 *~
 
+# Local agent skills
+.agents/
+skills-lock.json
+
 # OS
 .DS_Store
 .DS_Store?
