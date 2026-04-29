@@ -67,6 +67,57 @@
   "evaluation": {
     "title": "평가 관리",
     "description": "모든 제품 평가를 관리하고 조회합니다",
+    "console": {
+      "title": "평가 관리",
+      "subtitle": "제품 평가, 담당자, 프로세스 단계, TAT, 내보내기 준비 기록을 모니터링합니다.",
+      "daySuffix": "일",
+      "tableMeta": "총 {total}건 · 정렬: {sort}",
+      "paginationMeta": "{start}-{end} / {total} 표시 · 페이지당 {size}건",
+      "savedViews": {
+        "allActive": "전체 활성 {count}",
+        "noUpdate": "미업데이트 {count}",
+        "openOver10d": "10일 초과 {count}",
+        "reliabilityFailures": "신뢰성 실패 {count}"
+      },
+      "kpis": {
+        "openEvaluations": {
+          "label": "미완료 평가",
+          "hint": "진행 중 또는 일시정지"
+        },
+        "staleOpenEvaluations": {
+          "label": "48시간 초과 미업데이트",
+          "hint": "업데이트가 지연된 항목"
+        },
+        "openOver10d": {
+          "label": "10일 초과 진행",
+          "hint": "시작일 기준 경과"
+        },
+        "medianOpenAge": {
+          "label": "진행 기간 중앙값",
+          "hint": "미완료 항목만"
+        },
+        "createdThisMonth": {
+          "label": "이번 달 생성",
+          "hint": "신규 평가 기록"
+        },
+        "completedThisMonth": {
+          "label": "이번 달 완료",
+          "hint": "이번 달 종료"
+        }
+      },
+      "sort": {
+        "asc": "오름차순",
+        "desc": "내림차순",
+        "defaultCreatedDesc": "생성일 내림차순",
+        "sortedBy": "{field} {direction}",
+        "fields": {
+          "evaluation_number": "평가 번호",
+          "product_name": "제품",
+          "pgm_version": "PGM 버전",
+          "start_date": "시작 날짜"
+        }
+      }
+    },
     "new": {
       "title": "새 평가",
       "description": "새로운 제품 평가 프로젝트를 생성합니다"

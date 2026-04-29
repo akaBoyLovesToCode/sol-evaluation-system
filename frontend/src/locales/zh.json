@@ -84,6 +84,57 @@
   "evaluation": {
     "title": "评价管理",
     "description": "管理和查看所有产品评价",
+    "console": {
+      "title": "评价管理",
+      "subtitle": "监控产品评价、担当、流程阶段、TAT 和可导出记录。",
+      "daySuffix": "天",
+      "tableMeta": "共 {total} 条 · 排序：{sort}",
+      "paginationMeta": "显示 {start}-{end} / {total} · 每页 {size} 条",
+      "savedViews": {
+        "allActive": "全部活动 {count}",
+        "noUpdate": "未更新 {count}",
+        "openOver10d": "超过10天 {count}",
+        "reliabilityFailures": "可靠性失败 {count}"
+      },
+      "kpis": {
+        "openEvaluations": {
+          "label": "未关闭评价",
+          "hint": "进行中或暂停"
+        },
+        "staleOpenEvaluations": {
+          "label": "超过48小时未更新",
+          "hint": "未更新的进行中项"
+        },
+        "openOver10d": {
+          "label": "创建超过10天",
+          "hint": "从开始日期计算"
+        },
+        "medianOpenAge": {
+          "label": "TAT时长中位数",
+          "hint": "仅统计进行中项"
+        },
+        "createdThisMonth": {
+          "label": "本月创建",
+          "hint": "本月新增的评价记录"
+        },
+        "completedThisMonth": {
+          "label": "本月完成",
+          "hint": "本月中完成的评价数"
+        }
+      },
+      "sort": {
+        "asc": "升序",
+        "desc": "降序",
+        "defaultCreatedDesc": "创建时间 降序",
+        "sortedBy": "{field} {direction}",
+        "fields": {
+          "evaluation_number": "评价编号",
+          "product_name": "产品",
+          "pgm_version": "PGM版本",
+          "start_date": "开始日期"
+        }
+      }
+    },
     "new": {
       "title": "新建评价",
       "description": "创建新的产品评价项目"

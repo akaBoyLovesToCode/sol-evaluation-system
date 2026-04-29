@@ -1,312 +1,382 @@
 <template>
   <div class="evaluations-page">
-    <!-- 页面头部 -->
-    <div class="page-header">
-      <div class="header-left">
-        <h1 class="page-title">{{ $t('evaluation.title') }}</h1>
-        <p class="page-description">{{ $t('evaluation.description') }}</p>
+    <section class="page-head">
+      <div class="page-title-block">
+        <div>
+          <h1 class="page-title">{{ $t('evaluation.console.title') }}</h1>
+          <p class="page-description">
+            {{ $t('evaluation.console.subtitle') }}
+          </p>
+        </div>
       </div>
-      <div class="header-right">
-        <el-button type="primary" @click="openNew()">
-          <template #icon><Plus /></template>
+      <div class="page-actions">
+        <button class="console-command primary" type="button" @click="openNew()">
           {{ $t('evaluation.new.title') }}
-        </el-button>
+        </button>
       </div>
-    </div>
+    </section>
 
-    <!-- 搜索和筛选 -->
-    <AnimatedContainer type="fadeInUp" delay="0.1s">
-      <el-card class="filter-card">
-        <el-form :model="searchForm" inline class="search-form">
-          <el-form-item :label="$t('evaluation.evaluationNumber')">
-            <el-input
-              v-model="searchForm.evaluation_number"
-              :placeholder="$t('evaluation.placeholders.evaluationNumber')"
-              clearable
-              class="w-[200px]"
-            />
-          </el-form-item>
-
-          <el-form-item :label="$t('evaluation.evaluationType')">
-            <el-select
-              v-model="searchForm.evaluation_type"
-              :placeholder="$t('evaluation.placeholders.evaluationType')"
-              clearable
-              class="w-[150px]"
-            >
-              <el-option :label="$t('evaluation.type.new_product')" value="new_product" />
-              <el-option :label="$t('evaluation.type.mass_production')" value="mass_production" />
-            </el-select>
-          </el-form-item>
-
-          <el-form-item :label="$t('common.status')">
-            <el-select
-              v-model="searchForm.status"
-              :placeholder="$t('evaluation.placeholders.status')"
-              clearable
-              class="w-[150px]"
-            >
-              <el-option
-                v-for="status in statusOptions"
-                :key="status.value"
-                :label="status.label"
-                :value="status.value"
-              />
-            </el-select>
-          </el-form-item>
-
-          <el-form-item :label="$t('evaluation.product')">
-            <el-select
-              v-model="searchForm.product"
-              multiple
-              filterable
-              allow-create
-              default-first-option
-              collapse-tags
-              collapse-tags-tooltip
-              :reserve-keyword="false"
-              :placeholder="$t('evaluation.placeholders.product')"
-              class="w-[220px]"
-            />
-          </el-form-item>
-
-          <el-form-item :label="$t('evaluation.scsCharger')">
-            <el-select
-              v-model="searchForm.scs_charger"
-              multiple
-              filterable
-              allow-create
-              default-first-option
-              collapse-tags
-              collapse-tags-tooltip
-              :reserve-keyword="false"
-              :placeholder="$t('evaluation.placeholders.scsCharger')"
-              class="w-[220px]"
-            />
-          </el-form-item>
-
-          <el-form-item :label="$t('evaluation.headOfficeCharger')">
-            <el-select
-              v-model="searchForm.head_office_charger"
-              multiple
-              filterable
-              allow-create
-              default-first-option
-              collapse-tags
-              collapse-tags-tooltip
-              :reserve-keyword="false"
-              :placeholder="$t('evaluation.placeholders.headOfficeCharger')"
-              class="w-[220px]"
-            />
-          </el-form-item>
-
-          <el-form-item :label="$t('evaluation.dateRange')">
-            <el-date-picker
-              v-model="searchForm.dateRange"
-              type="daterange"
-              :range-separator="$t('evaluation.placeholders.rangeSeparator')"
-              :start-placeholder="$t('evaluation.placeholders.startDate')"
-              :end-placeholder="$t('evaluation.placeholders.endDate')"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              class="w-[240px]"
-            />
-          </el-form-item>
-
-          <el-form-item>
-            <el-button type="primary" @click="handleSearch">
-              <template #icon><Search /></template>
-              {{ $t('evaluation.search') }}
-            </el-button>
-            <el-button @click="handleReset">
-              <template #icon><Refresh /></template>
-              {{ $t('evaluation.reset') }}
-            </el-button>
-          </el-form-item>
-        </el-form>
-      </el-card>
-    </AnimatedContainer>
-
-    <!-- 数据表格 -->
-    <AnimatedContainer type="fadeInUp" delay="0.3s">
-      <el-card class="table-card">
-        <template #header>
-          <div class="table-header">
-            <span>{{ $t('evaluation.list') }}</span>
-            <div class="table-actions">
-              <el-dropdown
-                split-button
-                :loading="exportLoading"
-                class="export-dropdown"
-                @click="handleExport('current')"
-                @command="handleCommand"
-              >
-                <el-icon class="mr-2"><Download /></el-icon>
-                {{ $t('evaluation.export') }}
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item command="exportAll">
-                      <el-icon><Files /></el-icon>
-                      {{ $t('evaluation.exportAll') }}
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-            </div>
-          </div>
-        </template>
-
-        <div class="table-scroll">
-          <el-table
-            v-loading="tableLoading"
-            :data="tableData"
-            stripe
-            @selection-change="handleSelectionChange"
-            @sort-change="handleSortChange"
-          >
-            <el-table-column type="selection" width="40" />
-
-            <el-table-column
-              prop="evaluation_number"
-              :label="$t('evaluation.evaluationNumber')"
-              width="180"
-              sortable="custom"
-            >
-              <template #default="{ row }">
-                <el-link type="primary" @click="openDetail(row)">
-                  {{ row.evaluation_number }}
-                </el-link>
-              </template>
-            </el-table-column>
-
-            <el-table-column
-              prop="evaluation_type"
-              :label="$t('evaluation.evaluationType')"
-              width="110"
-            >
-              <template #default="{ row }">
-                <el-tag :type="row.evaluation_type === 'new_product' ? 'primary' : 'success'">
-                  {{ $t(`evaluation.type.${row.evaluation_type}`) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-
-            <el-table-column
-              prop="product_name"
-              :label="$t('evaluation.product')"
-              width="130"
-              sortable="custom"
-            />
-
-            <el-table-column
-              prop="process_step"
-              :label="$t('evaluation.processStep')"
-              width="110"
-            />
-
-            <el-table-column
-              prop="pgm_version"
-              :label="$t('evaluation.pgmVersionColumn')"
-              width="120"
-              sortable="custom"
-            >
-              <template #default="{ row }">
-                {{ row.pgm_version || '-' }}
-              </template>
-            </el-table-column>
-
-            <el-table-column prop="part_number" :label="$t('evaluation.partNumber')" width="220" />
-
-            <el-table-column prop="evaluation_reason" :label="$t('evaluation.reason')" width="140">
-              <template #default="{ row }">
-                {{ formatReasons(row.evaluation_reason || row.reason) }}
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="remarks"
-              :label="$t('evaluation.descriptionLabel')"
-              min-width="100"
-            >
-              <template #default="{ row }">
-                <template v-if="row.remarks">
-                  <el-tooltip
-                    placement="top"
-                    effect="dark"
-                    popper-class="evaluation-description-tooltip"
-                  >
-                    <template #content>
-                      <div class="evaluation-description-tooltip-content">
-                        {{ row.remarks }}
-                      </div>
-                    </template>
-                    <span class="evaluation-description-cell">
-                      {{ truncateDescription(row.remarks) }}
-                    </span>
-                  </el-tooltip>
-                </template>
-                <span v-else class="evaluation-description-cell">-</span>
-              </template>
-            </el-table-column>
-
-            <el-table-column
-              prop="scs_charger_name"
-              :label="$t('evaluation.scsCharger')"
-              width="90"
-            />
-
-            <el-table-column
-              prop="head_office_charger_name"
-              :label="$t('evaluation.headOfficeCharger')"
-              width="80"
-            />
-
-            <el-table-column prop="status" :label="$t('common.status')" width="80">
-              <template #default="{ row }">
-                <el-tag :type="getStatusTagType(row.status)">
-                  {{ $t(`status.${row.status}`) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-
-            <el-table-column
-              prop="start_date"
-              :label="$t('evaluation.startDate')"
-              width="130"
-              sortable="custom"
-            >
-              <template #default="{ row }">
-                {{ formatDate(row.start_date) }}
-              </template>
-            </el-table-column>
-
-            <el-table-column prop="actual_end_date" :label="$t('evaluation.endDate')" width="110">
-              <template #default="{ row }">
-                {{ row.actual_end_date ? formatDate(row.actual_end_date) : '-' }}
-              </template>
-            </el-table-column>
-
-            <el-table-column :label="$t('evaluation.tat')" width="60">
-              <template #default="{ row }">
-                {{ formatTat(row) }}
-              </template>
-            </el-table-column>
-          </el-table>
+    <section v-loading="kpiLoading" class="kpi-strip">
+      <div v-for="item in kpiCards" :key="item.key" class="kpi-card">
+        <div class="kpi-label">
+          <span>{{ item.label }}</span>
         </div>
+        <div class="kpi-value">{{ item.value }}</div>
+        <div class="kpi-hint">{{ item.hint }}</div>
+      </div>
+    </section>
 
-        <!-- 分页 -->
-        <div class="pagination-container">
-          <el-pagination
-            v-model:current-page="pagination.page"
-            v-model:page-size="pagination.size"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="pagination.total"
-            layout="total, sizes, prev, pager, next, jumper"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
+    <section class="saved-views">
+      <div class="view-tabs">
+        <button
+          v-for="view in savedViews"
+          :key="view.value"
+          type="button"
+          class="view-tab"
+          :class="{ active: activeOperationalView === view.value }"
+          @click="handleSavedView(view.value)"
+        >
+          {{ view.label }}
+        </button>
+      </div>
+    </section>
+
+    <section class="filters">
+      <div class="field">
+        <label>{{ $t('evaluation.evaluationNumber') }}</label>
+        <el-input
+          v-model="searchForm.evaluation_number"
+          :placeholder="$t('evaluation.placeholders.evaluationNumber')"
+          clearable
+        />
+      </div>
+      <div class="field">
+        <label>{{ $t('evaluation.evaluationType') }}</label>
+        <el-select
+          v-model="searchForm.evaluation_type"
+          :placeholder="$t('evaluation.placeholders.evaluationType')"
+          clearable
+        >
+          <el-option :label="$t('evaluation.type.new_product')" value="new_product" />
+          <el-option :label="$t('evaluation.type.mass_production')" value="mass_production" />
+        </el-select>
+      </div>
+      <div class="field">
+        <label>{{ $t('common.status') }}</label>
+        <el-select
+          v-model="searchForm.status"
+          :placeholder="$t('evaluation.placeholders.status')"
+          clearable
+        >
+          <el-option
+            v-for="status in statusOptions"
+            :key="status.value"
+            :label="status.label"
+            :value="status.value"
           />
+        </el-select>
+      </div>
+      <div class="field">
+        <label>{{ $t('evaluation.product') }}</label>
+        <el-select
+          v-model="searchForm.product"
+          multiple
+          filterable
+          allow-create
+          default-first-option
+          collapse-tags
+          collapse-tags-tooltip
+          :reserve-keyword="false"
+          :placeholder="$t('evaluation.placeholders.product')"
+        />
+      </div>
+      <div class="field">
+        <label>{{ $t('evaluation.scsCharger') }}</label>
+        <el-select
+          v-model="searchForm.scs_charger"
+          multiple
+          filterable
+          allow-create
+          default-first-option
+          collapse-tags
+          collapse-tags-tooltip
+          :reserve-keyword="false"
+          :placeholder="$t('evaluation.placeholders.scsCharger')"
+        />
+      </div>
+      <div class="field">
+        <label>{{ $t('evaluation.headOfficeCharger') }}</label>
+        <el-select
+          v-model="searchForm.head_office_charger"
+          multiple
+          filterable
+          allow-create
+          default-first-option
+          collapse-tags
+          collapse-tags-tooltip
+          :reserve-keyword="false"
+          :placeholder="$t('evaluation.placeholders.headOfficeCharger')"
+        />
+      </div>
+      <div class="field date-field">
+        <label>{{ $t('evaluation.dateRange') }}</label>
+        <el-date-picker
+          v-model="searchForm.dateRange"
+          type="daterange"
+          :range-separator="$t('evaluation.placeholders.rangeSeparator')"
+          :start-placeholder="$t('evaluation.placeholders.startDate')"
+          :end-placeholder="$t('evaluation.placeholders.endDate')"
+          format="YYYY-MM-DD"
+          value-format="YYYY-MM-DD"
+        />
+      </div>
+      <div class="filter-actions">
+        <button
+          class="console-command primary dense"
+          type="button"
+          :aria-label="$t('evaluation.search')"
+          :title="$t('evaluation.search')"
+          @click="handleSearch"
+        >
+          {{ $t('evaluation.search') }}
+        </button>
+        <button
+          class="console-command secondary dense"
+          type="button"
+          :aria-label="$t('evaluation.reset')"
+          :title="$t('evaluation.reset')"
+          @click="handleReset"
+        >
+          {{ $t('evaluation.reset') }}
+        </button>
+      </div>
+    </section>
+
+    <section class="table-shell">
+      <div class="table-toolbar">
+        <div class="table-title">
+          <span>{{ $t('evaluation.list') }}</span>
+          <span class="table-meta">
+            {{ $t('evaluation.console.tableMeta', { total: pagination.total, sort: sortLabel }) }}
+          </span>
         </div>
-      </el-card>
-    </AnimatedContainer>
+        <div class="table-actions">
+          <button
+            class="console-command secondary"
+            type="button"
+            :disabled="exportLoading"
+            @click="handleExport('current')"
+          >
+            {{ $t('evaluation.export') }}
+          </button>
+          <button
+            class="console-command ghost"
+            type="button"
+            :disabled="exportLoading"
+            @click="handleCommand('exportAll')"
+          >
+            {{ $t('evaluation.exportAll') }}
+          </button>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <el-table
+          v-loading="tableLoading"
+          :data="tableData"
+          class="operations-table"
+          size="small"
+          border
+          table-layout="fixed"
+          @selection-change="handleSelectionChange"
+          @sort-change="handleSortChange"
+          @row-dblclick="openDetail"
+        >
+          <el-table-column type="selection" width="44" fixed="left" align="center" />
+
+          <el-table-column
+            prop="evaluation_number"
+            :label="$t('evaluation.evaluationNumber')"
+            width="168"
+            fixed="left"
+            sortable="custom"
+            align="center"
+          >
+            <template #default="{ row }">
+              <el-link type="primary" class="eval-link" @click="openDetail(row)">
+                {{ row.evaluation_number }}
+              </el-link>
+            </template>
+          </el-table-column>
+
+          <el-table-column
+            prop="evaluation_type"
+            :label="$t('evaluation.evaluationType')"
+            width="122"
+            align="center"
+          >
+            <template #default="{ row }">
+              <el-tag
+                effect="plain"
+                :type="row.evaluation_type === 'new_product' ? 'primary' : 'success'"
+              >
+                {{ formatEvaluationType(row.evaluation_type) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+
+          <el-table-column
+            prop="product_name"
+            :label="$t('evaluation.product')"
+            width="150"
+            sortable="custom"
+            show-overflow-tooltip
+            align="center"
+          />
+
+          <el-table-column prop="status" :label="$t('common.status')" width="136" align="center">
+            <template #default="{ row }">
+              <el-tag effect="plain" :type="getStatusTagType(row.status)">
+                {{ formatStatusLabel(row.status) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+
+          <el-table-column
+            prop="process_step"
+            :label="$t('evaluation.processStep')"
+            width="130"
+            show-overflow-tooltip
+            align="center"
+          />
+
+          <el-table-column
+            prop="pgm_version"
+            :label="$t('evaluation.pgmVersionColumn')"
+            width="130"
+            sortable="custom"
+            show-overflow-tooltip
+            align="center"
+          >
+            <template #default="{ row }">
+              {{ row.pgm_version || '-' }}
+            </template>
+          </el-table-column>
+
+          <el-table-column
+            prop="part_number"
+            :label="$t('evaluation.partNumber')"
+            width="150"
+            show-overflow-tooltip
+            align="center"
+          />
+
+          <el-table-column
+            prop="evaluation_reason"
+            :label="$t('evaluation.reason')"
+            width="150"
+            show-overflow-tooltip
+            align="center"
+          >
+            <template #default="{ row }">
+              {{ formatReasons(row.evaluation_reason || row.reason) }}
+            </template>
+          </el-table-column>
+
+          <el-table-column
+            prop="remarks"
+            :label="$t('evaluation.descriptionLabel')"
+            width="240"
+            header-align="center"
+            align="left"
+            class-name="description-column"
+          >
+            <template #default="{ row }">
+              <template v-if="row.remarks">
+                <el-tooltip placement="top" effect="dark" popper-class="evaluation-description-tooltip">
+                  <template #content>
+                    <div class="evaluation-description-tooltip-content">
+                      {{ row.remarks }}
+                    </div>
+                  </template>
+                  <span class="evaluation-description-cell">
+                    {{ truncateDescription(row.remarks) }}
+                  </span>
+                </el-tooltip>
+              </template>
+              <span v-else class="evaluation-description-cell">-</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column
+            prop="scs_charger_name"
+            :label="$t('evaluation.scsCharger')"
+            width="120"
+            show-overflow-tooltip
+            align="center"
+          />
+
+          <el-table-column
+            prop="head_office_charger_name"
+            :label="$t('evaluation.headOfficeCharger')"
+            width="120"
+            show-overflow-tooltip
+            align="center"
+          />
+
+          <el-table-column
+            prop="start_date"
+            :label="$t('evaluation.startDate')"
+            width="122"
+            sortable="custom"
+            align="center"
+          >
+            <template #default="{ row }">
+              {{ formatDate(row.start_date) }}
+            </template>
+          </el-table-column>
+
+          <el-table-column
+            prop="actual_end_date"
+            :label="$t('evaluation.endDate')"
+            width="122"
+            align="center"
+          >
+            <template #default="{ row }">
+              {{ row.actual_end_date ? formatDate(row.actual_end_date) : '-' }}
+            </template>
+          </el-table-column>
+
+          <el-table-column :label="$t('evaluation.tat')" width="82" align="center">
+            <template #default="{ row }">
+              {{ formatTat(row) }}
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <div class="pagination-container">
+        <span class="pagination-meta">
+          {{
+            $t('evaluation.console.paginationMeta', {
+              start: pageStart,
+              end: pageEnd,
+              total: pagination.total,
+              size: pagination.size,
+            })
+          }}
+        </span>
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.size"
+          :page-sizes="[8, 20, 50, 100]"
+          :total="pagination.total"
+          layout="sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+    </section>
 
     <!-- Popout dialogs -->
     <el-dialog
@@ -327,10 +397,19 @@
         @edit="onEdit"
       />
       <template #footer>
-        <el-button @click="showDetail = false">{{ $t('common.close') }}</el-button>
-        <el-button :type="detailPrimaryActionType" @click="triggerDetailPrimaryAction">
-          {{ detailPrimaryActionLabel }}
-        </el-button>
+        <div class="dialog-footer-actions">
+          <button class="console-command secondary" type="button" @click="showDetail = false">
+            {{ $t('common.close') }}
+          </button>
+          <button
+            class="console-command"
+            :class="detailPrimaryActionClass"
+            type="button"
+            @click="triggerDetailPrimaryAction"
+          >
+            {{ detailPrimaryActionLabel }}
+          </button>
+        </div>
       </template>
     </el-dialog>
     <el-dialog
@@ -351,26 +430,34 @@
         @saved="handleSaved"
       />
       <template #footer>
-        <el-button @click="showNew = false">{{ $t('common.cancel') }}</el-button>
-        <template v-if="!isEditing">
-          <el-button type="primary" @click="newEvalRef?.saveDraft()">
-            {{ $t('evaluation.saveDraft') }}
-          </el-button>
-          <el-button type="success" @click="newEvalRef?.submitForm()">
-            {{ $t('evaluation.submit') }}
-          </el-button>
-        </template>
-        <template v-else>
-          <el-button type="danger" @click="newEvalRef?.deleteEval()">
-            {{ $t('common.delete') }}
-          </el-button>
-          <el-button type="primary" @click="newEvalRef?.save()">
-            {{ $t('common.save') }}
-          </el-button>
-          <el-button type="success" @click="newEvalRef?.finish()">
-            {{ $t('evaluation.finish') }}
-          </el-button>
-        </template>
+        <div class="dialog-footer-actions">
+          <button class="console-command secondary" type="button" @click="showNew = false">
+            {{ $t('common.cancel') }}
+          </button>
+          <template v-if="!isEditing">
+            <button
+              class="console-command secondary"
+              type="button"
+              @click="newEvalRef?.saveDraft()"
+            >
+              {{ $t('evaluation.saveDraft') }}
+            </button>
+            <button class="console-command success" type="button" @click="newEvalRef?.submitForm()">
+              {{ $t('evaluation.submit') }}
+            </button>
+          </template>
+          <template v-else>
+            <button class="console-command danger" type="button" @click="newEvalRef?.deleteEval()">
+              {{ $t('common.delete') }}
+            </button>
+            <button class="console-command primary" type="button" @click="newEvalRef?.save()">
+              {{ $t('common.save') }}
+            </button>
+            <button class="console-command success" type="button" @click="newEvalRef?.finish()">
+              {{ $t('evaluation.finish') }}
+            </button>
+          </template>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -381,7 +468,6 @@ import { ref, reactive, onMounted, computed, defineAsyncComponent, onUnmounted }
 import { useI18n } from 'vue-i18n'
 import api from '../utils/api'
 import { buildReliabilitySummary, isReliabilityStep } from '../utils/reliability'
-import AnimatedContainer from '../components/AnimatedContainer.vue'
 const EvaluationDetail = defineAsyncComponent(() => import('./EvaluationDetail.vue'))
 const NewEvaluation = defineAsyncComponent(() => import('./NewEvaluation.vue'))
 
@@ -397,7 +483,7 @@ const updateWidth = () => {
 
 onMounted(() => {
   window.addEventListener('resize', updateWidth)
-  fetchEvaluations()
+  fetchPageData()
 })
 
 onUnmounted(() => {
@@ -405,6 +491,7 @@ onUnmounted(() => {
 })
 
 const tableLoading = ref(false)
+const kpiLoading = ref(false)
 const exportLoading = ref(false)
 const showDetail = ref(false)
 const showNew = ref(false)
@@ -416,9 +503,20 @@ const detailRef = ref(null)
 const newEvalRef = ref(null)
 const tableData = ref([])
 const selectedRows = ref([])
+const activeOperationalView = ref('all_active')
 const processStepOptions = ['iARTs', 'Aging', 'LI', 'Repair']
 const DESCRIPTION_WORD_LIMIT = 16
 const DESCRIPTION_CHAR_LIMIT = 80
+
+const kpiData = reactive({
+  open_evaluations: 0,
+  stale_open_evaluations: 0,
+  open_over_10d: 0,
+  median_open_age_days: 0,
+  created_this_month: 0,
+  reliability_failures: 0,
+  completed_this_month: 0,
+})
 
 const searchForm = reactive({
   evaluation_number: '',
@@ -432,7 +530,7 @@ const searchForm = reactive({
 
 const pagination = reactive({
   page: 1,
-  size: 20,
+  size: 8,
   total: 0,
 })
 
@@ -444,12 +542,97 @@ const sortParams = reactive({
 const statusOptions = computed(() => [
   { label: t('status.draft'), value: 'draft' },
   { label: t('status.in_progress'), value: 'in_progress' },
-  { label: t('status.pending_approval'), value: 'pending_approval' },
   { label: t('status.completed'), value: 'completed' },
   { label: t('status.paused'), value: 'paused' },
   { label: t('status.cancelled'), value: 'cancelled' },
   { label: t('status.rejected'), value: 'rejected' },
 ])
+
+const savedViews = computed(() => [
+  {
+    label: t('evaluation.console.savedViews.allActive', { count: kpiData.open_evaluations }),
+    value: 'all_active',
+  },
+  {
+    label: t('evaluation.console.savedViews.noUpdate', {
+      count: kpiData.stale_open_evaluations,
+    }),
+    value: 'no_update_48h',
+  },
+  {
+    label: t('evaluation.console.savedViews.openOver10d', { count: kpiData.open_over_10d }),
+    value: 'open_over_10d',
+  },
+  {
+    label: t('evaluation.console.savedViews.reliabilityFailures', {
+      count: kpiData.reliability_failures,
+    }),
+    value: 'has_failures',
+  },
+])
+
+const formatKpiValue = (value, suffix = '') => {
+  if (value === null || value === undefined || value === '') return `0${suffix}`
+  return `${value}${suffix}`
+}
+
+const kpiCards = computed(() => [
+  {
+    key: 'open_evaluations',
+    label: t('evaluation.console.kpis.openEvaluations.label'),
+    value: formatKpiValue(kpiData.open_evaluations),
+    hint: t('evaluation.console.kpis.openEvaluations.hint'),
+  },
+  {
+    key: 'stale_open_evaluations',
+    label: t('evaluation.console.kpis.staleOpenEvaluations.label'),
+    value: formatKpiValue(kpiData.stale_open_evaluations),
+    hint: t('evaluation.console.kpis.staleOpenEvaluations.hint'),
+  },
+  {
+    key: 'open_over_10d',
+    label: t('evaluation.console.kpis.openOver10d.label'),
+    value: formatKpiValue(kpiData.open_over_10d),
+    hint: t('evaluation.console.kpis.openOver10d.hint'),
+  },
+  {
+    key: 'median_open_age_days',
+    label: t('evaluation.console.kpis.medianOpenAge.label'),
+    value: formatKpiValue(kpiData.median_open_age_days, t('evaluation.console.daySuffix')),
+    hint: t('evaluation.console.kpis.medianOpenAge.hint'),
+  },
+  {
+    key: 'created_this_month',
+    label: t('evaluation.console.kpis.createdThisMonth.label'),
+    value: formatKpiValue(kpiData.created_this_month),
+    hint: t('evaluation.console.kpis.createdThisMonth.hint'),
+  },
+  {
+    key: 'completed_this_month',
+    label: t('evaluation.console.kpis.completedThisMonth.label'),
+    value: formatKpiValue(kpiData.completed_this_month),
+    hint: t('evaluation.console.kpis.completedThisMonth.hint'),
+  },
+])
+
+const sortLabel = computed(() => {
+  const directionKey = sortParams.order === 'ascending' ? 'asc' : 'desc'
+  const direction = t(`evaluation.console.sort.${directionKey}`)
+  if (!sortParams.prop) {
+    return t('evaluation.console.sort.defaultCreatedDesc')
+  }
+  const fieldKey = `evaluation.console.sort.fields.${sortParams.prop}`
+  const translatedField = t(fieldKey)
+  const field = translatedField === fieldKey ? sortParams.prop : translatedField
+  return t('evaluation.console.sort.sortedBy', { field, direction })
+})
+
+const pageStart = computed(() => {
+  if (pagination.total === 0) return 0
+  return (pagination.page - 1) * pagination.size + 1
+})
+
+const pageEnd = computed(() => Math.min(pagination.page * pagination.size, pagination.total))
 
 const detailDialogTitle = computed(() => selectedEvaluationNumber.value || t('evaluation.title'))
 const terminalStatuses = ['completed', 'cancelled', 'rejected']
@@ -460,7 +643,7 @@ const detailPrimaryActionIsReopen = computed(() => terminalStatuses.includes(det
 const detailPrimaryActionLabel = computed(() =>
   detailPrimaryActionIsReopen.value ? t('evaluation.reopen') : t('evaluation.cancel'),
 )
-const detailPrimaryActionType = computed(() =>
+const detailPrimaryActionClass = computed(() =>
   detailPrimaryActionIsReopen.value ? 'primary' : 'danger',
 )
 
@@ -754,50 +937,79 @@ const buildNestedResultSummary = (processes) => {
   return segments.join(' ; ')
 }
 
+const buildEvaluationParams = ({
+  page = pagination.page,
+  perPage = pagination.size,
+  includePagination = true,
+  includeSort = true,
+  includeOperationalView = true,
+} = {}) => {
+  const params = {}
+
+  if (includePagination) {
+    params.page = page
+    params.per_page = perPage
+  }
+
+  if (includeOperationalView && activeOperationalView.value) {
+    params.operational_view = activeOperationalView.value
+  }
+  if (searchForm.evaluation_number) {
+    params.evaluation_number = searchForm.evaluation_number
+  }
+  if (searchForm.evaluation_type) {
+    params.evaluation_type = searchForm.evaluation_type
+  }
+  if (searchForm.status) {
+    params.status = searchForm.status
+  }
+  const products = normalizeMultiValue(searchForm.product)
+  if (products.length > 0) {
+    params.product = products.join(',')
+  }
+  const scsChargers = normalizeMultiValue(searchForm.scs_charger)
+  if (scsChargers.length > 0) {
+    params.scs_charger_name = scsChargers.join(',')
+  }
+  const headCharger = normalizeMultiValue(searchForm.head_office_charger)
+  if (headCharger.length > 0) {
+    params.head_office_charger_name = headCharger.join(',')
+  }
+  if (searchForm.dateRange && searchForm.dateRange.length === 2) {
+    params.start_date_from = searchForm.dateRange[0]
+    params.start_date_to = searchForm.dateRange[1]
+  }
+  if (includeSort && sortParams.prop) {
+    params.sort_by = sortParams.prop
+    params.sort_order = sortParams.order === 'ascending' ? 'asc' : 'desc'
+  }
+
+  return params
+}
+
+const fetchKpis = async () => {
+  try {
+    kpiLoading.value = true
+    const response = await api.get('/evaluations/kpis', {
+      params: buildEvaluationParams({
+        includePagination: false,
+        includeSort: false,
+        includeOperationalView: false,
+      }),
+    })
+    Object.assign(kpiData, response.data?.data || {})
+  } catch (error) {
+    ElMessage.error(t('ui.fetchListFailed'))
+    console.error('Failed to fetch evaluation KPIs:', error)
+  } finally {
+    kpiLoading.value = false
+  }
+}
+
 const fetchEvaluations = async () => {
   try {
     tableLoading.value = true
-
-    const params = {
-      page: pagination.page,
-      per_page: pagination.size,
-    }
-
-    // 只添加非空的搜索参数
-    if (searchForm.evaluation_number) {
-      params.evaluation_number = searchForm.evaluation_number
-    }
-    if (searchForm.evaluation_type) {
-      params.evaluation_type = searchForm.evaluation_type
-    }
-    if (searchForm.status) {
-      params.status = searchForm.status
-    }
-    const products = normalizeMultiValue(searchForm.product)
-    if (products.length > 0) {
-      params.product = products.join(',')
-    }
-    const scsChargers = normalizeMultiValue(searchForm.scs_charger)
-    if (scsChargers.length > 0) {
-      params.scs_charger_name = scsChargers.join(',')
-    }
-    const headCharger = normalizeMultiValue(searchForm.head_office_charger)
-    if (headCharger.length > 0) {
-      params.head_office_charger_name = headCharger.join(',')
-    }
-
-    // 处理日期范围
-    if (searchForm.dateRange && searchForm.dateRange.length === 2) {
-      params.start_date_from = searchForm.dateRange[0]
-      params.start_date_to = searchForm.dateRange[1]
-    }
-
-    // 处理排序
-    if (sortParams.prop) {
-      params.sort_by = sortParams.prop
-      params.sort_order = sortParams.order === 'ascending' ? 'asc' : 'desc'
-    }
-
+    const params = buildEvaluationParams()
     const response = await api.get('/evaluations', { params })
     const data = response.data.data
 
@@ -810,6 +1022,10 @@ const fetchEvaluations = async () => {
   } finally {
     tableLoading.value = false
   }
+}
+
+const fetchPageData = async () => {
+  await Promise.all([fetchEvaluations(), fetchKpis()])
 }
 
 const openDetail = (rowOrId) => {
@@ -839,7 +1055,7 @@ const onEdit = (id) => {
 
 const handleSaved = () => {
   showNew.value = false
-  fetchEvaluations()
+  fetchPageData()
 }
 
 const triggerDetailPrimaryAction = () => {
@@ -852,13 +1068,24 @@ const triggerDetailPrimaryAction = () => {
 
 const handleSearch = () => {
   pagination.page = 1
-  fetchEvaluations()
+  fetchPageData()
 }
 
 const handleReset = () => {
-  Object.keys(searchForm).forEach((key) => {
-    searchForm[key] = key === 'dateRange' ? null : []
-  })
+  searchForm.evaluation_number = ''
+  searchForm.evaluation_type = ''
+  searchForm.status = ''
+  searchForm.product = []
+  searchForm.scs_charger = []
+  searchForm.head_office_charger = []
+  searchForm.dateRange = null
+  activeOperationalView.value = 'all_active'
+  pagination.page = 1
+  fetchPageData()
+}
+
+const handleSavedView = (view) => {
+  activeOperationalView.value = view
   pagination.page = 1
   fetchEvaluations()
 }
@@ -905,42 +1132,7 @@ const handleExport = async (type = 'current') => {
     let dataToExport = []
 
     if (type === 'all') {
-      const params = {
-        page: 1,
-        per_page: 100000,
-      }
-
-      if (searchForm.evaluation_number) {
-        params.evaluation_number = searchForm.evaluation_number
-      }
-      if (searchForm.evaluation_type) {
-        params.evaluation_type = searchForm.evaluation_type
-      }
-      if (searchForm.status) {
-        params.status = searchForm.status
-      }
-      const products = normalizeMultiValue(searchForm.product)
-      if (products.length > 0) {
-        params.product = products.join(',')
-      }
-      const scsChargers = normalizeMultiValue(searchForm.scs_charger)
-      if (scsChargers.length > 0) {
-        params.scs_charger_name = scsChargers.join(',')
-      }
-      const headCharger = normalizeMultiValue(searchForm.head_office_charger)
-      if (headCharger.length > 0) {
-        params.head_office_charger_name = headCharger.join(',')
-      }
-
-      if (searchForm.dateRange && searchForm.dateRange.length === 2) {
-        params.start_date_from = searchForm.dateRange[0]
-        params.start_date_to = searchForm.dateRange[1]
-      }
-
-      if (sortParams.prop) {
-        params.sort_by = sortParams.prop
-        params.sort_order = sortParams.order === 'ascending' ? 'asc' : 'desc'
-      }
+      const params = buildEvaluationParams({ page: 1, perPage: 100000 })
 
       const response = await api.get('/evaluations', { params })
       dataToExport = response.data.data.evaluations || []
@@ -1140,12 +1332,29 @@ const getStatusTagType = (status) => {
     draft: 'info',
     in_progress: 'primary',
     pending_approval: 'warning',
+    pending_part_approval: 'warning',
+    pending_group_approval: 'warning',
     completed: 'success',
     paused: 'info',
     cancelled: 'danger',
     rejected: 'danger',
   }
   return typeMap[status] || 'info'
+}
+
+const formatEvaluationType = (value) => {
+  if (!value) return '-'
+  const key = `evaluation.type.${value}`
+  const translated = t(key)
+  return translated === key ? value : translated
+}
+
+const formatStatusLabel = (status) => {
+  if (!status) return '-'
+  const key = `status.${status}`
+  const translated = t(key)
+  if (translated !== key) return translated
+  return status.replace(/_/g, ' ')
 }
 
 const formatDate = (dateString) => {
@@ -1195,16 +1404,429 @@ const formatDateForExport = (value) => {
   return String(value)
 }
 
-onMounted(() => {
-  fetchEvaluations()
-})
 </script>
 
 <style scoped>
 .evaluations-page {
+  --console-bg: #f5f7fa;
+  --console-panel: #ffffff;
+  --console-line: #d8dee8;
+  --console-line-soft: #e8edf3;
+  --console-ink: #1f2937;
+  --console-muted: #667085;
+  --console-blue: #155eef;
+  --console-blue-dark: #0f48b8;
+  --console-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
   padding: 0;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: var(--console-bg);
   min-height: 100vh;
+  color: var(--console-ink);
+  font-size: 13px;
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.page-title-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-title {
+  margin: 0 0 4px;
+  color: var(--console-ink);
+  font-size: 22px;
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.page-description {
+  margin: 0;
+  color: var(--console-muted);
+  font-size: 13px;
+}
+
+.page-actions,
+.table-actions,
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.console-command {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 11px;
+  border: 1px solid var(--console-line);
+  border-radius: 6px;
+  background: #fff;
+  color: #344054;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: none;
+}
+
+.console-command:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #b9c3d3;
+  color: #1f2937;
+}
+
+.console-command.primary {
+  background: var(--console-blue);
+  border-color: var(--console-blue);
+  color: #fff;
+}
+
+.console-command.primary:hover:not(:disabled) {
+  background: var(--console-blue-dark);
+  border-color: var(--console-blue-dark);
+  color: #fff;
+}
+
+.console-command.success {
+  background: #14804a;
+  border-color: #14804a;
+  color: #fff;
+}
+
+.console-command.success:hover:not(:disabled) {
+  background: #0f6b3d;
+  border-color: #0f6b3d;
+  color: #fff;
+}
+
+.console-command.danger {
+  background: #b42318;
+  border-color: #b42318;
+  color: #fff;
+}
+
+.console-command.danger:hover:not(:disabled) {
+  background: #912018;
+  border-color: #912018;
+  color: #fff;
+}
+
+.console-command.secondary {
+  background: #fff;
+}
+
+.console-command.ghost {
+  background: transparent;
+  border-color: transparent;
+}
+
+.console-command.ghost:hover:not(:disabled) {
+  background: #f2f5f9;
+  border-color: #e1e7ef;
+}
+
+.console-command.dense {
+  min-width: 82px;
+}
+
+.console-command:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.console-command .el-icon {
+  font-size: 14px;
+}
+
+.console-icon-command {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--console-line);
+  border-radius: 6px;
+  background: #fff;
+  color: #344054;
+  cursor: pointer;
+  font: inherit;
+  box-shadow: none;
+}
+
+.console-icon-command:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #b9c3d3;
+  color: #1f2937;
+}
+
+.console-icon-command.primary {
+  background: var(--console-blue);
+  border-color: var(--console-blue);
+  color: #fff;
+}
+
+.console-icon-command.primary:hover:not(:disabled) {
+  background: var(--console-blue-dark);
+  border-color: var(--console-blue-dark);
+  color: #fff;
+}
+
+.console-icon-command .el-icon {
+  font-size: 15px;
+}
+
+.dialog-footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(140px, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.kpi-card {
+  min-height: 78px;
+  padding: 10px 12px;
+  background: var(--console-panel);
+  border: 1px solid var(--console-line);
+  border-radius: 6px;
+}
+
+.kpi-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+  color: var(--console-muted);
+  font-size: 12px;
+}
+
+.kpi-value {
+  color: var(--console-ink);
+  font-size: 24px;
+  font-weight: 750;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-hint {
+  margin-top: 5px;
+  color: var(--console-muted);
+  font-size: 12px;
+}
+
+.saved-views,
+.filters,
+.table-shell {
+  background: var(--console-panel);
+  border: 1px solid var(--console-line);
+  border-radius: 6px;
+  box-shadow: var(--console-shadow);
+}
+
+.saved-views {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 10px;
+  margin-bottom: 8px;
+}
+
+.view-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.view-tab {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--console-muted);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 650;
+}
+
+.view-tab.active {
+  background: #eef4ff;
+  color: var(--console-blue-dark);
+  border-color: #c7d7fe;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: 190px 132px 126px 160px 160px 160px 230px auto;
+  gap: 8px;
+  align-items: end;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--console-muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.field :deep(.el-input__wrapper),
+.field :deep(.el-select__wrapper) {
+  min-height: 32px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px var(--console-line) inset;
+}
+
+.field :deep(.el-input__wrapper:hover),
+.field :deep(.el-select__wrapper:hover) {
+  box-shadow: 0 0 0 1px #b9c3d3 inset;
+}
+
+.field :deep(.el-input__wrapper.is-focus),
+.field :deep(.el-select__wrapper.is-focused) {
+  box-shadow:
+    0 0 0 1px #84adff inset,
+    0 0 0 3px #eff4ff;
+}
+
+.date-field :deep(.el-date-editor) {
+  width: 100%;
+  height: 32px;
+}
+
+.filter-actions {
+  align-self: end;
+  white-space: nowrap;
+}
+
+.table-shell {
+  overflow: hidden;
+}
+
+.table-toolbar {
+  min-height: 44px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--console-line);
+  background: #fff;
+}
+
+.table-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: var(--console-ink);
+  font-weight: 750;
+}
+
+.table-meta,
+.pagination-meta {
+  color: var(--console-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.table-scroll {
+  width: 100%;
+  overflow: hidden;
+}
+
+.operations-table {
+  width: 100%;
+}
+
+.operations-table :deep(.el-table__inner-wrapper::before),
+.operations-table :deep(.el-table__border-left-patch) {
+  background: var(--console-line-soft);
+}
+
+.operations-table :deep(.el-table__header th) {
+  height: 34px;
+  background: #f8fafc;
+  color: #475467;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.operations-table :deep(.el-table__row .el-table__cell) {
+  height: 40px;
+  padding: 4px 0;
+  color: var(--console-ink);
+  background: #fff;
+}
+
+.operations-table :deep(.el-table__cell .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  line-height: 1.35;
+}
+
+.operations-table :deep(.description-column .cell) {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.operations-table :deep(.el-table__row:hover > .el-table__cell) {
+  background: #f9fbff;
+}
+
+.operations-table :deep(.el-table-fixed-column--left),
+.operations-table :deep(.el-table__cell.is-left) {
+  background: #fff;
+  background-clip: padding-box;
+}
+
+.operations-table :deep(th.el-table-fixed-column--left),
+.operations-table :deep(th.el-table__cell.is-left) {
+  background: #f8fafc;
+  background-clip: padding-box;
+}
+
+.operations-table :deep(.el-table__row:hover > .el-table-fixed-column--left),
+.operations-table :deep(.el-table__row:hover > .el-table__cell.is-left) {
+  background: #f9fbff;
+}
+
+.operations-table :deep(.el-table-fixed-column--left:last-of-type) {
+  box-shadow: 1px 0 0 var(--console-line-soft), 12px 0 18px -18px rgba(16, 24, 40, 0.45);
+}
+
+.eval-link {
+  font-weight: 750;
 }
 
 .evaluation-description-cell {
@@ -1240,245 +1862,17 @@ onMounted(() => {
   text-align: left;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 32px;
-  padding: 24px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border-radius: 20px;
-}
-
-.page-title {
-  font-size: 28px;
-  font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0 0 8px 0;
-}
-
-.page-description {
-  color: #7f8c8d;
-  margin: 0;
-  font-size: 16px;
-  opacity: 0.8;
-}
-
-.header-right .el-button {
-  height: 48px;
-  padding: 0 24px;
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  color: #fff;
-  transition: all 0.3s ease;
-}
-
-.header-right .el-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-}
-
-.filter-card {
-  margin-bottom: 24px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.filter-card:hover {
-  transform: none;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
-}
-
-.search-form {
-  margin: 0;
-  padding: 8px;
-}
-
-.search-form :deep(.el-form-item) {
-  margin-bottom: 16px;
-}
-
-.search-form :deep(.el-input__wrapper) {
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.search-form :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-.search-form :deep(.el-select .el-input__wrapper) {
-  border-radius: 12px;
-}
-
-.search-form :deep(.el-button) {
-  border-radius: 12px;
-  height: 40px;
-  padding: 0 20px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.search-form :deep(.el-button--primary) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  color: #fff;
-}
-
-.search-form :deep(.el-button--primary:hover) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-}
-
-.search-form :deep(.el-button:not(.el-button--primary):hover) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.table-card {
-  margin-bottom: 24px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.table-card:hover {
-  transform: none;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
-}
-
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.table-actions .el-button {
-  border-radius: 12px;
-  height: 40px;
-  padding: 0 16px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.table-actions .el-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-/* Fix split button border radius */
-.table-actions .export-dropdown :deep(.el-button-group .el-button) {
-  border-radius: 0;
-  margin-right: -1px; /* merge borders */
-}
-
-.table-actions .export-dropdown :deep(.el-button-group .el-button:first-child) {
-  border-top-left-radius: 12px;
-  border-bottom-left-radius: 12px;
-}
-
-.table-actions .export-dropdown :deep(.el-button-group .el-button:last-child) {
-  border-top-right-radius: 12px;
-  border-bottom-right-radius: 12px;
-}
-
-.table-card :deep(.el-table) {
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.table-card :deep(.el-table th) {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  font-weight: 600;
-  color: #2c3e50;
-  text-align: center; /* Center align all table headers */
-}
-
-.table-card :deep(.el-table th .cell) {
-  text-align: center; /* Ensure header text is centered */
-}
-
-/* Center align all table data cells */
-.table-card :deep(.el-table td) {
-  text-align: center; /* Center align all table data */
-}
-
-.table-card :deep(.el-table td .cell) {
-  text-align: center; /* Ensure cell content is centered */
-  justify-content: center; /* Center flex content */
-}
-
-.table-card :deep(.el-table tr:hover > td) {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-}
-
-.table-card :deep(.el-link) {
-  font-weight: 500;
-}
-
-.table-card :deep(.el-tag) {
-  border-radius: 8px;
-  font-weight: 500;
-}
-
-.progress-text {
-  font-size: 12px;
-  color: #606266;
-  margin-left: 8px;
-}
-
 .pagination-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 12px;
-  padding: 16px 0;
-}
-
-.pagination-container :deep(.el-pagination) {
-  --el-pagination-button-bg-color: transparent;
-  --el-pagination-hover-color: #667eea;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 12px 20px;
+  min-height: 46px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+  border-top: 1px solid var(--console-line);
+  background: #fff;
 }
 
-.pagination-container :deep(.el-pagination .btn-next),
-.pagination-container :deep(.el-pagination .btn-prev) {
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-.pagination-container :deep(.el-pagination .btn-next:hover),
-.pagination-container :deep(.el-pagination .btn-prev:hover) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-/* Fix all pagination text alignment */
 .pagination-container :deep(.el-pagination .el-pager li),
 .pagination-container :deep(.el-pagination .el-pagination__total),
 .pagination-container :deep(.el-pagination .el-pagination__sizes),
@@ -1495,46 +1889,33 @@ onMounted(() => {
   margin-bottom: 0;
 }
 
-/* Expand table width and improve column spacing */
-.table-card :deep(.el-table) {
-  width: 100%;
-  /* min-width removed to allow responsive behavior */
+@media (max-width: 1200px) {
+  .kpi-strip {
+    grid-template-columns: repeat(3, minmax(140px, 1fr));
+  }
+
+  .filters {
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+  }
 }
 
-/* Ensure table container scrolls on small screens */
-.table-card :deep(.el-card__body) {
-  overflow-x: auto;
-}
-
-.table-scroll {
-  width: 100%;
-  overflow-x: auto;
-}
-
-/* 响应式设计 */
 @media (max-width: 768px) {
-  .page-header {
+  .page-head,
+  .saved-views,
+  .pagination-container,
+  .table-toolbar {
     flex-direction: column;
-    gap: 16px;
-  }
-
-  .search-form {
-    display: block;
-  }
-
-  .search-form :deep(.el-form-item) {
-    display: block;
-    margin-bottom: 16px;
-  }
-
-  .search-form :deep(.el-form-item__content) {
-    margin-left: 0 !important;
-  }
-
-  .table-header {
-    flex-direction: column;
-    gap: 12px;
     align-items: flex-start;
   }
+
+  .kpi-strip,
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-actions {
+    align-self: stretch;
+  }
+
 }
 </style>

@@ -84,6 +84,57 @@
   "evaluation": {
     "title": "Evaluation Management",
     "description": "Manage and view all product evaluations",
+    "console": {
+      "title": "Evaluation Management",
+      "subtitle": "Monitor product evaluations, owners, process stages, TAT, and export-ready records.",
+      "daySuffix": "d",
+      "tableMeta": "{total} records · sorted by {sort}",
+      "paginationMeta": "Showing {start}-{end} of {total} · {size}/page",
+      "savedViews": {
+        "allActive": "All Active {count}",
+        "noUpdate": "No Update {count}",
+        "openOver10d": "Open >10d {count}",
+        "reliabilityFailures": "Reliability Failures {count}"
+      },
+      "kpis": {
+        "openEvaluations": {
+          "label": "Open evaluations",
+          "hint": "in progress or paused"
+        },
+        "staleOpenEvaluations": {
+          "label": "No update >48h",
+          "hint": "stale open items"
+        },
+        "openOver10d": {
+          "label": "Open >10d",
+          "hint": "elapsed from start"
+        },
+        "medianOpenAge": {
+          "label": "Median open age",
+          "hint": "open items only"
+        },
+        "createdThisMonth": {
+          "label": "Created this month",
+          "hint": "new evaluation records"
+        },
+        "completedThisMonth": {
+          "label": "Completed this month",
+          "hint": "closed this month"
+        }
+      },
+      "sort": {
+        "asc": "asc",
+        "desc": "desc",
+        "defaultCreatedDesc": "Created Date desc",
+        "sortedBy": "{field} {direction}",
+        "fields": {
+          "evaluation_number": "Evaluation No.",
+          "product_name": "Product",
+          "pgm_version": "PGM Version",
+          "start_date": "Start Date"
+        }
+      }
+    },
     "new": {
       "title": "New Evaluation",
       "description": "Create a new product evaluation project"
@@ -120,7 +171,7 @@
     "addProcess": "Add Process",
     "remove": "Remove",
     "scsCharger": "SCS Charger",
-    "headOfficeCharger": "Head Office Charger",
+    "headOfficeCharger": "HO Charger",
     "complete": "Complete",
     "basicInfo": "Basic Information",
     "basicInformation": "Basic Information",
@@ -141,17 +192,17 @@
     "submitSuccess": "Evaluation submitted successfully",
     "submitError": "Submit failed",
     "cancelConfirm": "Are you sure you want to cancel? Unsaved data will be lost.",
-    "evaluationNumber": "Evaluation Number",
+    "evaluationNumber": "Evaluation No.",
     "typeLabel": "Evaluation Type",
-    "evaluationType": "Evaluation Type",
+    "evaluationType": "Type",
     "evaluationTypeLabel": "Evaluation Type (Label)",
     "productName": "Product Name",
     "partNumber": "P/N",
     "startDate": "Start Date",
     "actualEndDate": "Actual End Date",
-    "reason": "Evaluation Reason",
+    "reason": "Reason",
     "reasonLabel": "Evaluation Reason (Label)",
-    "descriptionLabel": "Evaluation Description",
+    "descriptionLabel": "Description",
     "pgmVersionColumn": "PGM Version",
     "evaluationDescription": "Evaluation Description",
     "pgmVersion": "PGM Version",
@@ -221,7 +272,7 @@
     "pgmLoginImage": "PGM Login Image",
     "pgmLoginPasteHint": "Paste an image directly here or use Upload.",
     "placeholders": {
-      "evaluationNumber": "Enter evaluation number",
+      "evaluationNumber": "Enter evaluation no.",
       "evaluationType": "Select evaluation type",
       "status": "Select status",
       "product": "Enter product name",
