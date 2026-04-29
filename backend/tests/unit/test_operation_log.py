@@ -5,10 +5,11 @@ from app.models.operation_log import OperationLog, OperationType
 
 def test_operation_log_creation(session):
     """Test creating a new operation log."""
+    target_id = 987654
     log = OperationLog(
         operation_type=OperationType.CREATE.value,
         target_type="evaluation",
-        target_id=1,
+        target_id=target_id,
         target_description="Created evaluation EV-20250101-001",
         operation_description="Created a new evaluation",
         ip_address="127.0.0.1",
@@ -19,12 +20,12 @@ def test_operation_log_creation(session):
     session.commit()
 
     # Retrieve the log from the database
-    retrieved_log = session.query(OperationLog).filter_by(target_id=1).first()
+    retrieved_log = session.query(OperationLog).filter_by(target_id=target_id).first()
 
     assert retrieved_log is not None
     assert retrieved_log.operation_type == OperationType.CREATE.value
     assert retrieved_log.target_type == "evaluation"
-    assert retrieved_log.target_id == 1
+    assert retrieved_log.target_id == target_id
     assert retrieved_log.target_description == "Created evaluation EV-20250101-001"
     assert retrieved_log.operation_description == "Created a new evaluation"
     assert retrieved_log.ip_address == "127.0.0.1"
