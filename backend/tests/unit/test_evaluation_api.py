@@ -1,8 +1,13 @@
 """Unit tests for evaluation API persistence."""
 
-from datetime import date
+from datetime import date, timedelta
 
-from app.models.evaluation import Evaluation
+from app.models.evaluation import (
+    Evaluation,
+    EvaluationProcessStep,
+    EvaluationStepFailure,
+)
+from app.utils.timezone import utcnow
 from tests.helpers import create_test_evaluation, json_response
 
 
@@ -97,3 +102,232 @@ def test_complete_status_preserves_existing_end_date_when_not_provided(client, s
 
     session.refresh(evaluation)
     assert evaluation.actual_end_date == date(2026, 3, 19)
+
+
+def _set_updated_at(session, evaluation, updated_at):
+    evaluation.updated_at = updated_at
+    session.add(evaluation)
+    session.commit()
+
+
+def _add_failed_step(session, evaluation, fail_units=1):
+    step = EvaluationProcessStep(
+        evaluation_id=evaluation.id,
+        lot_number="LOT-FAIL",
+        quantity=10,
+        order_index=1,
+        step_code="M031",
+        results_applicable=True,
+        total_units=10,
+        pass_units=10 - fail_units,
+        fail_units=fail_units,
+    )
+    session.add(step)
+    session.flush()
+    session.add(
+        EvaluationStepFailure(
+            step_id=step.id,
+            sequence=1,
+            fail_code_text="3379",
+            analysis_result="Signal integrity issue",
+        )
+    )
+    session.commit()
+
+
+def test_evaluation_kpis_returns_global_operational_metrics(client, session):
+    """GET /api/evaluations/kpis should aggregate the filtered operational set."""
+    today = utcnow().date()
+    stale_time = utcnow() - timedelta(hours=49)
+    previous_month = utcnow().replace(
+        day=1, hour=0, minute=0, second=0, microsecond=0
+    ) - timedelta(days=1)
+
+    active_old = create_test_evaluation(
+        session,
+        evaluation_number="EV-KPI-OLD",
+        product_name="Console SSD",
+        status="in_progress",
+        start_date=today - timedelta(days=12),
+    )
+    _set_updated_at(session, active_old, stale_time)
+    _add_failed_step(session, active_old, fail_units=2)
+
+    active_fresh = create_test_evaluation(
+        session,
+        evaluation_number="EV-KPI-FRESH",
+        product_name="Console SSD",
+        status="paused",
+        start_date=today - timedelta(days=4),
+    )
+    _set_updated_at(session, active_fresh, utcnow())
+
+    create_test_evaluation(
+        session,
+        evaluation_number="EV-KPI-COMPLETE",
+        product_name="Console SSD",
+        status="completed",
+        start_date=today - timedelta(days=8),
+        actual_end_date=today,
+    )
+
+    create_test_evaluation(
+        session,
+        evaluation_number="EV-KPI-PREVIOUS-MONTH",
+        product_name="Console SSD",
+        status="draft",
+        start_date=today,
+        created_at=previous_month,
+    )
+
+    create_test_evaluation(
+        session,
+        evaluation_number="EV-KPI-OTHER",
+        product_name="Other Product",
+        status="in_progress",
+        start_date=today - timedelta(days=20),
+    )
+
+    response = client.get("/api/evaluations/kpis?product=Console")
+    body = json_response(response)
+
+    assert response.status_code == 200
+    assert body["success"] is True
+    assert body["data"] == {
+        "open_evaluations": 2,
+        "stale_open_evaluations": 1,
+        "open_over_10d": 1,
+        "median_open_age_days": 8.0,
+        "created_this_month": 3,
+        "reliability_failures": 1,
+        "completed_this_month": 1,
+    }
+
+
+def test_evaluation_list_operational_view_all_active(client, session):
+    """The all_active operational view should return only active evaluations."""
+    create_test_evaluation(
+        session,
+        evaluation_number="EV-ACTIVE-1",
+        product_name="Active View Product",
+        status="in_progress",
+    )
+    create_test_evaluation(
+        session,
+        evaluation_number="EV-ACTIVE-2",
+        product_name="Active View Product",
+        status="paused",
+    )
+    create_test_evaluation(
+        session,
+        evaluation_number="EV-ACTIVE-3",
+        product_name="Active View Product",
+        status="completed",
+    )
+
+    response = client.get(
+        "/api/evaluations?operational_view=all_active&product=Active%20View&per_page=20"
+    )
+    body = json_response(response)
+
+    numbers = {row["evaluation_number"] for row in body["data"]["evaluations"]}
+    assert response.status_code == 200
+    assert numbers == {"EV-ACTIVE-1", "EV-ACTIVE-2"}
+
+
+def test_evaluation_list_operational_view_no_update_48h(client, session):
+    """The no_update_48h view should return stale active evaluations only."""
+    stale = create_test_evaluation(
+        session,
+        evaluation_number="EV-STALE",
+        product_name="Stale View Product",
+        status="in_progress",
+        start_date=utcnow().date(),
+    )
+    _set_updated_at(session, stale, utcnow() - timedelta(hours=49))
+    fresh = create_test_evaluation(
+        session,
+        evaluation_number="EV-FRESH",
+        product_name="Stale View Product",
+        status="in_progress",
+        start_date=utcnow().date(),
+    )
+    _set_updated_at(session, fresh, utcnow())
+    completed = create_test_evaluation(
+        session,
+        evaluation_number="EV-STALE-COMPLETE",
+        product_name="Stale View Product",
+        status="completed",
+        start_date=utcnow().date(),
+    )
+    _set_updated_at(session, completed, utcnow() - timedelta(hours=72))
+
+    response = client.get(
+        "/api/evaluations?operational_view=no_update_48h&product=Stale%20View&per_page=20"
+    )
+    body = json_response(response)
+
+    assert response.status_code == 200
+    numbers = {row["evaluation_number"] for row in body["data"]["evaluations"]}
+    assert numbers == {"EV-STALE"}
+
+
+def test_evaluation_list_operational_view_open_over_10d(client, session):
+    """The open_over_10d view should return active evaluations older than 10 days."""
+    today = utcnow().date()
+    create_test_evaluation(
+        session,
+        evaluation_number="EV-OLD",
+        product_name="Old View Product",
+        status="in_progress",
+        start_date=today - timedelta(days=10),
+    )
+    create_test_evaluation(
+        session,
+        evaluation_number="EV-YOUNG",
+        product_name="Old View Product",
+        status="paused",
+        start_date=today - timedelta(days=9),
+    )
+    create_test_evaluation(
+        session,
+        evaluation_number="EV-OLD-COMPLETE",
+        product_name="Old View Product",
+        status="completed",
+        start_date=today - timedelta(days=20),
+    )
+
+    response = client.get(
+        "/api/evaluations?operational_view=open_over_10d&product=Old%20View&per_page=20"
+    )
+    body = json_response(response)
+
+    assert response.status_code == 200
+    numbers = {row["evaluation_number"] for row in body["data"]["evaluations"]}
+    assert numbers == {"EV-OLD"}
+
+
+def test_evaluation_list_operational_view_has_failures(client, session):
+    """The has_failures view should return evaluations with failed nested steps."""
+    failed = create_test_evaluation(
+        session,
+        evaluation_number="EV-FAILED",
+        product_name="Failure View Product",
+        status="in_progress",
+    )
+    _add_failed_step(session, failed, fail_units=1)
+    create_test_evaluation(
+        session,
+        evaluation_number="EV-PASSING",
+        product_name="Failure View Product",
+        status="in_progress",
+    )
+
+    response = client.get(
+        "/api/evaluations?operational_view=has_failures&product=Failure%20View&per_page=20"
+    )
+    body = json_response(response)
+
+    assert response.status_code == 200
+    numbers = {row["evaluation_number"] for row in body["data"]["evaluations"]}
+    assert numbers == {"EV-FAILED"}

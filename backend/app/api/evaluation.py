@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from flask import Blueprint, Response, current_app, jsonify, request
@@ -26,6 +26,14 @@ from app.utils import get_client_ip
 from app.utils.timezone import resolve_timezone_from_request, timezone_label, utcnow
 
 evaluation_bp = Blueprint("evaluation", __name__)
+
+ACTIVE_EVALUATION_STATUSES = ("in_progress", "paused")
+VALID_OPERATIONAL_VIEWS = {
+    "all_active",
+    "no_update_48h",
+    "open_over_10d",
+    "has_failures",
+}
 
 
 def _safe_int(value: object, default: int = 0) -> int:
@@ -79,6 +87,129 @@ def _parse_multi_param(value: str | None, list_values: list[str]) -> list[str]:
             [part.strip() for part in re.split(r"[|,]", value) if part.strip()]
         )
     return _dedupe_preserve_order(tokens)
+
+
+def _failure_evaluation_ids_query():
+    return (
+        db.session.query(EvaluationProcessStep.evaluation_id)
+        .outerjoin(
+            EvaluationStepFailure,
+            EvaluationStepFailure.step_id == EvaluationProcessStep.id,
+        )
+        .filter(
+            or_(
+                EvaluationProcessStep.fail_units > 0,
+                EvaluationStepFailure.id.isnot(None),
+            )
+        )
+        .distinct()
+    )
+
+
+def _apply_evaluation_base_filters(query, args):
+    evaluation_number = args.get("evaluation_number")
+    status = args.get("status")
+    evaluation_type = args.get("evaluation_type")
+    product_name = args.get("product_name")
+    if not product_name:
+        product_name = args.get("product")
+    product_names = _parse_multi_param(product_name, args.getlist("product"))
+
+    scs_charger_name = args.get("scs_charger_name")
+    scs_charger_names = _parse_multi_param(
+        scs_charger_name, args.getlist("scs_charger_name")
+    )
+
+    head_office_charger_name = args.get("head_office_charger_name")
+    head_office_charger_names = _parse_multi_param(
+        head_office_charger_name, args.getlist("head_office_charger_name")
+    )
+    start_date_from = args.get("start_date_from")
+    start_date_to = args.get("start_date_to")
+
+    if evaluation_number:
+        query = query.filter(Evaluation.evaluation_number.ilike(f"%{evaluation_number}%"))
+    if status:
+        query = query.filter(Evaluation.status == status)
+    if evaluation_type:
+        query = query.filter(Evaluation.evaluation_type == evaluation_type)
+    if product_names:
+        query = query.filter(
+            or_(*[Evaluation.product_name.ilike(f"%{name}%") for name in product_names])
+        )
+    if scs_charger_names:
+        query = query.filter(
+            or_(
+                *[
+                    Evaluation.scs_charger_name.ilike(f"%{name}%")
+                    for name in scs_charger_names
+                ]
+            )
+        )
+    if head_office_charger_names:
+        query = query.filter(
+            or_(
+                *[
+                    Evaluation.head_office_charger_name.ilike(f"%{name}%")
+                    for name in head_office_charger_names
+                ]
+            )
+        )
+    if start_date_from:
+        try:
+            start_date_from_value = datetime.strptime(start_date_from, "%Y-%m-%d").date()
+            query = query.filter(Evaluation.start_date >= start_date_from_value)
+        except ValueError:
+            current_app.logger.warning(
+                "Invalid start_date_from parameter: %s", start_date_from
+            )
+    if start_date_to:
+        try:
+            start_date_to_value = datetime.strptime(start_date_to, "%Y-%m-%d").date()
+            query = query.filter(Evaluation.start_date <= start_date_to_value)
+        except ValueError:
+            current_app.logger.warning(
+                "Invalid start_date_to parameter: %s", start_date_to
+            )
+
+    return query
+
+
+def _apply_operational_view(query, operational_view: str | None):
+    now = utcnow()
+    today = now.date()
+
+    if not operational_view:
+        return query
+    if operational_view not in VALID_OPERATIONAL_VIEWS:
+        current_app.logger.warning("Unsupported operational_view: %s", operational_view)
+        return query
+    if operational_view == "all_active":
+        return query.filter(Evaluation.status.in_(ACTIVE_EVALUATION_STATUSES))
+    if operational_view == "no_update_48h":
+        return query.filter(
+            Evaluation.status.in_(ACTIVE_EVALUATION_STATUSES),
+            Evaluation.updated_at <= now - timedelta(hours=48),
+        )
+    if operational_view == "open_over_10d":
+        return query.filter(
+            Evaluation.status.in_(ACTIVE_EVALUATION_STATUSES),
+            Evaluation.start_date <= today - timedelta(days=10),
+        )
+    if operational_view == "has_failures":
+        return query.filter(Evaluation.id.in_(_failure_evaluation_ids_query()))
+
+    return query
+
+
+def _median(values: list[float]) -> float:
+    if not values:
+        return 0
+    ordered = sorted(values)
+    midpoint = len(ordered) // 2
+    if len(ordered) % 2:
+        return round(float(ordered[midpoint]), 1)
+    return round((ordered[midpoint - 1] + ordered[midpoint]) / 2, 1)
 
 
 STEP_CODE_CANONICAL = {
@@ -817,89 +948,13 @@ def get_evaluations() -> tuple[Response, int]:
         # Get query parameters
         page = request.args.get("page", 1, type=int)
         per_page = request.args.get("per_page", 10, type=int)
-        evaluation_number = request.args.get("evaluation_number")
-        status = request.args.get("status")
-        evaluation_type = request.args.get("evaluation_type")
-        product_name = request.args.get("product_name")
-        if not product_name:
-            product_name = request.args.get("product")
-        product_names = _parse_multi_param(
-            product_name, request.args.getlist("product")
-        )
-
-        scs_charger_name = request.args.get("scs_charger_name")
-        scs_charger_names = _parse_multi_param(
-            scs_charger_name, request.args.getlist("scs_charger_name")
-        )
-
-        head_office_charger_name = request.args.get("head_office_charger_name")
-        head_office_charger_names = _parse_multi_param(
-            head_office_charger_name, request.args.getlist("head_office_charger_name")
-        )
-        start_date_from = request.args.get("start_date_from")
-        start_date_to = request.args.get("start_date_to")
+        operational_view = request.args.get("operational_view")
 
         tz = resolve_timezone_from_request(request.args)
 
         # Build query
-        query = Evaluation.query
-
-        # Apply filters
-        if evaluation_number:
-            query = query.filter(
-                Evaluation.evaluation_number.ilike(f"%{evaluation_number}%")
-            )
-        if status:
-            query = query.filter(Evaluation.status == status)
-        if evaluation_type:
-            query = query.filter(Evaluation.evaluation_type == evaluation_type)
-        if product_names:
-            query = query.filter(
-                or_(
-                    *[
-                        Evaluation.product_name.ilike(f"%{name}%")
-                        for name in product_names
-                    ]
-                )
-            )
-        if scs_charger_names:
-            query = query.filter(
-                or_(
-                    *[
-                        Evaluation.scs_charger_name.ilike(f"%{name}%")
-                        for name in scs_charger_names
-                    ]
-                )
-            )
-        if head_office_charger_names:
-            query = query.filter(
-                or_(
-                    *[
-                        Evaluation.head_office_charger_name.ilike(f"%{name}%")
-                        for name in head_office_charger_names
-                    ]
-                )
-            )
-        if start_date_from:
-            try:
-                start_date_from_value = datetime.strptime(
-                    start_date_from, "%Y-%m-%d"
-                ).date()
-                query = query.filter(Evaluation.start_date >= start_date_from_value)
-            except ValueError:
-                current_app.logger.warning(
-                    "Invalid start_date_from parameter: %s", start_date_from
-                )
-        if start_date_to:
-            try:
-                start_date_to_value = datetime.strptime(
-                    start_date_to, "%Y-%m-%d"
-                ).date()
-                query = query.filter(Evaluation.start_date <= start_date_to_value)
-            except ValueError:
-                current_app.logger.warning(
-                    "Invalid start_date_to parameter: %s", start_date_to
-                )
+        query = _apply_evaluation_base_filters(Evaluation.query, request.args)
+        query = _apply_operational_view(query, operational_view)
 
         # Sorting
         sort_by = request.args.get("sort_by")
@@ -974,6 +1029,73 @@ def get_evaluations() -> tuple[Response, int]:
         current_app.logger.error(f"Error getting evaluations: {str(e)}")
         return jsonify(
             {"success": False, "message": "Failed to get evaluations", "error": str(e)}
+        ), 500
+
+
+@evaluation_bp.route("/kpis", methods=["GET"])
+def get_evaluation_kpis() -> tuple[Response, int]:
+    """Get aggregate KPI metrics for the evaluation list console."""
+    try:
+        tz = resolve_timezone_from_request(request.args)
+        now = utcnow()
+        today = now.date()
+        month_start = today.replace(day=1)
+        month_start_at = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        if month_start.month == 12:
+            next_month_start = month_start.replace(
+                year=month_start.year + 1, month=1
+            )
+            next_month_start_at = month_start_at.replace(
+                year=month_start_at.year + 1, month=1
+            )
+        else:
+            next_month_start = month_start.replace(month=month_start.month + 1)
+            next_month_start_at = month_start_at.replace(month=month_start_at.month + 1)
+
+        base_query = _apply_evaluation_base_filters(Evaluation.query, request.args)
+        open_query = base_query.filter(Evaluation.status.in_(ACTIVE_EVALUATION_STATUSES))
+
+        open_start_dates = [
+            row.start_date
+            for row in open_query.with_entities(Evaluation.start_date).all()
+            if row.start_date
+        ]
+        open_ages = [max((today - start_date).days, 0) for start_date in open_start_dates]
+
+        data = {
+            "open_evaluations": open_query.count(),
+            "stale_open_evaluations": open_query.filter(
+                Evaluation.updated_at <= now - timedelta(hours=48)
+            ).count(),
+            "open_over_10d": open_query.filter(
+                Evaluation.start_date <= today - timedelta(days=10)
+            ).count(),
+            "median_open_age_days": _median(open_ages),
+            "created_this_month": base_query.filter(
+                Evaluation.created_at >= month_start_at,
+                Evaluation.created_at < next_month_start_at,
+            ).count(),
+            "reliability_failures": base_query.filter(
+                Evaluation.id.in_(_failure_evaluation_ids_query())
+            ).count(),
+            "completed_this_month": base_query.filter(
+                Evaluation.status == EvaluationStatus.COMPLETED.value,
+                Evaluation.actual_end_date >= month_start,
+                Evaluation.actual_end_date < next_month_start,
+            ).count(),
+        }
+
+        response = jsonify({"success": True, "data": data})
+        response.headers["X-Server-Timezone"] = timezone_label(tz)
+        return response
+    except Exception as e:
+        current_app.logger.error(f"Error getting evaluation KPIs: {str(e)}")
+        return jsonify(
+            {
+                "success": False,
+                "message": "Failed to get evaluation KPIs",
+                "error": str(e),
+            }
         ), 500
 
 
