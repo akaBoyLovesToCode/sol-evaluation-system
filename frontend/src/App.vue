@@ -2,17 +2,22 @@
   <el-config-provider :locale="elLocale">
     <div id="app" class="app-root">
       <header class="topbar">
-        <div class="left">
-          <el-button class="back-btn" text @click="goBack">
-            <template #icon><ArrowLeft /></template>
-          </el-button>
+        <div class="topbar-left">
+          <span class="topbar-mark">Sol.</span>
+          <div class="topbar-title">
+            <span class="topbar-product">S.T.A.R.</span>
+          </div>
         </div>
-        <div class="right">
-          <el-dropdown class="lang-dropdown" @command="changeLanguage">
-            <el-button text class="lang-button">
-              <el-icon><Setting /></el-icon>
-              <span class="lang-label">{{ currentLanguage }}</span>
-            </el-button>
+        <div class="topbar-right">
+          <el-dropdown class="lang-dropdown" trigger="click" @command="changeLanguage">
+            <button
+              class="lang-chip"
+              type="button"
+              :aria-label="`Switch language: ${currentLanguage}`"
+            >
+              <span class="lang-dot" aria-hidden="true"></span>
+              <span>{{ currentLanguage }}</span>
+            </button>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="zh">中文</el-dropdown-item>
@@ -76,58 +81,113 @@ const currentLanguage = computed(() => {
   }
 })
 
-const goBack = () => {
-  window.history.back()
-}
 </script>
 
 <style>
 .app-root {
   min-height: 100vh;
-  background: #f5f6f8;
+  background: #f5f7fa;
   display: flex;
   flex-direction: column;
+  color: #1f2937;
 }
 
 .topbar {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 20;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 12px 20px;
-  padding: 10px 14px;
+  gap: 16px;
+  margin: 0;
+  padding: 0 20px;
   background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid #d8dee8;
+  box-shadow: none;
 }
 
-.left,
-.right {
+.topbar-left,
+.topbar-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
-.back-btn :deep(.el-icon) {
-  font-size: 18px;
-}
-.lang-dropdown .lang-button {
+.topbar-mark,
+.lang-chip {
+  height: 28px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  border: 1px solid #d8dee8;
+  background: #ffffff;
+  color: #344054;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1;
+  box-shadow: none;
+}
+
+.topbar-mark {
+  width: 36px;
+  padding: 0;
+  background: #172554;
+  border-color: #172554;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.lang-chip:hover {
+  background: #f8fafc;
+  border-color: #b9c3d3;
+  color: #1f2937;
+}
+
+.topbar-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.topbar-product {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.topbar-section {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.lang-chip {
   gap: 6px;
-  color: #606266;
+  min-width: 82px;
+  padding: 0 9px;
 }
-.lang-dropdown .lang-button:hover {
-  color: #303133;
+
+.lang-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #155eef;
 }
-.lang-label {
-  font-weight: 500;
+
+.lang-dropdown {
+  display: inline-flex;
+  align-items: center;
 }
 
 .content {
-  padding: 20px;
+  padding: 16px 20px 20px;
 }
 </style>
