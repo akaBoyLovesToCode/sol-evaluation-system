@@ -1,0 +1,1359 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>S.T.A.R. NAND View Prototype</title>
+    <style>
+      :root {
+        --console-bg: #f5f7fa;
+        --console-panel: #ffffff;
+        --console-line: #d8dee8;
+        --console-line-soft: #e8edf3;
+        --console-ink: #1f2937;
+        --console-muted: #667085;
+        --console-blue: #155eef;
+        --console-blue-dark: #0f48b8;
+        --console-green: #14804a;
+        --console-amber: #b54708;
+        --console-red: #b42318;
+        --console-gray: #475467;
+        --console-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--console-bg);
+        color: var(--console-ink);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Noto Sans", sans-serif;
+        font-size: 13px;
+        letter-spacing: 0;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      .app-root {
+        min-height: 100vh;
+        background: var(--console-bg);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 0 20px;
+        background: #fff;
+        border-bottom: 1px solid var(--console-line);
+      }
+
+      .topbar-left,
+      .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .topbar-mark {
+        width: 36px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #172554;
+        border-radius: 6px;
+        background: #172554;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .topbar-product {
+        color: #111827;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+
+      .lang-chip {
+        height: 28px;
+        min-width: 82px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 0 9px;
+        border: 1px solid var(--console-line);
+        border-radius: 6px;
+        background: #fff;
+        color: #344054;
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .lang-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--console-blue);
+      }
+
+      .content {
+        padding: 16px 20px 20px;
+      }
+
+      .page-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 14px;
+      }
+
+      .page-title {
+        margin: 0 0 4px;
+        color: var(--console-ink);
+        font-size: 22px;
+        font-weight: 750;
+        line-height: 1.2;
+      }
+
+      .page-description {
+        margin: 0;
+        color: var(--console-muted);
+        font-size: 13px;
+      }
+
+      .page-actions,
+      .table-actions,
+      .filter-actions,
+      .view-tabs,
+      .legend-row,
+      .chip-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .console-command {
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 11px;
+        border: 1px solid var(--console-line);
+        border-radius: 6px;
+        background: #fff;
+        color: #344054;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+        white-space: nowrap;
+        box-shadow: none;
+      }
+
+      .console-command.primary {
+        background: var(--console-blue);
+        border-color: var(--console-blue);
+        color: #fff;
+      }
+
+      .console-command.ghost {
+        background: transparent;
+        border-color: transparent;
+      }
+
+      .console-command.secondary {
+        background: #fff;
+      }
+
+      .console-command:hover {
+        background: #f8fafc;
+        border-color: #b9c3d3;
+        color: #1f2937;
+      }
+
+      .console-command.primary:hover {
+        background: var(--console-blue-dark);
+        border-color: var(--console-blue-dark);
+        color: #fff;
+      }
+
+      .kpi-strip {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(140px, 1fr));
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .kpi-card {
+        min-height: 78px;
+        padding: 10px 12px;
+        background: var(--console-panel);
+        border: 1px solid var(--console-line);
+        border-radius: 6px;
+      }
+
+      .kpi-label {
+        margin-bottom: 4px;
+        color: var(--console-muted);
+        font-size: 12px;
+      }
+
+      .kpi-value {
+        color: var(--console-ink);
+        font-size: 24px;
+        font-weight: 750;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .kpi-hint {
+        margin-top: 5px;
+        color: var(--console-muted);
+        font-size: 12px;
+      }
+
+      .saved-views,
+      .filters,
+      .matrix-shell,
+      .state-panel {
+        background: var(--console-panel);
+        border: 1px solid var(--console-line);
+        border-radius: 6px;
+        box-shadow: var(--console-shadow);
+      }
+
+      .saved-views {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 9px 10px;
+        margin-bottom: 8px;
+      }
+
+      .view-tab {
+        height: 28px;
+        padding: 0 10px;
+        border: 1px solid transparent;
+        border-radius: 5px;
+        background: transparent;
+        color: var(--console-muted);
+        cursor: pointer;
+        font-weight: 650;
+      }
+
+      .view-tab.active {
+        background: #eef4ff;
+        color: var(--console-blue-dark);
+        border-color: #c7d7fe;
+      }
+
+      .filters {
+        display: grid;
+        grid-template-columns: 120px 124px 110px 104px 150px 110px 220px auto;
+        gap: 8px;
+        align-items: end;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+
+      .field label {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--console-muted);
+        font-size: 11px;
+        font-weight: 650;
+      }
+
+      .select-like,
+      .date-like {
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 0 10px;
+        border: 1px solid var(--console-line);
+        border-radius: 6px;
+        background: #fff;
+        color: #344054;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .select-like::after {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-right: 1.5px solid #98a2b3;
+        border-bottom: 1.5px solid #98a2b3;
+        transform: rotate(45deg) translateY(-2px);
+      }
+
+      .matrix-shell {
+        overflow: hidden;
+      }
+
+      .matrix-toolbar {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 12px;
+        border-bottom: 1px solid var(--console-line);
+        background: #fff;
+      }
+
+      .matrix-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        color: var(--console-ink);
+        font-weight: 750;
+      }
+
+      .matrix-meta {
+        color: var(--console-muted);
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .legend {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--console-line-soft);
+        background: #fbfcfe;
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--console-muted);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .legend-swatch {
+        width: 18px;
+        height: 8px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+      }
+
+      .legend-swatch.done {
+        background: #ecfdf3;
+        border-color: #a6d7b8;
+      }
+
+      .legend-swatch.active {
+        background: #eef4ff;
+        border-color: #9bbcff;
+      }
+
+      .legend-swatch.planned {
+        background: #f2f4f7;
+        border-color: #cfd6e2;
+      }
+
+      .legend-swatch.risk {
+        background: #fff6ed;
+        border-color: #f7b27a;
+      }
+
+      .legend-swatch.fail {
+        background: #fef3f2;
+        border-color: #fda29b;
+      }
+
+      .matrix-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 300px;
+        min-height: 560px;
+      }
+
+      .matrix-scroll {
+        overflow: auto;
+        border-right: 1px solid var(--console-line);
+      }
+
+      .matrix-grid {
+        min-width: 1260px;
+      }
+
+      .timeline-header,
+      .matrix-row {
+        display: grid;
+        grid-template-columns: 360px repeat(8, minmax(108px, 1fr));
+      }
+
+      .timeline-header {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: #f8fafc;
+        border-bottom: 1px solid var(--console-line);
+      }
+
+      .axis-title,
+      .week-cell {
+        min-height: 34px;
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        border-right: 1px solid var(--console-line-soft);
+        color: #475467;
+        font-size: 11px;
+        font-weight: 750;
+        text-transform: uppercase;
+      }
+
+      .axis-title {
+        position: sticky;
+        left: 0;
+        z-index: 6;
+        background: #f8fafc;
+      }
+
+      .week-cell {
+        justify-content: center;
+        text-align: center;
+      }
+
+      .matrix-row {
+        min-height: 72px;
+        border-bottom: 1px solid var(--console-line-soft);
+        background: #fff;
+      }
+
+      .row-head {
+        position: sticky;
+        left: 0;
+        z-index: 4;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 8px 10px;
+        border-right: 1px solid var(--console-line);
+        background: #fff;
+      }
+
+      .row-main {
+        min-width: 0;
+      }
+
+      .row-title {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 5px;
+        font-weight: 750;
+        color: var(--console-ink);
+      }
+
+      .eval-id {
+        color: var(--console-blue);
+        font-weight: 750;
+      }
+
+      .dimension-chip,
+      .status-badge,
+      .signal-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 20px;
+        padding: 0 7px;
+        border-radius: 5px;
+        border: 1px solid var(--console-line);
+        background: #fff;
+        color: #344054;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .dimension-chip.wf {
+        background: #f8fafc;
+        border-color: #cfd6e2;
+      }
+
+      .dimension-chip.density {
+        background: #eef4ff;
+        border-color: #c7d7fe;
+        color: #1849a9;
+      }
+
+      .dimension-chip.solder {
+        background: #ecfdf3;
+        border-color: #abefc6;
+        color: #067647;
+      }
+
+      .dimension-chip.ff {
+        background: #fff6ed;
+        border-color: #fedf89;
+        color: #b54708;
+      }
+
+      .dimension-chip.fab {
+        background: #f8fafc;
+        border-color: #d0d5dd;
+        color: #475467;
+      }
+
+      .row-score {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 5px;
+      }
+
+      .status-badge.ok {
+        background: #ecfdf3;
+        border-color: #abefc6;
+        color: #067647;
+      }
+
+      .status-badge.active {
+        background: #eef4ff;
+        border-color: #c7d7fe;
+        color: #1849a9;
+      }
+
+      .status-badge.risk {
+        background: #fff6ed;
+        border-color: #fedf89;
+        color: #b54708;
+      }
+
+      .status-badge.fail {
+        background: #fef3f2;
+        border-color: #fecdca;
+        color: #b42318;
+      }
+
+      .status-badge.planned {
+        background: #f2f4f7;
+        border-color: #d0d5dd;
+        color: #475467;
+      }
+
+      .timeline-lane {
+        position: relative;
+        grid-column: 2 / -1;
+        grid-row: 1;
+        display: grid;
+        grid-template-columns: repeat(8, minmax(108px, 1fr));
+        padding: 17px 10px;
+      }
+
+      .timeline-lane::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(to right, transparent calc(100% - 1px), #eef2f7 0) 0 0 /
+            calc(100% / 8) 100%,
+          linear-gradient(to right, rgba(21, 94, 239, 0.13), rgba(21, 94, 239, 0.13))
+            calc((100% / 8) * 2) 0 / 1px 100% no-repeat;
+      }
+
+      .bar {
+        position: relative;
+        z-index: 2;
+        min-height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 0 9px;
+        border: 1px solid transparent;
+        border-radius: 5px;
+        font-size: 12px;
+        font-weight: 750;
+        overflow: visible;
+        white-space: nowrap;
+      }
+
+      .bar span:last-child {
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .bar.done {
+        background: #ecfdf3;
+        border-color: #a6d7b8;
+        color: #067647;
+      }
+
+      .bar.active {
+        background: #eef4ff;
+        border-color: #9bbcff;
+        color: #1849a9;
+      }
+
+      .bar.planned {
+        background: #f2f4f7;
+        border-color: #cfd6e2;
+        color: #475467;
+      }
+
+      .bar.risk {
+        background: #fff6ed;
+        border-color: #f7b27a;
+        color: #b54708;
+      }
+
+      .bar.fail {
+        background: #fef3f2;
+        border-color: #fda29b;
+        color: #b42318;
+      }
+
+      .bar.delay {
+        background:
+          repeating-linear-gradient(
+            -45deg,
+            rgba(180, 35, 24, 0.1),
+            rgba(180, 35, 24, 0.1) 5px,
+            rgba(255, 255, 255, 0.72) 5px,
+            rgba(255, 255, 255, 0.72) 10px
+          ),
+          #fff6ed;
+      }
+
+      .bar .tooltip {
+        position: absolute;
+        left: 10px;
+        bottom: calc(100% + 8px);
+        width: 285px;
+        display: none;
+        padding: 10px;
+        border: 1px solid #cfd6e2;
+        border-radius: 6px;
+        background: #fff;
+        color: var(--console-ink);
+        box-shadow: 0 10px 22px rgba(16, 24, 40, 0.12);
+        white-space: normal;
+        line-height: 1.35;
+      }
+
+      .bar:hover .tooltip {
+        display: block;
+      }
+
+      .tooltip-title {
+        margin-bottom: 6px;
+        font-weight: 800;
+      }
+
+      .tooltip-line {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        color: var(--console-muted);
+        font-size: 12px;
+      }
+
+      .signal {
+        position: absolute;
+        z-index: 3;
+        top: 9px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--console-red);
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 1px #fda29b;
+      }
+
+      .signal.delay {
+        background: var(--console-amber);
+        box-shadow: 0 0 0 1px #f7b27a;
+      }
+
+      .today-line {
+        position: absolute;
+        z-index: 3;
+        top: 0;
+        bottom: 0;
+        left: calc((100% / 8) * 2 + 43px);
+        width: 2px;
+        background: var(--console-blue);
+      }
+
+      .today-line::before {
+        content: "Today";
+        position: absolute;
+        top: 2px;
+        left: 5px;
+        padding: 1px 5px;
+        border: 1px solid #9bbcff;
+        border-radius: 999px;
+        background: #eef4ff;
+        color: #1849a9;
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .insight-rail {
+        background: #fff;
+      }
+
+      .rail-section {
+        padding: 12px;
+        border-bottom: 1px solid var(--console-line-soft);
+      }
+
+      .rail-title {
+        margin: 0 0 8px;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .rail-subtitle {
+        margin: 0 0 10px;
+        color: var(--console-muted);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .detail-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .detail-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 12px;
+      }
+
+      .detail-row span:first-child {
+        color: var(--console-muted);
+      }
+
+      .detail-row span:last-child {
+        color: var(--console-ink);
+        font-weight: 700;
+        text-align: right;
+      }
+
+      .signal-stack {
+        display: grid;
+        gap: 8px;
+      }
+
+      .signal-pill {
+        width: 100%;
+        justify-content: space-between;
+        height: auto;
+        min-height: 30px;
+        padding: 6px 8px;
+      }
+
+      .signal-pill.fail {
+        background: #fef3f2;
+        border-color: #fecdca;
+        color: #b42318;
+      }
+
+      .signal-pill.risk {
+        background: #fff6ed;
+        border-color: #fedf89;
+        color: #b54708;
+      }
+
+      .signal-pill.ok {
+        background: #ecfdf3;
+        border-color: #abefc6;
+        color: #067647;
+      }
+
+      .state-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .state-panel {
+        padding: 12px;
+      }
+
+      .state-title {
+        margin: 0 0 8px;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .empty-box {
+        min-height: 108px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border: 1px dashed #cfd6e2;
+        border-radius: 6px;
+        background: #fbfcfe;
+        color: var(--console-muted);
+      }
+
+      .skeleton-row {
+        height: 18px;
+        margin-bottom: 9px;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #eef2f7, #f8fafc, #eef2f7);
+      }
+
+      .skeleton-row.short {
+        width: 62%;
+      }
+
+      .skeleton-row.long {
+        width: 88%;
+      }
+
+      @media (max-width: 1400px) {
+        .filters {
+          grid-template-columns: repeat(4, minmax(130px, 1fr));
+        }
+
+        .matrix-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .insight-rail {
+          border-top: 1px solid var(--console-line);
+        }
+      }
+
+      @media (max-width: 980px) {
+        .kpi-strip {
+          grid-template-columns: repeat(3, minmax(140px, 1fr));
+        }
+
+        .page-head,
+        .saved-views,
+        .matrix-toolbar,
+        .legend {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .state-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-root">
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="topbar-mark">Sol.</span>
+          <span class="topbar-product">S.T.A.R.</span>
+        </div>
+        <div class="topbar-right">
+          <span class="lang-chip"><span class="lang-dot"></span> English</span>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="page-head">
+          <div>
+            <h1 class="page-title">Evaluation Management</h1>
+            <p class="page-description">
+              NAND-focused operations view for product attributes, evaluation stages, and timing
+              risk.
+            </p>
+          </div>
+          <div class="page-actions">
+            <button class="console-command secondary" type="button">Export View</button>
+            <button class="console-command primary" type="button">New Evaluation</button>
+          </div>
+        </section>
+
+        <section class="kpi-strip" aria-label="NAND evaluation KPI strip">
+          <div class="kpi-card">
+            <div class="kpi-label">NAND active</div>
+            <div class="kpi-value">18</div>
+            <div class="kpi-hint">active NAND evaluations</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">At risk</div>
+            <div class="kpi-value">5</div>
+            <div class="kpi-hint">risk or delay signal</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Delayed</div>
+            <div class="kpi-value">3</div>
+            <div class="kpi-hint">past planned gate</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Failure signals</div>
+            <div class="kpi-value">4</div>
+            <div class="kpi-hint">failed steps or fail units</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Next 7d gates</div>
+            <div class="kpi-value">9</div>
+            <div class="kpi-hint">scheduled milestones</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Matrix coverage</div>
+            <div class="kpi-value">82%</div>
+            <div class="kpi-hint">dimension coverage</div>
+          </div>
+        </section>
+
+        <section class="saved-views" aria-label="Saved operational views">
+          <div class="view-tabs">
+            <button class="view-tab" type="button">All Active 42</button>
+            <button class="view-tab" type="button">No Update 6</button>
+            <button class="view-tab" type="button">Open &gt;10d 5</button>
+            <button class="view-tab" type="button">Reliability Failures 4</button>
+            <button class="view-tab active" type="button">NAND View 18</button>
+          </div>
+        </section>
+
+        <section class="filters" aria-label="NAND matrix filters">
+          <div class="field">
+            <label>WF</label>
+            <div class="select-like">V6 BF +3</div>
+          </div>
+          <div class="field">
+            <label>Density</label>
+            <div class="select-like">All density</div>
+          </div>
+          <div class="field">
+            <label>Solder</label>
+            <div class="select-like">LTS, SAC</div>
+          </div>
+          <div class="field">
+            <label>F/F</label>
+            <div class="select-like">All F/F</div>
+          </div>
+          <div class="field">
+            <label>Model</label>
+            <div class="select-like">PM9C1a +3</div>
+          </div>
+          <div class="field">
+            <label>Fab-line</label>
+            <div class="select-like">All line</div>
+          </div>
+          <div class="field">
+            <label>Time range</label>
+            <div class="date-like">2026-05-01 ~ 2026-06-30</div>
+          </div>
+          <div class="filter-actions">
+            <button class="console-command primary" type="button">Apply</button>
+            <button class="console-command secondary" type="button">Reset</button>
+          </div>
+        </section>
+
+        <section class="matrix-shell" aria-label="NAND timeline matrix">
+          <div class="matrix-toolbar">
+            <div class="matrix-title">
+              <span>NAND Evaluation Matrix</span>
+              <span class="matrix-meta">18 items · grouped by model and NAND attributes</span>
+            </div>
+            <div class="table-actions">
+              <button class="console-command primary" type="button">Week</button>
+              <button class="console-command secondary" type="button">Month</button>
+              <button class="console-command ghost" type="button">Compact rows</button>
+            </div>
+          </div>
+
+          <div class="legend">
+            <div class="legend-row">
+              <span class="legend-item"><span class="legend-swatch done"></span>Complete</span>
+              <span class="legend-item"><span class="legend-swatch active"></span>In progress</span>
+              <span class="legend-item"><span class="legend-swatch planned"></span>Planned</span>
+              <span class="legend-item"><span class="legend-swatch risk"></span>At risk / delayed</span>
+              <span class="legend-item"><span class="legend-swatch fail"></span>Failure signal</span>
+            </div>
+            <div class="matrix-meta">Hover bars for detail. Click concept opens the detail rail.</div>
+          </div>
+
+          <div class="matrix-layout">
+            <div class="matrix-scroll">
+              <div class="matrix-grid">
+                <div class="timeline-header">
+                  <div class="axis-title">Product / NAND item</div>
+                  <div class="week-cell">May W1</div>
+                  <div class="week-cell">May W2</div>
+                  <div class="week-cell">May W3</div>
+                  <div class="week-cell">May W4</div>
+                  <div class="week-cell">Jun W1</div>
+                  <div class="week-cell">Jun W2</div>
+                  <div class="week-cell">Jun W3</div>
+                  <div class="week-cell">Jun W4</div>
+                </div>
+
+                <div class="matrix-row">
+                  <div class="row-head">
+                    <div class="row-main">
+                      <div class="row-title">
+                        <span>PM9C1a</span>
+                        <span class="eval-id">EVAL-20260503-0042</span>
+                      </div>
+                      <div class="chip-row">
+                        <span class="dimension-chip wf">V8 CU</span>
+                        <span class="dimension-chip density">1TB</span>
+                        <span class="dimension-chip solder">SAC</span>
+                        <span class="dimension-chip ff">2280</span>
+                        <span class="dimension-chip fab">P2L</span>
+                      </div>
+                    </div>
+                    <div class="row-score">
+                      <span class="status-badge active">In progress</span>
+                      <span class="matrix-meta">TAT 12d</span>
+                    </div>
+                  </div>
+                  <div class="timeline-lane">
+                    <span class="today-line"></span>
+                    <div class="bar done" style="grid-column: 1 / span 2">
+                      <span>Build verify</span><span>Done</span>
+                      <div class="tooltip">
+                        <div class="tooltip-title">PM9C1a / V8 CU / 1TB</div>
+                        <div class="tooltip-line"><span>Stage</span><strong>Build verify</strong></div>
+                        <div class="tooltip-line"><span>Owner</span><strong>SCS: Chen</strong></div>
+                        <div class="tooltip-line"><span>Result</span><strong>0 fail units</strong></div>
+                      </div>
+                    </div>
+                    <div class="bar active" style="grid-column: 3 / span 2">
+                      <span>M031 reliability</span><span>68%</span>
+                      <div class="tooltip">
+                        <div class="tooltip-title">Current stage detail</div>
+                        <div class="tooltip-line"><span>Plan</span><strong>May 13 - May 27</strong></div>
+                        <div class="tooltip-line"><span>Fab-line</span><strong>P2L</strong></div>
+                        <div class="tooltip-line"><span>Next gate</span><strong>AQL sample lock</strong></div>
+                      </div>
+                    </div>
+                    <div class="bar planned" style="grid-column: 5 / span 1">
+                      <span>AQL</span><span>Plan</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="matrix-row">
+                  <div class="row-head">
+                    <div class="row-main">
+                      <div class="row-title">
+                        <span>PM9C1a</span>
+                        <span class="eval-id">EVAL-20260428-0038</span>
+                      </div>
+                      <div class="chip-row">
+                        <span class="dimension-chip wf">V7 GJ</span>
+                        <span class="dimension-chip density">512GB</span>
+                        <span class="dimension-chip solder">LTS</span>
+                        <span class="dimension-chip ff">2242</span>
+                        <span class="dimension-chip fab">X2L</span>
+                      </div>
+                    </div>
+                    <div class="row-score">
+                      <span class="status-badge risk">Delayed</span>
+                      <span class="matrix-meta">+4d</span>
+                    </div>
+                  </div>
+                  <div class="timeline-lane">
+                    <span class="signal delay" style="left: calc((100% / 8) * 2.9)"></span>
+                    <div class="bar done" style="grid-column: 1 / span 1">
+                      <span>DOE</span><span>Done</span>
+                    </div>
+                    <div class="bar risk delay" style="grid-column: 2 / span 3">
+                      <span>Thermal cycle</span><span>Late</span>
+                      <div class="tooltip">
+                        <div class="tooltip-title">Delay signal</div>
+                        <div class="tooltip-line"><span>Cause</span><strong>LTS solder rework queue</strong></div>
+                        <div class="tooltip-line"><span>Delay</span><strong>4 days</strong></div>
+                        <div class="tooltip-line"><span>Next action</span><strong>HQ owner decision</strong></div>
+                      </div>
+                    </div>
+                    <div class="bar planned" style="grid-column: 6 / span 1">
+                      <span>Close</span><span>Plan</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="matrix-row">
+                  <div class="row-head">
+                    <div class="row-main">
+                      <div class="row-title">
+                        <span>BM9C1</span>
+                        <span class="eval-id">EVAL-20260425-0031</span>
+                      </div>
+                      <div class="chip-row">
+                        <span class="dimension-chip wf">V6 BH</span>
+                        <span class="dimension-chip density">256GB</span>
+                        <span class="dimension-chip solder">SAC</span>
+                        <span class="dimension-chip ff">2230</span>
+                        <span class="dimension-chip fab">X1L</span>
+                      </div>
+                    </div>
+                    <div class="row-score">
+                      <span class="status-badge fail">Failure</span>
+                      <span class="matrix-meta">2 fail</span>
+                    </div>
+                  </div>
+                  <div class="timeline-lane">
+                    <span class="signal" style="left: calc((100% / 8) * 3.55)"></span>
+                    <div class="bar done" style="grid-column: 1 / span 2">
+                      <span>Sample prep</span><span>Done</span>
+                    </div>
+                    <div class="bar fail" style="grid-column: 3 / span 2">
+                      <span>Aging</span><span>Fail</span>
+                      <div class="tooltip">
+                        <div class="tooltip-title">Failure signal</div>
+                        <div class="tooltip-line"><span>Fail code</span><strong>3379</strong></div>
+                        <div class="tooltip-line"><span>Fail units</span><strong>2 / 32</strong></div>
+                        <div class="tooltip-line"><span>Analysis</span><strong>Vcc drop under load</strong></div>
+                      </div>
+                    </div>
+                    <div class="bar planned" style="grid-column: 6 / span 2">
+                      <span>Retest</span><span>Plan</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="matrix-row">
+                  <div class="row-head">
+                    <div class="row-main">
+                      <div class="row-title">
+                        <span>990Pro</span>
+                        <span class="eval-id">EVAL-20260418-0027</span>
+                      </div>
+                      <div class="chip-row">
+                        <span class="dimension-chip wf">V8 CU</span>
+                        <span class="dimension-chip density">1TB</span>
+                        <span class="dimension-chip solder">SAC</span>
+                        <span class="dimension-chip ff">2280</span>
+                        <span class="dimension-chip fab">P1L</span>
+                      </div>
+                    </div>
+                    <div class="row-score">
+                      <span class="status-badge ok">Complete</span>
+                      <span class="matrix-meta">TAT 19d</span>
+                    </div>
+                  </div>
+                  <div class="timeline-lane">
+                    <div class="bar done" style="grid-column: 1 / span 4">
+                      <span>M010 + M031 + AQL</span><span>Closed</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="matrix-row">
+                  <div class="row-head">
+                    <div class="row-main">
+                      <div class="row-title">
+                        <span>PM9E1</span>
+                        <span class="eval-id">EVAL-20260508-0047</span>
+                      </div>
+                      <div class="chip-row">
+                        <span class="dimension-chip wf">V6 BF</span>
+                        <span class="dimension-chip density">512GB</span>
+                        <span class="dimension-chip solder">LTS</span>
+                        <span class="dimension-chip ff">2242</span>
+                        <span class="dimension-chip fab">P2L</span>
+                      </div>
+                    </div>
+                    <div class="row-score">
+                      <span class="status-badge risk">Paused</span>
+                      <span class="matrix-meta">owner wait</span>
+                    </div>
+                  </div>
+                  <div class="timeline-lane">
+                    <div class="bar active" style="grid-column: 2 / span 2">
+                      <span>PGM verify</span><span>Hold</span>
+                    </div>
+                    <div class="bar planned" style="grid-column: 5 / span 2">
+                      <span>M111</span><span>Plan</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="matrix-row">
+                  <div class="row-head">
+                    <div class="row-main">
+                      <div class="row-title">
+                        <span>PM9E1</span>
+                        <span class="eval-id">EVAL-20260510-0049</span>
+                      </div>
+                      <div class="chip-row">
+                        <span class="dimension-chip wf">V7 GJ</span>
+                        <span class="dimension-chip density">256GB</span>
+                        <span class="dimension-chip solder">SAC</span>
+                        <span class="dimension-chip ff">2230</span>
+                        <span class="dimension-chip fab">X2L</span>
+                      </div>
+                    </div>
+                    <div class="row-score">
+                      <span class="status-badge planned">Planned</span>
+                      <span class="matrix-meta">starts W4</span>
+                    </div>
+                  </div>
+                  <div class="timeline-lane">
+                    <div class="bar planned" style="grid-column: 4 / span 2">
+                      <span>Build verify</span><span>Plan</span>
+                    </div>
+                    <div class="bar planned" style="grid-column: 7 / span 1">
+                      <span>AQL</span><span>Plan</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="matrix-row">
+                  <div class="row-head">
+                    <div class="row-main">
+                      <div class="row-title">
+                        <span>BM9C1</span>
+                        <span class="eval-id">EVAL-20260501-0040</span>
+                      </div>
+                      <div class="chip-row">
+                        <span class="dimension-chip wf">V8 CU</span>
+                        <span class="dimension-chip density">512GB</span>
+                        <span class="dimension-chip solder">SAC</span>
+                        <span class="dimension-chip ff">2280</span>
+                        <span class="dimension-chip fab">X1L</span>
+                      </div>
+                    </div>
+                    <div class="row-score">
+                      <span class="status-badge active">In progress</span>
+                      <span class="matrix-meta">TAT 7d</span>
+                    </div>
+                  </div>
+                  <div class="timeline-lane">
+                    <div class="bar done" style="grid-column: 1 / span 1">
+                      <span>M010</span><span>Done</span>
+                    </div>
+                    <div class="bar active" style="grid-column: 2 / span 3">
+                      <span>M031</span><span>51%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="matrix-row">
+                  <div class="row-head">
+                    <div class="row-main">
+                      <div class="row-title">
+                        <span>990Pro</span>
+                        <span class="eval-id">EVAL-20260502-0041</span>
+                      </div>
+                      <div class="chip-row">
+                        <span class="dimension-chip wf">V6 BH</span>
+                        <span class="dimension-chip density">1TB</span>
+                        <span class="dimension-chip solder">LTS</span>
+                        <span class="dimension-chip ff">2280</span>
+                        <span class="dimension-chip fab">P2L</span>
+                      </div>
+                    </div>
+                    <div class="row-score">
+                      <span class="status-badge risk">At risk</span>
+                      <span class="matrix-meta">temp drift</span>
+                    </div>
+                  </div>
+                  <div class="timeline-lane">
+                    <span class="signal delay" style="left: calc((100% / 8) * 4.1)"></span>
+                    <div class="bar done" style="grid-column: 1 / span 2">
+                      <span>DOE</span><span>Done</span>
+                    </div>
+                    <div class="bar risk" style="grid-column: 4 / span 2">
+                      <span>M130 temp</span><span>Watch</span>
+                    </div>
+                    <div class="bar planned" style="grid-column: 7 / span 1">
+                      <span>Close</span><span>Plan</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <aside class="insight-rail" aria-label="Selected NAND evaluation detail">
+              <div class="rail-section">
+                <h2 class="rail-title">Selected evaluation</h2>
+                <p class="rail-subtitle">
+                  Click behavior concept: selecting a bar opens a compact detail rail without
+                  leaving the matrix.
+                </p>
+                <div class="detail-list">
+                  <div class="detail-row"><span>Evaluation</span><span>EVAL-20260425-0031</span></div>
+                  <div class="detail-row"><span>Model</span><span>BM9C1</span></div>
+                  <div class="detail-row"><span>WF / Density</span><span>V6 BH / 256GB</span></div>
+                  <div class="detail-row"><span>Solder / F/F</span><span>SAC / 2230</span></div>
+                  <div class="detail-row"><span>Fab-line</span><span>X1L</span></div>
+                  <div class="detail-row"><span>Owner</span><span>SCS: Kang</span></div>
+                </div>
+              </div>
+              <div class="rail-section">
+                <h2 class="rail-title">Signals</h2>
+                <div class="signal-stack">
+                  <div class="signal-pill fail"><span>Failure code 3379</span><strong>2 units</strong></div>
+                  <div class="signal-pill risk"><span>Retest not scheduled</span><strong>needs owner</strong></div>
+                  <div class="signal-pill ok"><span>Lot mapping</span><strong>complete</strong></div>
+                </div>
+              </div>
+              <div class="rail-section">
+                <h2 class="rail-title">Next actions</h2>
+                <p class="rail-subtitle">
+                  1. Confirm retest lot split for X1L.<br />
+                  2. Attach FA note before Jun W2 gate.<br />
+                  3. Escalate if fail rate repeats above 5%.
+                </p>
+                <button class="console-command primary" type="button">Open detail</button>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="state-grid" aria-label="State concepts">
+          <div class="state-panel">
+            <h2 class="state-title">Loading state concept</h2>
+            <div class="skeleton-row long"></div>
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row short"></div>
+            <div class="skeleton-row long"></div>
+          </div>
+          <div class="state-panel">
+            <h2 class="state-title">Empty state concept</h2>
+            <div class="empty-box">
+              <strong>No NAND evaluations match this filter set</strong>
+              <span>Reset filters or widen the time range.</span>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
