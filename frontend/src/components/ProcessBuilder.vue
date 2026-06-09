@@ -78,6 +78,8 @@
               @paste-lots="openPasteLots"
             />
 
+            <process-result-editor v-model="process.result_html" :readonly="readonly" />
+
             <div class="steps-container">
               <step-card
                 v-for="(step, sIndex) in process.steps"
@@ -167,6 +169,7 @@
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ProcessLots from './ProcessLots.vue'
+import ProcessResultEditor from './ProcessResultEditor.vue'
 import StepCard from './StepCard.vue'
 import { stepLabelForPath } from '../utils/reliability'
 
@@ -362,6 +365,7 @@ function createProcess(overrides = {}) {
       overrides.process_name ||
       t('nested.defaultProcessName', { index: processCounter }),
     order_index: overrides.order_index ?? processForm.processes.length + 1,
+    result_html: overrides.result_html ?? overrides.process_result ?? '',
     lots: [],
     steps: [],
   }
@@ -567,6 +571,7 @@ function duplicateProcess(index) {
     key: generateProcessKey(),
     name: `${source.name} ${t('nested.copySuffix')}`,
     order_index: processForm.processes.length + 1,
+    result_html: source.result_html,
     lots: source.lots,
     steps: source.steps,
   })
@@ -838,6 +843,7 @@ function setPayload(payload, { markClean = false } = {}) {
               payload?.process_name ||
               t('nested.defaultProcessName', { index: 1 }),
             order_index: payload?.order_index || payload?.process_order_index || 1,
+            result_html: payload?.result_html || payload?.process_result || '',
             lots: payload?.lots || [],
             steps: payload?.steps || [],
           },
@@ -952,6 +958,7 @@ function normalizeCurrentState() {
       key: process.key,
       name: process.name?.trim() || t('nested.defaultProcessName', { index: processIndex + 1 }),
       order_index: process.order_index ?? processIndex + 1,
+      result_html: process.result_html?.trim() || '',
       lots: normalizedLots,
       steps: normalizedSteps,
     }

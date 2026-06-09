@@ -4,6 +4,7 @@ from datetime import date, timedelta
 
 from app.models.evaluation import (
     Evaluation,
+    EvaluationNestedProcess,
     EvaluationProcessStep,
     EvaluationStepFailure,
 )
@@ -59,6 +60,97 @@ def test_update_evaluation_persists_pgm_test_time(client, session):
     session.refresh(evaluation)
     assert evaluation.pgm_version == "new-version"
     assert evaluation.pgm_test_time == "120 min"
+
+
+def test_nested_process_results_are_sanitized_and_persisted(client, session):
+    """Nested process results should persist independently for each process."""
+    evaluation = create_test_evaluation(session)
+    payload = {
+        "processes": [
+            {
+                "key": "proc-aging",
+                "name": "Aging Process",
+                "order_index": 1,
+                "result_html": (
+                    "<p><strong>Passed</strong></p>"
+                    '<table><colgroup><col width="120"><col width="240"></colgroup>'
+                    '<tbody><tr><th>Item</th><th onclick="bad()">Value</th></tr>'
+                    "<tr><td>PPM</td><td>0</td></tr></tbody></table>"
+                    "<script>alert('bad')</script>"
+                ),
+                "lots": [
+                    {
+                        "client_id": "aging-lot",
+                        "temp_id": "aging-lot",
+                        "lot_number": "LOT-AGING",
+                        "quantity": 10,
+                    }
+                ],
+                "steps": [
+                    {
+                        "order_index": 1,
+                        "step_code": "M100",
+                        "step_label": "Aging",
+                        "lot_refs": ["aging-lot"],
+                        "results_applicable": False,
+                    }
+                ],
+            },
+            {
+                "key": "proc-li",
+                "name": "LI Process",
+                "order_index": 2,
+                "result_html": "<p><em>Review required</em></p>",
+                "lots": [
+                    {
+                        "client_id": "li-lot",
+                        "temp_id": "li-lot",
+                        "lot_number": "LOT-LI",
+                        "quantity": 5,
+                    }
+                ],
+                "steps": [
+                    {
+                        "order_index": 1,
+                        "step_code": "M130",
+                        "step_label": "LI",
+                        "lot_refs": ["li-lot"],
+                        "results_applicable": True,
+                        "total_units": 5,
+                        "fail_units": 0,
+                        "failures": [],
+                    }
+                ],
+            },
+        ]
+    }
+
+    save_response = client.post(
+        f"/api/evaluations/{evaluation.id}/processes/nested",
+        json=payload,
+    )
+    assert save_response.status_code == 200
+
+    stored = (
+        session.query(EvaluationNestedProcess)
+        .filter_by(evaluation_id=evaluation.id)
+        .order_by(EvaluationNestedProcess.order_index)
+        .all()
+    )
+    assert [process.process_key for process in stored] == ["proc-aging", "proc-li"]
+    assert "<table>" in stored[0].result_html
+    assert '<col width="120"><col width="240">' in stored[0].result_html
+    assert "onclick" not in stored[0].result_html
+    assert "script" not in stored[0].result_html
+    assert "alert" not in stored[0].result_html
+
+    get_response = client.get(f"/api/evaluations/{evaluation.id}/processes/nested")
+    body = json_response(get_response)
+
+    assert get_response.status_code == 200
+    processes = body["data"]["payload"]["processes"]
+    assert processes[0]["result_html"] == stored[0].result_html
+    assert processes[1]["result_html"] == "<p><em>Review required</em></p>"
 
 
 def test_complete_status_uses_user_provided_end_date(client, session):

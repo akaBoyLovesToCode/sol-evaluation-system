@@ -12,6 +12,7 @@ from sqlalchemy import or_
 from app.models import db
 from app.models.evaluation import (
     Evaluation,
+    EvaluationNestedProcess,
     EvaluationProcess,
     EvaluationProcessLot,
     EvaluationProcessRaw,
@@ -23,6 +24,7 @@ from app.models.evaluation import (
 )
 from app.models.operation_log import OperationLog, OperationType
 from app.utils import get_client_ip
+from app.utils.rich_text import sanitize_rich_text
 from app.utils.timezone import resolve_timezone_from_request, timezone_label, utcnow
 
 evaluation_bp = Blueprint("evaluation", __name__)
@@ -635,6 +637,8 @@ def _normalize_nested_payload(
                 "name": payload.get("name") or payload.get("process_name"),
                 "order_index": payload.get("order_index")
                 or payload.get("process_order_index"),
+                "result_html": payload.get("result_html")
+                or payload.get("process_result"),
                 "lots": payload.get("lots"),
                 "steps": payload.get("steps"),
             }
@@ -662,6 +666,9 @@ def _normalize_nested_payload(
         if order_value is None:
             order_value = raw_process.get("process_order_index")
         process_order_index = _safe_int(order_value, default=process_index)
+        result_html = sanitize_rich_text(
+            raw_process.get("result_html") or raw_process.get("process_result") or ""
+        )
 
         process_key = _normalize_process_key(
             raw_process.get("key") or raw_process.get("process_key"),
@@ -731,6 +738,7 @@ def _normalize_nested_payload(
                 "key": process_key,
                 "name": process_name,
                 "order_index": process_order_index,
+                "result_html": result_html,
                 "lots": payload_lots,
                 "steps": payload_steps,
             }
@@ -741,6 +749,7 @@ def _normalize_nested_payload(
                 "key": process_key,
                 "name": process_name,
                 "order_index": process_order_index,
+                "result_html": result_html,
                 "lots": normalized_lots,
                 "steps": normalized_steps,
             }
@@ -1644,10 +1653,25 @@ def save_nested_process(evaluation_id: int) -> tuple[Response, int]:
         for lot in existing_lots:
             db.session.delete(lot)
 
+        existing_processes = EvaluationNestedProcess.query.filter_by(
+            evaluation_id=evaluation.id
+        ).all()
+        for process in existing_processes:
+            db.session.delete(process)
+
         db.session.flush()
 
         lot_records: dict[str, EvaluationProcessLot] = {}
         for process in normalized_processes:
+            db.session.add(
+                EvaluationNestedProcess(
+                    evaluation_id=evaluation.id,
+                    process_key=process["key"],
+                    process_name=process["name"],
+                    order_index=process["order_index"],
+                    result_html=process["result_html"],
+                )
+            )
             for entry in process["lots"]:
                 lot_record = EvaluationProcessLot(
                     evaluation_id=evaluation.id,
@@ -1832,6 +1856,14 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
         )
         .all()
     )
+    nested_processes = (
+        EvaluationNestedProcess.query.filter_by(evaluation_id=evaluation_id)
+        .order_by(
+            EvaluationNestedProcess.order_index.asc(),
+            EvaluationNestedProcess.id.asc(),
+        )
+        .all()
+    )
 
     process_groups: dict[str, dict[str, Any]] = {}
     used_output_keys: set[str] = set()
@@ -1841,6 +1873,7 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
         raw_key: str | None,
         raw_name: str | None,
         raw_order: int | None,
+        raw_result_html: str | None = None,
     ) -> dict[str, Any]:
         nonlocal fallback_counter
         trimmed_key = (raw_key or "").strip()
@@ -1852,6 +1885,8 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
         )
         group = process_groups.get(identifier)
         if group:
+            if raw_result_html and not group["result_html"]:
+                group["result_html"] = sanitize_rich_text(raw_result_html)
             return group
 
         order_index = _safe_int(raw_order, default=None)
@@ -1874,6 +1909,7 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
             "key": candidate,
             "name": name,
             "order_index": order_index,
+            "result_html": sanitize_rich_text(raw_result_html or ""),
             "lots": [],
             "steps": [],
         }
@@ -1883,6 +1919,14 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
 
     lot_id_to_client: dict[int, str] = {}
     lot_id_to_record: dict[int, EvaluationProcessLot] = {}
+
+    for process in nested_processes:
+        resolve_group(
+            process.process_key,
+            process.process_name,
+            process.order_index,
+            process.result_html,
+        )
 
     for lot in lots:
         group = resolve_group(
@@ -2028,6 +2072,7 @@ def get_nested_process(evaluation_id: int) -> tuple[Response, int]:
                 "key": group["key"],
                 "name": group["name"],
                 "order_index": group["order_index"],
+                "result_html": group["result_html"],
                 "lots": group["lots"],
                 "steps": sorted(group["steps"], key=lambda step: step["order_index"]),
             }

@@ -5,6 +5,7 @@ from app import db
 from .evaluation import (
     Evaluation,
     EvaluationDetail,
+    EvaluationNestedProcess,
     EvaluationProcess,
     EvaluationProcessRaw,
     EvaluationProcessStep,
@@ -20,6 +21,7 @@ __all__ = [
     "db",
     "Evaluation",
     "EvaluationDetail",
+    "EvaluationNestedProcess",
     "EvaluationProcess",
     "EvaluationProcessRaw",
     "EvaluationProcessStep",

@@ -150,6 +150,12 @@ class Evaluation(db.Model):
         lazy="dynamic",
         cascade="all, delete-orphan",
     )
+    nested_processes = db.relationship(
+        "EvaluationNestedProcess",
+        backref="evaluation",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
     process_raw_records = db.relationship(
         "EvaluationProcessRaw",
         backref="evaluation",
@@ -567,6 +573,48 @@ class EvaluationProcessRaw(db.Model):
 
     def __repr__(self) -> str:
         return f"<EvaluationProcessRaw eval={self.evaluation_id} source={self.source}>"
+
+
+class EvaluationNestedProcess(db.Model):
+    """Process-level metadata for the nested process editor."""
+
+    __tablename__ = "evaluation_nested_processes"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "evaluation_id",
+            "process_key",
+            name="uq_evaluation_nested_process_key",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    evaluation_id = db.Column(
+        db.Integer, db.ForeignKey("evaluations.id"), nullable=False, index=True
+    )
+    process_key = db.Column(db.String(64), nullable=False)
+    process_name = db.Column(db.String(255), nullable=False)
+    order_index = db.Column(db.Integer, nullable=False, default=1)
+    result_html = db.Column(db.Text)
+
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<EvaluationNestedProcess eval={self.evaluation_id} "
+            f"key={self.process_key}>"
+        )
 
 
 class EvaluationProcessLot(db.Model):

@@ -178,6 +178,7 @@ const normalizeProcesses = (payload) => {
       key,
       name,
       order_index: orderIndex,
+      result_html: (process?.result_html || process?.process_result || '').trim(),
       lots,
       steps,
     }
@@ -300,6 +301,7 @@ export const builderPayloadToNestedRequest = (payload) => {
       key: process.key || `proc_${index + 1}`,
       name: process.name || `Process ${index + 1}`,
       order_index: safeInt(process.order_index, index + 1),
+      result_html: (process.result_html || '').trim(),
       lots,
       steps,
     }
@@ -356,6 +358,7 @@ export const evaluationToBuilderPayload = (evaluation) => {
           key: 'proc_1',
           name: 'Process 1',
           order_index: 1,
+          result_html: '',
           lots: lotsFromLegacy.length
             ? lotsFromLegacy
             : [
@@ -415,6 +418,7 @@ export const evaluationToBuilderPayload = (evaluation) => {
         key: 'proc_1',
         name: evaluation.process_name || 'Process 1',
         order_index: 1,
+        result_html: '',
         lots,
         steps,
       },

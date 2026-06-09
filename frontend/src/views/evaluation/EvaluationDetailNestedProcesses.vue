@@ -1,11 +1,16 @@
 <template>
   <div>
-    <el-card class="info-card">
+    <el-card class="detail-panel info-card">
       <template #header>
         <div class="card-header">
           <span>{{ $t('evaluation.evaluationProcesses') }}</span>
-          <el-button v-if="canEdit" type="primary" plain @click="openProcessDrawer">
-            <template #icon><Connection /></template>
+          <el-button
+            v-if="canEdit"
+            type="primary"
+            plain
+            class="detail-button"
+            @click="openProcessDrawer"
+          >
             {{ $t('evaluation.manageNestedProcesses') }}
           </el-button>
         </div>
@@ -13,15 +18,11 @@
 
       <el-empty v-if="!hasBuilderSteps" :description="$t('nested.summary.empty')" />
 
-      <div v-else class="nested-summary flex flex-col gap-3">
-        <div
-          v-for="process in summaryProcesses"
-          :key="process.key"
-          class="nested-process-summary border border-gray-200 rounded-lg p-3 bg-white"
-        >
-          <div class="nested-process-header flex justify-between items-center mb-2">
-            <strong class="text-gray-700">{{ process.name }}</strong>
-            <span class="nested-process-chain text-gray-400 text-sm">
+      <div v-else class="nested-summary">
+        <div v-for="process in summaryProcesses" :key="process.key" class="nested-process-summary">
+          <div class="nested-process-header">
+            <strong>{{ process.name }}</strong>
+            <span class="nested-process-chain">
               {{
                 process.steps
                   .map((step) => stepLabelForPath(step, $t('nested.newStep')))
@@ -29,107 +30,108 @@
               }}
             </span>
           </div>
-          <ul
-            v-if="process.lots.length"
-            class="nested-process-lots pl-4 text-sm text-gray-500 mb-2 list-disc"
-          >
+          <ul v-if="process.lots.length" class="nested-process-lots">
             <li v-for="lot in process.lots" :key="lot.client_id">{{ lot.label }}</li>
           </ul>
-          <div
-            v-for="step in process.steps"
-            :key="`${process.key}-${step.order_index}`"
-            class="nested-summary-item border border-gray-100 rounded p-3 bg-gray-50 mb-2"
-          >
-            <div class="nested-step-title font-semibold text-gray-700">
-              <strong>{{ step.order_index }}. {{ step.step_code }}</strong>
-              <span v-if="step.step_label"> - {{ step.step_label }}</span>
-            </div>
-            <div class="nested-step-meta text-sm text-gray-500 mt-1">
-              <template v-if="step.results_applicable === false">
-                {{ $t('nested.summary.noResults') }}
-              </template>
-              <template v-else-if="isReliabilityStepCode(step.step_code)">
-                {{ reliabilitySummaryFor(step) || totalsSummaryFor(step) }}
-              </template>
-              <template v-else>
-                {{ totalsSummaryFor(step) }}
-              </template>
-            </div>
-            <div class="nested-step-lots text-xs text-gray-400 mt-1">
-              {{ $t('nested.summary.appliesTo') }}
-              {{ describeStepLots(process, step.lot_refs) }}
-            </div>
-            <div
-              v-if="hasFailures(step)"
-              class="nested-failure-panel mt-2 p-3 border border-red-200 rounded-lg bg-red-50"
-            >
-              <div class="nested-failure-header flex justify-between items-center mb-2">
-                <div class="nested-failure-title flex items-center gap-2 text-red-600 font-bold">
-                  <el-tag size="small" type="danger" effect="dark">{{
-                    $t('nested.failureTitle')
-                  }}</el-tag>
-                  <span class="nested-failure-count text-sm">
-                    {{ $t('nested.summary.failuresCount', { count: step.failures.length }) }}
-                  </span>
+          <div class="nested-process-body">
+            <section class="nested-step-column">
+              <h4>{{ $t('nested.stepRecords') }}</h4>
+              <div
+                v-for="step in process.steps"
+                :key="`${process.key}-${step.order_index}`"
+                class="nested-summary-item"
+              >
+                <div class="nested-step-title">
+                  <strong>{{ step.order_index }}. {{ step.step_code }}</strong>
+                  <span v-if="step.step_label"> - {{ step.step_label }}</span>
+                </div>
+                <div class="nested-step-meta">
+                  <template v-if="step.results_applicable === false">
+                    {{ $t('nested.summary.noResults') }}
+                  </template>
+                  <template v-else-if="isReliabilityStepCode(step.step_code)">
+                    {{ reliabilitySummaryFor(step) || totalsSummaryFor(step) }}
+                  </template>
+                  <template v-else>
+                    {{ totalsSummaryFor(step) }}
+                  </template>
+                </div>
+                <div class="nested-step-lots">
+                  {{ $t('nested.summary.appliesTo') }}
+                  {{ describeStepLots(process, step.lot_refs) }}
+                </div>
+                <div v-if="hasFailures(step)" class="nested-failure-panel">
+                  <div class="nested-failure-header">
+                    <div class="nested-failure-title">
+                      <el-tag size="small" type="danger" effect="dark">{{
+                        $t('nested.failureTitle')
+                      }}</el-tag>
+                      <span class="nested-failure-count text-sm">
+                        {{ $t('nested.summary.failuresCount', { count: step.failures.length }) }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="nested-failure-table-wrapper">
+                    <table class="nested-failure-table">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>{{ $t('nested.failCode') }} / {{ $t('nested.failName') }}</th>
+                          <th>{{ $t('nested.serialNumber') }}</th>
+                          <th>{{ $t('nested.analysisResult') }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr
+                          v-for="(failure, failureIndex) in step.failures"
+                          :key="`${process.key}-${step.order_index}-${failure.sequence || failure.serial_number || failure.fail_code_text || failureIndex}`"
+                        >
+                          <td>#{{ failure.sequence || failureIndex + 1 }}</td>
+                          <td>
+                            <div class="flex flex-wrap gap-1 items-center">
+                              <el-tag size="small" type="danger" effect="plain">
+                                {{ failure.fail_code_text || $t('nested.failCode') }}
+                              </el-tag>
+                              <el-tag
+                                v-if="failure.fail_code_name_snapshot"
+                                size="small"
+                                type="info"
+                                effect="plain"
+                              >
+                                {{ failure.fail_code_name_snapshot }}
+                              </el-tag>
+                            </div>
+                          </td>
+                          <td>
+                            <el-tag
+                              v-if="failure.serial_number"
+                              size="small"
+                              type="info"
+                              effect="plain"
+                            >
+                              {{ failure.serial_number }}
+                            </el-tag>
+                            <span v-else class="muted">-</span>
+                          </td>
+                          <td>
+                            <p>{{ failure.analysis_result || '-' }}</p>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
-              <div class="nested-failure-table-wrapper overflow-x-auto">
-                <table
-                  class="nested-failure-table w-full border-collapse bg-white border border-red-200 rounded text-sm"
-                >
-                  <thead>
-                    <tr class="bg-red-50 text-red-600">
-                      <th class="p-2 text-left w-12">#</th>
-                      <th class="p-2 text-left">
-                        {{ $t('nested.failCode') }} / {{ $t('nested.failName') }}
-                      </th>
-                      <th class="p-2 text-left">{{ $t('nested.serialNumber') }}</th>
-                      <th class="p-2 text-left">{{ $t('nested.analysisResult') }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="(failure, failureIndex) in step.failures"
-                      :key="`${process.key}-${step.order_index}-${failure.sequence || failure.serial_number || failure.fail_code_text || failureIndex}`"
-                      class="border-b border-gray-100 last:border-0"
-                    >
-                      <td class="p-2 text-red-600 font-bold">
-                        #{{ failure.sequence || failureIndex + 1 }}
-                      </td>
-                      <td class="p-2">
-                        <div class="flex flex-wrap gap-1 items-center">
-                          <el-tag size="small" type="danger" effect="plain">
-                            {{ failure.fail_code_text || $t('nested.failCode') }}
-                          </el-tag>
-                          <el-tag
-                            v-if="failure.fail_code_name_snapshot"
-                            size="small"
-                            type="info"
-                            effect="plain"
-                          >
-                            {{ failure.fail_code_name_snapshot }}
-                          </el-tag>
-                        </div>
-                      </td>
-                      <td class="p-2 min-w-[100px]">
-                        <el-tag
-                          v-if="failure.serial_number"
-                          size="small"
-                          type="info"
-                          effect="plain"
-                        >
-                          {{ failure.serial_number }}
-                        </el-tag>
-                        <span v-else class="text-gray-400">—</span>
-                      </td>
-                      <td class="p-2 text-gray-700">
-                        <p>{{ failure.analysis_result || '-' }}</p>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            </section>
+            <aside class="nested-result-column">
+              <h4>{{ $t('nested.processResult') }}</h4>
+              <ProcessResultContent
+                v-if="process.result_html"
+                class="nested-result-content"
+                :html="process.result_html"
+              />
+              <div v-else class="nested-result-empty">{{ $t('nested.processResultEmpty') }}</div>
+            </aside>
           </div>
         </div>
       </div>
@@ -155,8 +157,9 @@
     <el-drawer
       v-model="drawerVisible"
       :size="drawerSize"
-      :before-close="handleDrawerBeforeClose"
+      :before-close="handleProcessDrawerBeforeClose"
       :title="$t('evaluation.manageNestedProcesses')"
+      class="detail-process-drawer"
     >
       <ProcessBuilder
         ref="processBuilderRef"
@@ -182,6 +185,7 @@ import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessageBox } from 'element-plus'
 import ProcessBuilder from '../../components/ProcessBuilder.vue'
+import ProcessResultContent from '../../components/ProcessResultContent.vue'
 import {
   buildReliabilitySummary,
   buildTotalsSummary,
@@ -244,6 +248,7 @@ const summaryProcesses = computed(() => {
       key: process.key || `proc_${processIndex + 1}`,
       name: process.name || t('nested.defaultProcessName', { index: processIndex + 1 }),
       order_index: process.order_index || processIndex + 1,
+      result_html: process.result_html || '',
       lots: lotLabels,
       lotLabelMap,
       steps: Array.isArray(process.steps) ? process.steps : [],
@@ -319,13 +324,253 @@ defineExpose({ openProcessDrawer })
 </script>
 
 <style scoped>
-.info-card :deep(.el-card__header) {
-  background-color: #f8f9fa;
-  font-weight: 600;
+.detail-panel {
+  --console-line: #d8dee8;
+  --console-line-soft: #e8edf3;
+  --console-ink: #1f2937;
+  --console-muted: #667085;
+  margin-bottom: 0;
+  border: 1px solid var(--console-line);
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  overflow: hidden;
 }
+
+.detail-panel :deep(.el-card__header) {
+  min-height: 42px;
+  padding: 6px 12px;
+  background: #fff;
+  border-bottom: 1px solid var(--console-line);
+  font-weight: 750;
+}
+
+.detail-panel :deep(.el-card__body) {
+  padding: 12px;
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
+  color: var(--console-ink);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.detail-button {
+  min-height: 28px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.nested-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nested-process-summary {
+  border: 1px solid var(--console-line-soft);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.nested-process-header {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--console-line-soft);
+}
+
+.nested-process-header strong {
+  color: var(--console-ink);
+  font-size: 13px;
+}
+
+.nested-process-chain,
+.nested-step-meta,
+.nested-step-lots,
+.muted {
+  color: var(--console-muted);
+  font-size: 12px;
+}
+
+.nested-process-lots {
+  margin: 8px 10px;
+  padding-left: 18px;
+  color: var(--console-muted);
+  font-size: 12px;
+}
+
+.nested-process-body {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr);
+  border-top: 1px solid var(--console-line-soft);
+}
+
+.nested-step-column,
+.nested-result-column {
+  min-width: 0;
+  padding: 10px;
+}
+
+.nested-result-column {
+  border-left: 1px solid var(--console-line-soft);
+  background: #fbfcfe;
+}
+
+.nested-step-column h4,
+.nested-result-column h4 {
+  margin: 0 0 8px;
+  color: var(--console-muted);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nested-summary-item {
+  margin: 0 0 8px;
+  padding: 9px 10px;
+  border: 1px solid var(--console-line-soft);
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.nested-summary-item:last-child {
+  margin-bottom: 0;
+}
+
+.nested-result-content,
+.nested-result-empty {
+  min-height: 96px;
+  padding: 9px 10px;
+  border: 1px solid var(--console-line-soft);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--console-ink);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.nested-result-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--console-muted);
+  text-align: center;
+}
+
+.nested-result-content :deep(p),
+.nested-result-content :deep(div) {
+  margin: 0 0 6px;
+}
+
+.nested-result-content :deep(table) {
+  width: 100%;
+  margin: 8px 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.nested-result-content :deep(th),
+.nested-result-content :deep(td) {
+  padding: 6px 8px;
+  border: 1px solid var(--console-line);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.nested-result-content :deep(th) {
+  background: #f2f4f7;
+  font-weight: 700;
+}
+
+.nested-step-title {
+  color: var(--console-ink);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.nested-step-meta,
+.nested-step-lots {
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.nested-failure-panel {
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fff7f7;
+}
+
+.nested-failure-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.nested-failure-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #b42318;
+  font-weight: 750;
+}
+
+.nested-failure-table-wrapper {
+  overflow-x: auto;
+}
+
+.nested-failure-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.nested-failure-table th,
+.nested-failure-table td {
+  padding: 7px 8px;
+  border-bottom: 1px solid #fee2e2;
+  text-align: left;
+  vertical-align: top;
+}
+
+.nested-failure-table th {
+  background: #fff1f2;
+  color: #b42318;
+  font-weight: 750;
+}
+
+.nested-failure-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.nested-failure-table p {
+  margin: 0;
+  color: var(--console-ink);
+}
+
+@media (max-width: 900px) {
+  .nested-process-body {
+    grid-template-columns: 1fr;
+  }
+
+  .nested-result-column {
+    border-top: 1px solid var(--console-line-soft);
+    border-left: 0;
+  }
 }
 </style>
