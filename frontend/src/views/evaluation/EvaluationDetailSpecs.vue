@@ -1,22 +1,25 @@
 <template>
-  <el-card class="info-card">
+  <el-card class="detail-panel info-card">
     <template #header>
       <div class="card-header">
         <span>{{ $t('evaluation.technicalSpecifications') }}</span>
         <div v-if="canEdit" class="header-actions">
           <template v-if="!editing">
-            <el-button size="small" type="primary" @click="startEdit">
-              <template #icon><Edit /></template>
+            <el-button size="small" type="primary" class="detail-button" @click="startEdit">
               {{ $t('common.edit') }}
             </el-button>
           </template>
           <template v-else>
-            <el-button size="small" @click="cancelEdit">
-              <template #icon><Close /></template>
+            <el-button size="small" class="detail-button" @click="cancelEdit">
               {{ $t('common.cancel') }}
             </el-button>
-            <el-button size="small" type="primary" :loading="saving" @click="saveEdit">
-              <template #icon><Check /></template>
+            <el-button
+              size="small"
+              type="primary"
+              class="detail-button"
+              :loading="saving"
+              @click="saveEdit"
+            >
               {{ $t('common.save') }}
             </el-button>
           </template>
@@ -121,33 +124,70 @@ defineExpose({ startEdit, cancelEdit })
 </script>
 
 <style scoped>
-.info-card {
-  margin-bottom: 20px;
+.detail-panel {
+  --console-line: #d8dee8;
+  --console-ink: #1f2937;
+  --console-muted: #667085;
+  margin-bottom: 0;
+  border: 1px solid var(--console-line);
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  overflow: hidden;
 }
 
 .card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  color: var(--console-ink);
+  font-size: 13px;
+  font-weight: 750;
 }
 
 .header-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+.detail-button {
+  height: 28px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .technical-specs :deep(.el-descriptions__label) {
-  width: 120px;
-  min-width: 120px;
+  width: 132px;
+  min-width: 132px;
+  background: #f8fafc;
+  color: var(--console-muted);
+  font-size: 12px;
+  font-weight: 650;
 }
 
 .technical-specs :deep(.el-descriptions__content) {
   width: auto;
   min-width: 180px;
+  color: var(--console-ink);
+  font-size: 13px;
+  font-weight: 500;
 }
 
-.info-card :deep(.el-card__header) {
-  background-color: #f8f9fa;
-  font-weight: 600;
+.technical-specs :deep(.el-descriptions__cell) {
+  padding: 8px 10px;
+}
+
+.detail-panel :deep(.el-card__header) {
+  min-height: 42px;
+  padding: 6px 12px;
+  background: #fff;
+  border-bottom: 1px solid var(--console-line);
+  font-weight: 750;
+}
+
+.detail-panel :deep(.el-card__body) {
+  padding: 12px;
 }
 </style>

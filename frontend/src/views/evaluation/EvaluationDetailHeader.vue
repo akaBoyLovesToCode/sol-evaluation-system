@@ -1,45 +1,38 @@
 <template>
-  <div class="page-header">
+  <div class="detail-header">
     <div class="header-left">
       <h1 class="page-title">
-        {{ evaluation.evaluation_number }}
-        <el-tag :type="statusTagType" class="status-tag">
+        <span>{{ evaluation.evaluation_number }}</span>
+        <el-tag v-if="isSupportedStatus" :type="statusTagType" class="status-tag">
           {{ $t(`status.${evaluation.status}`) }}
         </el-tag>
       </h1>
       <p class="page-description">{{ evaluation.product_name }}</p>
     </div>
     <div class="header-right">
-      <el-button type="primary" plain @click="$emit('manage-nested')">
-        <template #icon><Connection /></template>
+      <button class="detail-command secondary" type="button" @click="$emit('manage-nested')">
         {{ $t('evaluation.manageNestedProcesses') }}
-      </el-button>
-      <el-button v-if="canEdit" type="primary" @click="$emit('edit')">
-        <template #icon><Edit /></template>
+      </button>
+      <button v-if="canEdit" class="detail-command primary" type="button" @click="$emit('edit')">
         {{ $t('common.edit') }}
-      </el-button>
+      </button>
 
       <el-dropdown v-if="canOperate" @command="$emit('operation', $event)">
-        <el-button type="primary">
-          <template #icon><MoreFilled /></template>
+        <button class="detail-command primary" type="button">
           {{ $t('common.operations') }}
-        </el-button>
+        </button>
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item v-if="canPause" command="pause">
-              <el-icon><VideoPause /></el-icon>
               {{ $t('evaluation.pause') }}
             </el-dropdown-item>
             <el-dropdown-item v-if="canResume" command="resume">
-              <el-icon><VideoPlay /></el-icon>
               {{ $t('evaluation.resume') }}
             </el-dropdown-item>
             <el-dropdown-item v-if="canReopen" command="reopen" divided>
-              <el-icon><RefreshRight /></el-icon>
               {{ $t('evaluation.reopen') }}
             </el-dropdown-item>
             <el-dropdown-item v-if="canCancel" command="cancel" divided>
-              <el-icon><Close /></el-icon>
               {{ $t('evaluation.cancel') }}
             </el-dropdown-item>
           </el-dropdown-menu>
@@ -67,36 +60,46 @@ const props = defineProps({
 
 defineEmits(['manage-nested', 'edit', 'operation'])
 
+const supportedStatuses = ['draft', 'in_progress', 'completed', 'paused', 'cancelled']
+const isSupportedStatus = computed(() => supportedStatuses.includes(props.evaluation.status))
+
 const statusTagType = computed(() => {
   const typeMap = {
     draft: 'info',
     in_progress: 'primary',
-    pending_approval: 'warning',
     completed: 'success',
     paused: 'info',
     cancelled: 'danger',
-    rejected: 'danger',
   }
   return typeMap[props.evaluation.status] || 'info'
 })
 </script>
 
 <style scoped>
-.page-header {
+.detail-header {
+  --console-line: #d8dee8;
+  --console-ink: #1f2937;
+  --console-muted: #667085;
+  --console-blue: #155eef;
+  --console-blue-dark: #0f48b8;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding: 0;
 }
 
 .page-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 8px 0;
+  margin: 0 0 4px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  color: var(--console-ink);
+  font-size: 22px;
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: 0;
 }
 
 .status-tag {
@@ -104,19 +107,63 @@ const statusTagType = computed(() => {
 }
 
 .page-description {
-  color: #7f8c8d;
   margin: 0;
+  color: var(--console-muted);
+  font-size: 13px;
 }
 
 .header-right {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.detail-command {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 11px;
+  border: 1px solid var(--console-line);
+  border-radius: 6px;
+  background: #fff;
+  color: #344054;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: none;
+}
+
+.detail-command:hover {
+  background: #f8fafc;
+  border-color: #b9c3d3;
+  color: #1f2937;
+}
+
+.detail-command.primary {
+  background: var(--console-blue);
+  border-color: var(--console-blue);
+  color: #fff;
+}
+
+.detail-command.primary:hover {
+  background: var(--console-blue-dark);
+  border-color: var(--console-blue-dark);
+  color: #fff;
+}
+
+.detail-command.secondary {
+  background: #fff;
 }
 
 @media (max-width: 768px) {
-  .page-header {
+  .detail-header {
     flex-direction: column;
-    gap: 16px;
   }
 
   .page-title {

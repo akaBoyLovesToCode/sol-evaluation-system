@@ -15,10 +15,10 @@
       @operation="handleOperation"
     />
 
-    <div v-if="evaluation" class="detail-content dialog-scroll">
+    <div v-if="evaluation" :class="['detail-content', inDialog ? 'dialog-scroll' : '']">
       <!-- Dialog mode: Tabbed layout to reduce scrolling -->
       <template v-if="inDialog">
-        <el-tabs v-model="activeTab" type="border-card" class="dialog-tabs">
+        <el-tabs v-model="activeTab" type="card" class="detail-tabs">
           <el-tab-pane :label="$t('evaluation.basicInformation')" name="details">
             <EvaluationDetailInfo
               ref="infoRef"
@@ -73,9 +73,8 @@
       </template>
 
       <!-- Full-page layout (non-dialog) -->
-      <el-row v-else :gutter="20">
-        <!-- Main Content Column -->
-        <el-col :xs="24" :md="16">
+      <div v-else class="detail-layout">
+        <main class="detail-main">
           <EvaluationDetailInfo
             ref="infoRef"
             :evaluation="evaluation"
@@ -86,7 +85,7 @@
             @save-end="saving = false"
           />
 
-          <div class="mt-5">
+          <div class="detail-section">
             <EvaluationDetailSpecs
               :evaluation="evaluation"
               :can-edit="canEdit"
@@ -96,7 +95,7 @@
             />
           </div>
 
-          <div class="mt-5">
+          <div class="detail-section">
             <EvaluationDetailNestedProcesses
               ref="nestedRef"
               :builder-payload="builderPayload"
@@ -112,29 +111,25 @@
           </div>
 
           <!-- Evaluation Results (Legacy/Simple) -->
-          <div v-if="evaluation.results && evaluation.results.length > 0" class="mt-5">
-            <el-card class="info-card">
-              <template #header>
+          <div v-if="evaluation.results && evaluation.results.length > 0" class="detail-section">
+            <section class="detail-panel results-panel">
+              <div class="detail-panel-header">
                 <span>{{ $t('evaluation.evaluationResults') }}</span>
-              </template>
-              <div class="results-section p-4">
-                <div
-                  v-for="result in evaluation.results"
-                  :key="result.id"
-                  class="result-item bg-gray-50 p-4 rounded-lg mb-4 last:mb-0"
-                >
-                  <div class="result-header flex justify-between items-center mb-2">
-                    <h4 class="font-semibold text-gray-700 m-0">{{ result.test_item }}</h4>
+              </div>
+              <div class="results-section">
+                <div v-for="result in evaluation.results" :key="result.id" class="result-item">
+                  <div class="result-header">
+                    <h4>{{ result.test_item }}</h4>
                     <el-tag :type="result.result === 'pass' ? 'success' : 'danger'">
                       {{ result.result === 'pass' ? $t('evaluation.pass') : $t('evaluation.fail') }}
                     </el-tag>
                   </div>
-                  <div class="result-content text-sm text-gray-600">
-                    <p class="mb-1">
+                  <div class="result-content">
+                    <p>
                       <strong>{{ $t('evaluation.testConditions') }}：</strong
                       >{{ result.test_conditions }}
                     </p>
-                    <p class="mb-1">
+                    <p>
                       <strong>{{ $t('evaluation.testResult') }}：</strong>{{ result.test_result }}
                     </p>
                     <p v-if="result.remarks">
@@ -143,38 +138,37 @@
                   </div>
                 </div>
               </div>
-            </el-card>
+            </section>
           </div>
-        </el-col>
+        </main>
 
         <!-- Sidebar Column -->
-        <el-col :xs="24" :md="8">
-          <!-- Status Info (In sidebar for desktop, implicit in Info for mobile/dialog?) 
-               Actually, Status Info was a separate card in the original.
-               I should probably extract it or keep it here.
-               For now, I'll keep the Status Card here as it's small.
-          -->
-          <el-card class="sidebar-card mb-5">
-            <template #header>
-              <span class="font-semibold">{{ $t('evaluation.statusInformation') }}</span>
-            </template>
-            <div class="status-info py-4">
-              <div class="status-item flex justify-between mb-3 text-sm">
-                <span class="text-gray-500">{{ $t('evaluation.currentStatus') }}：</span>
-                <el-tag :type="getStatusTagType(evaluation.status)">
-                  {{ $t(`status.${evaluation.status}`) }}
+        <aside class="detail-aside">
+          <section class="detail-panel sidebar-panel">
+            <div class="detail-panel-header">
+              <span>{{ $t('evaluation.statusInformation') }}</span>
+            </div>
+            <div class="status-info">
+              <div class="status-item">
+                <span>{{ $t('evaluation.currentStatus') }}：</span>
+                <el-tag
+                  v-if="isSupportedStatus(evaluation.status)"
+                  :type="getStatusTagType(evaluation.status)"
+                >
+                  {{ formatStatusLabel(evaluation.status) }}
                 </el-tag>
+                <strong v-else>-</strong>
               </div>
-              <div class="status-item flex justify-between mb-3 text-sm">
-                <span class="text-gray-500">{{ $t('evaluation.createdAt') }}：</span>
-                <span>{{ formatDateTime(evaluation.created_at) }}</span>
+              <div class="status-item">
+                <span>{{ $t('evaluation.createdAt') }}：</span>
+                <strong>{{ formatDateTime(evaluation.created_at) }}</strong>
               </div>
-              <div class="status-item flex justify-between mb-3 text-sm">
-                <span class="text-gray-500">{{ $t('evaluation.updatedAt') }}：</span>
-                <span>{{ formatDateTime(evaluation.updated_at) }}</span>
+              <div class="status-item">
+                <span>{{ $t('evaluation.updatedAt') }}：</span>
+                <strong>{{ formatDateTime(evaluation.updated_at) }}</strong>
               </div>
             </div>
-          </el-card>
+          </section>
 
           <EvaluationDetailFiles
             class="mb-5"
@@ -187,8 +181,8 @@
           />
 
           <EvaluationDetailLogs :logs="filteredLogs" />
-        </el-col>
-      </el-row>
+        </aside>
+      </div>
     </div>
   </div>
 </template>
@@ -238,6 +232,7 @@ const props = defineProps({
 
 const route = useRoute()
 const { t } = useI18n()
+const supportedStatuses = ['draft', 'in_progress', 'completed', 'paused', 'cancelled']
 
 const loading = ref(false)
 const saving = ref(false)
@@ -265,11 +260,11 @@ const canPause = computed(() => evaluation.value?.status === 'in_progress')
 const canResume = computed(() => evaluation.value?.status === 'paused')
 const canReopen = computed(() => {
   if (!evaluation.value) return false
-  return ['completed', 'cancelled', 'rejected'].includes(evaluation.value.status)
+  return ['completed', 'cancelled'].includes(evaluation.value.status)
 })
 const canCancel = computed(() => {
   if (!evaluation.value) return false
-  return !canReopen.value
+  return ['draft', 'in_progress', 'paused'].includes(evaluation.value.status)
 })
 const canOperate = computed(
   () => canPause.value || canResume.value || canReopen.value || canCancel.value,
@@ -500,13 +495,18 @@ const getStatusTagType = (status) => {
   const typeMap = {
     draft: 'info',
     in_progress: 'primary',
-    pending_approval: 'warning',
     completed: 'success',
     paused: 'info',
     cancelled: 'danger',
-    rejected: 'danger',
   }
   return typeMap[status] || 'info'
+}
+
+const isSupportedStatus = (status) => supportedStatuses.includes(status)
+
+const formatStatusLabel = (status) => {
+  if (!isSupportedStatus(status)) return '-'
+  return t(`status.${status}`)
 }
 
 const formatDateTime = (dateString) => {
@@ -528,11 +528,28 @@ defineExpose({
 
 <style scoped>
 .evaluation-detail-page {
+  --console-bg: #f5f7fa;
+  --console-panel: #ffffff;
+  --console-line: #d8dee8;
+  --console-line-soft: #e8edf3;
+  --console-ink: #1f2937;
+  --console-muted: #667085;
+  --console-blue: #155eef;
+  --console-blue-dark: #0f48b8;
+  --console-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
   padding: 0;
+  background: var(--console-bg);
+  min-height: 100vh;
+  color: var(--console-ink);
+  font-size: 13px;
 }
 
 .dialog-mode .page-header {
   display: none;
+}
+
+.detail-content {
+  width: 100%;
 }
 
 .dialog-scroll {
@@ -542,13 +559,156 @@ defineExpose({
   padding-right: 4px;
 }
 
-.info-card :deep(.el-card__header) {
-  background-color: #f8f9fa;
-  font-weight: 600;
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: 12px;
+  align-items: start;
 }
 
-.sidebar-card :deep(.el-card__header) {
-  background-color: #f8f9fa;
-  font-weight: 600;
+.detail-main,
+.detail-aside {
+  min-width: 0;
+}
+
+.detail-section {
+  margin-top: 12px;
+}
+
+.detail-panel {
+  background: var(--console-panel);
+  border: 1px solid var(--console-line);
+  border-radius: 6px;
+  box-shadow: var(--console-shadow);
+  overflow: hidden;
+}
+
+.detail-panel-header {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--console-line);
+  background: #fff;
+  color: var(--console-ink);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.sidebar-panel {
+  margin-bottom: 12px;
+}
+
+.status-info {
+  padding: 4px 12px;
+}
+
+.status-item {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid var(--console-line-soft);
+  color: var(--console-muted);
+  font-size: 12px;
+}
+
+.status-item:last-child {
+  border-bottom: 0;
+}
+
+.status-item strong {
+  color: var(--console-ink);
+  font-size: 12px;
+  font-weight: 650;
+  text-align: right;
+}
+
+.results-section {
+  padding: 12px;
+}
+
+.result-item {
+  padding: 10px;
+  border: 1px solid var(--console-line-soft);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.result-item + .result-item {
+  margin-top: 8px;
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.result-header h4 {
+  margin: 0;
+  color: var(--console-ink);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.result-content {
+  color: #475467;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.result-content p {
+  margin: 0 0 4px;
+}
+
+.result-content p:last-child {
+  margin-bottom: 0;
+}
+
+.detail-tabs {
+  border: 1px solid var(--console-line);
+  border-radius: 6px;
+  box-shadow: var(--console-shadow);
+  overflow: hidden;
+}
+
+.detail-tabs :deep(.el-tabs__header) {
+  margin: 0;
+  background: #fff;
+  border-bottom: 1px solid var(--console-line);
+}
+
+.detail-tabs :deep(.el-tabs__nav) {
+  border: 0;
+}
+
+.detail-tabs :deep(.el-tabs__item) {
+  height: 36px;
+  border-left: 0;
+  color: var(--console-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.detail-tabs :deep(.el-tabs__item.is-active) {
+  color: var(--console-blue-dark);
+  background: #eef4ff;
+}
+
+.detail-tabs :deep(.el-tabs__content) {
+  padding: 12px;
+  background: var(--console-bg);
+}
+
+@media (max-width: 1100px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

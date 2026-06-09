@@ -1,31 +1,34 @@
 <template>
   <div class="evaluation-info-blocks">
     <!-- Basic Information -->
-    <el-card class="info-card">
+    <el-card class="detail-panel info-card">
       <template #header>
         <div class="card-header">
           <span>{{ $t('evaluation.basicInformation') }}</span>
           <div class="header-actions">
             <template v-if="!editing && canEdit">
-              <el-button size="small" type="primary" @click="startEdit">
-                <template #icon><Edit /></template>
+              <el-button size="small" type="primary" class="detail-button" @click="startEdit">
                 {{ $t('common.edit') }}
               </el-button>
             </template>
             <template v-else-if="editing">
-              <el-button size="small" @click="cancelEdit">
-                <template #icon><Close /></template>
+              <el-button size="small" class="detail-button" @click="cancelEdit">
                 {{ $t('common.cancel') }}
               </el-button>
-              <el-button size="small" type="primary" :loading="saving" @click="saveEdit">
-                <template #icon><Check /></template>
+              <el-button
+                size="small"
+                type="primary"
+                class="detail-button"
+                :loading="saving"
+                @click="saveEdit"
+              >
                 {{ $t('common.save') }}
               </el-button>
             </template>
           </div>
         </div>
       </template>
-      <el-descriptions :column="isMobile ? 1 : 2" border>
+      <el-descriptions :column="isMobile ? 1 : 2" border class="detail-descriptions">
         <el-descriptions-item :label="$t('common.status')">
           <template v-if="editing">
             <el-select v-model="editForm.status" style="width: 100%">
@@ -38,9 +41,13 @@
             </el-select>
           </template>
           <template v-else>
-            <el-tag :type="getStatusTagType(evaluation.status)">
+            <el-tag
+              v-if="isSupportedStatus(evaluation.status)"
+              :type="getStatusTagType(evaluation.status)"
+            >
               {{ $t(`status.${evaluation.status}`) }}
             </el-tag>
+            <span v-else>-</span>
           </template>
         </el-descriptions-item>
         <el-descriptions-item :label="$t('evaluation.evaluationType')">
@@ -146,14 +153,14 @@
       </el-descriptions>
 
       <div class="description-section">
-        <h4 class="text-gray-700 font-semibold mb-3">
+        <h4 class="section-title">
           {{ $t('evaluation.evaluationDescription') }}
         </h4>
         <template v-if="editing">
           <el-input v-model="editForm.remarks" type="textarea" :rows="3" />
         </template>
         <template v-else>
-          <p class="whitespace-pre-wrap break-words text-gray-600">
+          <p class="description-value">
             {{ evaluation.remarks || evaluation.description || '-' }}
           </p>
         </template>
@@ -162,16 +169,14 @@
 
     <!-- Technical Specifications -->
     <!-- Process Section -->
-    <el-card class="info-card">
+    <el-card class="detail-panel info-card">
       <template #header>
         <span>{{ $t('evaluation.processSection') }}</span>
       </template>
       <el-row :gutter="20" class="process-fields">
         <el-col :xs="24" :sm="12">
           <div class="process-field mb-4">
-            <label class="process-label block font-semibold text-gray-700 mb-2">{{
-              $t('evaluation.testProcess')
-            }}</label>
+            <label class="process-label">{{ $t('evaluation.testProcess') }}</label>
             <template v-if="editing">
               <el-input
                 v-model="editForm.test_process"
@@ -181,9 +186,7 @@
               />
             </template>
             <template v-else>
-              <div
-                class="process-text bg-gray-50 border border-gray-200 rounded p-3 min-h-[56px] whitespace-pre-wrap break-words"
-              >
+              <div class="process-text">
                 {{ evaluation.test_process || '-' }}
               </div>
             </template>
@@ -191,9 +194,7 @@
         </el-col>
         <el-col :xs="24" :sm="12">
           <div class="process-field mb-4">
-            <label class="process-label block font-semibold text-gray-700 mb-2">{{
-              $t('evaluation.vProcess')
-            }}</label>
+            <label class="process-label">{{ $t('evaluation.vProcess') }}</label>
             <template v-if="editing">
               <el-input
                 v-model="editForm.v_process"
@@ -203,9 +204,7 @@
               />
             </template>
             <template v-else>
-              <div
-                class="process-text bg-gray-50 border border-gray-200 rounded p-3 min-h-[56px] whitespace-pre-wrap break-words"
-              >
+              <div class="process-text">
                 {{ evaluation.v_process || '-' }}
               </div>
             </template>
@@ -214,9 +213,7 @@
       </el-row>
 
       <div class="process-field">
-        <label class="process-label block font-semibold text-gray-700 mb-2">{{
-          $t('evaluation.pgmLogin')
-        }}</label>
+        <label class="process-label">{{ $t('evaluation.pgmLogin') }}</label>
         <template v-if="editing">
           <div class="pgm-login-block flex flex-col gap-2" @paste="handlePgmPaste">
             <el-input
@@ -253,9 +250,7 @@
           </div>
         </template>
         <template v-else>
-          <div
-            class="process-text bg-gray-50 border border-gray-200 rounded p-3 min-h-[56px] whitespace-pre-wrap break-words"
-          >
+          <div class="process-text">
             {{ evaluation.pgm_login_text || '-' }}
           </div>
           <div
@@ -325,16 +320,9 @@ const editForm = reactive({
 })
 
 const processStepChoices = computed(() => props.processStepOptions)
+const supportedStatuses = ['draft', 'in_progress', 'completed', 'paused', 'cancelled']
 
-const statusOptions = [
-  'draft',
-  'in_progress',
-  'pending_approval',
-  'completed',
-  'paused',
-  'cancelled',
-  'rejected',
-]
+const statusOptions = supportedStatuses
 
 const reasonOptions = computed(() => {
   if (!props.evaluation) return []
@@ -445,21 +433,21 @@ const getStatusTagType = (status) => {
   const typeMap = {
     draft: 'info',
     in_progress: 'primary',
-    pending_approval: 'warning',
     completed: 'success',
     paused: 'info',
     cancelled: 'danger',
-    rejected: 'danger',
   }
   return typeMap[status] || 'info'
 }
 
+const isSupportedStatus = (status) => supportedStatuses.includes(status)
+
 // Image handling
 const fileToDataUrl = (file) =>
-  new Promise((resolve, reject) => {
+  new Promise((resolve, failFileRead) => {
     const reader = new FileReader()
     reader.onload = () => resolve(reader.result)
-    reader.onerror = reject
+    reader.onerror = failFileRead
     reader.readAsDataURL(file)
   })
 
@@ -502,29 +490,125 @@ defineExpose({ startEdit, cancelEdit })
 </script>
 
 <style scoped>
-.info-card {
-  margin-bottom: 20px;
+.evaluation-info-blocks {
+  --console-line: #d8dee8;
+  --console-line-soft: #e8edf3;
+  --console-ink: #1f2937;
+  --console-muted: #667085;
+  --console-blue: #155eef;
+}
+
+.detail-panel {
+  margin-bottom: 0;
+  border: 1px solid var(--console-line);
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  overflow: hidden;
+}
+
+.detail-panel + .detail-panel {
+  margin-top: 12px;
 }
 
 .card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  color: var(--console-ink);
+  font-size: 13px;
+  font-weight: 750;
 }
 
 .header-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
-.info-card :deep(.el-card__header) {
-  background-color: #f8f9fa;
-  font-weight: 600;
+.detail-button {
+  height: 28px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.detail-panel :deep(.el-card__header) {
+  min-height: 42px;
+  padding: 6px 12px;
+  background: #fff;
+  border-bottom: 1px solid var(--console-line);
+  font-weight: 750;
+}
+
+.detail-panel :deep(.el-card__body) {
+  padding: 12px;
+}
+
+.detail-descriptions :deep(.el-descriptions__cell) {
+  padding: 8px 10px;
+}
+
+.detail-descriptions :deep(.el-descriptions__label) {
+  width: 132px;
+  min-width: 132px;
+  background: #f8fafc;
+  color: var(--console-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.detail-descriptions :deep(.el-descriptions__content) {
+  color: var(--console-ink);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .description-section {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--console-line-soft);
+}
+
+.section-title,
+.process-label {
+  display: block;
+  margin: 0 0 6px;
+  color: var(--console-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.description-value,
+.process-text {
+  margin: 0;
+  min-height: 48px;
+  padding: 9px 10px;
+  border: 1px solid var(--console-line-soft);
+  border-radius: 6px;
+  background: #f8fafc;
+  color: var(--console-ink);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.process-field {
+  margin-bottom: 12px;
+}
+
+.process-fields {
+  margin-bottom: 0;
+}
+
+.pgm-upload-row {
+  color: var(--console-muted);
+}
+
+.pgm-image-preview {
+  border-color: var(--console-line) !important;
+  border-radius: 6px !important;
+  background: #f8fafc !important;
 }
 </style>

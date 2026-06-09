@@ -1,11 +1,11 @@
 <template>
-  <el-card class="sidebar-card">
+  <el-card class="detail-panel sidebar-card">
     <template #header>
       <div class="card-header">
         <span>{{ $t('evaluation.operationLogs') }}</span>
       </div>
     </template>
-    <div class="logs-list h-[300px] overflow-y-auto p-4">
+    <div class="logs-list">
       <el-timeline>
         <el-timeline-item
           v-for="log in logs"
@@ -17,27 +17,27 @@
               <component :is="getOperationIconName(log.operation_type)" />
             </el-icon>
           </template>
-          <div class="log-content flex flex-col gap-1">
-            <div class="log-time text-xs text-gray-400 font-medium mb-1">
+          <div class="log-content">
+            <div class="log-time">
               {{ formatDateTime(log.created_at) }}
             </div>
-            <div class="log-user text-sm font-semibold text-gray-700">
+            <div class="log-user">
               <el-tag size="small" type="info">{{
                 (log.request_method || 'GET').toUpperCase()
               }}</el-tag>
-              <el-tag size="small" :type="log.success ? 'success' : 'danger'" class="ml-1">{{
+              <el-tag size="small" :type="log.success ? 'success' : 'danger'" class="status-code">{{
                 log.status_code || '-'
               }}</el-tag>
-              <span class="ml-2">{{ log.request_path }}</span>
+              <span class="request-path">{{ log.request_path }}</span>
             </div>
-            <div class="log-action text-sm text-gray-600 leading-snug">
+            <div class="log-action">
               {{ getOperationDescription(log) }}
             </div>
-            <div class="log-meta text-xs text-gray-400 mt-1">
+            <div class="log-meta">
               <span>IP: {{ log.ip_address || '-' }}</span>
-              <span class="ml-2">UA: {{ (log.user_agent || '').slice(0, 80) }}</span>
+              <span>UA: {{ (log.user_agent || '').slice(0, 80) }}</span>
             </div>
-            <div v-if="log.old_data || log.new_data" class="log-diff mt-1">
+            <div v-if="log.old_data || log.new_data" class="log-diff">
               <el-button link type="primary" size="small" @click="toggleLog(log.id)">
                 {{
                   logExpanded[log.id]
@@ -45,17 +45,13 @@
                     : $t('common.details') || 'Details'
                 }}
               </el-button>
-              <div v-show="logExpanded[log.id]" class="mt-2 bg-gray-50 p-2 rounded text-xs">
+              <div v-show="logExpanded[log.id]" class="log-diff-content">
                 <div v-if="getLogDiff(log).length > 0">
-                  <div
-                    v-for="d in getLogDiff(log)"
-                    :key="d.key"
-                    class="diff-row flex gap-2 border-b border-gray-100 last:border-0 py-1"
-                  >
-                    <span class="diff-key font-mono text-blue-600">{{ d.key }}</span>
-                    <span class="diff-from text-red-500 line-through">{{ stringify(d.from) }}</span>
-                    <span class="diff-arrow text-gray-400">→</span>
-                    <span class="diff-to text-green-600">{{ stringify(d.to) }}</span>
+                  <div v-for="d in getLogDiff(log)" :key="d.key" class="diff-row">
+                    <span class="diff-key">{{ d.key }}</span>
+                    <span class="diff-from">{{ stringify(d.from) }}</span>
+                    <span class="diff-arrow">→</span>
+                    <span class="diff-to">{{ stringify(d.to) }}</span>
                   </div>
                 </div>
                 <div v-else>
@@ -71,7 +67,7 @@
           </div>
         </el-timeline-item>
       </el-timeline>
-      <div v-if="logs.length === 0" class="empty-logs text-center py-5 text-gray-400 text-sm">
+      <div v-if="logs.length === 0" class="empty-logs">
         <el-empty :image-size="60" :description="$t('evaluation.noOperationLogs')" />
       </div>
     </div>
@@ -103,8 +99,6 @@ const getOperationIconName = (operationType) => {
     create: 'CirclePlus',
     update: 'EditPen',
     delete: 'Delete',
-    approve: 'CircleCheck',
-    reject: 'CircleClose',
     view: 'View',
     login: 'User',
     logout: 'User',
@@ -118,8 +112,6 @@ const getOperationColor = (operationType) => {
     create: '#67C23A',
     update: '#E6A23C',
     delete: '#F56C6C',
-    approve: '#67C23A',
-    reject: '#F56C6C',
     view: '#909399',
     login: '#409EFF',
     logout: '#909399',
@@ -176,13 +168,142 @@ const getLogDiff = (log) => {
 </script>
 
 <style scoped>
-.sidebar-card :deep(.el-card__header) {
-  background-color: #f8f9fa;
-  font-weight: 600;
+.detail-panel {
+  --console-line: #d8dee8;
+  --console-line-soft: #e8edf3;
+  --console-ink: #1f2937;
+  --console-muted: #667085;
+  border: 1px solid var(--console-line);
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  overflow: hidden;
 }
+
+.detail-panel :deep(.el-card__header) {
+  min-height: 42px;
+  padding: 6px 12px;
+  background: #fff;
+  border-bottom: 1px solid var(--console-line);
+  font-weight: 750;
+}
+
+.detail-panel :deep(.el-card__body) {
+  padding: 0;
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  color: var(--console-ink);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.logs-list {
+  height: 300px;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.logs-list :deep(.el-timeline) {
+  padding-left: 2px;
+}
+
+.logs-list :deep(.el-timeline-item__wrapper) {
+  padding-left: 20px;
+}
+
+.log-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--console-ink);
+}
+
+.log-time {
+  color: var(--console-muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.log-user {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--console-ink);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.request-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.log-action {
+  color: #475467;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.log-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: var(--console-muted);
+  font-size: 11px;
+}
+
+.log-diff {
+  margin-top: 2px;
+}
+
+.log-diff-content {
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid var(--console-line-soft);
+  border-radius: 6px;
+  background: #f8fafc;
+  font-size: 11px;
+}
+
+.diff-row {
+  display: grid;
+  grid-template-columns: minmax(80px, 0.8fr) minmax(80px, 1fr) 18px minmax(80px, 1fr);
+  gap: 6px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--console-line-soft);
+}
+
+.diff-row:last-child {
+  border-bottom: 0;
+}
+
+.diff-key {
+  color: #155eef;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+}
+
+.diff-from {
+  color: #b42318;
+  text-decoration: line-through;
+}
+
+.diff-arrow {
+  color: var(--console-muted);
+}
+
+.diff-to {
+  color: #14804a;
+}
+
+.empty-logs {
+  padding: 18px 0;
+  color: var(--console-muted);
+  font-size: 12px;
+  text-align: center;
 }
 </style>
