@@ -467,6 +467,7 @@
 import { ref, reactive, onMounted, computed, defineAsyncComponent, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '../utils/api'
+import { fetchAllEvaluationPages } from '../utils/evaluationExport'
 import { buildReliabilitySummary, isReliabilityStep } from '../utils/reliability'
 const EvaluationDetail = defineAsyncComponent(() => import('./EvaluationDetail.vue'))
 const NewEvaluation = defineAsyncComponent(() => import('./NewEvaluation.vue'))
@@ -1132,10 +1133,11 @@ const handleExport = async (type = 'current') => {
     let dataToExport = []
 
     if (type === 'all') {
-      const params = buildEvaluationParams({ page: 1, perPage: 100000 })
-
-      const response = await api.get('/evaluations', { params })
-      dataToExport = response.data.data.evaluations || []
+      const params = buildEvaluationParams({
+        includePagination: false,
+        includeOperationalView: false,
+      })
+      dataToExport = await fetchAllEvaluationPages(api, params)
     } else {
       // Determine data to export: selected rows or all data
       dataToExport = selectedRows.value.length > 0 ? selectedRows.value : tableData.value
@@ -1160,7 +1162,7 @@ const handleExport = async (type = 'current') => {
     const exportMessage =
       selectedRows.value.length > 0
         ? `导出选中的 ${selectedRows.value.length} 条评价记录`
-        : `导出全部 ${tableData.value.length} 条评价记录`
+        : `导出全部 ${dataToExport.length} 条评价记录`
     console.log(exportMessage)
 
     // Prepare CSV data
