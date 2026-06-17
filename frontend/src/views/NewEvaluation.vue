@@ -356,9 +356,6 @@
 
           <!-- Create Mode Buttons -->
           <template v-if="!isEditMode">
-            <el-button type="primary" :loading="saving" @click="handleSave(false)">
-              {{ $t('evaluation.saveDraft') }}
-            </el-button>
             <el-button type="success" :loading="submitting" @click="handleSave(true)">
               {{ $t('evaluation.submit') }}
             </el-button>
@@ -495,6 +492,7 @@ const reasonOptions = computed(() => {
         value: 'firmware_change',
       },
       { label: t('evaluation.reasons.bom_change'), value: 'bom_change' },
+      { label: t('evaluation.reasons.pcb'), value: 'pcb' },
       {
         label: t('evaluation.reasons.customer_requirement'),
         value: 'customer_requirement',
@@ -890,7 +888,7 @@ const handleSave = async (submit = false) => {
     const payload = buildPayload()
 
     if (!isEditMode.value) {
-      payload.status = submit ? 'in_progress' : 'draft'
+      payload.status = 'in_progress'
     }
 
     let targetId = evaluationId.value
@@ -905,7 +903,7 @@ const handleSave = async (submit = false) => {
         ElMessage.error(t('common.responseError'))
         return
       }
-      ElMessage.success(submit ? t('evaluation.submitSuccess') : t('evaluation.saveSuccess'))
+      ElMessage.success(t('evaluation.submitSuccess'))
     }
 
     nestedSaveWarnings.value = []
@@ -1047,9 +1045,6 @@ onMounted(() => {
 })
 
 // Expose methods for dialog footer controls in parent
-const saveDraft = async () => {
-  await handleSave(false)
-}
 const submitForm = async () => {
   await handleSave(true)
 }
@@ -1063,7 +1058,7 @@ const deleteEval = async () => {
   await handleDelete()
 }
 
-defineExpose({ saveDraft, submitForm, save, finish, deleteEval })
+defineExpose({ submitForm, save, finish, deleteEval })
 </script>
 
 <style scoped>

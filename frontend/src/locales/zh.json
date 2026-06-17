@@ -91,15 +91,15 @@
       "tableMeta": "共 {total} 条 · 排序：{sort}",
       "paginationMeta": "显示 {start}-{end} / {total} · 每页 {size} 条",
       "savedViews": {
-        "allActive": "全部活动 {count}",
+        "allActive": "进行中 {count}",
         "noUpdate": "未更新 {count}",
         "openOver10d": "超过10天 {count}",
-        "reliabilityFailures": "可靠性失败 {count}"
+        "allEvaluations": "全部评价 {count}"
       },
       "kpis": {
         "openEvaluations": {
-          "label": "未关闭评价",
-          "hint": "进行中或暂停"
+          "label": "进行中评价",
+          "hint": "当前正在推进的评价"
         },
         "staleOpenEvaluations": {
           "label": "超过48小时未更新",
@@ -164,7 +164,6 @@
     "addProcess": "添加过程",
     "remove": "移除",
     "massProductionNote": "注：量产评价无需审批直接完成",
-    "saveDraft": "保存草稿",
     "submit": "提交",
     "submitSuccess": "评价提交成功",
     "submitError": "提交失败",
@@ -302,6 +301,7 @@
       "pgm_improvement": "PGM改善",
       "firmware_change": "F/W变更",
       "bom_change": "BOM变更",
+      "pcb": "PCB",
       "nand": "NAND",
       "nprr": "NPRR",
       "repair": "Repair",
@@ -354,14 +354,9 @@
     "headOfficeCharger": "本社担当",
     "complete": "完成",
     "statusDescriptions": {
-      "draft": "评价处于草稿状态，可以编辑。",
       "inProgress": "评价正在进行中。",
-      "paused": "评价已暂时暂停。",
-      "pendingPartApproval": "等待Part长审批。",
-      "pendingGroupApproval": "等待Group长审批。",
       "completed": "评价已成功完成。",
-      "cancelled": "评价已取消。",
-      "rejected": "评价已被拒绝。"
+      "cancelled": "评价已取消。"
     }
   },
   "nested": {
@@ -498,12 +493,8 @@
     "noProcess": "尚未添加 Process"
   },
   "status": {
-    "draft": "草稿",
     "in_progress": "进行中",
-    "pending_approval": "待审批",
     "completed": "已完成",
-    "paused": "已暂停",
-    "cancelled": "已取消",
-    "rejected": "已拒绝"
+    "cancelled": "已取消"
   }
 }

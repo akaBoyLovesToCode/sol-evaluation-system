@@ -6,8 +6,6 @@
       :evaluation="evaluation"
       :can-edit="canEdit"
       :can-operate="canOperate"
-      :can-pause="canPause"
-      :can-resume="canResume"
       :can-reopen="canReopen"
       :can-cancel="canCancel"
       @edit="handleEdit"
@@ -232,7 +230,7 @@ const props = defineProps({
 
 const route = useRoute()
 const { t } = useI18n()
-const supportedStatuses = ['draft', 'in_progress', 'completed', 'paused', 'cancelled']
+const supportedStatuses = ['in_progress', 'completed', 'cancelled']
 
 const loading = ref(false)
 const saving = ref(false)
@@ -253,22 +251,18 @@ const filteredLogs = computed(() => evaluation.value?.logs || [])
 
 const canEdit = computed(() => {
   if (!evaluation.value) return false
-  return ['draft', 'in_progress', 'paused'].includes(evaluation.value.status)
+  return evaluation.value.status === 'in_progress'
 })
 
-const canPause = computed(() => evaluation.value?.status === 'in_progress')
-const canResume = computed(() => evaluation.value?.status === 'paused')
 const canReopen = computed(() => {
   if (!evaluation.value) return false
   return ['completed', 'cancelled'].includes(evaluation.value.status)
 })
 const canCancel = computed(() => {
   if (!evaluation.value) return false
-  return ['draft', 'in_progress', 'paused'].includes(evaluation.value.status)
+  return evaluation.value.status === 'in_progress'
 })
-const canOperate = computed(
-  () => canPause.value || canResume.value || canReopen.value || canCancel.value,
-)
+const canOperate = computed(() => canReopen.value || canCancel.value)
 
 // Data Fetching
 async function fetchEvaluation(options = {}) {
@@ -407,28 +401,7 @@ const handleOperation = async (command) => {
       return
     }
 
-    let message = ''
-    let confirmText = ''
-
-    if (command === 'pause') {
-      message = t('evaluation.confirmPause')
-      confirmText = t('evaluation.pause')
-    } else if (command === 'resume') {
-      message = t('evaluation.confirmResume')
-      confirmText = t('evaluation.resume')
-    }
-
-    await ElMessageBox.confirm(message, t('common.confirmAction'), {
-      confirmButtonText: confirmText,
-      cancelButtonText: t('common.cancel'),
-      type: 'warning',
-    })
-
-    const status = command === 'pause' ? 'paused' : 'in_progress'
-    await api.put(`/evaluations/${evaluation.value.id}/status`, { status })
-
-    ElMessage.success(t('evaluation.operationSuccess'))
-    fetchEvaluation()
+    console.warn(`Unsupported evaluation operation: ${command}`)
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error(t('evaluation.operationFailed'))
@@ -493,10 +466,8 @@ const handleDownloadFile = () => {
 // Utils
 const getStatusTagType = (status) => {
   const typeMap = {
-    draft: 'info',
     in_progress: 'primary',
     completed: 'success',
-    paused: 'info',
     cancelled: 'danger',
   }
   return typeMap[status] || 'info'

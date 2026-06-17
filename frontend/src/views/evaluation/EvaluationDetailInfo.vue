@@ -320,7 +320,7 @@ const editForm = reactive({
 })
 
 const processStepChoices = computed(() => props.processStepOptions)
-const supportedStatuses = ['draft', 'in_progress', 'completed', 'paused', 'cancelled']
+const supportedStatuses = ['in_progress', 'completed', 'cancelled']
 
 const statusOptions = supportedStatuses
 
@@ -336,6 +336,7 @@ const reasonOptions = computed(() => {
     { label: t('evaluation.reasons.pgm_improvement'), value: 'pgm_improvement' },
     { label: t('evaluation.reasons.firmware_change'), value: 'firmware_change' },
     { label: t('evaluation.reasons.bom_change'), value: 'bom_change' },
+    { label: t('evaluation.reasons.pcb'), value: 'pcb' },
     { label: t('evaluation.reasons.customer_requirement'), value: 'customer_requirement' },
     { label: t('evaluation.reasons.nand'), value: 'nand' },
     { label: t('evaluation.reasons.nprr'), value: 'nprr' },
@@ -372,7 +373,7 @@ const syncEditForm = () => {
     process_step: parseProcessSteps(props.evaluation.process_step),
     scs_charger_name: props.evaluation.scs_charger_name || '',
     head_office_charger_name: props.evaluation.head_office_charger_name || '',
-    status: props.evaluation.status || 'draft',
+    status: props.evaluation.status || 'in_progress',
     start_date: props.evaluation.start_date || '',
     end_date: props.evaluation.actual_end_date || '',
     remarks: props.evaluation.remarks || props.evaluation.description || '',
@@ -431,10 +432,8 @@ const getReasonText = (reason) => {
 
 const getStatusTagType = (status) => {
   const typeMap = {
-    draft: 'info',
     in_progress: 'primary',
     completed: 'success',
-    paused: 'info',
     cancelled: 'danger',
   }
   return typeMap[status] || 'info'

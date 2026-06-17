@@ -293,7 +293,11 @@
           >
             <template #default="{ row }">
               <template v-if="row.remarks">
-                <el-tooltip placement="top" effect="dark" popper-class="evaluation-description-tooltip">
+                <el-tooltip
+                  placement="top"
+                  effect="dark"
+                  popper-class="evaluation-description-tooltip"
+                >
                   <template #content>
                     <div class="evaluation-description-tooltip-content">
                       {{ row.remarks }}
@@ -435,13 +439,6 @@
             {{ $t('common.cancel') }}
           </button>
           <template v-if="!isEditing">
-            <button
-              class="console-command secondary"
-              type="button"
-              @click="newEvalRef?.saveDraft()"
-            >
-              {{ $t('evaluation.saveDraft') }}
-            </button>
             <button class="console-command success" type="button" @click="newEvalRef?.submitForm()">
               {{ $t('evaluation.submit') }}
             </button>
@@ -515,7 +512,7 @@ const kpiData = reactive({
   open_over_10d: 0,
   median_open_age_days: 0,
   created_this_month: 0,
-  reliability_failures: 0,
+  total_evaluations: 0,
   completed_this_month: 0,
 })
 
@@ -541,12 +538,9 @@ const sortParams = reactive({
 })
 
 const statusOptions = computed(() => [
-  { label: t('status.draft'), value: 'draft' },
   { label: t('status.in_progress'), value: 'in_progress' },
   { label: t('status.completed'), value: 'completed' },
-  { label: t('status.paused'), value: 'paused' },
   { label: t('status.cancelled'), value: 'cancelled' },
-  { label: t('status.rejected'), value: 'rejected' },
 ])
 
 const savedViews = computed(() => [
@@ -565,10 +559,10 @@ const savedViews = computed(() => [
     value: 'open_over_10d',
   },
   {
-    label: t('evaluation.console.savedViews.reliabilityFailures', {
-      count: kpiData.reliability_failures,
+    label: t('evaluation.console.savedViews.allEvaluations', {
+      count: kpiData.total_evaluations,
     }),
-    value: 'has_failures',
+    value: 'all',
   },
 ])
 
@@ -636,7 +630,7 @@ const pageStart = computed(() => {
 const pageEnd = computed(() => Math.min(pagination.page * pagination.size, pagination.total))
 
 const detailDialogTitle = computed(() => selectedEvaluationNumber.value || t('evaluation.title'))
-const terminalStatuses = ['completed', 'cancelled', 'rejected']
+const terminalStatuses = ['completed', 'cancelled']
 const detailStatus = computed(
   () => detailRef.value?.evaluation?.status || selectedEvaluationStatus.value || '',
 )
@@ -1331,15 +1325,9 @@ const handleExport = async (type = 'current') => {
 
 const getStatusTagType = (status) => {
   const typeMap = {
-    draft: 'info',
     in_progress: 'primary',
-    pending_approval: 'warning',
-    pending_part_approval: 'warning',
-    pending_group_approval: 'warning',
     completed: 'success',
-    paused: 'info',
     cancelled: 'danger',
-    rejected: 'danger',
   }
   return typeMap[status] || 'info'
 }
@@ -1405,7 +1393,6 @@ const formatDateForExport = (value) => {
   }
   return String(value)
 }
-
 </script>
 
 <style scoped>
@@ -1824,7 +1811,9 @@ const formatDateForExport = (value) => {
 }
 
 .operations-table :deep(.el-table-fixed-column--left:last-of-type) {
-  box-shadow: 1px 0 0 var(--console-line-soft), 12px 0 18px -18px rgba(16, 24, 40, 0.45);
+  box-shadow:
+    1px 0 0 var(--console-line-soft),
+    12px 0 18px -18px rgba(16, 24, 40, 0.45);
 }
 
 .eval-link {
@@ -1918,6 +1907,5 @@ const formatDateForExport = (value) => {
   .filter-actions {
     align-self: stretch;
   }
-
 }
 </style>

@@ -23,13 +23,7 @@
         </button>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item v-if="canPause" command="pause">
-              {{ $t('evaluation.pause') }}
-            </el-dropdown-item>
-            <el-dropdown-item v-if="canResume" command="resume">
-              {{ $t('evaluation.resume') }}
-            </el-dropdown-item>
-            <el-dropdown-item v-if="canReopen" command="reopen" divided>
+            <el-dropdown-item v-if="canReopen" command="reopen">
               {{ $t('evaluation.reopen') }}
             </el-dropdown-item>
             <el-dropdown-item v-if="canCancel" command="cancel" divided>
@@ -52,23 +46,19 @@ const props = defineProps({
   },
   canEdit: Boolean,
   canOperate: Boolean,
-  canPause: Boolean,
-  canResume: Boolean,
   canReopen: Boolean,
   canCancel: Boolean,
 })
 
 defineEmits(['manage-nested', 'edit', 'operation'])
 
-const supportedStatuses = ['draft', 'in_progress', 'completed', 'paused', 'cancelled']
+const supportedStatuses = ['in_progress', 'completed', 'cancelled']
 const isSupportedStatus = computed(() => supportedStatuses.includes(props.evaluation.status))
 
 const statusTagType = computed(() => {
   const typeMap = {
-    draft: 'info',
     in_progress: 'primary',
     completed: 'success',
-    paused: 'info',
     cancelled: 'danger',
   }
   return typeMap[props.evaluation.status] || 'info'

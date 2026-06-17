@@ -91,15 +91,15 @@
       "tableMeta": "{total} records · sorted by {sort}",
       "paginationMeta": "Showing {start}-{end} of {total} · {size}/page",
       "savedViews": {
-        "allActive": "All Active {count}",
+        "allActive": "In Progress {count}",
         "noUpdate": "No Update {count}",
         "openOver10d": "Open >10d {count}",
-        "reliabilityFailures": "Reliability Failures {count}"
+        "allEvaluations": "All Evaluations {count}"
       },
       "kpis": {
         "openEvaluations": {
-          "label": "Open evaluations",
-          "hint": "in progress or paused"
+          "label": "In-progress evaluations",
+          "hint": "currently active evaluations"
         },
         "staleOpenEvaluations": {
           "label": "No update >48h",
@@ -144,17 +144,10 @@
       "description": "Modify evaluation information"
     },
     "statusDescriptions": {
-      "draft": "Evaluation is in draft and can be edited.",
       "in_progress": "Evaluation is currently in progress.",
-      "paused": "Evaluation is paused.",
-      "pending_part_approval": "Waiting for part leader approval.",
-      "pending_group_approval": "Waiting for group leader approval.",
       "completed": "Evaluation has been completed successfully.",
       "cancelled": "Evaluation has been cancelled.",
-      "rejected": "Evaluation has been rejected.",
-      "inProgress": "Evaluation is in progress.",
-      "pendingPartApproval": "Waiting for Part Leader approval.",
-      "pendingGroupApproval": "Waiting for Group Leader approval."
+      "inProgress": "Evaluation is in progress."
     },
     "processStep": "Step",
     "processSummary": "Process Summary",
@@ -187,7 +180,6 @@
     "massProductionProcess": "Mass Production Evaluation Process",
     "newProductNote": "Note: New product evaluations require two-level approval from Part Leader and Group Leader",
     "massProductionNote": "Note: Mass production evaluations are completed directly without approval",
-    "saveDraft": "Save Draft",
     "submit": "Submit",
     "submitSuccess": "Evaluation submitted successfully",
     "submitError": "Submit failed",
@@ -322,6 +314,7 @@
       "pgm_improvement": "PGM Improvement",
       "firmware_change": "F/W Change",
       "bom_change": "BOM Change",
+      "pcb": "PCB",
       "nand": "NAND",
       "nprr": "NPRR",
       "repair": "Repair",
@@ -335,9 +328,6 @@
     },
     "horizontal_expansion": "Horizontal Expansion",
     "direct_development": "Direct Development",
-    "pgm_improvement": "PGM Improvement",
-    "firmware_change": "F/W Change",
-    "bom_change": "BOM Change",
     "formFactors": {
       "2_5_inch": "2.5 inch",
       "m2_2280": "M.2 2280",
@@ -533,12 +523,8 @@
     "noProcess": "No processes defined yet"
   },
   "status": {
-    "draft": "Draft",
     "in_progress": "In Progress",
-    "pending_approval": "Pending Approval",
     "completed": "Completed",
-    "paused": "Paused",
-    "cancelled": "Cancelled",
-    "rejected": "Rejected"
+    "cancelled": "Cancelled"
   }
 }
