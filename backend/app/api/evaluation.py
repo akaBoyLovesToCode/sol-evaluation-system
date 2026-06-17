@@ -29,12 +29,13 @@ from app.utils.timezone import resolve_timezone_from_request, timezone_label, ut
 
 evaluation_bp = Blueprint("evaluation", __name__)
 
-ACTIVE_EVALUATION_STATUSES = ("in_progress", "paused")
+ALLOWED_EVALUATION_STATUSES = tuple(status.value for status in EvaluationStatus)
+ACTIVE_EVALUATION_STATUSES = (EvaluationStatus.IN_PROGRESS.value,)
 VALID_OPERATIONAL_VIEWS = {
+    "all",
     "all_active",
     "no_update_48h",
     "open_over_10d",
-    "has_failures",
 }
 
 
@@ -130,7 +131,9 @@ def _apply_evaluation_base_filters(query, args):
     start_date_to = args.get("start_date_to")
 
     if evaluation_number:
-        query = query.filter(Evaluation.evaluation_number.ilike(f"%{evaluation_number}%"))
+        query = query.filter(
+            Evaluation.evaluation_number.ilike(f"%{evaluation_number}%")
+        )
     if status:
         query = query.filter(Evaluation.status == status)
     if evaluation_type:
@@ -159,7 +162,9 @@ def _apply_evaluation_base_filters(query, args):
         )
     if start_date_from:
         try:
-            start_date_from_value = datetime.strptime(start_date_from, "%Y-%m-%d").date()
+            start_date_from_value = datetime.strptime(
+                start_date_from, "%Y-%m-%d"
+            ).date()
             query = query.filter(Evaluation.start_date >= start_date_from_value)
         except ValueError:
             current_app.logger.warning(
@@ -186,6 +191,8 @@ def _apply_operational_view(query, operational_view: str | None):
     if operational_view not in VALID_OPERATIONAL_VIEWS:
         current_app.logger.warning("Unsupported operational_view: %s", operational_view)
         return query
+    if operational_view == "all":
+        return query
     if operational_view == "all_active":
         return query.filter(Evaluation.status.in_(ACTIVE_EVALUATION_STATUSES))
     if operational_view == "no_update_48h":
@@ -198,9 +205,6 @@ def _apply_operational_view(query, operational_view: str | None):
             Evaluation.status.in_(ACTIVE_EVALUATION_STATUSES),
             Evaluation.start_date <= today - timedelta(days=10),
         )
-    if operational_view == "has_failures":
-        return query.filter(Evaluation.id.in_(_failure_evaluation_ids_query()))
-
     return query
 
 
@@ -862,7 +866,7 @@ def get_evaluations() -> tuple[Response, int]:
         in: query
         schema:
           type: string
-          enum: [draft, in_progress, pending_part_approval, pending_group_approval, completed, paused, cancelled, rejected]
+          enum: [in_progress, completed, cancelled]
         description: Filter by evaluation status
       - name: evaluation_type
         in: query
@@ -1051,9 +1055,7 @@ def get_evaluation_kpis() -> tuple[Response, int]:
         month_start = today.replace(day=1)
         month_start_at = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         if month_start.month == 12:
-            next_month_start = month_start.replace(
-                year=month_start.year + 1, month=1
-            )
+            next_month_start = month_start.replace(year=month_start.year + 1, month=1)
             next_month_start_at = month_start_at.replace(
                 year=month_start_at.year + 1, month=1
             )
@@ -1062,14 +1064,18 @@ def get_evaluation_kpis() -> tuple[Response, int]:
             next_month_start_at = month_start_at.replace(month=month_start_at.month + 1)
 
         base_query = _apply_evaluation_base_filters(Evaluation.query, request.args)
-        open_query = base_query.filter(Evaluation.status.in_(ACTIVE_EVALUATION_STATUSES))
+        open_query = base_query.filter(
+            Evaluation.status.in_(ACTIVE_EVALUATION_STATUSES)
+        )
 
         open_start_dates = [
             row.start_date
             for row in open_query.with_entities(Evaluation.start_date).all()
             if row.start_date
         ]
-        open_ages = [max((today - start_date).days, 0) for start_date in open_start_dates]
+        open_ages = [
+            max((today - start_date).days, 0) for start_date in open_start_dates
+        ]
 
         data = {
             "open_evaluations": open_query.count(),
@@ -1084,9 +1090,7 @@ def get_evaluation_kpis() -> tuple[Response, int]:
                 Evaluation.created_at >= month_start_at,
                 Evaluation.created_at < next_month_start_at,
             ).count(),
-            "reliability_failures": base_query.filter(
-                Evaluation.id.in_(_failure_evaluation_ids_query())
-            ).count(),
+            "total_evaluations": base_query.count(),
             "completed_this_month": base_query.filter(
                 Evaluation.status == EvaluationStatus.COMPLETED.value,
                 Evaluation.actual_end_date >= month_start,
@@ -1250,7 +1254,7 @@ def create_evaluation() -> tuple[Response, int]:
         evaluation_number (str, optional): Unique evaluation number (auto-generated if not provided).
         evaluation_reason (str, optional): Reason for the evaluation.
         description (str, optional): Detailed description.
-        status (str, optional): Initial status (defaults to 'draft').
+        status (str, optional): Initial status (defaults to 'in_progress').
 
     Returns:
         Tuple[Response, int]: JSON response with created evaluation and HTTP status code.
@@ -1311,8 +1315,8 @@ def create_evaluation() -> tuple[Response, int]:
                 description: Name of the Head Office Charger
               status:
                 type: string
-                enum: [draft, in_progress]
-                description: Initial status (defaults to draft)
+                enum: [in_progress, completed, cancelled]
+                description: Initial status (defaults to in_progress)
     responses:
       201:
         description: Evaluation created successfully
@@ -1347,6 +1351,15 @@ def create_evaluation() -> tuple[Response, int]:
         if not evaluation_number:
             evaluation_number = generate_evaluation_number()
 
+        requested_status = data.get("status", EvaluationStatus.IN_PROGRESS.value)
+        if requested_status not in ALLOWED_EVALUATION_STATUSES:
+            return jsonify(
+                {
+                    "success": False,
+                    "message": f"Invalid evaluation status: {requested_status}",
+                }
+            ), 400
+
         # Create evaluation
         tz = resolve_timezone_from_request(request.args)
 
@@ -1357,7 +1370,7 @@ def create_evaluation() -> tuple[Response, int]:
             part_number=data["part_number"],
             evaluation_reason=data.get("evaluation_reason", ""),
             remarks=data.get("remarks", data.get("description", "")),
-            status=data.get("status", EvaluationStatus.DRAFT.value),
+            status=requested_status,
             start_date=datetime.strptime(data["start_date"], "%Y-%m-%d").date(),
             process_step=data["process_step"],
             scs_charger_name=data.get("scs_charger_name"),
@@ -1508,10 +1521,7 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
         # Auth removed
 
         # Check if evaluation can be updated
-        if evaluation.status not in [
-            EvaluationStatus.DRAFT.value,
-            EvaluationStatus.IN_PROGRESS.value,
-        ]:
+        if evaluation.status != EvaluationStatus.IN_PROGRESS.value:
             return jsonify(
                 {
                     "success": False,
@@ -2851,7 +2861,7 @@ def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
             properties:
               status:
                 type: string
-                enum: [draft, in_progress, pending_part_approval, pending_group_approval, completed, paused, cancelled, rejected]
+                enum: [in_progress, completed, cancelled]
                 description: New status for the evaluation
     responses:
       200:
@@ -2888,6 +2898,13 @@ def update_evaluation_status(evaluation_id: int) -> tuple[Response, int]:
 
         # Update status
         new_status = data["status"]
+        if new_status not in ALLOWED_EVALUATION_STATUSES:
+            return jsonify(
+                {
+                    "success": False,
+                    "message": f"Invalid evaluation status: {new_status}",
+                }
+            ), 400
         evaluation.status = new_status
 
         cancel_reason = data.get("cancel_reason")

@@ -22,7 +22,6 @@ def test_create_evaluation_persists_pgm_test_time(client, session):
             "part_number": "API-001",
             "start_date": "2026-03-23",
             "process_step": "M031",
-            "status": "draft",
             "pgm_version": "v1.2.3",
             "pgm_test_time": "90 min",
         },
@@ -37,6 +36,49 @@ def test_create_evaluation_persists_pgm_test_time(client, session):
     assert created is not None
     assert created.pgm_version == "v1.2.3"
     assert created.pgm_test_time == "90 min"
+    assert created.status == "in_progress"
+
+
+def test_create_evaluation_rejects_unsupported_status(client):
+    """POST /api/evaluations should reject removed workflow statuses."""
+    response = client.post(
+        "/api/evaluations",
+        json={
+            "evaluation_type": "new_product",
+            "product_name": "Invalid Status Product",
+            "part_number": "API-STATUS",
+            "start_date": "2026-03-23",
+            "process_step": "M031",
+            "status": "draft",
+        },
+    )
+
+    body = json_response(response)
+
+    assert response.status_code == 400
+    assert body["success"] is False
+
+
+def test_create_mass_production_evaluation_accepts_pcb_reason(client, session):
+    """Mass production evaluations should persist the PCB reason option."""
+    response = client.post(
+        "/api/evaluations",
+        json={
+            "evaluation_type": "mass_production",
+            "product_name": "PCB Product",
+            "part_number": "PCB-001",
+            "start_date": "2026-03-23",
+            "process_step": "M031",
+            "evaluation_reason": "pcb",
+        },
+    )
+    body = json_response(response)
+
+    assert response.status_code == 201
+    assert body["data"]["evaluation"]["evaluation_reason"] == "pcb"
+
+    created = session.query(Evaluation).get(body["data"]["evaluation"]["id"])
+    assert created.evaluation_reason == "pcb"
 
 
 def test_update_evaluation_persists_pgm_test_time(client, session):
@@ -155,7 +197,9 @@ def test_nested_process_results_are_sanitized_and_persisted(client, session):
 
 def test_complete_status_uses_user_provided_end_date(client, session):
     """Completing an evaluation should keep the user-provided end date."""
-    evaluation = create_test_evaluation(session, actual_end_date=None, status="in_progress")
+    evaluation = create_test_evaluation(
+        session, actual_end_date=None, status="in_progress"
+    )
 
     response = client.put(
         f"/api/evaluations/{evaluation.id}/status",
@@ -249,7 +293,7 @@ def test_evaluation_kpis_returns_global_operational_metrics(client, session):
         session,
         evaluation_number="EV-KPI-FRESH",
         product_name="Console SSD",
-        status="paused",
+        status="in_progress",
         start_date=today - timedelta(days=4),
     )
     _set_updated_at(session, active_fresh, utcnow())
@@ -267,7 +311,7 @@ def test_evaluation_kpis_returns_global_operational_metrics(client, session):
         session,
         evaluation_number="EV-KPI-PREVIOUS-MONTH",
         product_name="Console SSD",
-        status="draft",
+        status="cancelled",
         start_date=today,
         created_at=previous_month,
     )
@@ -291,7 +335,7 @@ def test_evaluation_kpis_returns_global_operational_metrics(client, session):
         "open_over_10d": 1,
         "median_open_age_days": 8.0,
         "created_this_month": 3,
-        "reliability_failures": 1,
+        "total_evaluations": 4,
         "completed_this_month": 1,
     }
 
@@ -308,7 +352,7 @@ def test_evaluation_list_operational_view_all_active(client, session):
         session,
         evaluation_number="EV-ACTIVE-2",
         product_name="Active View Product",
-        status="paused",
+        status="cancelled",
     )
     create_test_evaluation(
         session,
@@ -324,7 +368,7 @@ def test_evaluation_list_operational_view_all_active(client, session):
 
     numbers = {row["evaluation_number"] for row in body["data"]["evaluations"]}
     assert response.status_code == 200
-    assert numbers == {"EV-ACTIVE-1", "EV-ACTIVE-2"}
+    assert numbers == {"EV-ACTIVE-1"}
 
 
 def test_evaluation_list_operational_view_no_update_48h(client, session):
@@ -378,7 +422,7 @@ def test_evaluation_list_operational_view_open_over_10d(client, session):
         session,
         evaluation_number="EV-YOUNG",
         product_name="Old View Product",
-        status="paused",
+        status="in_progress",
         start_date=today - timedelta(days=9),
     )
     create_test_evaluation(
@@ -399,27 +443,32 @@ def test_evaluation_list_operational_view_open_over_10d(client, session):
     assert numbers == {"EV-OLD"}
 
 
-def test_evaluation_list_operational_view_has_failures(client, session):
-    """The has_failures view should return evaluations with failed nested steps."""
-    failed = create_test_evaluation(
-        session,
-        evaluation_number="EV-FAILED",
-        product_name="Failure View Product",
-        status="in_progress",
-    )
-    _add_failed_step(session, failed, fail_units=1)
+def test_evaluation_list_operational_view_all(client, session):
+    """The all operational view should return every filtered evaluation."""
     create_test_evaluation(
         session,
-        evaluation_number="EV-PASSING",
-        product_name="Failure View Product",
+        evaluation_number="EV-ALL-ACTIVE",
+        product_name="All View Product",
         status="in_progress",
+    )
+    create_test_evaluation(
+        session,
+        evaluation_number="EV-ALL-COMPLETE",
+        product_name="All View Product",
+        status="completed",
+    )
+    create_test_evaluation(
+        session,
+        evaluation_number="EV-ALL-CANCELLED",
+        product_name="All View Product",
+        status="cancelled",
     )
 
     response = client.get(
-        "/api/evaluations?operational_view=has_failures&product=Failure%20View&per_page=20"
+        "/api/evaluations?operational_view=all&product=All%20View&per_page=20"
     )
     body = json_response(response)
 
     assert response.status_code == 200
     numbers = {row["evaluation_number"] for row in body["data"]["evaluations"]}
-    assert numbers == {"EV-FAILED"}
+    assert numbers == {"EV-ALL-ACTIVE", "EV-ALL-COMPLETE", "EV-ALL-CANCELLED"}

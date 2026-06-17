@@ -19,7 +19,7 @@ def test_evaluation_creation(session):
         product_name="Test Product",
         part_number="TP-001",
         evaluation_reason="Testing",
-        status=EvaluationStatus.DRAFT.value,
+        status=EvaluationStatus.IN_PROGRESS.value,
         start_date=start_date,
         process_step="M001",
     )
@@ -39,7 +39,7 @@ def test_evaluation_creation(session):
     assert retrieved_evaluation.product_name == "Test Product"
     assert retrieved_evaluation.part_number == "TP-001"
     assert retrieved_evaluation.evaluation_reason == "Testing"
-    assert retrieved_evaluation.status == EvaluationStatus.DRAFT.value
+    assert retrieved_evaluation.status == EvaluationStatus.IN_PROGRESS.value
     assert retrieved_evaluation.start_date == start_date
     assert retrieved_evaluation.process_step == "M001"
 
@@ -70,7 +70,7 @@ def test_evaluation_type_validation():
         evaluation_type=EvaluationType.MASS_PRODUCTION.value,
         product_name="Type Test",
         part_number="TT-001",
-        status=EvaluationStatus.DRAFT.value,
+        status=EvaluationStatus.IN_PROGRESS.value,
         start_date=datetime.now().date(),
     )
     assert evaluation.evaluation_type == EvaluationType.MASS_PRODUCTION.value

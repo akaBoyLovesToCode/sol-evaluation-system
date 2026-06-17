@@ -13,14 +13,9 @@ from app.utils.timezone import iso_date, iso_local, utcnow
 class EvaluationStatus(Enum):
     """Evaluation status enumeration."""
 
-    DRAFT = "draft"
     IN_PROGRESS = "in_progress"
-    PENDING_PART_APPROVAL = "pending_part_approval"
-    PENDING_GROUP_APPROVAL = "pending_group_approval"
     COMPLETED = "completed"
-    PAUSED = "paused"
     CANCELLED = "cancelled"
-    REJECTED = "rejected"
 
 
 class EvaluationType(Enum):
@@ -68,18 +63,13 @@ class Evaluation(db.Model):
     # Status and workflow
     status = db.Column(
         db.Enum(
-            "draft",
             "in_progress",
-            "pending_part_approval",
-            "pending_group_approval",
             "completed",
-            "paused",
             "cancelled",
-            "rejected",
             name="evaluation_status",
         ),
         nullable=False,
-        default="draft",
+        default="in_progress",
     )
 
     # Dates
@@ -235,7 +225,7 @@ class Evaluation(db.Model):
 
     def reject(self) -> None:
         """Reject the evaluation."""
-        self.status = "rejected"
+        self.status = "cancelled"
 
     def complete(self) -> None:
         """Mark evaluation as completed (for mass production)."""
@@ -244,15 +234,15 @@ class Evaluation(db.Model):
 
     def pause(self) -> None:
         """Pause the evaluation."""
-        self.status = "paused"
+        self.status = "in_progress"
 
     def cancel(self) -> None:
         """Cancel the evaluation."""
         self.status = "cancelled"
 
     def resume(self) -> None:
-        """Resume paused evaluation."""
-        if self.status == "paused":
+        """Resume evaluation."""
+        if self.status != "completed":
             self.status = "in_progress"
 
     def get_next_approver_role(self) -> str | None:
@@ -263,13 +253,6 @@ class Evaluation(db.Model):
 
         """
         if self.evaluation_type == "mass_production":
-            return None
-
-        # Reserved statuses retained, but no approver required
-        if self.status in [
-            "pending_part_approval",
-            "pending_group_approval",
-        ]:
             return None
 
         return None
