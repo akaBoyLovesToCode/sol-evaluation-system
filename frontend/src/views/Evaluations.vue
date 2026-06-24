@@ -197,7 +197,7 @@
           <el-table-column
             prop="evaluation_number"
             :label="$t('evaluation.evaluationNumber')"
-            width="168"
+            width="198"
             fixed="left"
             sortable="custom"
             align="center"
@@ -206,6 +206,19 @@
               <el-link type="primary" class="eval-link" @click="openDetail(row)">
                 {{ row.evaluation_number }}
               </el-link>
+            </template>
+          </el-table-column>
+
+          <el-table-column
+            prop="evaluation_name"
+            :label="$t('evaluation.evaluationName')"
+            width="220"
+            sortable="custom"
+            show-overflow-tooltip
+            align="center"
+          >
+            <template #default="{ row }">
+              {{ row.evaluation_name || '-' }}
             </template>
           </el-table-column>
 
@@ -266,7 +279,7 @@
           <el-table-column
             prop="part_number"
             :label="$t('evaluation.partNumber')"
-            width="150"
+            width="170"
             show-overflow-tooltip
             align="center"
           />
@@ -1204,6 +1217,10 @@ const handleExport = async (type = 'current') => {
       {
         header: t('evaluation.evaluationNumber'),
         value: (source) => source.evaluation_number || '',
+      },
+      {
+        header: t('evaluation.evaluationName'),
+        value: (source) => source.evaluation_name || '',
       },
       {
         header: t('evaluation.evaluationType'),

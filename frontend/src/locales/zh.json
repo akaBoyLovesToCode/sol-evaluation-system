@@ -169,6 +169,7 @@
     "submitError": "提交失败",
     "cancelConfirm": "确定要取消吗？未保存的数据将会丢失。",
     "evaluationNumber": "评价编号",
+    "evaluationName": "评价名称",
     "typeLabel": "评价类型",
     "evaluationType": "评价类型",
     "evaluationTypeLabel": "评价类型（显示）",
@@ -252,6 +253,7 @@
     "pgmLoginPasteHint": "可直接在此粘贴图片或点击上传。",
     "placeholders": {
       "evaluationNumber": "请输入评价编号",
+      "evaluationName": "请输入评价名称",
       "evaluationType": "请选择评价类型",
       "status": "请选择状态",
       "product": "请输入产品名称",

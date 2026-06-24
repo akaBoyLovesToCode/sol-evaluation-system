@@ -45,6 +45,17 @@
           </el-row>
 
           <el-row :gutter="20">
+            <el-col :xs="24">
+              <el-form-item :label="$t('evaluation.evaluationName')" prop="evaluation_name">
+                <el-input
+                  v-model="form.evaluation_name"
+                  :placeholder="$t('evaluation.placeholders.evaluationName')"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-row :gutter="20">
             <el-col :xs="24" :sm="12">
               <el-form-item :label="$t('evaluation.partNumber')" prop="part_number">
                 <el-input
@@ -509,6 +520,7 @@ const reasonOptions = computed(() => {
 
 const form = reactive({
   evaluation_type: '',
+  evaluation_name: '',
   product_name: '',
   part_number: '',
   start_date: '',
@@ -857,6 +869,7 @@ const handleCancel = async () => {
 
 const buildPayload = () => ({
   evaluation_type: form.evaluation_type,
+  evaluation_name: form.evaluation_name,
   product_name: form.product_name,
   part_number: form.part_number,
   start_date: form.start_date,
@@ -1008,6 +1021,7 @@ const fetchEvaluation = async () => {
 
     Object.assign(form, {
       evaluation_type: evaluation.evaluation_type || '',
+      evaluation_name: evaluation.evaluation_name || '',
       product_name: evaluation.product_name || '',
       part_number: evaluation.part_number || '',
       start_date: evaluation.start_date || '',

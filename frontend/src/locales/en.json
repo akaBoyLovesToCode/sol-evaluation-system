@@ -185,6 +185,7 @@
     "submitError": "Submit failed",
     "cancelConfirm": "Are you sure you want to cancel? Unsaved data will be lost.",
     "evaluationNumber": "Evaluation No.",
+    "evaluationName": "Evaluation Name",
     "typeLabel": "Evaluation Type",
     "evaluationType": "Type",
     "evaluationTypeLabel": "Evaluation Type (Label)",
@@ -265,6 +266,7 @@
     "pgmLoginPasteHint": "Paste an image directly here or use Upload.",
     "placeholders": {
       "evaluationNumber": "Enter evaluation no.",
+      "evaluationName": "Enter evaluation name",
       "evaluationType": "Select evaluation type",
       "status": "Select status",
       "product": "Enter product name",
