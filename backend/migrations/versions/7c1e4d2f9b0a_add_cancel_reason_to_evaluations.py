@@ -21,9 +21,13 @@ def upgrade():
     if "evaluations" not in inspector.get_table_names():
         return
 
-    existing_columns = {column["name"] for column in inspector.get_columns("evaluations")}
+    existing_columns = {
+        column["name"] for column in inspector.get_columns("evaluations")
+    }
     if "cancel_reason" not in existing_columns:
-        op.add_column("evaluations", sa.Column("cancel_reason", sa.Text(), nullable=True))
+        op.add_column(
+            "evaluations", sa.Column("cancel_reason", sa.Text(), nullable=True)
+        )
 
 
 def downgrade():
@@ -32,6 +36,8 @@ def downgrade():
     if "evaluations" not in inspector.get_table_names():
         return
 
-    existing_columns = {column["name"] for column in inspector.get_columns("evaluations")}
+    existing_columns = {
+        column["name"] for column in inspector.get_columns("evaluations")
+    }
     if "cancel_reason" in existing_columns:
         op.drop_column("evaluations", "cancel_reason")

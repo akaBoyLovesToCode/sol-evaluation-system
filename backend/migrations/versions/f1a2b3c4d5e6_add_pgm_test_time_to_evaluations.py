@@ -25,7 +25,9 @@ def upgrade():
     existing_columns = {col["name"] for col in inspector.get_columns("evaluations")}
     if "pgm_test_time" not in existing_columns:
         with op.batch_alter_table("evaluations", schema=None) as batch_op:
-            batch_op.add_column(sa.Column("pgm_test_time", sa.String(length=100), nullable=True))
+            batch_op.add_column(
+                sa.Column("pgm_test_time", sa.String(length=100), nullable=True)
+            )
 
 
 def downgrade():

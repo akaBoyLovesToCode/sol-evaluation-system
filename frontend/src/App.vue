@@ -80,7 +80,6 @@ const currentLanguage = computed(() => {
       return '中文'
   }
 })
-
 </script>
 
 <style>
