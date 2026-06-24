@@ -20,6 +20,7 @@ from app.models.evaluation import (
     EvaluationStatus,
     EvaluationStepFailure,
     EvaluationStepLot,
+    EvaluationType,
     FailCode,
 )
 from app.models.operation_log import OperationLog, OperationType
@@ -30,6 +31,9 @@ from app.utils.timezone import resolve_timezone_from_request, timezone_label, ut
 evaluation_bp = Blueprint("evaluation", __name__)
 
 ALLOWED_EVALUATION_STATUSES = tuple(status.value for status in EvaluationStatus)
+ALLOWED_EVALUATION_TYPES = tuple(
+    evaluation_type.value for evaluation_type in EvaluationType
+)
 ACTIVE_EVALUATION_STATUSES = (EvaluationStatus.IN_PROGRESS.value,)
 VALID_OPERATIONAL_VIEWS = {
     "all",
@@ -924,6 +928,8 @@ def get_evaluations() -> tuple[Response, int]:
                             type: integer
                           evaluation_number:
                             type: string
+                          evaluation_name:
+                            type: string
                           evaluation_type:
                             type: string
                           product_name:
@@ -974,6 +980,7 @@ def get_evaluations() -> tuple[Response, int]:
         sort_order = request.args.get("sort_order", "desc").lower()
         allowed_sorts = {
             "evaluation_number": Evaluation.evaluation_number,
+            "evaluation_name": Evaluation.evaluation_name,
             "evaluation_type": Evaluation.evaluation_type,
             "product_name": Evaluation.product_name,
             "part_number": Evaluation.part_number,
@@ -1247,6 +1254,7 @@ def create_evaluation() -> tuple[Response, int]:
 
     Request Body:
         evaluation_type (str): Type of evaluation ('new_product' or 'mass_production').
+        evaluation_name (str, optional): Human-readable evaluation name.
         product_name (str): Name of the product.
         part_number (str): Part number.
         start_date (str): Start date in YYYY-MM-DD format.
@@ -1283,6 +1291,9 @@ def create_evaluation() -> tuple[Response, int]:
               evaluation_number:
                 type: string
                 description: Unique evaluation number (auto-generated if not provided)
+              evaluation_name:
+                type: string
+                description: Human-readable evaluation name
               evaluation_type:
                 type: string
                 enum: [new_product, mass_production]
@@ -1346,6 +1357,15 @@ def create_evaluation() -> tuple[Response, int]:
                     {"success": False, "message": f"Missing required field: {field}"}
                 ), 400
 
+        requested_type = data["evaluation_type"]
+        if requested_type not in ALLOWED_EVALUATION_TYPES:
+            return jsonify(
+                {
+                    "success": False,
+                    "message": f"Invalid evaluation type: {requested_type}",
+                }
+            ), 400
+
         # Generate evaluation number if not provided
         evaluation_number = data.get("evaluation_number")
         if not evaluation_number:
@@ -1365,7 +1385,8 @@ def create_evaluation() -> tuple[Response, int]:
 
         evaluation = Evaluation(
             evaluation_number=evaluation_number,
-            evaluation_type=data["evaluation_type"],
+            evaluation_name=data.get("evaluation_name"),
+            evaluation_type=requested_type,
             product_name=data["product_name"],
             part_number=data["part_number"],
             evaluation_reason=data.get("evaluation_reason", ""),
@@ -1439,6 +1460,8 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
         evaluation_id (int): ID of the evaluation to update.
 
     Request Body:
+        evaluation_name (str, optional): Human-readable evaluation name.
+        evaluation_type (str, optional): Type of evaluation.
         product_name (str, optional): Name of the product.
         part_number (str, optional): Part number.
         evaluation_reason (str, optional): Reason for the evaluation.
@@ -1474,6 +1497,13 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
           schema:
             type: object
             properties:
+              evaluation_name:
+                type: string
+                description: Human-readable evaluation name
+              evaluation_type:
+                type: string
+                enum: [new_product, mass_production]
+                description: Type of evaluation
               product_name:
                 type: string
                 description: Name of the product
@@ -1533,6 +1563,18 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
         old_data = evaluation.to_dict(tz=tz)
 
         # Update fields
+        if "evaluation_name" in data:
+            evaluation.evaluation_name = data["evaluation_name"]
+        if "evaluation_type" in data:
+            requested_type = data["evaluation_type"]
+            if requested_type not in ALLOWED_EVALUATION_TYPES:
+                return jsonify(
+                    {
+                        "success": False,
+                        "message": f"Invalid evaluation type: {requested_type}",
+                    }
+                ), 400
+            evaluation.evaluation_type = requested_type
         if "product_name" in data:
             evaluation.product_name = data["product_name"]
         if "part_number" in data:

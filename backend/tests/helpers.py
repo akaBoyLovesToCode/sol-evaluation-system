@@ -22,6 +22,7 @@ def create_test_evaluation(session, **kwargs):
     unique_id = str(uuid.uuid4())[:8]
     defaults = {
         "evaluation_number": f"EV-{datetime.now().strftime('%Y%m%d')}-{unique_id}",
+        "evaluation_name": "Test Evaluation",
         "evaluation_type": EvaluationType.NEW_PRODUCT.value,
         "product_name": "Test Product",
         "part_number": "TP-001",

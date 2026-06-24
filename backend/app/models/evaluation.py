@@ -42,6 +42,7 @@ class Evaluation(db.Model):
     evaluation_number = db.Column(
         db.String(50), unique=True, nullable=False, index=True
     )
+    evaluation_name = db.Column(db.String(255))
     evaluation_type = db.Column(
         db.Enum("new_product", "mass_production", name="evaluation_types"),
         nullable=False,
@@ -270,6 +271,7 @@ class Evaluation(db.Model):
         data = {
             "id": self.id,
             "evaluation_number": self.evaluation_number,
+            "evaluation_name": self.evaluation_name,
             "evaluation_type": self.evaluation_type,
             "product_name": self.product_name,
             "part_number": self.part_number,

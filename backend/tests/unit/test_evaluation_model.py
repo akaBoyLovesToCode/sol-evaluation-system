@@ -15,6 +15,7 @@ def test_evaluation_creation(session):
 
     evaluation = Evaluation(
         evaluation_number=f"EV-{datetime.now().strftime('%Y%m%d')}-{unique_id}",
+        evaluation_name="BM9C1 LI PGM change (LI, R1.0.29)",
         evaluation_type=EvaluationType.NEW_PRODUCT.value,
         product_name="Test Product",
         part_number="TP-001",
@@ -35,6 +36,7 @@ def test_evaluation_creation(session):
 
     assert retrieved_evaluation is not None
     assert retrieved_evaluation.evaluation_number == evaluation.evaluation_number
+    assert retrieved_evaluation.evaluation_name == "BM9C1 LI PGM change (LI, R1.0.29)"
     assert retrieved_evaluation.evaluation_type == EvaluationType.NEW_PRODUCT.value
     assert retrieved_evaluation.product_name == "Test Product"
     assert retrieved_evaluation.part_number == "TP-001"
@@ -87,6 +89,7 @@ def test_evaluation_to_dict(session):
     evaluation_dict = evaluation.to_dict()
 
     assert evaluation_dict["evaluation_number"] == evaluation.evaluation_number
+    assert evaluation_dict["evaluation_name"] == evaluation.evaluation_name
     assert evaluation_dict["evaluation_type"] == evaluation.evaluation_type
     assert evaluation_dict["product_name"] == evaluation.product_name
     assert evaluation_dict["part_number"] == evaluation.part_number

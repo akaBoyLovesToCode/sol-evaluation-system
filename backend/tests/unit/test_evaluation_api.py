@@ -17,6 +17,7 @@ def test_create_evaluation_persists_pgm_test_time(client, session):
     response = client.post(
         "/api/evaluations",
         json={
+            "evaluation_name": "API Evaluation Name",
             "evaluation_type": "new_product",
             "product_name": "API Test Product",
             "part_number": "API-001",
@@ -30,10 +31,12 @@ def test_create_evaluation_persists_pgm_test_time(client, session):
     body = json_response(response)
 
     assert response.status_code == 201
+    assert body["data"]["evaluation"]["evaluation_name"] == "API Evaluation Name"
     assert body["data"]["evaluation"]["pgm_test_time"] == "90 min"
 
     created = session.query(Evaluation).get(body["data"]["evaluation"]["id"])
     assert created is not None
+    assert created.evaluation_name == "API Evaluation Name"
     assert created.pgm_version == "v1.2.3"
     assert created.pgm_test_time == "90 min"
     assert created.status == "in_progress"
@@ -50,6 +53,25 @@ def test_create_evaluation_rejects_unsupported_status(client):
             "start_date": "2026-03-23",
             "process_step": "M031",
             "status": "draft",
+        },
+    )
+
+    body = json_response(response)
+
+    assert response.status_code == 400
+    assert body["success"] is False
+
+
+def test_create_evaluation_rejects_unsupported_type(client):
+    """POST /api/evaluations should reject unsupported evaluation types."""
+    response = client.post(
+        "/api/evaluations",
+        json={
+            "evaluation_type": "prototype",
+            "product_name": "Invalid Type Product",
+            "part_number": "API-TYPE",
+            "start_date": "2026-03-23",
+            "process_step": "M031",
         },
     )
 
@@ -88,6 +110,8 @@ def test_update_evaluation_persists_pgm_test_time(client, session):
     response = client.put(
         f"/api/evaluations/{evaluation.id}",
         json={
+            "evaluation_name": "Updated Evaluation Name",
+            "evaluation_type": "mass_production",
             "pgm_version": "new-version",
             "pgm_test_time": "120 min",
         },
@@ -96,10 +120,14 @@ def test_update_evaluation_persists_pgm_test_time(client, session):
     body = json_response(response)
 
     assert response.status_code == 200
+    assert body["data"]["evaluation"]["evaluation_name"] == "Updated Evaluation Name"
+    assert body["data"]["evaluation"]["evaluation_type"] == "mass_production"
     assert body["data"]["evaluation"]["pgm_version"] == "new-version"
     assert body["data"]["evaluation"]["pgm_test_time"] == "120 min"
 
     session.refresh(evaluation)
+    assert evaluation.evaluation_name == "Updated Evaluation Name"
+    assert evaluation.evaluation_type == "mass_production"
     assert evaluation.pgm_version == "new-version"
     assert evaluation.pgm_test_time == "120 min"
 
