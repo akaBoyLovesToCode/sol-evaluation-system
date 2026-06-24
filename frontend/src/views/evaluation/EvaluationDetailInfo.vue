@@ -51,9 +51,29 @@
           </template>
         </el-descriptions-item>
         <el-descriptions-item :label="$t('evaluation.evaluationType')">
-          <el-tag :type="evaluation.evaluation_type === 'new_product' ? 'primary' : 'success'">
-            {{ $t(`evaluation.type.${evaluation.evaluation_type}`) }}
-          </el-tag>
+          <template v-if="editing">
+            <el-select
+              v-model="editForm.evaluation_type"
+              style="width: 100%"
+              @change="handleEvaluationTypeChange"
+            >
+              <el-option value="new_product" :label="$t('evaluation.type.new_product')" />
+              <el-option value="mass_production" :label="$t('evaluation.type.mass_production')" />
+            </el-select>
+          </template>
+          <template v-else>
+            <el-tag :type="evaluation.evaluation_type === 'new_product' ? 'primary' : 'success'">
+              {{ $t(`evaluation.type.${evaluation.evaluation_type}`) }}
+            </el-tag>
+          </template>
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('evaluation.evaluationName')">
+          <template v-if="editing">
+            <el-input v-model="editForm.evaluation_name" />
+          </template>
+          <template v-else>
+            {{ evaluation.evaluation_name || '-' }}
+          </template>
         </el-descriptions-item>
         <el-descriptions-item :label="$t('evaluation.productName')">
           <template v-if="editing">
@@ -303,6 +323,8 @@ onUnmounted(() => {
 })
 
 const editForm = reactive({
+  evaluation_type: '',
+  evaluation_name: '',
   product_name: '',
   part_number: '',
   evaluation_reason: [],
@@ -323,10 +345,13 @@ const processStepChoices = computed(() => props.processStepOptions)
 const supportedStatuses = ['in_progress', 'completed', 'cancelled']
 
 const statusOptions = supportedStatuses
+const selectedEvaluationType = computed(() =>
+  editing.value ? editForm.evaluation_type : props.evaluation?.evaluation_type,
+)
 
 const reasonOptions = computed(() => {
-  if (!props.evaluation) return []
-  if (props.evaluation.evaluation_type === 'new_product') {
+  if (!selectedEvaluationType.value) return []
+  if (selectedEvaluationType.value === 'new_product') {
     return [
       { label: t('evaluation.reasons.horizontal_expansion'), value: 'horizontal_expansion' },
       { label: t('evaluation.reasons.direct_development'), value: 'direct_development' },
@@ -367,6 +392,8 @@ const normalizeReasons = (reason) => {
 const syncEditForm = () => {
   if (!props.evaluation) return
   Object.assign(editForm, {
+    evaluation_type: props.evaluation.evaluation_type || '',
+    evaluation_name: props.evaluation.evaluation_name || '',
     product_name: props.evaluation.product_name || '',
     part_number: props.evaluation.part_number || '',
     evaluation_reason: normalizeReasons(props.evaluation.evaluation_reason),
@@ -391,6 +418,10 @@ const startEdit = () => {
 
 const cancelEdit = () => {
   editing.value = false
+}
+
+const handleEvaluationTypeChange = () => {
+  editForm.evaluation_reason = []
 }
 
 const saveEdit = async () => {
