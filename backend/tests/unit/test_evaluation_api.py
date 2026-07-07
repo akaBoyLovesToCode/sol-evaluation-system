@@ -7,6 +7,7 @@ from app.models.evaluation import (
     EvaluationNestedProcess,
     EvaluationProcessStep,
     EvaluationStepFailure,
+    NandEvaluation,
 )
 from app.utils.timezone import utcnow
 from tests.helpers import create_test_evaluation, json_response
@@ -101,6 +102,106 @@ def test_create_mass_production_evaluation_accepts_pcb_reason(client, session):
 
     created = session.query(Evaluation).get(body["data"]["evaluation"]["id"])
     assert created.evaluation_reason == "pcb"
+
+
+def test_create_nand_evaluation_requires_nand_info(client):
+    """POST /api/evaluations should require NAND details for NAND evaluations."""
+    response = client.post(
+        "/api/evaluations",
+        json={
+            "evaluation_type": "mass_production",
+            "product_name": "NAND Product",
+            "part_number": "NAND-001",
+            "start_date": "2026-03-23",
+            "process_step": "M031",
+            "evaluation_reason": "nand",
+        },
+    )
+    body = json_response(response)
+
+    assert response.status_code == 400
+    assert body["success"] is False
+    assert "nand_info" in body["message"]
+
+
+def test_create_nand_evaluation_persists_extension(client, session):
+    """POST /api/evaluations should persist NAND-specific details."""
+    response = client.post(
+        "/api/evaluations",
+        json={
+            "evaluation_type": "mass_production",
+            "product_name": "NAND Product",
+            "part_number": "NAND-002",
+            "start_date": "2026-03-23",
+            "process_step": "M031",
+            "evaluation_reason": "nand",
+            "nand_info": {
+                "dr_generation": "V6",
+                "product_code": "BF",
+                "milestone_date": "2026-04-06",
+                "milestone_status": "current_month_plan",
+                "evaluation_item": "S3 approval",
+                "fab_line": "X1L",
+                "applied_products": ["PM9A1", "980PRO"],
+                "grades": ["Lv4", "S3"],
+                "remark_top": "Lv4",
+                "remark_bottom": "PM9A1",
+            },
+        },
+    )
+    body = json_response(response)
+
+    assert response.status_code == 201
+    nand_info = body["data"]["evaluation"]["nand_info"]
+    assert nand_info["dr_generation"] == "V6"
+    assert nand_info["product_code"] == "BF"
+    assert nand_info["milestone_status"] == "current_month_plan"
+    assert nand_info["applied_products"] == ["980PRO", "PM9A1"]
+    assert nand_info["grades"] == ["Lv4", "S3"]
+
+    created = session.query(Evaluation).get(body["data"]["evaluation"]["id"])
+    assert created.nand_evaluation is not None
+    assert created.nand_evaluation.nand_product.product_code == "BF"
+
+
+def test_update_non_nand_reason_removes_nand_extension(client, session):
+    """PUT /api/evaluations/<id> should clear NAND details when reason changes."""
+    evaluation = create_test_evaluation(
+        session,
+        evaluation_number="EV-NAND-REMOVE",
+        evaluation_reason="nand",
+    )
+    response = client.put(
+        f"/api/evaluations/{evaluation.id}",
+        json={
+            "evaluation_reason": "nand",
+            "nand_info": {
+                "dr_generation": "V6",
+                "product_code": "BF",
+                "milestone_date": "2026-04-06",
+                "milestone_status": "approved",
+                "evaluation_item": "S3 approval",
+                "fab_line": "X1L",
+                "applied_products": ["PM9A1"],
+                "grades": ["Lv4"],
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert session.query(NandEvaluation).filter_by(evaluation_id=evaluation.id).one()
+
+    response = client.put(
+        f"/api/evaluations/{evaluation.id}",
+        json={"evaluation_reason": "pcb"},
+    )
+    body = json_response(response)
+
+    assert response.status_code == 200
+    assert body["data"]["evaluation"]["nand_info"] is None
+    assert (
+        session.query(NandEvaluation).filter_by(evaluation_id=evaluation.id).first()
+        is None
+    )
 
 
 def test_update_evaluation_persists_pgm_test_time(client, session):

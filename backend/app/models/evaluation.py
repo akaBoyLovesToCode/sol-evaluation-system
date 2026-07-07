@@ -25,6 +25,340 @@ class EvaluationType(Enum):
     MASS_PRODUCTION = "mass_production"
 
 
+nand_evaluation_applied_products = db.Table(
+    "nand_evaluation_applied_products",
+    db.Column(
+        "nand_evaluation_id",
+        db.Integer,
+        db.ForeignKey("nand_evaluations.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    db.Column(
+        "applied_product_id",
+        db.Integer,
+        db.ForeignKey("nand_applied_products.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)
+
+nand_evaluation_grades = db.Table(
+    "nand_evaluation_grades",
+    db.Column(
+        "nand_evaluation_id",
+        db.Integer,
+        db.ForeignKey("nand_evaluations.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    db.Column(
+        "grade_id",
+        db.Integer,
+        db.ForeignKey("nand_grades.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)
+
+
+class NandProduct(db.Model):
+    """NAND DR and product row shown on the NAND timeline."""
+
+    __tablename__ = "nand_products"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "dr_generation",
+            "product_code",
+            name="uq_nand_product_dr_product",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    dr_generation = db.Column(db.String(20), nullable=False, index=True)
+    product_code = db.Column(db.String(20), nullable=False, index=True)
+    display_order = db.Column(db.Integer, nullable=False, default=0)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    def to_dict(self, tz=None) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "dr_generation": self.dr_generation,
+            "product_code": self.product_code,
+            "display_order": self.display_order,
+            "is_active": self.is_active,
+            "created_at": iso_local(self.created_at, tz),
+            "updated_at": iso_local(self.updated_at, tz),
+        }
+
+    def __repr__(self) -> str:
+        return f"<NandProduct {self.dr_generation}_{self.product_code}>"
+
+
+class NandAppliedProduct(db.Model):
+    """Applied product model associated with a NAND evaluation."""
+
+    __tablename__ = "nand_applied_products"
+
+    id = db.Column(db.Integer, primary_key=True)
+    model_name = db.Column(db.String(100), nullable=False, unique=True, index=True)
+
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    def to_dict(self, tz=None) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "model_name": self.model_name,
+            "created_at": iso_local(self.created_at, tz),
+            "updated_at": iso_local(self.updated_at, tz),
+        }
+
+    def __repr__(self) -> str:
+        return f"<NandAppliedProduct {self.model_name}>"
+
+
+class NandGrade(db.Model):
+    """NAND grade or approval level associated with a NAND evaluation."""
+
+    __tablename__ = "nand_grades"
+
+    id = db.Column(db.Integer, primary_key=True)
+    grade_code = db.Column(db.String(50), nullable=False, unique=True, index=True)
+    grade_family = db.Column(db.String(50), nullable=False, default="unknown")
+
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    def to_dict(self, tz=None) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "grade_code": self.grade_code,
+            "grade_family": self.grade_family,
+            "created_at": iso_local(self.created_at, tz),
+            "updated_at": iso_local(self.updated_at, tz),
+        }
+
+    def __repr__(self) -> str:
+        return f"<NandGrade {self.grade_code}>"
+
+
+class NandEvaluation(db.Model):
+    """NAND-specific extension for one evaluation timeline node."""
+
+    __tablename__ = "nand_evaluations"
+
+    id = db.Column(db.Integer, primary_key=True)
+    evaluation_id = db.Column(
+        db.Integer,
+        db.ForeignKey("evaluations.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    nand_product_id = db.Column(
+        db.Integer, db.ForeignKey("nand_products.id"), nullable=False, index=True
+    )
+    milestone_date = db.Column(db.Date, nullable=False, index=True)
+    milestone_status = db.Column(
+        db.Enum(
+            "approved",
+            "current_month_plan",
+            "follow_up_plan",
+            name="nand_milestone_status",
+        ),
+        nullable=False,
+    )
+    evaluation_item = db.Column(db.String(100), nullable=False)
+    fab_line = db.Column(db.String(50), nullable=False)
+    remark = db.Column(db.Text)
+    remark_top = db.Column(db.Text)
+    remark_bottom = db.Column(db.Text)
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    nand_product = db.relationship(
+        "NandProduct",
+        backref=db.backref("nand_evaluations", lazy="dynamic"),
+    )
+    applied_products = db.relationship(
+        "NandAppliedProduct",
+        secondary=nand_evaluation_applied_products,
+        lazy="joined",
+    )
+    grades = db.relationship(
+        "NandGrade",
+        secondary=nand_evaluation_grades,
+        lazy="joined",
+    )
+    source_relations = db.relationship(
+        "NandTimelineRelation",
+        foreign_keys="NandTimelineRelation.from_nand_evaluation_id",
+        back_populates="from_nand_evaluation",
+        cascade="all, delete-orphan",
+    )
+    destination_relations = db.relationship(
+        "NandTimelineRelation",
+        foreign_keys="NandTimelineRelation.to_nand_evaluation_id",
+        back_populates="to_nand_evaluation",
+        cascade="all, delete-orphan",
+    )
+
+    def to_dict(self, tz=None) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "evaluation_id": self.evaluation_id,
+            "nand_product_id": self.nand_product_id,
+            "dr_generation": self.nand_product.dr_generation
+            if self.nand_product
+            else None,
+            "product_code": self.nand_product.product_code
+            if self.nand_product
+            else None,
+            "product": self.nand_product.to_dict(tz=tz) if self.nand_product else None,
+            "milestone_date": iso_date(self.milestone_date, tz),
+            "milestone_status": self.milestone_status,
+            "evaluation_item": self.evaluation_item,
+            "fab_line": self.fab_line,
+            "applied_products": [
+                product.model_name
+                for product in sorted(self.applied_products, key=lambda p: p.model_name)
+            ],
+            "grades": [
+                grade.grade_code
+                for grade in sorted(self.grades, key=lambda g: g.grade_code)
+            ],
+            "remark": self.remark,
+            "remark_top": self.remark_top,
+            "remark_bottom": self.remark_bottom,
+            "sort_order": self.sort_order,
+            "relations_from": [
+                relation.to_dict(tz=tz)
+                for relation in sorted(
+                    self.source_relations, key=lambda r: r.display_order
+                )
+            ],
+            "created_at": iso_local(self.created_at, tz),
+            "updated_at": iso_local(self.updated_at, tz),
+        }
+
+    def __repr__(self) -> str:
+        return f"<NandEvaluation eval={self.evaluation_id}>"
+
+
+class NandTimelineRelation(db.Model):
+    """Visual relationship between two NAND timeline nodes."""
+
+    __tablename__ = "nand_timeline_relations"
+
+    id = db.Column(db.Integer, primary_key=True)
+    from_nand_evaluation_id = db.Column(
+        db.Integer,
+        db.ForeignKey("nand_evaluations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    to_nand_evaluation_id = db.Column(
+        db.Integer,
+        db.ForeignKey("nand_evaluations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    relation_type = db.Column(db.String(50), nullable=False, default="delay")
+    label = db.Column(db.String(100))
+    color = db.Column(db.String(20))
+    display_order = db.Column(db.Integer, nullable=False, default=0)
+
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    from_nand_evaluation = db.relationship(
+        "NandEvaluation",
+        foreign_keys=[from_nand_evaluation_id],
+        back_populates="source_relations",
+    )
+    to_nand_evaluation = db.relationship(
+        "NandEvaluation",
+        foreign_keys=[to_nand_evaluation_id],
+        back_populates="destination_relations",
+    )
+
+    def to_dict(self, tz=None) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "from_nand_evaluation_id": self.from_nand_evaluation_id,
+            "to_nand_evaluation_id": self.to_nand_evaluation_id,
+            "relation_type": self.relation_type,
+            "label": self.label,
+            "color": self.color,
+            "display_order": self.display_order,
+            "created_at": iso_local(self.created_at, tz),
+            "updated_at": iso_local(self.updated_at, tz),
+        }
+
+    def __repr__(self) -> str:
+        return (
+            f"<NandTimelineRelation {self.from_nand_evaluation_id}"
+            f"->{self.to_nand_evaluation_id}>"
+        )
+
+
 class Evaluation(db.Model):
     """Main evaluation model for solution evaluations.
 
@@ -151,6 +485,12 @@ class Evaluation(db.Model):
         "EvaluationProcessRaw",
         backref="evaluation",
         lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+    nand_evaluation = db.relationship(
+        "NandEvaluation",
+        backref="evaluation",
+        uselist=False,
         cascade="all, delete-orphan",
     )
     operation_logs = db.relationship(
@@ -295,6 +635,9 @@ class Evaluation(db.Model):
             "head_office_charger_name": self.head_office_charger_name,
             "created_at": iso_local(self.created_at, tz),
             "updated_at": iso_local(self.updated_at, tz),
+            "nand_info": self.nand_evaluation.to_dict(tz=tz)
+            if self.nand_evaluation
+            else None,
         }
 
         if include_details:

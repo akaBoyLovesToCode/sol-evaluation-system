@@ -22,6 +22,10 @@ from app.models.evaluation import (
     EvaluationStepLot,
     EvaluationType,
     FailCode,
+    NandAppliedProduct,
+    NandEvaluation,
+    NandGrade,
+    NandProduct,
 )
 from app.models.operation_log import OperationLog, OperationType
 from app.utils import get_client_ip
@@ -40,6 +44,26 @@ VALID_OPERATIONAL_VIEWS = {
     "all_active",
     "no_update_48h",
     "open_over_10d",
+}
+NAND_REASON_VALUE = "nand"
+NAND_MILESTONE_STATUSES = {"approved", "current_month_plan", "follow_up_plan"}
+NAND_PRODUCT_ORDER = {
+    ("V3", "DW"): 1,
+    ("V3", "DX"): 2,
+    ("V3", "DA"): 3,
+    ("V4", "FB"): 4,
+    ("V4", "FP"): 5,
+    ("V4", "FY"): 6,
+    ("V5", "IX"): 7,
+    ("V5", "IT"): 8,
+    ("V5", "IL"): 9,
+    ("V6", "BF"): 10,
+    ("V6", "BU"): 11,
+    ("V6P", "BH"): 12,
+    ("V7", "GQ"): 13,
+    ("V7", "GJ"): 14,
+    ("V8", "CR"): 15,
+    ("V8", "CU"): 16,
 }
 
 
@@ -94,6 +118,204 @@ def _parse_multi_param(value: str | None, list_values: list[str]) -> list[str]:
             [part.strip() for part in re.split(r"[|,]", value) if part.strip()]
         )
     return _dedupe_preserve_order(tokens)
+
+
+def _normalize_reason_values(value: object) -> list[str]:
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if not value:
+        return []
+    return [
+        part.strip() for part in re.split(r"[|,]", str(value)) if part and part.strip()
+    ]
+
+
+def _is_nand_reason(value: object) -> bool:
+    return any(
+        reason.lower() == NAND_REASON_VALUE
+        for reason in _normalize_reason_values(value)
+    )
+
+
+def _clean_string(value: object) -> str:
+    return str(value or "").strip()
+
+
+def _normalize_name_list(value: object, key: str) -> list[str]:
+    values: list[str] = []
+    if isinstance(value, list):
+        raw_values = value
+    elif value:
+        raw_values = re.split(r"[|,]", str(value))
+    else:
+        raw_values = []
+
+    for item in raw_values:
+        if isinstance(item, dict):
+            name = _clean_string(
+                item.get(key) or item.get("value") or item.get("label")
+            )
+        else:
+            name = _clean_string(item)
+        if name:
+            values.append(name)
+    return _dedupe_preserve_order(values)
+
+
+def _grade_family(grade_code: str) -> str:
+    normalized = grade_code.strip().lower()
+    if normalized.startswith("lv"):
+        return "lv"
+    if re.match(r"^[st]\d+", normalized):
+        return "wafer_chip"
+    return "unknown"
+
+
+def _get_or_create_nand_product(dr_generation: str, product_code: str) -> NandProduct:
+    product = NandProduct.query.filter_by(
+        dr_generation=dr_generation, product_code=product_code
+    ).first()
+    if product:
+        return product
+
+    product = NandProduct(
+        dr_generation=dr_generation,
+        product_code=product_code,
+        display_order=NAND_PRODUCT_ORDER.get((dr_generation, product_code), 999),
+        is_active=True,
+    )
+    db.session.add(product)
+    db.session.flush()
+    return product
+
+
+def _get_or_create_applied_product(model_name: str) -> NandAppliedProduct:
+    product = NandAppliedProduct.query.filter_by(model_name=model_name).first()
+    if product:
+        return product
+
+    product = NandAppliedProduct(model_name=model_name)
+    db.session.add(product)
+    db.session.flush()
+    return product
+
+
+def _get_or_create_grade(grade_code: str) -> NandGrade:
+    grade = NandGrade.query.filter_by(grade_code=grade_code).first()
+    if grade:
+        return grade
+
+    grade = NandGrade(grade_code=grade_code, grade_family=_grade_family(grade_code))
+    db.session.add(grade)
+    db.session.flush()
+    return grade
+
+
+def _normalize_nand_info(raw_info: object) -> dict[str, Any]:
+    if not isinstance(raw_info, dict):
+        raise ValueError("nand_info must be an object")
+
+    dr_generation = _clean_string(raw_info.get("dr_generation")).upper()
+    product_code = _clean_string(raw_info.get("product_code")).upper()
+    milestone_date = _clean_string(raw_info.get("milestone_date"))
+    milestone_status = _clean_string(raw_info.get("milestone_status"))
+    evaluation_item = _clean_string(raw_info.get("evaluation_item"))
+    fab_line = _clean_string(raw_info.get("fab_line")).upper()
+    applied_products = _normalize_name_list(
+        raw_info.get("applied_products"), "model_name"
+    )
+    grades = _normalize_name_list(raw_info.get("grades"), "grade_code")
+
+    required_values = {
+        "dr_generation": dr_generation,
+        "product_code": product_code,
+        "milestone_date": milestone_date,
+        "milestone_status": milestone_status,
+        "evaluation_item": evaluation_item,
+        "fab_line": fab_line,
+    }
+    missing = [key for key, value in required_values.items() if not value]
+    if missing:
+        raise ValueError(f"Missing NAND field: {missing[0]}")
+    if not applied_products:
+        raise ValueError("Missing NAND field: applied_products")
+    if not grades:
+        raise ValueError("Missing NAND field: grades")
+    if milestone_status not in NAND_MILESTONE_STATUSES:
+        raise ValueError(f"Invalid NAND milestone status: {milestone_status}")
+
+    try:
+        parsed_milestone_date = datetime.strptime(milestone_date, "%Y-%m-%d").date()
+    except ValueError as exc:
+        raise ValueError("Invalid NAND milestone date") from exc
+
+    return {
+        "dr_generation": dr_generation,
+        "product_code": product_code,
+        "milestone_date": parsed_milestone_date,
+        "milestone_status": milestone_status,
+        "evaluation_item": evaluation_item,
+        "fab_line": fab_line,
+        "applied_products": applied_products,
+        "grades": grades,
+        "remark": raw_info.get("remark") or None,
+        "remark_top": raw_info.get("remark_top") or None,
+        "remark_bottom": raw_info.get("remark_bottom") or None,
+        "sort_order": _safe_int(raw_info.get("sort_order"), default=0),
+    }
+
+
+def _nand_request_error(
+    evaluation_reason: object, raw_info: object, existing_nand: NandEvaluation | None
+) -> str | None:
+    if not _is_nand_reason(evaluation_reason):
+        return None
+    if raw_info is None:
+        if existing_nand:
+            return None
+        return "nand_info is required when evaluation_reason includes nand"
+    try:
+        _normalize_nand_info(raw_info)
+    except ValueError as exc:
+        return str(exc)
+    return None
+
+
+def _sync_nand_info(evaluation: Evaluation, raw_info: object) -> None:
+    if not _is_nand_reason(evaluation.evaluation_reason):
+        if evaluation.nand_evaluation:
+            db.session.delete(evaluation.nand_evaluation)
+        return
+
+    if raw_info is None:
+        return
+
+    info = _normalize_nand_info(raw_info)
+    nand_product = _get_or_create_nand_product(
+        info["dr_generation"], info["product_code"]
+    )
+
+    nand_evaluation = evaluation.nand_evaluation
+    if not nand_evaluation:
+        nand_evaluation = NandEvaluation(evaluation_id=evaluation.id)
+        db.session.add(nand_evaluation)
+
+    nand_evaluation.nand_product = nand_product
+    nand_evaluation.milestone_date = info["milestone_date"]
+    nand_evaluation.milestone_status = info["milestone_status"]
+    nand_evaluation.evaluation_item = info["evaluation_item"]
+    nand_evaluation.fab_line = info["fab_line"]
+    nand_evaluation.remark = info["remark"]
+    nand_evaluation.remark_top = info["remark_top"]
+    nand_evaluation.remark_bottom = info["remark_bottom"]
+    nand_evaluation.sort_order = info["sort_order"]
+    nand_evaluation.applied_products = [
+        _get_or_create_applied_product(model_name)
+        for model_name in info["applied_products"]
+    ]
+    nand_evaluation.grades = [
+        _get_or_create_grade(grade_code) for grade_code in info["grades"]
+    ]
 
 
 def _failure_evaluation_ids_query():
@@ -1380,6 +1602,12 @@ def create_evaluation() -> tuple[Response, int]:
                 }
             ), 400
 
+        nand_error = _nand_request_error(
+            data.get("evaluation_reason", ""), data.get("nand_info"), None
+        )
+        if nand_error:
+            return jsonify({"success": False, "message": nand_error}), 400
+
         # Create evaluation
         tz = resolve_timezone_from_request(request.args)
 
@@ -1408,6 +1636,8 @@ def create_evaluation() -> tuple[Response, int]:
         )
 
         db.session.add(evaluation)
+        db.session.flush()
+        _sync_nand_info(evaluation, data.get("nand_info"))
         db.session.commit()
 
         # Log operation
@@ -1562,6 +1792,14 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
         # Store old data for logging
         old_data = evaluation.to_dict(tz=tz)
 
+        requested_reason = data.get("evaluation_reason", evaluation.evaluation_reason)
+        raw_nand_info = data.get("nand_info") if "nand_info" in data else None
+        nand_error = _nand_request_error(
+            requested_reason, raw_nand_info, evaluation.nand_evaluation
+        )
+        if nand_error:
+            return jsonify({"success": False, "message": nand_error}), 400
+
         # Update fields
         if "evaluation_name" in data:
             evaluation.evaluation_name = data["evaluation_name"]
@@ -1626,6 +1864,7 @@ def update_evaluation(evaluation_id: int) -> tuple[Response, int]:
         if "form_factor" in data:
             evaluation.form_factor = data["form_factor"]
 
+        _sync_nand_info(evaluation, raw_nand_info)
         db.session.commit()
 
         # Log operation
