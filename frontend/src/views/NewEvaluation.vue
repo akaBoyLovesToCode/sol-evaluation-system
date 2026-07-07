@@ -164,6 +164,206 @@
           </el-form-item>
         </el-card>
 
+        <el-card
+          v-if="isNandEvaluation"
+          class="form-section fade-in-up"
+          style="animation-delay: 0.2s"
+        >
+          <template #header>
+            <span>{{ $t('evaluation.nand.title') }}</span>
+          </template>
+
+          <el-alert type="info" :closable="false" show-icon class="nand-info-alert">
+            {{ $t('evaluation.nand.description') }}
+          </el-alert>
+
+          <el-row :gutter="20">
+            <el-col :xs="24" :sm="8">
+              <el-form-item
+                :label="$t('evaluation.nand.drGeneration')"
+                prop="nand_info.dr_generation"
+              >
+                <el-select
+                  v-model="form.nand_info.dr_generation"
+                  :placeholder="$t('evaluation.nand.placeholders.drGeneration')"
+                  style="width: 100%"
+                  @change="handleNandDrChange"
+                >
+                  <el-option
+                    v-for="option in nandDrOptions"
+                    :key="option"
+                    :label="option"
+                    :value="option"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :xs="24" :sm="8">
+              <el-form-item
+                :label="$t('evaluation.nand.productCode')"
+                prop="nand_info.product_code"
+              >
+                <el-select
+                  v-model="form.nand_info.product_code"
+                  :placeholder="$t('evaluation.nand.placeholders.productCode')"
+                  style="width: 100%"
+                  :disabled="!form.nand_info.dr_generation"
+                >
+                  <el-option
+                    v-for="option in nandProductOptions"
+                    :key="option"
+                    :label="option"
+                    :value="option"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :xs="24" :sm="8">
+              <el-form-item
+                :label="$t('evaluation.nand.milestoneDate')"
+                prop="nand_info.milestone_date"
+              >
+                <el-date-picker
+                  v-model="form.nand_info.milestone_date"
+                  type="date"
+                  :placeholder="$t('evaluation.nand.placeholders.milestoneDate')"
+                  format="YYYY-MM-DD"
+                  value-format="YYYY-MM-DD"
+                  style="width: 100%"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-row :gutter="20">
+            <el-col :xs="24" :sm="8">
+              <el-form-item
+                :label="$t('evaluation.nand.milestoneStatus')"
+                prop="nand_info.milestone_status"
+              >
+                <el-select
+                  v-model="form.nand_info.milestone_status"
+                  :placeholder="$t('evaluation.nand.placeholders.milestoneStatus')"
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="option in nandStatusOptions"
+                    :key="option.value"
+                    :label="$t(option.labelKey)"
+                    :value="option.value"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :xs="24" :sm="8">
+              <el-form-item
+                :label="$t('evaluation.nand.evaluationItem')"
+                prop="nand_info.evaluation_item"
+              >
+                <el-input
+                  v-model="form.nand_info.evaluation_item"
+                  :placeholder="$t('evaluation.nand.placeholders.evaluationItem')"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :xs="24" :sm="8">
+              <el-form-item :label="$t('evaluation.nand.fabLine')" prop="nand_info.fab_line">
+                <el-select
+                  v-model="form.nand_info.fab_line"
+                  :placeholder="$t('evaluation.nand.placeholders.fabLine')"
+                  filterable
+                  allow-create
+                  default-first-option
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="option in nandFabLineOptions"
+                    :key="option"
+                    :label="option"
+                    :value="option"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-row :gutter="20">
+            <el-col :xs="24" :sm="12">
+              <el-form-item
+                :label="$t('evaluation.nand.appliedProducts')"
+                prop="nand_info.applied_products"
+              >
+                <el-select
+                  v-model="form.nand_info.applied_products"
+                  :placeholder="$t('evaluation.nand.placeholders.appliedProducts')"
+                  multiple
+                  filterable
+                  allow-create
+                  default-first-option
+                  collapse-tags
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="option in nandAppliedProductSuggestions"
+                    :key="option"
+                    :label="option"
+                    :value="option"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :xs="24" :sm="12">
+              <el-form-item :label="$t('evaluation.nand.grades')" prop="nand_info.grades">
+                <el-select
+                  v-model="form.nand_info.grades"
+                  :placeholder="$t('evaluation.nand.placeholders.grades')"
+                  multiple
+                  filterable
+                  allow-create
+                  default-first-option
+                  collapse-tags
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="option in nandGradeSuggestions"
+                    :key="option"
+                    :label="option"
+                    :value="option"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-row :gutter="20">
+            <el-col :xs="24" :sm="12">
+              <el-form-item :label="$t('evaluation.nand.remarkTop')">
+                <el-input
+                  v-model="form.nand_info.remark_top"
+                  :placeholder="$t('evaluation.nand.placeholders.remarkTop')"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :xs="24" :sm="12">
+              <el-form-item :label="$t('evaluation.nand.remarkBottom')">
+                <el-input
+                  v-model="form.nand_info.remark_bottom"
+                  :placeholder="$t('evaluation.nand.placeholders.remarkBottom')"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-form-item :label="$t('evaluation.nand.remark')">
+            <el-input
+              v-model="form.nand_info.remark"
+              type="textarea"
+              :rows="3"
+              :placeholder="$t('evaluation.nand.placeholders.remark')"
+            />
+          </el-form-item>
+        </el-card>
+
         <el-card class="form-section fade-in-up" style="animation-delay: 0.3s">
           <template #header>
             <span>{{ $t('evaluation.technicalSpec') }}</span>
@@ -391,7 +591,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 const props = defineProps({
   inDialog: { type: Boolean, default: false },
@@ -465,6 +665,7 @@ const normalizeReasons = (value) => {
 }
 
 const serializeReasons = (value) => normalizeReasons(value).join(',')
+const hasReason = (value, reason) => normalizeReasons(value).includes(reason)
 const formRef = ref()
 const saving = ref(false)
 const submitting = ref(false)
@@ -472,6 +673,39 @@ const loading = ref(false)
 const deleting = ref(false)
 const finishing = ref(false)
 // Simplified app: no user directory; chargers are free-text
+
+const form = reactive({
+  evaluation_type: '',
+  evaluation_name: '',
+  product_name: '',
+  part_number: '',
+  start_date: '',
+  end_date: '',
+  reason: [],
+  process_step: [],
+  description: '',
+  test_process: '',
+  v_process: '',
+  pgm_login_text: '',
+  pgm_login_image: '',
+  pgm_version: '',
+  pgm_test_time: '',
+  scs_charger_name: '',
+  head_office_charger_name: '',
+  nand_info: {
+    dr_generation: '',
+    product_code: '',
+    milestone_date: '',
+    milestone_status: 'current_month_plan',
+    evaluation_item: '',
+    fab_line: '',
+    applied_products: [],
+    grades: [],
+    remark_top: '',
+    remark_bottom: '',
+    remark: '',
+  },
+})
 
 // Check if in edit mode
 const isEditMode = computed(
@@ -518,25 +752,68 @@ const reasonOptions = computed(() => {
   return []
 })
 
-const form = reactive({
-  evaluation_type: '',
-  evaluation_name: '',
-  product_name: '',
-  part_number: '',
-  start_date: '',
-  end_date: '',
-  reason: [],
-  process_step: [],
-  description: '',
-  test_process: '',
-  v_process: '',
-  pgm_login_text: '',
-  pgm_login_image: '',
-  pgm_version: '',
-  pgm_test_time: '',
-  scs_charger_name: '',
-  head_office_charger_name: '',
+const nandDrProductMap = {
+  V3: ['DW', 'DX', 'DA'],
+  V4: ['FB', 'FP', 'FY'],
+  V5: ['IX', 'IT', 'IL'],
+  V6: ['BF', 'BU'],
+  V6P: ['BH'],
+  V7: ['GQ', 'GJ'],
+  V8: ['CR', 'CU'],
+}
+
+const nandDrOptions = Object.keys(nandDrProductMap)
+const nandStatusOptions = [
+  { labelKey: 'evaluation.nand.status.approved', value: 'approved' },
+  { labelKey: 'evaluation.nand.status.currentMonthPlan', value: 'current_month_plan' },
+  { labelKey: 'evaluation.nand.status.followUpPlan', value: 'follow_up_plan' },
+]
+const nandFabLineOptions = ['X1L', 'X2L', 'P1L', 'P2L']
+const nandAppliedProductSuggestions = ['PM9A1', '980PRO', 'PM983', 'PM9B1', '990Pro', 'PM9E1']
+const nandGradeSuggestions = ['Lv1', 'Lv2', 'Lv3', 'Lv4', 'Lv5', 'S1', 'S2', 'S3', 'T2']
+
+const isNandEvaluation = computed(() => hasReason(form.reason, 'nand'))
+const nandProductOptions = computed(() => nandDrProductMap[form.nand_info.dr_generation] || [])
+
+const requireWhenNand = (messageKey) => ({
+  validator: (_, value, callback) => {
+    if (!isNandEvaluation.value) {
+      callback()
+      return
+    }
+    if (Array.isArray(value) ? value.length === 0 : !value) {
+      callback(new Error(t(messageKey)))
+      return
+    }
+    callback()
+  },
+  trigger: 'change',
 })
+
+const handleNandDrChange = () => {
+  if (!nandProductOptions.value.includes(form.nand_info.product_code)) {
+    form.nand_info.product_code = ''
+  }
+}
+
+watch(
+  () => form.reason,
+  () => {
+    if (!isNandEvaluation.value) {
+      formRef.value?.clearValidate?.([
+        'nand_info.dr_generation',
+        'nand_info.product_code',
+        'nand_info.milestone_date',
+        'nand_info.milestone_status',
+        'nand_info.evaluation_item',
+        'nand_info.fab_line',
+        'nand_info.applied_products',
+        'nand_info.grades',
+      ])
+    }
+  },
+  { deep: true },
+)
 
 const builderPayload = ref(normalizeBuilderPayload(createEmptyBuilderPayload()))
 const processDrawerVisible = ref(false)
@@ -847,6 +1124,14 @@ const rules = computed(() => ({
       trigger: 'change',
     },
   ],
+  'nand_info.dr_generation': [requireWhenNand('validation.requiredField.nandDrGeneration')],
+  'nand_info.product_code': [requireWhenNand('validation.requiredField.nandProductCode')],
+  'nand_info.milestone_date': [requireWhenNand('validation.requiredField.nandMilestoneDate')],
+  'nand_info.milestone_status': [requireWhenNand('validation.requiredField.nandMilestoneStatus')],
+  'nand_info.evaluation_item': [requireWhenNand('validation.requiredField.nandEvaluationItem')],
+  'nand_info.fab_line': [requireWhenNand('validation.requiredField.nandFabLine')],
+  'nand_info.applied_products': [requireWhenNand('validation.requiredField.nandAppliedProducts')],
+  'nand_info.grades': [requireWhenNand('validation.requiredField.nandGrades')],
 }))
 
 const handleTypeChange = () => {
@@ -867,27 +1152,49 @@ const handleCancel = async () => {
   }
 }
 
-const buildPayload = () => ({
-  evaluation_type: form.evaluation_type,
-  evaluation_name: form.evaluation_name,
-  product_name: form.product_name,
-  part_number: form.part_number,
-  start_date: form.start_date,
-  end_date: form.end_date || null,
-  reason: serializeReasons(form.reason),
-  process_step: serializeProcessSteps(form.process_step),
-  evaluation_reason: serializeReasons(form.reason), // Map reason to evaluation_reason for backend compatibility
-  description: form.description,
-  remarks: form.description, // Map description to remarks for backend compatibility
-  test_process: form.test_process,
-  v_process: form.v_process,
-  pgm_login_text: form.pgm_login_text,
-  pgm_login_image: form.pgm_login_image,
-  pgm_version: form.pgm_version,
-  pgm_test_time: form.pgm_test_time,
-  scs_charger_name: form.scs_charger_name || null,
-  head_office_charger_name: form.head_office_charger_name || null,
+const buildNandInfoPayload = () => ({
+  dr_generation: form.nand_info.dr_generation,
+  product_code: form.nand_info.product_code,
+  milestone_date: form.nand_info.milestone_date,
+  milestone_status: form.nand_info.milestone_status,
+  evaluation_item: form.nand_info.evaluation_item,
+  fab_line: form.nand_info.fab_line,
+  applied_products: form.nand_info.applied_products,
+  grades: form.nand_info.grades,
+  remark_top: form.nand_info.remark_top,
+  remark_bottom: form.nand_info.remark_bottom,
+  remark: form.nand_info.remark,
 })
+
+const buildPayload = () => {
+  const payload = {
+    evaluation_type: form.evaluation_type,
+    evaluation_name: form.evaluation_name,
+    product_name: form.product_name,
+    part_number: form.part_number,
+    start_date: form.start_date,
+    end_date: form.end_date || null,
+    reason: serializeReasons(form.reason),
+    process_step: serializeProcessSteps(form.process_step),
+    evaluation_reason: serializeReasons(form.reason), // Map reason to evaluation_reason for backend compatibility
+    description: form.description,
+    remarks: form.description, // Map description to remarks for backend compatibility
+    test_process: form.test_process,
+    v_process: form.v_process,
+    pgm_login_text: form.pgm_login_text,
+    pgm_login_image: form.pgm_login_image,
+    pgm_version: form.pgm_version,
+    pgm_test_time: form.pgm_test_time,
+    scs_charger_name: form.scs_charger_name || null,
+    head_office_charger_name: form.head_office_charger_name || null,
+  }
+
+  if (isNandEvaluation.value) {
+    payload.nand_info = buildNandInfoPayload()
+  }
+
+  return payload
+}
 
 const handleSave = async (submit = false) => {
   if (!formRef.value) return
@@ -1011,6 +1318,22 @@ const handleDelete = async () => {
 
 // No user fetching in simplified mode
 
+const applyNandInfo = (nandInfo = {}) => {
+  Object.assign(form.nand_info, {
+    dr_generation: nandInfo?.dr_generation || '',
+    product_code: nandInfo?.product_code || '',
+    milestone_date: nandInfo?.milestone_date || '',
+    milestone_status: nandInfo?.milestone_status || 'current_month_plan',
+    evaluation_item: nandInfo?.evaluation_item || '',
+    fab_line: nandInfo?.fab_line || '',
+    applied_products: Array.isArray(nandInfo?.applied_products) ? nandInfo.applied_products : [],
+    grades: Array.isArray(nandInfo?.grades) ? nandInfo.grades : [],
+    remark_top: nandInfo?.remark_top || '',
+    remark_bottom: nandInfo?.remark_bottom || '',
+    remark: nandInfo?.remark || '',
+  })
+}
+
 const fetchEvaluation = async () => {
   if (!isEditMode.value) return
 
@@ -1038,6 +1361,7 @@ const fetchEvaluation = async () => {
       scs_charger_name: evaluation.scs_charger_name || '',
       head_office_charger_name: evaluation.head_office_charger_name || '',
     })
+    applyNandInfo(evaluation.nand_info)
     const payload = evaluationToBuilderPayload(evaluation)
     builderPayload.value = normalizeBuilderPayload(payload)
     nestedSaveWarnings.value = []

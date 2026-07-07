@@ -78,7 +78,15 @@
       "evalCode": "Please enter evaluation code",
       "lotNumber": "Please enter lot number",
       "quantity": "Please enter quantity",
-      "processFlow": "Please enter process flow description"
+      "processFlow": "Please enter process flow description",
+      "nandDrGeneration": "Please select DR generation",
+      "nandProductCode": "Please select NAND product",
+      "nandMilestoneDate": "Please select milestone date",
+      "nandMilestoneStatus": "Please select milestone status",
+      "nandEvaluationItem": "Please enter evaluation item",
+      "nandFabLine": "Please enter fab line",
+      "nandAppliedProducts": "Please enter applied product",
+      "nandGrades": "Please enter grade"
     }
   },
   "evaluation": {
@@ -94,7 +102,8 @@
         "allActive": "In Progress {count}",
         "noUpdate": "No Update {count}",
         "openOver10d": "Open >10d {count}",
-        "allEvaluations": "All Evaluations {count}"
+        "allEvaluations": "All Evaluations {count}",
+        "nandView": "NAND View"
       },
       "kpis": {
         "openEvaluations": {
@@ -133,6 +142,14 @@
           "pgm_version": "PGM Version",
           "start_date": "Start Date"
         }
+      },
+      "nand": {
+        "title": "NAND View",
+        "meta": "{total} nodes · {rows} product rows",
+        "productColumn": "Product",
+        "currentLine": "Current",
+        "emptyDescription": "No NAND evaluations match the current filters.",
+        "incompleteWarning": "{count} NAND evaluation(s) are missing timeline fields. Edit them and fill in NAND Evaluation Info to show them on the matrix."
       }
     },
     "new": {
@@ -264,6 +281,39 @@
     "pgmLoginText": "PGM Login Text",
     "pgmLoginImage": "PGM Login Image",
     "pgmLoginPasteHint": "Paste an image directly here or use Upload.",
+    "nand": {
+      "title": "NAND Evaluation Info",
+      "description": "These fields are required only when the evaluation reason includes NAND.",
+      "drGeneration": "DR",
+      "productCode": "NAND Product",
+      "milestoneDate": "Milestone Date",
+      "milestoneStatus": "Milestone Status",
+      "evaluationItem": "Evaluation Item",
+      "fabLine": "Fab Line",
+      "appliedProducts": "Applied Product",
+      "grades": "Grade",
+      "remarkTop": "Top Remark",
+      "remarkBottom": "Bottom Remark",
+      "remark": "Remark",
+      "status": {
+        "approved": "Approved",
+        "currentMonthPlan": "Current Month Plan",
+        "followUpPlan": "Follow-up Plan"
+      },
+      "placeholders": {
+        "drGeneration": "Select DR",
+        "productCode": "Select product",
+        "milestoneDate": "Select date",
+        "milestoneStatus": "Select status",
+        "evaluationItem": "Example: S3 approval",
+        "fabLine": "Example: X1L",
+        "appliedProducts": "Example: PM9A1",
+        "grades": "Example: Lv4 or S3",
+        "remarkTop": "Remark above node",
+        "remarkBottom": "Remark below node",
+        "remark": "Additional NAND notes"
+      }
+    },
     "placeholders": {
       "evaluationNumber": "Enter evaluation no.",
       "evaluationName": "Enter evaluation name",

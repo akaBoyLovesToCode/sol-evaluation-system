@@ -152,7 +152,117 @@
       </div>
     </section>
 
-    <section class="table-shell">
+    <section v-if="isNandView" v-loading="nandLoading" class="nand-shell">
+      <div class="nand-toolbar">
+        <div class="table-title">
+          <span>{{ $t('evaluation.console.nand.title') }}</span>
+          <span class="table-meta">
+            {{
+              $t('evaluation.console.nand.meta', {
+                total: nandEvents.length,
+                rows: nandRows.length,
+              })
+            }}
+          </span>
+        </div>
+        <div class="nand-legend">
+          <span v-for="item in nandLegendItems" :key="item.status" class="nand-legend-item">
+            <span class="nand-legend-node" :class="`nand-node-${item.status}`"></span>
+            {{ item.label }}
+          </span>
+        </div>
+      </div>
+
+      <el-alert
+        v-if="nandIncompleteCount > 0"
+        class="nand-incomplete-alert"
+        type="warning"
+        :closable="false"
+        show-icon
+        :title="$t('evaluation.console.nand.incompleteWarning', { count: nandIncompleteCount })"
+      />
+
+      <el-empty
+        v-if="nandEvents.length === 0"
+        class="nand-empty"
+        :description="$t('evaluation.console.nand.emptyDescription')"
+      />
+
+      <div v-else class="nand-matrix-scroll">
+        <div class="nand-matrix" :style="{ width: `${nandMatrixWidth}px` }">
+          <div class="nand-left-head">
+            <div>DR</div>
+            <div>{{ $t('evaluation.console.nand.productColumn') }}</div>
+          </div>
+          <div class="nand-month-head" :style="{ width: `${nandTimelineWidth}px` }">
+            <div
+              v-for="month in nandMonths"
+              :key="month.key"
+              class="nand-month"
+              :style="{ left: `${month.left}px`, width: `${month.width}px` }"
+            >
+              {{ month.label }}
+            </div>
+            <div
+              v-if="nandTodayPosition !== null"
+              class="nand-current-line head"
+              :style="{ left: `${nandTodayPosition}px` }"
+            >
+              <span>{{ $t('evaluation.console.nand.currentLine') }}</span>
+            </div>
+          </div>
+
+          <div class="nand-body" :style="{ width: `${nandMatrixWidth}px` }">
+            <template v-for="group in nandGroupedRows" :key="group.dr">
+              <div class="nand-dr-cell" :style="{ gridRow: `span ${group.rows.length}` }">
+                {{ group.dr }}
+              </div>
+              <template v-for="row in group.rows" :key="row.key">
+                <div class="nand-product-cell">{{ row.product }}</div>
+                <div class="nand-timeline-cell" :style="{ width: `${nandTimelineWidth}px` }">
+                  <div
+                    v-for="month in nandMonths"
+                    :key="`${row.key}-${month.key}`"
+                    class="nand-month-gridline"
+                    :style="{ left: `${month.left}px` }"
+                  ></div>
+                  <div
+                    v-if="nandTodayPosition !== null"
+                    class="nand-current-line body"
+                    :style="{ left: `${nandTodayPosition}px` }"
+                  ></div>
+                  <button
+                    v-for="event in row.events"
+                    :key="event.key"
+                    type="button"
+                    class="nand-event"
+                    :class="`nand-node-${event.status}`"
+                    :style="{ left: `${event.left}px` }"
+                    @click="openDetail(event.source)"
+                  >
+                    <span v-if="event.remarkTop" class="nand-event-note top">
+                      {{ event.remarkTop }}
+                    </span>
+                    <span class="nand-event-node">{{ event.day }}</span>
+                    <span v-if="event.remarkBottom" class="nand-event-note bottom">
+                      {{ event.remarkBottom }}
+                    </span>
+                    <span class="nand-event-popover">
+                      <strong>{{ event.evaluationNumber }}</strong>
+                      <span>{{ event.evaluationItem || '-' }}</span>
+                      <span>{{ event.appliedProducts || '-' }} · {{ event.fabLine || '-' }}</span>
+                      <span>{{ event.grades || '-' }}</span>
+                    </span>
+                  </button>
+                </div>
+              </template>
+            </template>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section v-else class="table-shell">
       <div class="table-toolbar">
         <div class="table-title">
           <span>{{ $t('evaluation.list') }}</span>
@@ -502,6 +612,7 @@ onUnmounted(() => {
 })
 
 const tableLoading = ref(false)
+const nandLoading = ref(false)
 const kpiLoading = ref(false)
 const exportLoading = ref(false)
 const showDetail = ref(false)
@@ -513,11 +624,16 @@ const isEditing = computed(() => !!selectedId.value)
 const detailRef = ref(null)
 const newEvalRef = ref(null)
 const tableData = ref([])
+const nandEvaluations = ref([])
 const selectedRows = ref([])
 const activeOperationalView = ref('all_active')
 const processStepOptions = ['iARTs', 'Aging', 'LI', 'Repair']
 const DESCRIPTION_WORD_LIMIT = 16
 const DESCRIPTION_CHAR_LIMIT = 80
+const NAND_VIEW_VALUE = 'nand_view'
+const NAND_LEFT_WIDTH = 190
+const NAND_MONTH_WIDTH = 132
+const DAY_MS = 24 * 60 * 60 * 1000
 
 const kpiData = reactive({
   open_evaluations: 0,
@@ -576,6 +692,10 @@ const savedViews = computed(() => [
       count: kpiData.total_evaluations,
     }),
     value: 'all',
+  },
+  {
+    label: t('evaluation.console.savedViews.nandView'),
+    value: NAND_VIEW_VALUE,
   },
 ])
 
@@ -641,6 +761,7 @@ const pageStart = computed(() => {
 })
 
 const pageEnd = computed(() => Math.min(pagination.page * pagination.size, pagination.total))
+const isNandView = computed(() => activeOperationalView.value === NAND_VIEW_VALUE)
 
 const detailDialogTitle = computed(() => selectedEvaluationNumber.value || t('evaluation.title'))
 const terminalStatuses = ['completed', 'cancelled']
@@ -699,6 +820,232 @@ const formatReasons = (value) => {
   })
   return labels.join(', ')
 }
+
+const parseDateOnly = (value) => {
+  if (!value) return null
+  const datePart = String(value).split('T')[0]
+  const [year, month, day] = datePart.split('-').map(Number)
+  if (!year || !month || !day) return null
+  const date = new Date(year, month - 1, day)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+const startOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1)
+const addMonths = (date, months) => new Date(date.getFullYear(), date.getMonth() + months, 1)
+const daysBetween = (start, end) => Math.round((end.getTime() - start.getTime()) / DAY_MS)
+
+const formatMonthLabel = (date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+
+const nandProductOrder = new Map(
+  [
+    'V3_DW',
+    'V3_DX',
+    'V3_DA',
+    'V4_FB',
+    'V4_FP',
+    'V4_FY',
+    'V5_IX',
+    'V5_IT',
+    'V5_IL',
+    'V6_BF',
+    'V6_BU',
+    'V6P_BH',
+    'V7_GQ',
+    'V7_GJ',
+    'V8_CR',
+    'V8_CU',
+  ].map((key, index) => [key, index]),
+)
+
+const nandStatuses = ['approved', 'current_month_plan', 'follow_up_plan']
+
+const normalizeNandStatus = (status) =>
+  nandStatuses.includes(status) ? status : 'current_month_plan'
+
+const isNandEvaluationRow = (row) => {
+  if (row?.nand_info) return true
+  return normalizeReasons(row?.evaluation_reason || row?.reason).some(
+    (reason) => reason.toLowerCase() === 'nand',
+  )
+}
+
+const nandLegendItems = computed(() => [
+  {
+    status: 'approved',
+    label: t('evaluation.nand.status.approved'),
+  },
+  {
+    status: 'current_month_plan',
+    label: t('evaluation.nand.status.currentMonthPlan'),
+  },
+  {
+    status: 'follow_up_plan',
+    label: t('evaluation.nand.status.followUpPlan'),
+  },
+])
+
+const nandBaseEvents = computed(() =>
+  nandEvaluations.value
+    .map((row) => {
+      const info = row.nand_info
+      const date = parseDateOnly(info?.milestone_date)
+      if (!info || !date) return null
+      const dr = info.dr_generation || '-'
+      const product = info.product_code || '-'
+      const rowKey = `${dr}_${product}`
+      const appliedProducts = Array.isArray(info.applied_products)
+        ? info.applied_products.join(', ')
+        : ''
+      const grades = Array.isArray(info.grades) ? info.grades.join(', ') : ''
+
+      return {
+        key: `${row.id}-${info.id || info.milestone_date}`,
+        rowKey,
+        dr,
+        product,
+        date,
+        day: date.getDate(),
+        status: normalizeNandStatus(info.milestone_status),
+        evaluationNumber: row.evaluation_number || '-',
+        evaluationItem: info.evaluation_item || '',
+        fabLine: info.fab_line || '',
+        appliedProducts,
+        grades,
+        remarkTop: info.remark_top || '',
+        remarkBottom: info.remark_bottom || '',
+        remark: info.remark || '',
+        source: row,
+      }
+    })
+    .filter(Boolean),
+)
+
+const nandTimelineRange = computed(() => {
+  const rangeStart = parseDateOnly(searchForm.dateRange?.[0])
+  const rangeEnd = parseDateOnly(searchForm.dateRange?.[1])
+  if (rangeStart && rangeEnd) {
+    return {
+      start: startOfMonth(rangeStart),
+      end: addMonths(startOfMonth(rangeEnd), 1),
+    }
+  }
+
+  const dates = nandBaseEvents.value.map((event) => event.date)
+  if (dates.length === 0) {
+    const today = new Date()
+    return {
+      start: startOfMonth(today),
+      end: addMonths(startOfMonth(today), 1),
+    }
+  }
+
+  const minDate = new Date(Math.min(...dates.map((date) => date.getTime())))
+  const maxDate = new Date(Math.max(...dates.map((date) => date.getTime())))
+  return {
+    start: startOfMonth(minDate),
+    end: addMonths(startOfMonth(maxDate), 1),
+  }
+})
+
+const nandMonthCount = computed(() => {
+  const { start, end } = nandTimelineRange.value
+  let count = 0
+  let cursor = start
+  while (cursor < end) {
+    count += 1
+    cursor = addMonths(cursor, 1)
+  }
+  return Math.max(1, count)
+})
+
+const nandTimelineWidth = computed(() => Math.max(760, nandMonthCount.value * NAND_MONTH_WIDTH))
+const nandMatrixWidth = computed(() => NAND_LEFT_WIDTH + nandTimelineWidth.value)
+
+const nandMonths = computed(() => {
+  const months = []
+  const { start, end } = nandTimelineRange.value
+  const totalDays = Math.max(1, daysBetween(start, end))
+  let cursor = start
+
+  while (cursor < end) {
+    const next = addMonths(cursor, 1)
+    const boundedNext = next < end ? next : end
+    months.push({
+      key: formatMonthLabel(cursor),
+      label: formatMonthLabel(cursor),
+      left: (daysBetween(start, cursor) / totalDays) * nandTimelineWidth.value,
+      width: (daysBetween(cursor, boundedNext) / totalDays) * nandTimelineWidth.value,
+    })
+    cursor = next
+  }
+
+  return months
+})
+
+const positionForNandDate = (date) => {
+  const { start, end } = nandTimelineRange.value
+  const totalDays = Math.max(1, daysBetween(start, end))
+  const offsetDays = Math.min(Math.max(daysBetween(start, date), 0), totalDays)
+  const rawPosition = (offsetDays / totalDays) * nandTimelineWidth.value
+  return Math.min(Math.max(rawPosition, 18), nandTimelineWidth.value - 18)
+}
+
+const nandEvents = computed(() =>
+  nandBaseEvents.value.map((event) => ({
+    ...event,
+    left: positionForNandDate(event.date),
+  })),
+)
+
+const nandIncompleteCount = computed(() => nandEvaluations.value.length - nandEvents.value.length)
+
+const nandTodayPosition = computed(() => {
+  const today = new Date()
+  const { start, end } = nandTimelineRange.value
+  if (today < start || today > end) return null
+  return positionForNandDate(today)
+})
+
+const nandRows = computed(() => {
+  const rowMap = new Map()
+  nandEvents.value.forEach((event) => {
+    if (!rowMap.has(event.rowKey)) {
+      rowMap.set(event.rowKey, {
+        key: event.rowKey,
+        dr: event.dr,
+        product: event.product,
+        events: [],
+      })
+    }
+    rowMap.get(event.rowKey).events.push(event)
+  })
+
+  return Array.from(rowMap.values())
+    .map((row) => ({
+      ...row,
+      order: nandProductOrder.get(row.key) ?? Number.MAX_SAFE_INTEGER,
+      events: row.events.sort((a, b) => a.date - b.date),
+    }))
+    .sort((a, b) => {
+      if (a.order !== b.order) return a.order - b.order
+      return a.key.localeCompare(b.key)
+    })
+})
+
+const nandGroupedRows = computed(() => {
+  const groups = []
+  nandRows.value.forEach((row) => {
+    let group = groups.find((item) => item.dr === row.dr)
+    if (!group) {
+      group = { dr: row.dr, order: row.order, rows: [] }
+      groups.push(group)
+    }
+    group.rows.push(row)
+    group.order = Math.min(group.order, row.order)
+  })
+  return groups.sort((a, b) => a.order - b.order || a.dr.localeCompare(b.dr))
+})
 
 const truncateDescription = (text) => {
   if (!text) {
@@ -959,7 +1306,7 @@ const buildEvaluationParams = ({
     params.per_page = perPage
   }
 
-  if (includeOperationalView && activeOperationalView.value) {
+  if (includeOperationalView && activeOperationalView.value && !isNandView.value) {
     params.operational_view = activeOperationalView.value
   }
   if (searchForm.evaluation_number) {
@@ -1021,7 +1368,6 @@ const fetchEvaluations = async () => {
     const response = await api.get('/evaluations', { params })
     const data = response.data.data
 
-    // 后端返回的数据结构是 { data: { evaluations: [...], pagination: {...} } }
     tableData.value = data.evaluations || []
     pagination.total = data.total || 0
   } catch (error) {
@@ -1032,8 +1378,25 @@ const fetchEvaluations = async () => {
   }
 }
 
+const fetchNandEvaluations = async () => {
+  try {
+    nandLoading.value = true
+    const params = buildEvaluationParams({
+      includePagination: false,
+      includeOperationalView: false,
+    })
+    const rows = await fetchAllEvaluationPages(api, params)
+    nandEvaluations.value = rows.filter(isNandEvaluationRow)
+  } catch (error) {
+    ElMessage.error(t('ui.fetchListFailed'))
+    console.error('Failed to fetch NAND evaluations:', error)
+  } finally {
+    nandLoading.value = false
+  }
+}
+
 const fetchPageData = async () => {
-  await Promise.all([fetchEvaluations(), fetchKpis()])
+  await Promise.all([isNandView.value ? fetchNandEvaluations() : fetchEvaluations(), fetchKpis()])
 }
 
 const openDetail = (rowOrId) => {
@@ -1095,24 +1458,32 @@ const handleReset = () => {
 const handleSavedView = (view) => {
   activeOperationalView.value = view
   pagination.page = 1
-  fetchEvaluations()
+  fetchPageData()
 }
 
 const handleSizeChange = (size) => {
   pagination.size = size
   pagination.page = 1
-  fetchEvaluations()
+  if (!isNandView.value) {
+    fetchEvaluations()
+  }
 }
 
 const handleCurrentChange = (page) => {
   pagination.page = page
-  fetchEvaluations()
+  if (!isNandView.value) {
+    fetchEvaluations()
+  }
 }
 
 const handleSortChange = ({ prop, order }) => {
   sortParams.prop = prop
   sortParams.order = order
-  fetchEvaluations()
+  if (isNandView.value) {
+    fetchNandEvaluations()
+  } else {
+    fetchEvaluations()
+  }
 }
 
 const handleSelectionChange = (selection) => {
@@ -1168,8 +1539,8 @@ const handleExport = async (type = 'current') => {
     // Show message about what's being exported
     const exportMessage =
       selectedRows.value.length > 0
-        ? `导出选中的 ${selectedRows.value.length} 条评价记录`
-        : `导出全部 ${dataToExport.length} 条评价记录`
+        ? `Export selected ${selectedRows.value.length} evaluations`
+        : `Export all ${dataToExport.length} evaluations`
     console.log(exportMessage)
 
     // Prepare CSV data
@@ -1329,16 +1700,14 @@ const handleExport = async (type = 'current') => {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
 
-    ElMessage.success(t('evaluation.exportSuccess') || '导出成功')
+    ElMessage.success(t('evaluation.exportSuccess'))
   } catch (error) {
-    ElMessage.error(t('evaluation.exportError') || '导出失败')
+    ElMessage.error(t('evaluation.exportError'))
     console.error('Export failed:', error)
   } finally {
     exportLoading.value = false
   }
 }
-
-// 权限检查函数
 
 const getStatusTagType = (status) => {
   const typeMap = {
@@ -1895,6 +2264,283 @@ const formatDateForExport = (value) => {
 .pagination-container :deep(.el-pagination .el-pagination__jump) {
   margin-top: 0;
   margin-bottom: 0;
+}
+
+.nand-shell {
+  background: var(--console-panel);
+  border: 1px solid var(--console-line);
+  border-radius: 6px;
+  box-shadow: var(--console-shadow);
+  overflow: hidden;
+}
+
+.nand-toolbar {
+  min-height: 44px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--console-line);
+  background: #fff;
+}
+
+.nand-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--console-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.nand-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.nand-legend-node {
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.nand-incomplete-alert {
+  margin: 10px 12px 0;
+}
+
+.nand-empty {
+  padding: 48px 0;
+}
+
+.nand-matrix-scroll {
+  width: 100%;
+  overflow: auto;
+  background: #fff;
+}
+
+.nand-matrix {
+  min-width: 100%;
+  display: grid;
+  grid-template-columns: 82px 108px auto;
+  grid-template-rows: 34px auto;
+}
+
+.nand-left-head {
+  position: sticky;
+  left: 0;
+  z-index: 8;
+  grid-column: 1 / 3;
+  grid-row: 1;
+  display: grid;
+  grid-template-columns: 82px 108px;
+  border-right: 1px solid var(--console-line);
+  border-bottom: 1px solid var(--console-line);
+  background: #f8fafc;
+  color: #475467;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.nand-left-head > div,
+.nand-dr-cell,
+.nand-product-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border-right: 1px solid var(--console-line-soft);
+}
+
+.nand-month-head {
+  position: relative;
+  grid-column: 3;
+  grid-row: 1;
+  height: 34px;
+  border-bottom: 1px solid var(--console-line);
+  background: #f8fafc;
+}
+
+.nand-month {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  border-left: 1px solid var(--console-line-soft);
+  color: #475467;
+  font-size: 11px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.nand-body {
+  grid-column: 1 / 4;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: 82px 108px auto;
+  align-items: stretch;
+}
+
+.nand-dr-cell {
+  position: sticky;
+  left: 0;
+  z-index: 6;
+  min-height: 78px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--console-line);
+  color: #344054;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.nand-product-cell {
+  position: sticky;
+  left: 82px;
+  z-index: 5;
+  min-height: 78px;
+  background: #fff;
+  border-bottom: 1px solid var(--console-line);
+  color: var(--console-ink);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.nand-timeline-cell {
+  position: relative;
+  min-height: 78px;
+  border-bottom: 1px solid var(--console-line);
+  background: linear-gradient(to bottom, #fff 0, #fff 50%, #f2f5f9 50%, #f2f5f9 51%, #fff 51%);
+}
+
+.nand-month-gridline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--console-line-soft);
+}
+
+.nand-current-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed #b42318;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.nand-current-line.head span {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #fff1f0;
+  color: #b42318;
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.nand-event {
+  position: absolute;
+  top: 50%;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--console-ink);
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+}
+
+.nand-event-node {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  background: #fff;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.nand-event:hover .nand-event-node {
+  background: #f8fafc;
+  box-shadow: 0 0 0 3px rgba(21, 94, 239, 0.08);
+}
+
+.nand-event-note {
+  position: absolute;
+  left: 50%;
+  width: 92px;
+  color: #344054;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  transform: translateX(-50%);
+}
+
+.nand-event-note.top {
+  bottom: 36px;
+}
+
+.nand-event-note.bottom {
+  top: 36px;
+}
+
+.nand-event-popover {
+  position: absolute;
+  bottom: 46px;
+  left: 50%;
+  width: 190px;
+  display: none;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 9px;
+  border: 1px solid var(--console-line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--console-ink);
+  text-align: left;
+  box-shadow: 0 8px 20px rgba(16, 24, 40, 0.12);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.nand-event:hover .nand-event-popover {
+  display: flex;
+}
+
+.nand-node-approved {
+  color: #667085;
+}
+
+.nand-node-current_month_plan {
+  color: #155eef;
+}
+
+.nand-node-follow_up_plan {
+  color: #d99a00;
 }
 
 @media (max-width: 1200px) {

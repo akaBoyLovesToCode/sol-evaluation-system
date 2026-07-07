@@ -61,7 +61,15 @@
       "evalCode": "평가 코드를 입력하세요",
       "lotNumber": "로트 번호를 입력하세요",
       "quantity": "수량을 입력하세요",
-      "processFlow": "공정 흐름 설명을 입력하세요"
+      "processFlow": "공정 흐름 설명을 입력하세요",
+      "nandDrGeneration": "DR 세대를 선택하세요",
+      "nandProductCode": "NAND 제품을 선택하세요",
+      "nandMilestoneDate": "노드 날짜를 선택하세요",
+      "nandMilestoneStatus": "노드 상태를 선택하세요",
+      "nandEvaluationItem": "평가 항목을 입력하세요",
+      "nandFabLine": "Fab 라인을 입력하세요",
+      "nandAppliedProducts": "탑재 제품을 입력하세요",
+      "nandGrades": "등급을 입력하세요"
     }
   },
   "evaluation": {
@@ -77,7 +85,8 @@
         "allActive": "진행 중 {count}",
         "noUpdate": "미업데이트 {count}",
         "openOver10d": "10일 초과 {count}",
-        "allEvaluations": "전체 평가 {count}"
+        "allEvaluations": "전체 평가 {count}",
+        "nandView": "NAND View"
       },
       "kpis": {
         "openEvaluations": {
@@ -116,6 +125,14 @@
           "pgm_version": "PGM 버전",
           "start_date": "시작 날짜"
         }
+      },
+      "nand": {
+        "title": "NAND View",
+        "meta": "노드 {total}개 · 제품 행 {rows}개",
+        "productColumn": "제품",
+        "currentLine": "현재",
+        "emptyDescription": "현재 필터와 일치하는 NAND 평가가 없습니다.",
+        "incompleteWarning": "{count}개의 NAND 평가에 타임라인 필드가 없습니다. 평가를 수정하고 NAND 평가 정보를 입력하면 매트릭스에 표시됩니다."
       }
     },
     "new": {
@@ -240,6 +257,39 @@
     "pgmLoginText": "PGM 등록 설명",
     "pgmLoginImage": "PGM 등록 이미지",
     "pgmLoginPasteHint": "여기에 이미지를 붙여넣거나 업로드하여 등록하세요.",
+    "nand": {
+      "title": "NAND 평가 정보",
+      "description": "평가 이유에 NAND가 포함된 경우에만 필요한 정보입니다.",
+      "drGeneration": "DR",
+      "productCode": "NAND 제품",
+      "milestoneDate": "노드 날짜",
+      "milestoneStatus": "노드 상태",
+      "evaluationItem": "평가 항목",
+      "fabLine": "Fab 라인",
+      "appliedProducts": "탑재 제품",
+      "grades": "등급",
+      "remarkTop": "상단 비고",
+      "remarkBottom": "하단 비고",
+      "remark": "비고",
+      "status": {
+        "approved": "기승인",
+        "currentMonthPlan": "당월 승인 예정",
+        "followUpPlan": "후속 승인 예정"
+      },
+      "placeholders": {
+        "drGeneration": "DR 선택",
+        "productCode": "제품 선택",
+        "milestoneDate": "날짜 선택",
+        "milestoneStatus": "상태 선택",
+        "evaluationItem": "예: S3승인",
+        "fabLine": "예: X1L",
+        "appliedProducts": "예: PM9A1",
+        "grades": "예: Lv4 또는 S3",
+        "remarkTop": "노드 상단 비고",
+        "remarkBottom": "노드 하단 비고",
+        "remark": "추가 NAND 비고"
+      }
+    },
     "placeholders": {
       "evaluationNumber": "평가 번호를 입력하세요",
       "evaluationName": "평가명을 입력하세요",
