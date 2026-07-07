@@ -1,0 +1,1298 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>S.T.A.R. NAND DR 타임라인 프로토타입</title>
+    <style>
+      :root {
+        --console-bg: #f5f7fa;
+        --console-panel: #ffffff;
+        --console-line: #d8dee8;
+        --console-line-soft: #e8edf3;
+        --console-ink: #1f2937;
+        --console-muted: #667085;
+        --console-blue: #155eef;
+        --console-blue-dark: #0f48b8;
+        --console-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+        --month-width: 220px;
+        --row-height: 86px;
+        --dr-width: 78px;
+        --nand-width: 92px;
+        --today-x: 631px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--console-bg);
+        color: var(--console-ink);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Noto Sans", sans-serif;
+        font-size: 13px;
+        letter-spacing: 0;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      .app-root {
+        min-height: 100vh;
+        background: var(--console-bg);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 0 20px;
+        background: #fff;
+        border-bottom: 1px solid var(--console-line);
+      }
+
+      .topbar-left,
+      .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .topbar-mark {
+        width: 36px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #172554;
+        border-radius: 6px;
+        background: #172554;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .topbar-product {
+        color: #111827;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+
+      .lang-chip {
+        height: 28px;
+        min-width: 82px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 0 9px;
+        border: 1px solid var(--console-line);
+        border-radius: 6px;
+        background: #fff;
+        color: #344054;
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .lang-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--console-blue);
+      }
+
+      .content {
+        padding: 16px 20px 20px;
+      }
+
+      .page-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 14px;
+      }
+
+      .page-title {
+        margin: 0 0 4px;
+        color: var(--console-ink);
+        font-size: 22px;
+        font-weight: 750;
+        line-height: 1.2;
+      }
+
+      .page-description {
+        margin: 0;
+        color: var(--console-muted);
+        font-size: 13px;
+      }
+
+      .page-actions,
+      .filter-actions,
+      .view-tabs,
+      .legend-row,
+      .toolbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .console-command {
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 11px;
+        border: 1px solid var(--console-line);
+        border-radius: 6px;
+        background: #fff;
+        color: #344054;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+        white-space: nowrap;
+        box-shadow: none;
+      }
+
+      .console-command.primary {
+        background: var(--console-blue);
+        border-color: var(--console-blue);
+        color: #fff;
+      }
+
+      .console-command.ghost {
+        background: transparent;
+        border-color: transparent;
+      }
+
+      .kpi-strip {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(140px, 1fr));
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .kpi-card {
+        min-height: 78px;
+        padding: 10px 12px;
+        background: var(--console-panel);
+        border: 1px solid var(--console-line);
+        border-radius: 6px;
+      }
+
+      .kpi-label {
+        margin-bottom: 4px;
+        color: var(--console-muted);
+        font-size: 12px;
+      }
+
+      .kpi-value {
+        color: var(--console-ink);
+        font-size: 24px;
+        font-weight: 750;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .kpi-hint {
+        margin-top: 5px;
+        color: var(--console-muted);
+        font-size: 12px;
+      }
+
+      .saved-views,
+      .filters,
+      .timeline-shell,
+      .state-panel {
+        background: var(--console-panel);
+        border: 1px solid var(--console-line);
+        border-radius: 6px;
+        box-shadow: var(--console-shadow);
+      }
+
+      .saved-views {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 9px 10px;
+        margin-bottom: 8px;
+      }
+
+      .view-tab {
+        height: 28px;
+        padding: 0 10px;
+        border: 1px solid transparent;
+        border-radius: 5px;
+        background: transparent;
+        color: var(--console-muted);
+        cursor: pointer;
+        font-weight: 650;
+      }
+
+      .view-tab.active {
+        background: #eef4ff;
+        color: var(--console-blue-dark);
+        border-color: #c7d7fe;
+      }
+
+      .filters {
+        display: grid;
+        grid-template-columns: 118px 132px 148px 152px 152px 220px auto;
+        gap: 8px;
+        align-items: end;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+
+      .field label {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--console-muted);
+        font-size: 11px;
+        font-weight: 650;
+      }
+
+      .select-like,
+      .date-like {
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 0 10px;
+        border: 1px solid var(--console-line);
+        border-radius: 6px;
+        background: #fff;
+        color: #344054;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .select-like::after {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-right: 1.5px solid #98a2b3;
+        border-bottom: 1.5px solid #98a2b3;
+        transform: rotate(45deg) translateY(-2px);
+      }
+
+      .timeline-shell {
+        overflow: hidden;
+      }
+
+      .timeline-toolbar {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 12px;
+        border-bottom: 1px solid var(--console-line);
+        background: #fff;
+      }
+
+      .timeline-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        color: var(--console-ink);
+        font-weight: 750;
+      }
+
+      .timeline-meta,
+      .small-muted {
+        color: var(--console-muted);
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .legend {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--console-line-soft);
+        background: #fbfcfe;
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--console-muted);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .legend-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 1px solid transparent;
+      }
+
+      .legend-line {
+        width: 28px;
+        height: 12px;
+        border-top: 2px solid #b54708;
+        border-radius: 50%;
+      }
+
+      .legend-dot.approved,
+      .node.approved {
+        background: #fff;
+        border-color: #98a2b3;
+        color: #344054;
+      }
+
+      .legend-dot.current,
+      .node.current {
+        background: #fff;
+        border-color: #155eef;
+        color: #155eef;
+      }
+
+      .legend-dot.future,
+      .node.future {
+        background: #fff;
+        border-color: #eaaa08;
+        color: #7a5b00;
+      }
+
+      .timeline-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 300px;
+        min-height: 710px;
+      }
+
+      .timeline-scroll {
+        overflow-x: auto;
+        overflow-y: auto;
+        scrollbar-gutter: stable;
+        border-right: 1px solid var(--console-line);
+      }
+
+      .timeline-board {
+        min-width: calc(var(--dr-width) + var(--nand-width) + var(--month-width) * 8);
+      }
+
+      .month-header {
+        position: sticky;
+        top: 0;
+        z-index: 8;
+        display: grid;
+        grid-template-columns:
+          var(--dr-width) var(--nand-width) repeat(8, var(--month-width));
+        min-height: 36px;
+        background: #f8fafc;
+        border-bottom: 1px solid var(--console-line);
+      }
+
+      .month-header::before {
+        content: "현재";
+        position: absolute;
+        top: 4px;
+        left: calc(var(--dr-width) + var(--nand-width) + var(--today-x) + 5px);
+        z-index: 11;
+        padding: 1px 5px;
+        border: 1px solid #9bbcff;
+        border-radius: 999px;
+        background: #eef4ff;
+        color: #1849a9;
+        font-size: 10px;
+        font-weight: 850;
+      }
+
+      .month-header::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: calc(var(--dr-width) + var(--nand-width) + var(--today-x));
+        z-index: 10;
+        border-left: 1px dashed #155eef;
+        pointer-events: none;
+      }
+
+      .head-cell {
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 10px;
+        border-right: 1px solid var(--console-line-soft);
+        color: #475467;
+        font-size: 11px;
+        font-weight: 750;
+        text-transform: uppercase;
+      }
+
+      .head-cell.sticky-left {
+        position: sticky;
+        left: 0;
+        z-index: 9;
+        background: #f8fafc;
+      }
+
+      .head-cell.sticky-nand {
+        position: sticky;
+        left: var(--dr-width);
+        z-index: 9;
+        background: #f8fafc;
+      }
+
+      .dr-group {
+        display: grid;
+        grid-template-columns:
+          var(--dr-width) var(--nand-width) repeat(8, var(--month-width));
+        grid-auto-rows: var(--row-height);
+        border-bottom: 1px solid var(--console-line);
+        background: #fff;
+      }
+
+      .dr-cell {
+        position: sticky;
+        left: 0;
+        z-index: 7;
+        grid-column: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-right: 1px solid var(--console-line);
+        background: #f8fafc;
+        color: #344054;
+        font-size: 15px;
+        font-weight: 800;
+      }
+
+      .nand-cell {
+        position: sticky;
+        left: var(--dr-width);
+        z-index: 6;
+        grid-column: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-right: 1px solid var(--console-line);
+        border-bottom: 1px solid var(--console-line-soft);
+        background: #fff;
+        color: #1f2937;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .timeline-row {
+        position: relative;
+        grid-column: 3 / -1;
+        border-bottom: 1px solid var(--console-line-soft);
+        background:
+          linear-gradient(to right, transparent calc(var(--month-width) - 1px), #e8edf3 0)
+            0 0 / var(--month-width) 100%,
+          #fff;
+      }
+
+      .timeline-row::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: var(--today-x);
+        z-index: 1;
+        border-left: 1px dashed rgba(21, 94, 239, 0.55);
+        pointer-events: none;
+      }
+
+      .timeline-row:hover,
+      .timeline-row:hover + .nand-cell {
+        background-color: #f9fbff;
+      }
+
+      .node {
+        position: absolute;
+        top: 50%;
+        z-index: 4;
+        width: 30px;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid transparent;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 850;
+        line-height: 1;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 0 2px #fff;
+      }
+
+      .node:hover {
+        outline: 3px solid rgba(21, 94, 239, 0.16);
+      }
+
+      .note {
+        position: absolute;
+        left: 50%;
+        display: inline-block;
+        width: max-content;
+        max-width: 132px;
+        color: var(--console-ink);
+        font-size: 11px;
+        font-weight: 750;
+        line-height: 1.2;
+        text-align: center;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: keep-all;
+        transform: translateX(-50%);
+      }
+
+      .note.top {
+        bottom: 35px;
+      }
+
+      .note.bottom {
+        top: 35px;
+      }
+
+      .node-tooltip {
+        position: absolute;
+        left: 50%;
+        bottom: calc(100% + 16px);
+        width: 250px;
+        display: none;
+        padding: 10px;
+        border: 1px solid #cfd6e2;
+        border-radius: 6px;
+        background: #fff;
+        color: var(--console-ink);
+        box-shadow: 0 10px 22px rgba(16, 24, 40, 0.12);
+        transform: translateX(-50%);
+      }
+
+      .node:hover .node-tooltip {
+        display: block;
+      }
+
+      .tooltip-title {
+        margin-bottom: 6px;
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .tooltip-line {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        color: var(--console-muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .tooltip-line strong {
+        color: var(--console-ink);
+        text-align: right;
+      }
+
+      .arrow-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+      }
+
+      .arrow-label {
+        fill: #b54708;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .detail-rail {
+        background: #fff;
+      }
+
+      .rail-section {
+        padding: 12px;
+        border-bottom: 1px solid var(--console-line-soft);
+      }
+
+      .rail-title {
+        margin: 0 0 8px;
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      .rail-copy {
+        margin: 0 0 10px;
+        color: var(--console-muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .detail-card {
+        display: none;
+      }
+
+      .detail-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .detail-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 12px;
+      }
+
+      .detail-row span:first-child {
+        color: var(--console-muted);
+      }
+
+      .detail-row span:last-child {
+        color: var(--console-ink);
+        font-weight: 750;
+        text-align: right;
+      }
+
+      .tag-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .tag {
+        min-height: 22px;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 7px;
+        border: 1px solid var(--console-line);
+        border-radius: 5px;
+        background: #fff;
+        color: #344054;
+        font-size: 11px;
+        font-weight: 750;
+      }
+
+      .hidden-radio {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #node-v6-bf-6:checked ~ .timeline-shell .detail-v6-bf-6,
+      #node-v6-bu-28:checked ~ .timeline-shell .detail-v6-bu-28,
+      #node-v7-gj-30:checked ~ .timeline-shell .detail-v7-gj-30,
+      #node-v8-cu-21:checked ~ .timeline-shell .detail-v8-cu-21 {
+        display: block;
+      }
+
+      #node-v6-bf-6:checked ~ .timeline-shell label[for="node-v6-bf-6"],
+      #node-v6-bu-28:checked ~ .timeline-shell label[for="node-v6-bu-28"],
+      #node-v7-gj-30:checked ~ .timeline-shell label[for="node-v7-gj-30"],
+      #node-v8-cu-21:checked ~ .timeline-shell label[for="node-v8-cu-21"] {
+        outline: 3px solid rgba(21, 94, 239, 0.2);
+      }
+
+      .state-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .state-panel {
+        padding: 12px;
+      }
+
+      .state-title {
+        margin: 0 0 8px;
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      .empty-box {
+        min-height: 100px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border: 1px dashed #cfd6e2;
+        border-radius: 6px;
+        background: #fbfcfe;
+        color: var(--console-muted);
+      }
+
+      .skeleton-row {
+        height: 18px;
+        margin-bottom: 9px;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #eef2f7, #f8fafc, #eef2f7);
+      }
+
+      .skeleton-row.short {
+        width: 62%;
+      }
+
+      .skeleton-row.long {
+        width: 88%;
+      }
+
+      @media (max-width: 1360px) {
+        .filters {
+          grid-template-columns: repeat(4, minmax(130px, 1fr));
+        }
+
+        .timeline-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .detail-rail {
+          border-top: 1px solid var(--console-line);
+        }
+      }
+
+      @media (max-width: 980px) {
+        .kpi-strip {
+          grid-template-columns: repeat(3, minmax(140px, 1fr));
+        }
+
+        .page-head,
+        .saved-views,
+        .timeline-toolbar,
+        .legend {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .state-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-root">
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="topbar-mark">Sol.</span>
+          <span class="topbar-product">S.T.A.R.</span>
+        </div>
+        <div class="topbar-right">
+          <span class="lang-chip"><span class="lang-dot"></span> 한국어</span>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="page-head">
+          <div>
+            <h1 class="page-title">NAND 뷰</h1>
+            <p class="page-description">
+              DR와 NAND 제품별 승인 일정을 월 단위 타임라인으로 추적하는 운영 뷰입니다.
+            </p>
+          </div>
+          <div class="page-actions">
+            <button class="console-command" type="button">뷰 내보내기</button>
+            <button class="console-command primary" type="button">신규 평가</button>
+          </div>
+        </section>
+
+        <section class="kpi-strip" aria-label="NAND KPI 영역">
+          <div class="kpi-card">
+            <div class="kpi-label">DR 그룹</div>
+            <div class="kpi-value">7</div>
+            <div class="kpi-hint">V3부터 V8, V6P 별도</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">제품</div>
+            <div class="kpi-value">16</div>
+            <div class="kpi-hint">활성 제품 행</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">기승인</div>
+            <div class="kpi-value">11</div>
+            <div class="kpi-hint">이미 승인된 노드</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">당월 승인 예정</div>
+            <div class="kpi-value">8</div>
+            <div class="kpi-hint">당월 승인 예정 노드</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">후속 승인 예정</div>
+            <div class="kpi-value">6</div>
+            <div class="kpi-hint">후속 승인 예정 노드</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">연기</div>
+            <div class="kpi-value">3</div>
+            <div class="kpi-hint">연기 관계</div>
+          </div>
+        </section>
+
+        <section class="saved-views" aria-label="저장된 운영 뷰">
+          <div class="view-tabs">
+            <button class="view-tab" type="button">전체 활성 42</button>
+            <button class="view-tab" type="button">미업데이트 6</button>
+            <button class="view-tab" type="button">10일 초과 5</button>
+            <button class="view-tab" type="button">신뢰성 실패 4</button>
+            <button class="view-tab" type="button">신제품 평가 뷰 18</button>
+            <button class="view-tab active" type="button">NAND 뷰 16</button>
+          </div>
+        </section>
+
+        <section class="filters" aria-label="NAND 타임라인 필터">
+          <div class="field">
+            <label>DR</label>
+            <div class="select-like">전체 DR</div>
+          </div>
+          <div class="field">
+            <label>제품</label>
+            <div class="select-like">전체 제품</div>
+          </div>
+          <div class="field">
+            <label>승인 상태</label>
+            <div class="select-like">전체 상태</div>
+          </div>
+          <div class="field">
+            <label>비고 키워드</label>
+            <div class="select-like">Lv / 심의회 / PT</div>
+          </div>
+          <div class="field">
+            <label>상세 필터</label>
+            <div class="select-like">평가 항목 / 모델 / Fab 라인</div>
+          </div>
+          <div class="field">
+            <label>기간</label>
+            <div class="date-like">2026-04 ~ 2026-11</div>
+          </div>
+          <div class="filter-actions">
+            <button class="console-command primary" type="button">적용</button>
+            <button class="console-command" type="button">초기화</button>
+          </div>
+        </section>
+
+        <input class="hidden-radio" id="node-v6-bf-6" name="selected-node" type="radio" checked />
+        <input class="hidden-radio" id="node-v6-bu-28" name="selected-node" type="radio" />
+        <input class="hidden-radio" id="node-v7-gj-30" name="selected-node" type="radio" />
+        <input class="hidden-radio" id="node-v8-cu-21" name="selected-node" type="radio" />
+
+        <section class="timeline-shell" aria-label="NAND DR 타임라인">
+          <div class="timeline-toolbar">
+            <div class="timeline-title">
+              <span>DR / 제품 승인 타임라인</span>
+              <span class="timeline-meta">16개 행 · DR 기준 그룹 · 날짜 위치 기반 노드</span>
+            </div>
+            <div class="toolbar-actions">
+              <button class="console-command primary" type="button">월간</button>
+              <button class="console-command" type="button">분기</button>
+              <button class="console-command ghost" type="button">관계 라벨 표시</button>
+            </div>
+          </div>
+
+          <div class="legend">
+            <div class="legend-row">
+              <span class="legend-item"><span class="legend-dot approved"></span>기승인</span>
+              <span class="legend-item"><span class="legend-dot current"></span>당월 승인 예정</span>
+              <span class="legend-item"><span class="legend-dot future"></span>후속 승인 예정</span>
+              <span class="legend-item"><span class="legend-line"></span>연기 / 관계 화살표</span>
+            </div>
+            <div class="timeline-meta">메인 뷰는 DR, 제품, 타임라인만 표시합니다. 다른 필드는 노드 상세에서 확인합니다.</div>
+          </div>
+
+          <div class="timeline-layout">
+            <div class="timeline-scroll">
+              <div class="timeline-board">
+                <div class="month-header">
+                  <div class="head-cell sticky-left">DR</div>
+                  <div class="head-cell sticky-nand">제품</div>
+                  <div class="head-cell">2026-04</div>
+                  <div class="head-cell">2026-05</div>
+                  <div class="head-cell">2026-06</div>
+                  <div class="head-cell">2026-07</div>
+                  <div class="head-cell">2026-08</div>
+                  <div class="head-cell">2026-09</div>
+                  <div class="head-cell">2026-10</div>
+                  <div class="head-cell">2026-11</div>
+                </div>
+
+                <div class="dr-group">
+                  <div class="dr-cell" style="grid-row: 1 / span 3">V3</div>
+                  <div class="nand-cell" style="grid-row: 1">DW</div>
+                  <div class="timeline-row" style="grid-row: 1">
+                    <svg class="arrow-layer" viewBox="0 0 1760 86" preserveAspectRatio="none">
+                      <defs>
+                        <marker id="arrow-a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                          <path d="M0,0 L8,4 L0,8 Z" fill="#b54708"></path>
+                        </marker>
+                      </defs>
+                      <path d="M44 43 C118 10 180 10 255 43" fill="none" stroke="#b54708" stroke-width="2" marker-end="url(#arrow-a)"></path>
+                      <text class="arrow-label" x="134" y="19">연기</text>
+                    </svg>
+                    <label class="node approved" style="left: 44px" for="node-v6-bf-6">
+                      6
+                      <span class="note top">Lv4（PM983）</span>
+                      <span class="note bottom">PM983</span>
+                      <span class="node-tooltip">
+                        <span class="tooltip-title">V3 / DW · 2026-04-06</span>
+                        <span class="tooltip-line"><span>승인 상태</span><strong>기승인</strong></span>
+                        <span class="tooltip-line"><span>평가 항목</span><strong>S3승인</strong></span>
+                        <span class="tooltip-line"><span>탑재 제품</span><strong>PM983</strong></span>
+                        <span class="tooltip-line"><span>Fab 라인</span><strong>X1L</strong></span>
+                      </span>
+                    </label>
+                    <label class="node current" style="left: 255px" for="node-v6-bf-6">
+                      5
+                      <span class="note top">PT투입</span>
+                      <span class="note bottom">단품</span>
+                    </label>
+                  </div>
+                  <div class="nand-cell" style="grid-row: 2">DX</div>
+                  <div class="timeline-row" style="grid-row: 2">
+                    <label class="node approved" style="left: 132px" for="node-v6-bf-6">
+                      18
+                      <span class="note top">Card</span>
+                    </label>
+                    <label class="node future" style="left: 469px" for="node-v6-bf-6">
+                      4
+                      <span class="note bottom">Lv1～Lv3</span>
+                    </label>
+                  </div>
+                  <div class="nand-cell" style="grid-row: 3">DA</div>
+                  <div class="timeline-row" style="grid-row: 3">
+                    <label class="node current" style="left: 263px" for="node-v6-bf-6">
+                      6
+                      <span class="note top">eMMC</span>
+                    </label>
+                    <label class="node future" style="left: 601px" for="node-v6-bf-6">
+                      22
+                      <span class="note bottom">심의회</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="dr-group">
+                  <div class="dr-cell" style="grid-row: 1 / span 3">V4</div>
+                  <div class="nand-cell" style="grid-row: 1">FB</div>
+                  <div class="timeline-row" style="grid-row: 1">
+                    <label class="node approved" style="left: 88px" for="node-v6-bf-6">
+                      12
+                      <span class="note top">Lv4（Gen.）</span>
+                    </label>
+                    <label class="node current" style="left: 390px" for="node-v6-bf-6">
+                      24
+                      <span class="note bottom">DC</span>
+                    </label>
+                  </div>
+                  <div class="nand-cell" style="grid-row: 2">FP</div>
+                  <div class="timeline-row" style="grid-row: 2">
+                    <label class="node current" style="left: 284px" for="node-v6-bf-6">
+                      9
+                      <span class="note top">WFBiz（Gen）</span>
+                      <span class="note bottom">AUTO</span>
+                    </label>
+                  </div>
+                  <div class="nand-cell" style="grid-row: 3">FY</div>
+                  <div class="timeline-row" style="grid-row: 3">
+                    <label class="node future" style="left: 557px" for="node-v6-bf-6">
+                      16
+                      <span class="note top">P-Qual</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="dr-group">
+                  <div class="dr-cell" style="grid-row: 1 / span 3">V5</div>
+                  <div class="nand-cell" style="grid-row: 1">IX</div>
+                  <div class="timeline-row" style="grid-row: 1">
+                    <label class="node approved" style="left: 205px" for="node-v6-bf-6">
+                      28
+                      <span class="note top">Lv5（16TB）</span>
+                    </label>
+                    <label class="node future" style="left: 520px" for="node-v6-bf-6">
+                      11
+                      <span class="note bottom">심의회</span>
+                    </label>
+                  </div>
+                  <div class="nand-cell" style="grid-row: 2">IT</div>
+                  <div class="timeline-row" style="grid-row: 2">
+                    <svg class="arrow-layer" viewBox="0 0 1760 86" preserveAspectRatio="none">
+                      <defs>
+                        <marker id="arrow-b" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                          <path d="M0,0 L8,4 L0,8 Z" fill="#b54708"></path>
+                        </marker>
+                      </defs>
+                      <path d="M319 43 C372 12 415 12 462 43" fill="none" stroke="#b54708" stroke-width="2" marker-end="url(#arrow-b)"></path>
+                      <text class="arrow-label" x="374" y="20">연기</text>
+                    </svg>
+                    <label class="node current" style="left: 319px" for="node-v6-bf-6">
+                      14
+                      <span class="note top">단품</span>
+                    </label>
+                    <label class="node future" style="left: 462px" for="node-v6-bf-6">
+                      3
+                      <span class="note bottom">SIE</span>
+                    </label>
+                  </div>
+                  <div class="nand-cell" style="grid-row: 3">IL</div>
+                  <div class="timeline-row" style="grid-row: 3">
+                    <label class="node current" style="left: 411px" for="node-v6-bf-6">
+                      27
+                      <span class="note top">SIE</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="dr-group">
+                  <div class="dr-cell" style="grid-row: 1 / span 2">V6</div>
+                  <div class="nand-cell" style="grid-row: 1">BF</div>
+                  <div class="timeline-row" style="grid-row: 1">
+                    <label class="node approved" style="left: 44px" for="node-v6-bf-6">
+                      6
+                      <span class="note top">Lv4/Lv5</span>
+                      <span class="note bottom">PM983</span>
+                      <span class="node-tooltip">
+                        <span class="tooltip-title">V6 / BF · 2026-04-06</span>
+                        <span class="tooltip-line"><span>승인 상태</span><strong>기승인</strong></span>
+                        <span class="tooltip-line"><span>평가 항목</span><strong>S3승인</strong></span>
+                        <span class="tooltip-line"><span>탑재 제품</span><strong>PM983</strong></span>
+                        <span class="tooltip-line"><span>Fab 라인</span><strong>X1L</strong></span>
+                      </span>
+                    </label>
+                    <label class="node current" style="left: 337px" for="node-v6-bf-6">
+                      16
+                      <span class="note top">PT투입</span>
+                    </label>
+                    <label class="node future" style="left: 586px" for="node-v6-bf-6">
+                      20
+                      <span class="note bottom">심의회</span>
+                    </label>
+                  </div>
+                  <div class="nand-cell" style="grid-row: 2">BU</div>
+                  <div class="timeline-row" style="grid-row: 2">
+                    <svg class="arrow-layer" viewBox="0 0 1760 86" preserveAspectRatio="none">
+                      <defs>
+                        <marker id="arrow-c" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                          <path d="M0,0 L8,4 L0,8 Z" fill="#b54708"></path>
+                        </marker>
+                      </defs>
+                      <path d="M255 43 C305 9 370 9 419 43" fill="none" stroke="#b54708" stroke-width="2" marker-end="url(#arrow-c)"></path>
+                      <text class="arrow-label" x="323" y="18">연기</text>
+                    </svg>
+                    <label class="node current" style="left: 255px" for="node-v6-bu-28">
+                      5
+                      <span class="note top">Lv2（PM9B1）</span>
+                      <span class="node-tooltip">
+                        <span class="tooltip-title">V6 / BU · 2026-05-05</span>
+                        <span class="tooltip-line"><span>승인 상태</span><strong>당월 승인 예정</strong></span>
+                        <span class="tooltip-line"><span>평가 항목</span><strong>T2승급</strong></span>
+                        <span class="tooltip-line"><span>탑재 제품</span><strong>PM9B1</strong></span>
+                        <span class="tooltip-line"><span>Fab 라인</span><strong>X2L</strong></span>
+                      </span>
+                    </label>
+                    <label class="node future" style="left: 419px" for="node-v6-bu-28">
+                      28
+                      <span class="note bottom">Lv3（A4）</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="dr-group">
+                  <div class="dr-cell" style="grid-row: 1 / span 1">V6P</div>
+                  <div class="nand-cell" style="grid-row: 1">BH</div>
+                  <div class="timeline-row" style="grid-row: 1">
+                    <label class="node approved" style="left: 169px" for="node-v6-bf-6">
+                      23
+                      <span class="note top">DC</span>
+                    </label>
+                    <label class="node future" style="left: 506px" for="node-v6-bf-6">
+                      9
+                      <span class="note bottom">P-Qual</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="dr-group">
+                  <div class="dr-cell" style="grid-row: 1 / span 2">V7</div>
+                  <div class="nand-cell" style="grid-row: 1">GQ</div>
+                  <div class="timeline-row" style="grid-row: 1">
+                    <label class="node current" style="left: 277px" for="node-v6-bf-6">
+                      8
+                      <span class="note top">eMMC</span>
+                    </label>
+                    <label class="node future" style="left: 630px" for="node-v6-bf-6">
+                      26
+                      <span class="note bottom">후속</span>
+                    </label>
+                  </div>
+                  <div class="nand-cell" style="grid-row: 2">GJ</div>
+                  <div class="timeline-row" style="grid-row: 2">
+                    <label class="node approved" style="left: 117px" for="node-v7-gj-30">
+                      16
+                      <span class="note top">WFBiz（Gen）</span>
+                      <span class="note bottom">AUTO</span>
+                      <span class="node-tooltip">
+                        <span class="tooltip-title">V7 / GJ · 2026-04-16</span>
+                        <span class="tooltip-line"><span>승인 상태</span><strong>기승인</strong></span>
+                        <span class="tooltip-line"><span>평가 항목</span><strong>S3승인</strong></span>
+                        <span class="tooltip-line"><span>탑재 제품</span><strong>PM983</strong></span>
+                        <span class="tooltip-line"><span>Fab 라인</span><strong>P1L</strong></span>
+                      </span>
+                    </label>
+                    <label class="node current" style="left: 433px" for="node-v7-gj-30">
+                      30
+                      <span class="note top">심의회</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="dr-group">
+                  <div class="dr-cell" style="grid-row: 1 / span 2">V8</div>
+                  <div class="nand-cell" style="grid-row: 1">CR</div>
+                  <div class="timeline-row" style="grid-row: 1">
+                    <label class="node current" style="left: 348px" for="node-v6-bf-6">
+                      18
+                      <span class="note top">Card</span>
+                    </label>
+                    <label class="node future" style="left: 721px" for="node-v6-bf-6">
+                      9
+                      <span class="note bottom">심의회</span>
+                    </label>
+                  </div>
+                  <div class="nand-cell" style="grid-row: 2">CU</div>
+                  <div class="timeline-row" style="grid-row: 2">
+                    <label class="node current" style="left: 484px" for="node-v8-cu-21">
+                      6
+                      <span class="note top">Lv4（PM983）</span>
+                      <span class="node-tooltip">
+                        <span class="tooltip-title">V8 / CU · 2026-06-06</span>
+                        <span class="tooltip-line"><span>승인 상태</span><strong>당월 승인 예정</strong></span>
+                        <span class="tooltip-line"><span>평가 항목</span><strong>S3승인</strong></span>
+                        <span class="tooltip-line"><span>탑재 제품</span><strong>PM983</strong></span>
+                        <span class="tooltip-line"><span>Fab 라인</span><strong>P2L</strong></span>
+                      </span>
+                    </label>
+                    <label class="node future" style="left: 809px" for="node-v8-cu-21">
+                      21
+                      <span class="note bottom">심의회</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <aside class="detail-rail" aria-label="선택된 NAND 노드 상세">
+              <div class="rail-section">
+                <h2 class="rail-title">선택된 노드</h2>
+                <p class="rail-copy">
+                  메인 타임라인은 DR, 제품, 승인 일자만 간결하게 표시합니다. 평가 항목,
+                  탑재 제품, Fab 라인은 노드 상세에서 확인합니다.
+                </p>
+                <div class="detail-card detail-v6-bf-6">
+                  <div class="detail-list">
+                    <div class="detail-row"><span>DR / 제품</span><span>V6 / BF</span></div>
+                    <div class="detail-row"><span>일자</span><span>2026-04-06</span></div>
+                    <div class="detail-row"><span>승인 상태</span><span>기승인</span></div>
+                    <div class="detail-row"><span>비고</span><span>Lv4/Lv5 · PM983</span></div>
+                    <div class="detail-row"><span>평가 항목</span><span>S3승인</span></div>
+                    <div class="detail-row"><span>탑재 제품</span><span>PM983</span></div>
+                    <div class="detail-row"><span>Fab 라인</span><span>X1L</span></div>
+                  </div>
+                </div>
+                <div class="detail-card detail-v6-bu-28">
+                  <div class="detail-list">
+                    <div class="detail-row"><span>DR / 제품</span><span>V6 / BU</span></div>
+                    <div class="detail-row"><span>일자</span><span>2026-05-28</span></div>
+                    <div class="detail-row"><span>승인 상태</span><span>후속 승인 예정</span></div>
+                    <div class="detail-row"><span>비고</span><span>Lv3（A4）</span></div>
+                    <div class="detail-row"><span>관계</span><span>5월 5일에서 연기</span></div>
+                    <div class="detail-row"><span>평가 항목</span><span>T2승급</span></div>
+                    <div class="detail-row"><span>탑재 제품</span><span>PM9B1</span></div>
+                    <div class="detail-row"><span>Fab 라인</span><span>X2L</span></div>
+                  </div>
+                </div>
+                <div class="detail-card detail-v7-gj-30">
+                  <div class="detail-list">
+                    <div class="detail-row"><span>DR / 제품</span><span>V7 / GJ</span></div>
+                    <div class="detail-row"><span>일자</span><span>2026-05-30</span></div>
+                    <div class="detail-row"><span>승인 상태</span><span>당월 승인 예정</span></div>
+                    <div class="detail-row"><span>비고</span><span>심의회</span></div>
+                    <div class="detail-row"><span>평가 항목</span><span>S3승인</span></div>
+                    <div class="detail-row"><span>탑재 제품</span><span>PM983</span></div>
+                    <div class="detail-row"><span>Fab 라인</span><span>P1L</span></div>
+                  </div>
+                </div>
+                <div class="detail-card detail-v8-cu-21">
+                  <div class="detail-list">
+                    <div class="detail-row"><span>DR / 제품</span><span>V8 / CU</span></div>
+                    <div class="detail-row"><span>일자</span><span>2026-07-21</span></div>
+                    <div class="detail-row"><span>승인 상태</span><span>후속 승인 예정</span></div>
+                    <div class="detail-row"><span>비고</span><span>심의회</span></div>
+                    <div class="detail-row"><span>평가 항목</span><span>S3승인</span></div>
+                    <div class="detail-row"><span>탑재 제품</span><span>PM983</span></div>
+                    <div class="detail-row"><span>Fab 라인</span><span>P2L</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="rail-section">
+                <h2 class="rail-title">비고 사전</h2>
+                <div class="tag-stack">
+                  <span class="tag">Lv4/Lv5</span>
+                  <span class="tag">Lv4（PM983）</span>
+                  <span class="tag">Lv5（16TB）</span>
+                  <span class="tag">Lv2（PM9B1）</span>
+                  <span class="tag">Card</span>
+                  <span class="tag">eMMC</span>
+                  <span class="tag">WFBiz（Gen）AUTO</span>
+                  <span class="tag">단품</span>
+                  <span class="tag">SIE</span>
+                  <span class="tag">P-Qual</span>
+                  <span class="tag">DC</span>
+                  <span class="tag">PT투입</span>
+                  <span class="tag">심의회</span>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="state-grid" aria-label="상태 화면 예시">
+          <div class="state-panel">
+            <h2 class="state-title">로딩 상태 예시</h2>
+            <div class="skeleton-row long"></div>
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row short"></div>
+            <div class="skeleton-row long"></div>
+          </div>
+          <div class="state-panel">
+            <h2 class="state-title">빈 상태 예시</h2>
+            <div class="empty-box">
+              <strong>현재 필터에 해당하는 NAND 승인 노드가 없습니다</strong>
+              <span>필터를 초기화하거나 기간을 넓혀 주세요.</span>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
